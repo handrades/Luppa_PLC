@@ -1,0 +1,38 @@
+name: JSON and YAML Lint
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  json-yaml-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        
+    - name: Install linting tools
+      run: |
+        npm install -g jsonlint
+        pip install yamllint
+        
+    - name: Lint JSON files
+      run: |
+        find . -name "*.json" -not -path "./node_modules/*" -not -path "./.bmad-core/*" -exec jsonlint {} \;
+        
+    - name: Lint YAML files
+      run: |
+        find . -name "*.yml" -o -name "*.yaml" -not -path "./node_modules/*" -not -path "./.bmad-core/*" | xargs yamllint

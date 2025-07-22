@@ -54,7 +54,14 @@ Key database patterns:
 ### Linting
 
 ```bash
+# Markdown linting
 markdownlint "**/*.md" --ignore node_modules
+
+# JSON linting
+find . -name "*.json" -not -path "./node_modules/*" -not -path "./.bmad-core/*" -exec jsonlint {} \;
+
+# YAML linting (requires: pip install yamllint)
+find . -name "*.yml" -o -name "*.yaml" -not -path "./node_modules/*" -not -path "./.bmad-core/*" | xargs yamllint
 ```
 
 The project uses relaxed markdown linting rules (see `.markdownlint.json`) with:
@@ -99,4 +106,5 @@ The framework is designed to support additional industrial apps:
 
 ## Development Best Practices
 
-- Before we push anything to GitHub, we need to make sure we run all GitHub workflows locally to speed up development.
+- Before we commit anything or push anything to GitHub, we need to make sure we run all GitHub workflows locally
+  to speed up development.
