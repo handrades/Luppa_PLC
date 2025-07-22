@@ -165,44 +165,45 @@ Working backwards from our vision, let's define the foundational layers:
 **Table Structure:**
 ```sql
 -- Main PLC inventory with optimized indexing
-plc_inventory (
+CREATE TABLE plc_inventory (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   country VARCHAR(50) NOT NULL,
   site VARCHAR(100) NOT NULL,
   cell_type VARCHAR(50) NOT NULL,
   line_number VARCHAR(20) NOT NULL,
   equipment VARCHAR(100) NOT NULL,
-  tag VARCHAR(50) UNIQUE NOT NULL,
+  tag VARCHAR(100)[] NOT NULL,
   description TEXT,
   ip INET UNIQUE,
   plc_model VARCHAR(100) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Performance indexes
-  INDEX idx_country_site (country, site),
-  INDEX idx_cell_line (cell_type, line_number),
-  INDEX idx_equipment (equipment),
-  INDEX idx_plc_model (plc_model),
-  INDEX idx_created_date (created_at),
-  UNIQUE INDEX idx_tag (tag),
-  UNIQUE INDEX idx_ip (ip)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Performance indexes
+CREATE INDEX idx_country_site   ON plc_inventory(country, site);
+CREATE INDEX idx_cell_line      ON plc_inventory(cell_type, line_number);
+CREATE INDEX idx_equipment      ON plc_inventory(equipment);
+CREATE INDEX idx_plc_model      ON plc_inventory(plc_model);
+CREATE INDEX idx_created_date   ON plc_inventory(created_at);
+CREATE INDEX idx_tag            ON plc_inventory USING GIN(tag);
+CREATE UNIQUE INDEX idx_ip      ON plc_inventory(ip);
+
 -- Audit table for ISO compliance
-plc_audit_log (
+CREATE TABLE plc_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  plc_id UUID REFERENCES plc_inventory(id),
+  plc_id UUID REFERENCES plc_inventory(id) ON DELETE CASCADE,
   action VARCHAR(20) NOT NULL, -- INSERT, UPDATE, DELETE
   changed_fields JSONB,
   old_values JSONB,
   new_values JSONB,
-  user_id UUID NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
-  
-  INDEX idx_plc_audit (plc_id, timestamp),
-  INDEX idx_user_audit (user_id, timestamp)
+  user_id UUID REFERENCES users(id) NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Audit table indexes
+CREATE INDEX idx_plc_audit   ON plc_audit_log(plc_id, timestamp);
+CREATE INDEX idx_user_audit  ON plc_audit_log(user_id, timestamp);
 ```
 
 #### API Performance Strategies
@@ -222,7 +223,7 @@ plc_audit_log (
 **Data Management:**
 - **Virtual Scrolling**: Handle 10,000+ PLC records efficiently  
 - **Smart Pagination**: Load data as user scrolls/navigates
-- **Local State**: Redux Toolkit Query with RTK Query for caching
+- **Local State**: RTK Query for client-side caching
 - **Debounced Search**: Reduce API calls during filtering
 - **Optimistic Updates**: Immediate UI feedback for better UX
 
