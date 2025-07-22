@@ -28,7 +28,8 @@ updated_at
 -- One-time extension for UUID generation
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-#### Database Design for Performance
+### Database Design for Performance
+
 **Table Structure:**
   cell_type VARCHAR(50) NOT NULL,
   cell_number VARCHAR(20) NOT NULL,
