@@ -108,3 +108,7 @@ The framework is designed to support additional industrial apps:
 
 - Before we commit anything or push anything to GitHub, we need to make sure we run all GitHub workflows locally
   to speed up development.
+
+## Claude Code Guidance
+
+- All files need to end with a new line
