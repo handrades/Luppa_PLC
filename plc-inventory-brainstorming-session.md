@@ -174,7 +174,7 @@ CREATE TABLE plc_inventory (
   equipment VARCHAR(100) NOT NULL,
   tag VARCHAR(100)[] NOT NULL,
   description TEXT,
-  ip INET UNIQUE,
+  ip INET,
   plc_model VARCHAR(100) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
