@@ -47,6 +47,8 @@ We'll explore ideas across these key areas:
 
 #### Potential Future Applications:
 - **PLC Inventory** (Phase 1) - Equipment cataloging & tracking
+- **PLC Emulator** - Equipment emulator that generates metrics
+- **Factory Dashboard** - Production lines viewer
 - **Maintenance Scheduler** - Preventive maintenance management  
 - **Asset Performance** - Equipment analytics & reporting
 - **Compliance Tracker** - Regulatory compliance management
@@ -172,7 +174,7 @@ CREATE TABLE plc_inventory (
   cell_type VARCHAR(50) NOT NULL,
   line_number VARCHAR(20) NOT NULL,
   equipment VARCHAR(100) NOT NULL,
-  tag VARCHAR(100)[] NOT NULL,
+  tag TEXT[] NOT NULL,
   description TEXT,
   ip INET,
   plc_model VARCHAR(100) NOT NULL,
@@ -187,7 +189,7 @@ CREATE INDEX idx_equipment      ON plc_inventory(equipment);
 CREATE INDEX idx_plc_model      ON plc_inventory(plc_model);
 CREATE INDEX idx_created_date   ON plc_inventory(created_at);
 CREATE INDEX idx_tag            ON plc_inventory USING GIN(tag);
-CREATE UNIQUE INDEX idx_ip      ON plc_inventory(ip);
+CREATE UNIQUE INDEX idx_ip ON plc_inventory(ip) WHERE ip IS NOT NULL;
 
 -- Audit table for ISO compliance
 CREATE TABLE plc_audit_log (
@@ -198,12 +200,25 @@ CREATE TABLE plc_audit_log (
   old_values JSONB,
   new_values JSONB,
   user_id UUID REFERENCES users(id) NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
+  event_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Audit table indexes
-CREATE INDEX idx_plc_audit   ON plc_audit_log(plc_id, timestamp);
-CREATE INDEX idx_user_audit  ON plc_audit_log(user_id, timestamp);
+CREATE INDEX idx_plc_audit   ON plc_audit_log(plc_id, event_at, action);
+CREATE INDEX idx_user_audit  ON plc_audit_log(user_id, event_at);
+
+-- Trigger to automatically update updated_at timestamp
+CREATE OR REPLACE FUNCTION set_plc_inventory_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at := NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_plc_inventory_updated_at
+BEFORE UPDATE ON plc_inventory
+FOR EACH ROW EXECUTE FUNCTION set_plc_inventory_updated_at();
 ```
 
 #### API Performance Strategies
