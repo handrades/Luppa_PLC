@@ -163,14 +163,11 @@ Working backwards from our vision, let's define the foundational layers:
 
 ### Scalability Architecture Deep Dive
 
+-- One-time extension for UUID generation
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 #### Database Design for Performance
 **Table Structure:**
-```sql
--- Main PLC inventory with optimized indexing
-CREATE TABLE plc_inventory (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  country VARCHAR(50) NOT NULL,
-  site VARCHAR(100) NOT NULL,
   cell_type VARCHAR(50) NOT NULL,
   line_number VARCHAR(20) NOT NULL,
   equipment VARCHAR(100) NOT NULL,
