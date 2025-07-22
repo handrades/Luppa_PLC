@@ -6,7 +6,8 @@
 **Session Type**: Structured Ideation & Strategic Planning  
 
 ## Project Overview
-**Goal**: Create a minimalist, modern CRUD web app for industrial PLC equipment inventory that serves as a foundation framework for multiple future applications.
+**Goal**: Create a minimalist, modern CRUD web app for industrial PLC equipment inventory that serves as a
+foundation framework for multiple future applications.
 
 **Key Requirements**:
 - React frontend, PostgreSQL database

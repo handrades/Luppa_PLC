@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **PLC Inventory Multi-App Framework** - a foundation for building multiple industrial applications starting with a PLC equipment inventory system. The project is designed for solo development with a focus on open-source technologies, industrial compliance, and scalable architecture.
+This is a **PLC Inventory Multi-App Framework** - a foundation for building multiple industrial applications
+starting with a PLC equipment inventory system. The project is designed for solo development with a focus on
+open-source technologies, industrial compliance, and scalable architecture.
 
 ## Architecture Vision
 
@@ -50,6 +52,7 @@ Key database patterns:
 ## Development Commands
 
 ### Linting
+
 ```bash
 markdownlint "**/*.md" --ignore node_modules
 ```
