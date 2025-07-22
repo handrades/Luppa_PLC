@@ -215,7 +215,9 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_plc_inventory_updated_at
 BEFORE UPDATE ON plc_inventory
-FOR EACH ROW EXECUTE FUNCTION set_plc_inventory_updated_at();
+FOR EACH ROW
+WHEN (OLD IS DISTINCT FROM NEW)               -- only if something changed
+EXECUTE FUNCTION set_plc_inventory_updated_at();
 ```
 
 #### API Performance Strategies
