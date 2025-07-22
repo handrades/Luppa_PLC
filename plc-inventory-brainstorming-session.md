@@ -174,7 +174,7 @@ Working backwards from our vision, let's define the foundational layers:
 **Caching Strategy:**
 - **Redis Cache**: Frequent queries (by site, by equipment type)
 - **Application Cache**: Static data (countries, equipment types)
-- **CDN**: Static assets and API responses for read-heavy endpoints
+- **Local Static Asset Cache**: Nginx-served static assets and cached API responses for read-heavy endpoints
 
 #### Frontend Performance Architecture
 **Data Management:**
