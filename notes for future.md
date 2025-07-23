@@ -2,26 +2,26 @@
 
 Some fields I thought about
 
-plc_id
-plc_description
-plc_make
-plc_model
-plc_ip
-plc_tags
-plc_tag_name
-plc_tag_type
+* plc_id
+* plc_description
+* plc_make
+* plc_model
+* plc_ip
+* plc_tags
+* plc_tag_name
+* plc_tag_type
 
-site_name
+* site_name
 
-cell_type
-cell_id
+* cell_type
+* cell_id
 
-equipment_id
-equipment_type
+* equipment_id
+* equipment_type
 
-each should have:
-created_at
-updated_at
+* each should have:
+* created_at
+* updated_at
 
 ## code from previous run that can be taken into consideration for tables above
 
@@ -31,6 +31,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 ### Database Design for Performance
 
 **Table Structure:**
+```
   cell_type VARCHAR(50) NOT NULL,
   cell_number VARCHAR(20) NOT NULL,
   equipment VARCHAR(100) NOT NULL,
