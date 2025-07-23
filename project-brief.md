@@ -10,7 +10,9 @@
 ## Executive Summary
 
 ### Project Vision
-Create a minimalist, modern CRUD web application for industrial equipment inventory management that serves as the foundation framework for multiple future industrial applications. The system will begin with an Inventory application and evolve into a comprehensive industrial management platform.
+Create a minimalist, modern CRUD web application for industrial equipment inventory management that serves as
+the foundation framework for multiple future industrial applications. The system will begin with an Inventory
+application and evolve into a comprehensive industrial management platform.
 
 ### Strategic Value Proposition
 - **Foundation First**: Build reusable framework components that accelerate future application development
@@ -274,4 +276,5 @@ Each new application will leverage:
 - **Security Review**: Validate security implementation meets industrial requirements
 - **Framework Extensibility**: Confirm architecture supports future applications
 
-This project brief serves as the definitive guide for developing the Industrial Inventory Multi-App Framework, ensuring alignment between business objectives, technical implementation, and long-term strategic vision.
+This project brief serves as the definitive guide for developing the Industrial Inventory Multi-App Framework,
+ensuring alignment between business objectives, technical implementation, and long-term strategic vision.
