@@ -542,28 +542,21 @@ so that I can make informed decisions about inventory management.
 7: Dashboard refreshes every 5 minutes automatically
 8: Export dashboard as PDF report with timestamp
 
-## Remaining Epic Details (Epic 3-5 Summary)
+## Additional Epic Story Details
 
-### Epic 3 Details: Advanced Inventory Features
-- **Story 3.1**: Flexible Tagging System Implementation
-- **Story 3.2**: Full-Text Search Across All Equipment Fields  
-- **Story 3.3**: Advanced Filtering and Sorting Interface
-- **Story 3.4**: CSV Import Functionality with Validation
-- **Story 3.5**: CSV Export with Custom Field Selection
+### Epic 5 Additional Stories: Advanced Inventory Features
+- **Story 5.5**: Flexible Tagging System Implementation
+- **Story 5.6**: Multi-Format Data Export (PDF, Excel, CSV)
+- **Story 5.7**: CSV Import Functionality with Advanced Validation
+- **Story 5.8**: Compliance Report Generation for ISO Standards
+- **Story 5.9**: Audit Trail Viewer with Filtering and Search
 
-### Epic 4 Details: Compliance & Reporting
-- **Story 4.1**: Audit Logging Infrastructure for All CRUD Operations
-- **Story 4.2**: User Activity Tracking and History
-- **Story 4.3**: Compliance Report Generation (ISO Standards)
-- **Story 4.4**: Data Export in Multiple Formats (PDF, Excel, CSV)
-- **Story 4.5**: Audit Trail Viewer with Filtering and Search
-
-### Epic 5 Details: Dashboard & Analytics  
-- **Story 5.1**: Equipment Summary Dashboard with KPIs
-- **Story 5.2**: Site-Based Equipment Distribution Visualization
-- **Story 5.3**: Equipment Status and Health Indicators
-- **Story 5.4**: Search and Quick Access Panel
-- **Story 5.5**: User Productivity Metrics and Reporting
+### Future Epic Considerations: Compliance & Reporting Enhancement
+- **Story X.1**: Advanced User Activity Tracking and History
+- **Story X.2**: Automated Compliance Report Scheduling
+- **Story X.3**: Real-time Equipment Status and Health Indicators
+- **Story X.4**: Enhanced Search and Quick Access Panel
+- **Story X.5**: User Productivity Metrics and Reporting Dashboard
 
 ## Checklist Results Report
 
