@@ -53,6 +53,32 @@ Key database patterns:
 
 ### Linting
 
+#### Psake Build Script (Recommended)
+
+```powershell
+# Install psake if not already installed
+Install-Module -Name psake -Scope CurrentUser
+
+# Run all linting checks (default task)
+Invoke-psake
+
+# Run specific linters
+Invoke-psake Markdown
+Invoke-psake Json
+Invoke-psake Yaml
+
+# Auto-fix markdown issues
+Invoke-psake FixMarkdown
+
+# Run CI checks (includes dependency verification)
+Invoke-psake CI
+
+# Show all available tasks
+Invoke-psake ?
+```
+
+#### Bash Commands (Alternative)
+
 ```bash
 # Markdown linting
 markdownlint "**/*.md" --ignore node_modules
@@ -112,3 +138,7 @@ The framework is designed to support additional industrial apps:
 ## Claude Code Guidance
 
 - All files need to end with a new line
+
+## Personal Preferences
+
+- I dislike bash scripting. Never recommend me to use bash over PowerShell
