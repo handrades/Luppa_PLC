@@ -1,5 +1,7 @@
 # Industrial Inventory Multi-App Framework Product Requirements Document (PRD)
 
+<!-- markdownlint-disable MD024 -->
+
 ## Goals and Background Context
 
 ### Goals
@@ -99,10 +101,19 @@ in industrial settings.
 ### Repository Structure: Monorepo
 
 ### Service Architecture
-**Monolith** - The project will use a monolithic architecture deployed via Docker containers. While the
+**Monolith with Modular Design** - The project will use a monolithic architecture deployed via Docker containers. While the
 infrastructure uses multiple containers (database, cache, monitoring), the application logic remains in a single
 deployable unit. This approach balances simplicity for a solo developer with the flexibility to extract services
-later if needed. The monolith will be structured with clear module boundaries to support future decomposition.
+later if needed.
+
+The monolith will be structured with clear module boundaries using:
+- **Workspace Management**: Organized with Nx workspaces, Yarn workspaces, or pnpm workspaces to maintain clear
+  separation between modules
+- **Module Independence**: Each major feature area (auth, inventory, monitoring) in separate workspace packages with
+  explicit dependencies
+- **CI/CD Rules**: Automated checks to prevent circular dependencies, enforce module boundaries, and enable independent testing/releasing
+- **Interface Contracts**: Well-defined APIs between modules to facilitate future extraction without major refactors
+- **Independent Build Artifacts**: Module structure that allows extracting services as separate deployables when needed
 
 ### Testing Requirements
 **Unit + Integration** - The project requires unit tests for business logic and integration tests for API
