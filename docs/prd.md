@@ -5,18 +5,28 @@
 ## Goals and Background Context
 
 ### Goals
-- Deploy a functional inventory application for cataloging industrial equipment (PLCs, sensors, controllers)
-- Establish a reusable multi-app framework foundation for future industrial applications
-- Implement ISO-compliant audit trails and comprehensive security measures
-- Achieve high-performance targets: <100ms query response times and <2s page loads
-- Create a system that supports 300+ PLCs initially with scalability to 10,000+ equipment records
+- Deploy a functional inventory application for cataloging industrial equipment (PLCs, sensors, controllers) that
+  serves process and controls engineers
+- Establish a reusable multi-app framework foundation that accelerates future industrial application development
+- Implement ISO-compliant audit trails and security measures to meet industrial compliance requirements
+- Achieve high-performance targets (<100ms query response, <2s page loads) while scaling from 300 to 10,000+ equipment records
+- Create cost-efficient solution using open-source technologies suitable for air-gapped industrial environments
 - Build with open-source technologies to maintain zero licensing costs
 - Design for air-gapped industrial environments with on-premise deployment
 - Enable efficient equipment tracking with site hierarchy and flexible tagging system
 
 ### Background Context
-This project addresses the critical need for industrial equipment inventory management within manufacturing
-environments. Process and controls engineers currently lack a centralized system for tracking PLCs, sensors, and
+The industrial equipment management landscape lacks modern, user-friendly solutions tailored for process
+engineers working in on-premise, air-gapped environments. Current systems are often outdated, expensive,
+or cloud-dependent, making them unsuitable for industrial operations that require reliable offline
+capabilities and strict security controls.
+
+This PRD addresses the need for a minimalist, modern CRUD web application that not only solves immediate
+inventory management challenges but also establishes a strategic foundation for multiple future industrial
+applications. The solution emphasizes ISO compliance, performance optimization, and framework reusability
+to maximize long-term value while staying within budget constraints of open-source technologies.
+
+Process and controls engineers currently lack a centralized system for tracking PLCs, sensors, and
 controllers across multiple sites and production cells. The solution must operate within air-gapped industrial
 networks while meeting strict ISO compliance requirements for audit trails and data integrity.
 
@@ -33,78 +43,109 @@ consistency and compliance across the platform.
 
 ## Requirements
 
-### Functional
-- FR1: The system shall provide CRUD operations for industrial equipment records including PLCs, sensors, and controllers
-- FR2: Equipment records shall support hierarchical organization by site_name, cell_type, and cell_id
-- FR3: The system shall implement flexible tagging with full-text search capabilities across all equipment fields
-- FR4: Users shall be able to perform bulk import/export operations via CSV format
-- FR5: The system shall provide advanced filtering by site, equipment type, make, model, and IP address
-- FR6: All data modifications shall be tracked in an audit trail with user context and timestamps
-- FR7: The system shall implement role-based access control (RBAC) for user permissions
-- FR8: The system shall support user authentication without external identity providers
-- FR9: Equipment records shall maintain relationships to equipment_id and equipment_type classifications
-- FR10: The system shall provide a dashboard view with equipment summaries by site and type
-- FR11: Users shall receive in-app notifications for system events and alerts
-- FR12: The system shall support configuration management through app settings and feature flags
+### Functional Requirements
+**FR1:** The system shall provide CRUD operations (Create, Read, Update, Delete) for industrial equipment
+records including PLCs, sensors, controllers, and related equipment  
+**FR2:** The system shall organize equipment using a hierarchical structure with site_name, cell_type, and
+cell_id classifications  
+**FR3:** The system shall support equipment mapping with equipment_id and equipment_type categorization  
+**FR4:** The system shall implement a flexible tagging system with full-text search capabilities across
+all equipment fields  
+**FR5:** The system shall provide bulk operations for CSV import and export of equipment data to handle large datasets  
+**FR6:** The system shall implement role-based access control (RBAC) with user authentication and authorization  
+**FR7:** The system shall provide advanced filtering by site, equipment type, model, and custom criteria  
+**FR8:** The system shall generate compliance reports and data exports in multiple formats  
+**FR9:** The system shall support concurrent access for 50+ simultaneous engineers  
+**FR10:** The system shall provide a dashboard with site and equipment summaries and key performance indicators  
+**FR11:** Users shall receive in-app notifications for system events and alerts  
+**FR12:** The system shall support configuration management through app settings and feature flags
 
-### Non Functional
-- NFR1: Query response times shall not exceed 100ms for filtered equipment searches
-- NFR2: Initial page load time shall be under 2 seconds with subsequent navigation under 500ms
-- NFR3: The system shall support 50+ concurrent users without performance degradation
-- NFR4: Total system resource usage shall not exceed 2GB RAM
-- NFR5: The system shall operate completely offline in air-gapped environments
-- NFR6: All data shall be stored using PostgreSQL with automated backup capabilities
-- NFR7: The system shall maintain ISO compliance through comprehensive audit logging
-- NFR8: Authentication tokens shall use JWT with bcrypt password hashing
-- NFR9: The system shall scale from 300 to 10,000+ equipment records without architecture changes
-- NFR10: All components shall use open-source technologies with no licensing fees
-- NFR11: The framework shall support deployment of additional applications without core infrastructure changes
-- NFR12: The system shall provide monitoring dashboards via Grafana/Prometheus integration
+### Non-Functional Requirements
+**NFR1:** System response time for filtered queries must be under 100ms  
+**NFR2:** Page load times must be under 2 seconds for initial load and under 500ms for navigation  
+**NFR3:** System must support scaling from 300 to 10,000+ equipment records without performance degradation  
+**NFR4:** Total system resource usage must not exceed 2GB RAM footprint  
+**NFR5:** System must maintain 99.9% uptime in industrial environments  
+**NFR6:** All user activities and data changes must be logged with full audit trails for ISO compliance  
+**NFR7:** System must operate reliably in air-gapped, on-premise network environments  
+**NFR8:** Database must implement proper foreign key constraints and data validation  
+**NFR9:** System must support offline capabilities for field work scenarios  
+**NFR10:** All components must use open-source technologies with no licensing fees  
+**NFR11:** The framework shall support deployment of additional applications without core infrastructure changes  
+**NFR12:** The system shall provide monitoring dashboards via Grafana/Prometheus integration
 
 ## User Interface Design Goals
 
 ### Overall UX Vision
-The interface will embody industrial-grade reliability with a clean, minimalist design optimized for process
-engineers working in manufacturing environments. The UI prioritizes efficiency and clarity, enabling quick access
-to equipment information during plant visits and troubleshooting scenarios. All interactions should feel responsive
-and purposeful, with visual feedback that confirms actions in environments where network latency may vary.
+The interface should prioritize **industrial efficiency and data clarity** with a clean, functional design
+that supports rapid information access during plant visits and troubleshooting scenarios. The UX should feel
+familiar to technical users while being intuitive enough for occasional users. Focus on **information
+density** and **task completion speed** over aesthetic flourishes.
 
 ### Key Interaction Paradigms
+- **Table-centric views** with advanced filtering and sorting for equipment listings
+- **Modal dialogs** for CRUD operations to maintain context
+- **Keyboard shortcuts** for power users who need rapid data entry
+- **Bulk selection** capabilities for mass operations (import/export/tagging)
+- **Search-first approach** with global search and scoped filtering
 - **Filter-First Navigation**: Advanced filtering capabilities are prominently accessible, allowing engineers to
   quickly narrow down equipment by site, type, or attributes
-- **Bulk Operations**: Drag-and-drop or checkbox selection for managing multiple equipment records simultaneously
-- **Keyboard Navigation**: Full keyboard accessibility for efficient data entry and navigation without mouse dependence
 - **Progressive Disclosure**: Complex features revealed contextually to avoid overwhelming new users while
   providing power user capabilities
 - **Offline-First Design**: Clear visual indicators for sync status and local changes pending upload
 
 ### Core Screens and Views
-- Equipment List View (primary interface with filtering, sorting, and search)
-- Equipment Detail/Edit Form
-- Dashboard Overview (site and equipment type summaries)
-- Bulk Import/Export Interface
-- User Management & Settings
-- Audit Trail Viewer
-- Site Hierarchy Navigator
+- **Equipment Listing Screen** - Primary data grid with advanced filtering
+- **Equipment Detail/Edit Screen** - Comprehensive CRUD form with validation
+- **Dashboard Screen** - Site summaries, KPIs, and quick access panels
+- **Import/Export Screen** - Bulk operations interface with progress indicators
+- **User Management Screen** - RBAC administration for administrators
+- **Audit Log Screen** - Compliance reporting and activity tracking
+- **Login Screen** - Simple authentication with role indication
+- **Site Hierarchy Navigator** - Visual tree view of site organization
 
 ### Accessibility: WCAG AA
+Meeting WCAG AA standards ensures usability in industrial environments with varying lighting conditions and
+supports users who may have visual or motor accessibility needs.
 
 ### Branding
-Industrial-themed Material-UI customization with a professional color palette suitable for extended use in
-manufacturing environments. Emphasis on high contrast and readability under varied lighting conditions typical
-in industrial settings.
+**Industrial/Technical aesthetic** with:
+- Clean, high-contrast color scheme suitable for industrial monitors
+- Sans-serif typography optimized for readability
+- Consistent iconography using industrial symbols where appropriate
+- Color coding for equipment status/types while maintaining accessibility
+- Minimal animations to avoid distraction in critical work environments
 
 ### Target Device and Platforms: Web Responsive
+**Web Responsive** supporting:
+- Desktop workstations (primary use case for office work)
+- Tablet devices for plant floor access
+- Rugged industrial tablets with touch-optimized interactions
+- Support for older browsers common in industrial environments
 
 ## Technical Assumptions
 
 ### Repository Structure: Monorepo
+**Monorepo** approach using a single repository containing:
+- Shared framework components and libraries
+- Backend API services
+- Frontend React applications
+- Infrastructure configuration (Docker, CI/CD)
+- Documentation and tooling
+
+This supports the multi-app framework vision while maintaining code sharing and consistent development
+workflows.
 
 ### Service Architecture
-**Monolith with Modular Design** - The project will use a monolithic architecture deployed via Docker containers. While the
-infrastructure uses multiple containers (database, cache, monitoring), the application logic remains in a single
-deployable unit. This approach balances simplicity for a solo developer with the flexibility to extract services
-later if needed.
+**Layered Monolith with Framework Foundation** - A structured monolithic application with clear separation
+of concerns:
+- **Infrastructure Layer**: Docker Swarm orchestration, PostgreSQL, Redis, Nginx
+- **Framework Layer**: Shared authentication, audit logging, user management, notification services
+- **Application Layer**: Inventory application with dedicated schemas and business logic
+- **Frontend Layer**: React framework with reusable component library
+
+This approach balances development simplicity for a solo developer while providing the foundation for future
+application expansion.
 
 The monolith will be structured with clear module boundaries using:
 - **Workspace Management**: Organized with Nx workspaces, Yarn workspaces, or pnpm workspaces to maintain clear
@@ -116,24 +157,31 @@ The monolith will be structured with clear module boundaries using:
 - **Independent Build Artifacts**: Module structure that allows extracting services as separate deployables when needed
 
 ### Testing Requirements
-**Unit + Integration** - The project requires unit tests for business logic and integration tests for API
-endpoints. Focus on critical paths: authentication, CRUD operations, and audit logging. Test coverage target of
-70% for core modules. Manual testing convenience methods will be provided for UI workflows. No requirement for
-full E2E automation initially due to resource constraints.
+**Unit + Integration Testing** strategy:
+- **Unit Tests**: Jest for backend logic and React Testing Library for components
+- **Integration Tests**: API endpoint testing with supertest, database integration tests
+- **Manual Testing Convenience**: Postman collections for API testing and development
+- **Automated Testing**: CI/CD pipeline integration for continuous validation
+- Focus on critical paths: authentication, CRUD operations, and audit logging
+- Test coverage target of 70% for core modules
+- No requirement for full E2E automation initially due to resource constraints
 
 ### Additional Technical Assumptions and Requests
-- **Frontend Build**: Vite for fast development builds and optimal production bundles
-- **Database Migrations**: TypeORM migration system for schema versioning and rollback capabilities
-- **API Design**: RESTful endpoints with OpenAPI/Swagger documentation
+- **Database Strategy**: PostgreSQL primary with Redis for session management and caching
+- **Authentication**: Local JWT-based auth with bcrypt password hashing (no external providers)
+- **API Design**: RESTful APIs with consistent error handling and response formats
+- **Frontend Framework**: React + TypeScript + Vite for development speed and type safety
+- **UI Component Library**: Material-UI with industrial theme customization
+- **Container Strategy**: Docker Swarm for on-premise orchestration and service management
+- **Monitoring Stack**: Grafana + Prometheus + Winston logging for observability
+- **Air-Gap Compatibility**: All dependencies must support offline installation and updates
+- **Performance Optimization**: Database indexing strategy, Redis caching, and query optimization
+- **Security Framework**: RBAC implementation, input validation with Joi, SQL injection prevention
 - **Error Handling**: Centralized error handling with Winston logging to file and console
 - **Session Management**: Redis for session storage with 24-hour timeout
 - **File Storage**: Local filesystem for uploaded files with virus scanning consideration
-- **Deployment**: Docker Swarm for orchestration, supporting single-node initially
 - **Backup Strategy**: Automated PostgreSQL dumps to local storage, retained for 30 days
 - **Development Tools**: ESLint, Prettier for code consistency; Husky for pre-commit hooks
-- **Performance Monitoring**: Application Performance Monitoring (APM) via Prometheus metrics
-- **Security Headers**: Helmet.js for security headers, CORS configuration for API access
-- **Data Validation**: Joi for request validation with detailed error messages
 
 ## Epic List
 
@@ -416,6 +464,18 @@ so that I can maintain accurate inventory data.
 7: Cancel button prompts if unsaved changes exist
 8: Form pre-populates when editing existing equipment
 
+### Story 4.5: Site Hierarchy Management
+As a **process engineer**,  
+I want **to organize equipment by site hierarchy**,  
+so that **I can quickly locate equipment by physical location and organization structure**.
+
+#### Acceptance Criteria
+1: Site dropdown populated from existing equipment data
+2: Cell type and cell ID fields with validation
+3: Hierarchical display option in equipment listing
+4: Filtering by site, cell type, and cell ID
+5: Site hierarchy validation prevents orphaned records
+
 ## Epic 5: Advanced Inventory Features
 
 This epic completes the inventory application by adding power-user features that enable efficient management of
@@ -482,48 +542,73 @@ so that I can make informed decisions about inventory management.
 7: Dashboard refreshes every 5 minutes automatically
 8: Export dashboard as PDF report with timestamp
 
+## Additional Epic Story Details
+
+### Epic 5 Additional Stories: Advanced Inventory Features
+- **Story 5.5**: Flexible Tagging System Implementation
+- **Story 5.6**: Multi-Format Data Export (PDF, Excel, CSV)
+- **Story 5.7**: CSV Import Functionality with Advanced Validation
+- **Story 5.8**: Compliance Report Generation for ISO Standards
+- **Story 5.9**: Audit Trail Viewer with Filtering and Search
+
+### Future Epic Considerations: Compliance & Reporting Enhancement
+- **Story X.1**: Advanced User Activity Tracking and History
+- **Story X.2**: Automated Compliance Report Scheduling
+- **Story X.3**: Real-time Equipment Status and Health Indicators
+- **Story X.4**: Enhanced Search and Quick Access Panel
+- **Story X.5**: User Productivity Metrics and Reporting Dashboard
+
 ## Checklist Results Report
 
 ### Executive Summary
+- **Overall PRD Completeness**: 92% - The PRD is comprehensive with clear goals, requirements, and well-structured epics
+- **MVP Scope Appropriateness**: Just Right - Well-balanced between functionality and feasibility
+- **Readiness for Architecture Phase**: Ready - All critical elements are defined for architectural design
+- **Most Critical Gaps**: Minor gaps in user research documentation and operational requirements details
 
-- **Overall PRD completeness**: 92% - The PRD is comprehensive with clear goals, requirements, and well-structured epics
-- **MVP scope appropriateness**: Just Right - The scope balances framework foundation with a functional inventory app
-- **Readiness for architecture phase**: Ready - All critical elements are defined for architectural design
-- **Most critical gaps**: Minor gaps in user research documentation and operational requirements details
-
-### Category Analysis
+### Category Analysis Table
 
 | Category                         | Status  | Critical Issues |
 | -------------------------------- | ------- | --------------- |
-| 1. Problem Definition & Context  | PASS    | None            |
-| 2. MVP Scope Definition          | PASS    | None            |
-| 3. User Experience Requirements  | PASS    | None            |
-| 4. Functional Requirements       | PASS    | None            |
-| 5. Non-Functional Requirements   | PASS    | None            |
-| 6. Epic & Story Structure        | PASS    | None            |
-| 7. Technical Guidance            | PASS    | None            |
-| 8. Cross-Functional Requirements | PARTIAL | Data migration strategy not detailed |
-| 9. Clarity & Communication       | PASS    | None            |
+| 1. Problem Definition & Context  | PASS    | None - Well defined from project brief |
+| 2. MVP Scope Definition          | PASS    | Excellent epic structure and scope boundaries |
+| 3. User Experience Requirements  | PARTIAL | User flows need more detail, edge cases limited |
+| 4. Functional Requirements       | PASS    | Comprehensive FR/NFR with clear acceptance criteria |
+| 5. Non-Functional Requirements   | PASS    | Strong performance and compliance requirements |
+| 6. Epic & Story Structure        | PASS    | Well-sequenced epics with appropriate story breakdown |
+| 7. Technical Guidance            | PASS    | Clear architectural direction and constraints |
+| 8. Cross-Functional Requirements | PARTIAL | Data relationships need more specificity |
+| 9. Clarity & Communication       | PASS    | Well-structured and clearly written |
 
 ### Top Issues by Priority
 
 **BLOCKERS**: None identified
 
-**HIGH**:
-- Data migration approach for initial 300+ PLCs dataset not specified
-- Backup retention strategy mentioned (30 days) but recovery procedures not detailed
+**HIGH Priority:**
+- User journey flows need detailed mapping for complex workflows (equipment import/export)
+- Data model relationships between equipment, sites, and audit logs need clarification
+- Performance benchmarking approach for 10,000+ records needs validation methodology
 
-**MEDIUM**:
-- User research findings referenced but not included in detail
-- Deployment frequency expectations not explicitly stated
-- Support requirements for industrial environment not fully detailed
+**MEDIUM Priority:**
+- Edge case handling for CSV import validation could be expanded
+- Error recovery workflows for failed operations need documentation
+- Integration testing approach for air-gapped environments needs detail
 
-**LOW**:
-- Competitive analysis mentioned but not included
-- Stakeholder approval process not defined
-- Communication plan for updates not specified
+**LOW Priority:**
+- Visual design guidelines could be more specific
+- Future enhancement roadmap could include more technical debt considerations
 
 ### MVP Scope Assessment
+**Scope Evaluation**: **Just Right**
+- Epic 1-2 provide solid MVP foundation with immediate user value
+- Epic 3-5 provide clear progression without feature bloat
+- Framework approach is appropriate for stated multi-app vision
+- Timeline expectations (9-13 weeks) align well with epic complexity
+
+**Strengths:**
+- Clear separation between core functionality (Epic 1-2) and enhancements (Epic 3-5)
+- Each epic delivers deployable value
+- Story sizing appears appropriate for solo developer execution
 
 **Appropriately Scoped Features**:
 - Core CRUD operations for equipment management
@@ -537,49 +622,49 @@ so that I can make informed decisions about inventory management.
 - Advanced filtering presets (Story 5.1) could be simplified
 - Dark mode support could be post-MVP
 
-**Scope Validation**:
-- The dual nature (framework + app) is ambitious but well-justified
-- 9-13 week timeline is realistic with focused execution
-- Progressive delivery through 5 epics enables early value
-
 ### Technical Readiness
+**Assessment**: **Nearly Ready**
+- Technical constraints are clearly articulated
+- Technology stack choices are well-justified
+- Architecture approach balances simplicity with extensibility
+- Performance requirements are aggressive but achievable with proper implementation
 
-**Clear Technical Direction**:
-- Monolithic architecture with module boundaries well-defined
-- Technology stack specified with rationale
-- Performance targets quantified
-- Security requirements explicit
-
-**Identified Technical Risks**:
-- Solo developer managing Docker Swarm complexity
-- TypeORM migration rollback reliability
-- Virtual scrolling performance with 10,000+ records
-
-**Areas for Architect Investigation**:
+**Areas for Architect Investigation:**
+- Database indexing strategy for sub-100ms query performance with 10K+ records
+- Docker Swarm vs. Docker Compose trade-offs for industrial deployment
+- Redis caching patterns for equipment data and session management
 - PostgreSQL connection pooling optimal settings
-- Redis session management configuration
 - Nginx rate limiting implementation
 - Module boundary definition within monolith
 
 ### Recommendations
 
-1. **Document Data Migration Strategy**: Create a plan for importing existing equipment data
-2. **Detail Recovery Procedures**: Expand backup strategy to include recovery testing
-3. **Add Deployment Guide**: Include deployment frequency and rollback procedures
-4. **Consider Scope Reduction Options**: Prepare a "reduced scope" plan if timeline slips
-5. **Technical Spike Stories**: Add investigation stories for identified risk areas
+1. **Before Architecture Phase:**
+   - Create detailed user journey maps for equipment import/export workflows
+   - Define specific data model relationships and foreign key constraints
+   - Establish performance testing methodology for NFR validation
+
+2. **Architecture Considerations:**
+   - Focus on database performance optimization strategies
+   - Design caching architecture for equipment queries
+   - Plan for offline capability implementation in air-gapped environments
+
+3. **Story Refinement:**
+   - Add more specific acceptance criteria for complex stories (CSV import, audit logging)
+   - Consider breaking down larger stories if they exceed 4-hour implementation estimates
 
 ### Final Decision
-
-**READY FOR ARCHITECT**: The PRD and epics are comprehensive, properly structured, and ready for architectural
-design. The identified issues are minor and can be addressed during implementation without blocking architecture work.
+**NEARLY READY FOR ARCHITECT**: The PRD provides excellent foundation with clear requirements,
+well-structured epics, and appropriate technical guidance. Minor refinements to user journey details and data
+modeling would strengthen the handoff to the architecture phase.
 
 ## Next Steps
 
 ### UX Expert Prompt
-Review the PRD at docs/prd.md and create detailed UI/UX specifications using the component library defined in
-Epic 3, focusing on the industrial theme and engineer-friendly workflows.
+Review the UI/UX design goals and create detailed wireframes and user journey maps for the core equipment
+management workflows, focusing on industrial efficiency and accessibility requirements.
 
 ### Architect Prompt
-Review the PRD at docs/prd.md and create the technical architecture document, defining the detailed implementation
-approach for the monolithic application with clear module boundaries as specified in the technical assumptions.
+Design the technical architecture for this multi-app industrial inventory framework, focusing on database
+performance optimization, containerized deployment strategy, and offline capability implementation while
+maintaining the specified performance targets and scalability requirements.
