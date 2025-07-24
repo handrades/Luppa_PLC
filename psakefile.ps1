@@ -6,6 +6,9 @@ Properties {
     $MarkdownFix = $false
 }
 
+# Parameters that can be passed between tasks
+$script:MarkdownFixMode = $false
+
 # Helper functions
 function Test-Command {
     param($Command)
@@ -47,7 +50,7 @@ Task LintMarkdown {
     
     Push-Location $PSScriptRoot
     try {
-        if ($MarkdownFix) {
+        if ($script:MarkdownFixMode -or $MarkdownFix) {
             exec { markdownlint "**/*.md" --ignore node_modules --fix } "Markdown linting with fixes failed"
         } else {
             exec { markdownlint "**/*.md" --ignore node_modules } "Markdown linting failed"
@@ -133,8 +136,9 @@ Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
 
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {
-    $script:MarkdownFix = $true
+    $script:MarkdownFixMode = $true
     Invoke-Task LintMarkdown
+    $script:MarkdownFixMode = $false  # Reset after use
 }
 
 # Clean task (placeholder for future use)
