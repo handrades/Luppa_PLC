@@ -3,25 +3,25 @@
 ## Goals and Background Context
 
 ### Goals
-- Deploy a functional Inventory application for industrial equipment cataloging that serves process and 
+- Deploy a functional Inventory application for industrial equipment cataloging that serves process and
   controls engineers
-- Establish a reusable multi-app framework foundation that accelerates future industrial application 
+- Establish a reusable multi-app framework foundation that accelerates future industrial application
   development
 - Implement ISO-compliant audit trails and security measures to meet industrial compliance requirements
-- Achieve high-performance targets (<100ms query response, <2s page loads) while scaling from 300 to 
+- Achieve high-performance targets (<100ms query response, <2s page loads) while scaling from 300 to
   10,000+ equipment records
-- Create cost-efficient solution using open-source technologies suitable for air-gapped industrial 
+- Create cost-efficient solution using open-source technologies suitable for air-gapped industrial
   environments
 
 ### Background Context
-The industrial equipment management landscape lacks modern, user-friendly solutions tailored for process 
-engineers working in on-premise, air-gapped environments. Current systems are often outdated, expensive, 
-or cloud-dependent, making them unsuitable for industrial operations that require reliable offline 
+The industrial equipment management landscape lacks modern, user-friendly solutions tailored for process
+engineers working in on-premise, air-gapped environments. Current systems are often outdated, expensive,
+or cloud-dependent, making them unsuitable for industrial operations that require reliable offline
 capabilities and strict security controls.
 
-This PRD addresses the need for a minimalist, modern CRUD web application that not only solves immediate 
-inventory management challenges but also establishes a strategic foundation for multiple future industrial 
-applications. The solution emphasizes ISO compliance, performance optimization, and framework reusability 
+This PRD addresses the need for a minimalist, modern CRUD web application that not only solves immediate
+inventory management challenges but also establishes a strategic foundation for multiple future industrial
+applications. The solution emphasizes ISO compliance, performance optimization, and framework reusability
 to maximize long-term value while staying within budget constraints of open-source technologies.
 
 ### Change Log
@@ -33,27 +33,27 @@ to maximize long-term value while staying within budget constraints of open-sour
 ## Requirements
 
 ### Functional Requirements
-**FR1:** The system shall provide CRUD operations (Create, Read, Update, Delete) for industrial equipment 
+**FR1:** The system shall provide CRUD operations (Create, Read, Update, Delete) for industrial equipment
 records including PLCs, sensors, controllers, and related equipment  
-**FR2:** The system shall organize equipment using a hierarchical structure with site_name, cell_type, and 
+**FR2:** The system shall organize equipment using a hierarchical structure with site_name, cell_type, and
 cell_id classifications  
 **FR3:** The system shall support equipment mapping with equipment_id and equipment_type categorization  
-**FR4:** The system shall implement a flexible tagging system with full-text search capabilities across all 
+**FR4:** The system shall implement a flexible tagging system with full-text search capabilities across all
 equipment fields  
-**FR5:** The system shall provide bulk operations for CSV import and export of equipment data to handle 
+**FR5:** The system shall provide bulk operations for CSV import and export of equipment data to handle
 large datasets  
-**FR6:** The system shall implement role-based access control (RBAC) with user authentication and 
+**FR6:** The system shall implement role-based access control (RBAC) with user authentication and
 authorization  
 **FR7:** The system shall provide advanced filtering by site, equipment type, model, and custom criteria  
 **FR8:** The system shall generate compliance reports and data exports in multiple formats  
 **FR9:** The system shall support concurrent access for 50+ simultaneous engineers  
-**FR10:** The system shall provide a dashboard with site and equipment summaries and key performance 
+**FR10:** The system shall provide a dashboard with site and equipment summaries and key performance
 indicators
 
 ### Non-Functional Requirements
 **NFR1:** System response time for filtered queries must be under 100ms  
 **NFR2:** Page load times must be under 2 seconds for initial load and under 500ms for navigation  
-**NFR3:** System must support scaling from 300 to 10,000+ equipment records without performance 
+**NFR3:** System must support scaling from 300 to 10,000+ equipment records without performance
 degradation  
 **NFR4:** Total system resource usage must not exceed 2GB RAM footprint  
 **NFR5:** System must maintain 99.9% uptime in industrial environments  
@@ -152,30 +152,30 @@ application expansion.
 ## Epic List
 
 ### Epic 1: Foundation & Core Infrastructure
-Establish project setup, authentication system, and basic monitoring while delivering a functional health check 
+Establish project setup, authentication system, and basic monitoring while delivering a functional health check
 and basic user management capability.
 
 ### Epic 2: Inventory Data Management
-Create the core inventory database schema, basic CRUD operations, and essential data validation for equipment 
+Create the core inventory database schema, basic CRUD operations, and essential data validation for equipment
 records.
 
 ### Epic 3: Advanced Inventory Features
-Implement search, filtering, tagging system, and bulk operations to provide comprehensive inventory management 
+Implement search, filtering, tagging system, and bulk operations to provide comprehensive inventory management
 capabilities.
 
 ### Epic 4: Compliance & Reporting
-Add audit logging, user activity tracking, compliance reporting, and data export functionality to meet ISO 
+Add audit logging, user activity tracking, compliance reporting, and data export functionality to meet ISO
 requirements.
 
 ### Epic 5: Dashboard & Analytics
-Develop dashboard interface with KPIs, site summaries, and data visualization to provide management insights 
+Develop dashboard interface with KPIs, site summaries, and data visualization to provide management insights
 and user productivity enhancements.
 
 ## Epic 1 Details: Foundation & Core Infrastructure
 
-**Expanded Goal:** Establish the foundational infrastructure, development environment, and core security 
-framework that enables all future development. This epic delivers a functioning containerized application 
-with user authentication, basic monitoring, and health check endpoints, providing immediate validation that 
+**Expanded Goal:** Establish the foundational infrastructure, development environment, and core security
+framework that enables all future development. This epic delivers a functioning containerized application
+with user authentication, basic monitoring, and health check endpoints, providing immediate validation that
 the technology stack works in the target environment.
 
 ### Story 1.1: Project Setup & Development Environment
@@ -240,9 +240,9 @@ so that **I can verify system health and troubleshoot issues**.
 
 ## Epic 2 Details: Inventory Data Management
 
-**Expanded Goal:** Create the core inventory management system with database schema, API endpoints, and 
-basic frontend interface for CRUD operations. This epic enables process engineers to create, view, update, 
-and delete equipment records with proper data validation and hierarchical organization, providing immediate 
+**Expanded Goal:** Create the core inventory management system with database schema, API endpoints, and
+basic frontend interface for CRUD operations. This epic enables process engineers to create, view, update,
+and delete equipment records with proper data validation and hierarchical organization, providing immediate
 business value through functional inventory management.
 
 ### Story 2.1: Equipment Database Schema & Models
@@ -410,17 +410,17 @@ so that **I can quickly locate equipment by physical location and organization s
    - Consider breaking down larger stories if they exceed 4-hour implementation estimates
 
 ### Final Decision
-**NEARLY READY FOR ARCHITECT**: The PRD provides excellent foundation with clear requirements, 
-well-structured epics, and appropriate technical guidance. Minor refinements to user journey details and data 
+**NEARLY READY FOR ARCHITECT**: The PRD provides excellent foundation with clear requirements,
+well-structured epics, and appropriate technical guidance. Minor refinements to user journey details and data
 modeling would strengthen the handoff to the architecture phase.
 
 ## Next Steps
 
 ### UX Expert Prompt
-Review the UI/UX design goals and create detailed wireframes and user journey maps for the core equipment 
+Review the UI/UX design goals and create detailed wireframes and user journey maps for the core equipment
 management workflows, focusing on industrial efficiency and accessibility requirements.
 
 ### Architect Prompt
-Design the technical architecture for this multi-app industrial inventory framework, focusing on database 
-performance optimization, containerized deployment strategy, and offline capability implementation while 
+Design the technical architecture for this multi-app industrial inventory framework, focusing on database
+performance optimization, containerized deployment strategy, and offline capability implementation while
 maintaining the specified performance targets and scalability requirements.
