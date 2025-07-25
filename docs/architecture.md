@@ -1235,8 +1235,7 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT true,
     last_login TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Roles table (shared across framework)
@@ -1641,16 +1640,22 @@ INSERT INTO roles (name, permissions, description, is_system) VALUES
 ('Engineer', '{"sites": {"create": false, "read": true, "update": false, "delete": false}, "cells": {"create": false, "read": true, "update": false, "delete": false}, "equipment": {"create": true, "read": true, "update": true, "delete": false}, "plcs": {"create": true, "read": true, "update": true, "delete": false}, "tags": {"create": true, "read": true, "update": true, "delete": true}, "users": {"create": false, "read": false, "update": false, "delete": false}, "audit": {"read": true, "export": false}}', 'Equipment management access', true),
 ('Viewer', '{"sites": {"create": false, "read": true, "update": false, "delete": false}, "cells": {"create": false, "read": true, "update": false, "delete": false}, "equipment": {"create": false, "read": true, "update": false, "delete": false}, "plcs": {"create": false, "read": true, "update": false, "delete": false}, "tags": {"create": false, "read": true, "update": false, "delete": false}, "users": {"create": false, "read": false, "update": false, "delete": false}, "audit": {"read": false, "export": false}}', 'Read-only access', true);
 
--- Create default admin user (password: AdminPassword123!)
--- Note: In production, this would be created via secure setup script
-INSERT INTO users (email, password_hash, first_name, last_name, role_id) 
-SELECT 
-    'admin@industrial.local',
-    '$2b$10$YourHashedPasswordHere', -- Replace with actual bcrypt hash
-    'System',
-    'Administrator',
-    id 
-FROM roles WHERE name = 'Admin';
+-- Initial Admin User Setup
+-- ========================
+-- For security reasons, the initial admin user must be created through a secure 
+-- provisioning process that is NOT committed to source control.
+-- 
+-- Options for admin user creation:
+-- 1. Use a secure setup script that prompts for credentials during installation
+-- 2. Create through environment-specific configuration management tools
+-- 3. Use a one-time initialization endpoint that is disabled after first use
+-- 
+-- The admin user creation script should:
+-- - Prompt for a strong password or generate one securely
+-- - Hash the password using bcrypt with appropriate cost factor
+-- - Associate the user with the 'Admin' role
+-- - Log the creation for audit purposes
+-- - Never store plaintext passwords or commit hashes to version control
 ```
 
 ## Frontend Architecture
