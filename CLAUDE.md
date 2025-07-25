@@ -8,6 +8,26 @@ This is a **PLC Inventory Multi-App Framework** - a foundation for building mult
 starting with a PLC equipment inventory system. The project is designed for solo development with a focus on
 open-source technologies, industrial compliance, and scalable architecture.
 
+## CRITICAL: Project Initialization Status
+
+**Current State:** The project has comprehensive documentation (PRD, Architecture, Frontend Spec) but NO executable code exists yet.
+Epic 0 (Project Initialization) must be completed before any work on Epic 1-5 can begin.
+
+**Epic 0 Requirements:**
+- Initialize monorepo structure with pnpm workspaces
+- Create Docker development environment
+- Scaffold backend (Express + TypeScript) and frontend (React + Vite)
+- Set up database migrations and CI/CD pipeline
+- Establish development tooling and documentation
+
+**When asked about implementation:** Always check if Epic 0 has been completed by looking for:
+- `/apps/api` and `/apps/web` directories
+- `package.json` files in the workspace
+- `docker-compose.dev.yml` file
+- Working health check endpoint
+
+If these don't exist, recommend completing Epic 0 first.
+
 ## Architecture Vision
 
 ### Multi-App Framework Approach
@@ -50,6 +70,20 @@ Key database patterns:
 - Auto-updating timestamps with triggers
 
 ## Development Commands
+
+### Initial Setup (Epic 0)
+
+```powershell
+# First-time setup (after Epic 0 is complete)
+pnpm install
+Copy-Item .env.example .env
+pnpm setup
+
+# Start development environment
+pnpm dev
+# OR
+docker-compose -f docker-compose.dev.yml up
+```
 
 ### Linting
 
@@ -132,6 +166,9 @@ The framework is designed to support additional industrial apps:
 
 ## Development Best Practices
 
+- **Epic 0 First**: Always ensure Epic 0 (Project Initialization) is complete before starting feature work
+- **Check Prerequisites**: Verify monorepo structure, Docker setup, and base scaffolding exist
+- **Use Existing Patterns**: Follow the patterns established in Epic 0 for new components/services
 - Before we commit anything or push anything to GitHub, we need to make sure we run all GitHub workflows locally
   to speed up development.
 
