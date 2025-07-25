@@ -179,3 +179,7 @@ The framework is designed to support additional industrial apps:
 ## Personal Preferences
 
 - I dislike bash scripting. Never recommend me to use bash over PowerShell
+
+## Git Workflow Policies
+
+- **NEVER push to master ALWAYS push to a branch. NOTIFY me if no branch has been created**
