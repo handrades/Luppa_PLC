@@ -34,21 +34,17 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Node.js linting tools
+      - name: Install dependencies
         run: |
-          npm install -g markdownlint-cli@latest
-          npm install -g jsonlint@latest
-
-      - name: Install Python linting tools
-        run: |
-          pip install yamllint
+          pnpm install
+          pip install -r requirements.txt
 
       - name: Lint Markdown files
         run: |
           echo "Checking Markdown files..."
           if find . -name "*.md" -not -path "./node_modules/*" \
                      -not -path "./.bmad-core/*" | head -1 | grep -q .; then
-            markdownlint "**/*.md" \
+            npx markdownlint "**/*.md" \
                          --ignore node_modules --ignore .bmad-core \
                          --config config/.markdownlint.json
             echo "✓ Markdown linting passed"
@@ -66,7 +62,7 @@ jobs:
             echo "$json_files"
             for file in $json_files; do
               echo "Checking $file..."
-              jsonlint "$file" -q
+              npx jsonlint "$file" -q
               echo "✓ $file"
             done
             echo "✓ JSON linting passed"
@@ -130,7 +126,7 @@ jobs:
                          -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
                          -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
                       -print0)
-          
+
           if [[ ${#failed_files[@]} -gt 0 ]]; then
             echo "❌ The following files do not end with a newline:"
             printf '%s\n' "${failed_files[@]}"

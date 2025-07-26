@@ -15,17 +15,20 @@ Both workflows perform identical linting checks across multiple file types:
 
 ### Prerequisites
 
-Install required tools:
+Install required tools as project dependencies:
 
 ```powershell
-# Node.js tools
-npm install -g markdownlint-cli
-npm install -g jsonlint
-npm install -g pnpm
+# Install Node.js dependencies (already included in package.json)
+pnpm install
 
-# Python tools
-pip install yamllint
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Verify psake is installed
+Install-Module -Name psake -Scope CurrentUser
 ```
+
+**Note:** The project uses pinned versions of linting tools as dev dependencies to ensure reproducibility. All tools are available via local scripts rather than global installs.
 
 ### Available Tasks
 

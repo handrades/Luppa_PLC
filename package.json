@@ -18,7 +18,10 @@
     "docker:down": "docker-compose -f docker-compose.dev.yml down",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "reset": "pnpm clean && pnpm install",
-    "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write"
+    "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write",
+    "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json",
+    "lint:json": "jsonlint **/*.json",
+    "lint:yaml": "yamllint --config-file config/.yamllint.yml ."
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -28,6 +31,8 @@
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "jest": "^30.0.0",
+    "jsonlint": "^1.6.3",
+    "markdownlint-cli": "^0.39.0",
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
     "typescript": "5.8.3",
