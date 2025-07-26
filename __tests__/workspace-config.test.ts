@@ -31,7 +31,7 @@ describe('Workspace Configuration', () => {
       const content = readFileSync(workspaceFile, 'utf-8');
       const config = yaml.parse(content);
       
-      expect(config.registry).toBe('https://registry.npmjs.org/');
+      expect(config.registries?.default).toBe('https://registry.npmjs.org/');
     });
   });
 

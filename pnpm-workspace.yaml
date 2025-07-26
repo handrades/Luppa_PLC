@@ -12,7 +12,8 @@ hoist-pattern:
   - "*"
 
 # Registry configuration for air-gapped environments
-registry: "https://registry.npmjs.org/"
+registries:
+  default: "https://registry.npmjs.org/"
 
 # Package resolution preferences
 resolution-mode: "highest"
