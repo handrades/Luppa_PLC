@@ -126,8 +126,8 @@ Task LintYaml {
     
     Push-Location $PSScriptRoot
     try {
-        # Run yamllint with format parsable to catch all issues
-        exec { yamllint --format parsable $fileList } "YAML linting failed"
+        # Run yamllint with format parsable and config file to catch all issues
+        exec { yamllint --format parsable --config-file config/.yamllint.yml $fileList } "YAML linting failed"
         Write-Host "✓ YAML linting passed" -ForegroundColor Green
     }
     finally {

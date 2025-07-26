@@ -1,17 +1,17 @@
+---
 name: Lint
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
   workflow_dispatch:
 
 jobs:
   lint:
     name: Run Linting Checks
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,8 +42,10 @@ jobs:
       - name: Lint Markdown files
         run: |
           echo "Checking Markdown files..."
-          if find . -name "*.md" -not -path "./node_modules/*" -not -path "./.bmad-core/*" | head -1 | grep -q .; then
-            markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json
+          if find . -name "*.md" -not -path "./node_modules/*" \
+                     -not -path "./.bmad-core/*" | head -1 | grep -q .; then
+            markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core \
+                         --config config/.markdownlint.json
             echo "✓ Markdown linting passed"
           else
             echo "No markdown files found to lint"
@@ -52,7 +54,8 @@ jobs:
       - name: Lint JSON files
         run: |
           echo "Checking JSON files..."
-          json_files=$(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.bmad-core/*")
+          json_files=$(find . -name "*.json" -not -path "./node_modules/*" \
+                                 -not -path "./.bmad-core/*")
           if [ -n "$json_files" ]; then
             echo "Found JSON files:"
             echo "$json_files"
@@ -69,11 +72,12 @@ jobs:
       - name: Lint YAML files
         run: |
           echo "Checking YAML files..."
-          yaml_files=$(find . \( -name "*.yml" -o -name "*.yaml" \) -not -path "./node_modules/*" -not -path "./.bmad-core/*")
+          yaml_files=$(find . \( -name "*.yml" -o -name "*.yaml" \) \
+                             -not -path "./node_modules/*" -not -path "./.bmad-core/*")
           if [ -n "$yaml_files" ]; then
             echo "Found YAML files:"
             echo "$yaml_files"
-            yamllint $yaml_files
+            yamllint --config-file config/.yamllint.yml $yaml_files
             echo "✓ YAML linting passed"
           else
             echo "No YAML files found to lint"
@@ -85,7 +89,8 @@ jobs:
           if [ -f "package.json" ]; then
             if grep -q '"lint"' package.json; then
               echo "Using pnpm workspace lint script..."
-              pnpm install --frozen-lockfile || echo "No lockfile found, installing dependencies..."
+              pnpm install --frozen-lockfile || \
+                echo "No lockfile found, installing dependencies..."
               pnpm lint
               echo "✓ TypeScript/JavaScript linting passed"
             else

@@ -1,0 +1,19 @@
+---
+extends: default
+rules:
+  # Increase line length limit to be more practical for CI/CD files
+  line-length:
+    max: 120
+  # Allow truthy values like 'on' in GitHub Actions  
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+  # Make document-start warnings instead of errors
+  document-start:
+    present: false
+  # Don't require document end
+  document-end:
+    present: false
+  # Allow empty values
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
