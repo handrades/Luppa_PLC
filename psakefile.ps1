@@ -298,20 +298,41 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     Write-Host "`nChecking dependencies..." -ForegroundColor Cyan
     
     $tools = @(
-        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"},
-        @{Name = "jsonlint"; Install = "npm install -g jsonlint"},
-        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"},
-        @{Name = "pnpm"; Install = "npm install -g pnpm"}
+        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"},
+        @{Name = "jsonlint"; Install = "npm install -g jsonlint"; CheckCommand = "jsonlint"},
+        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "pnpm exec yaml-lint"},
+        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"}
     )
     
     $missing = @()
     
     foreach ($tool in $tools) {
-        if (Test-Command $tool.Name) {
-            Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
-        } else {
-            Write-Host "✗ $($tool.Name) is NOT installed" -ForegroundColor Red
+        $checkCommand = if ($tool.CheckCommand) { $tool.CheckCommand } else { $tool.Name }
+        
+        # Special handling for tools that need pnpm exec
+        if ($checkCommand.StartsWith("pnpm exec")) {
+            # Check if pnpm is available and the local package exists
+            if ((Test-Command "pnpm") -and (Test-Path "package.json")) {
+                try {
+                    $null = & pnpm list $tool.Name --depth=0 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "✓ $($tool.Name) is installed (local)" -ForegroundColor Green
+                        continue
+                    }
+                } catch {
+                    # Package not found locally
+                }
+            }
+            Write-Host "✗ $($tool.Name) is NOT installed (local)" -ForegroundColor Red
             $missing += $tool
+        } else {
+            # Standard global command check
+            if (Test-Command $checkCommand) {
+                Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
+            } else {
+                Write-Host "✗ $($tool.Name) is NOT installed" -ForegroundColor Red
+                $missing += $tool
+            }
         }
     }
     
