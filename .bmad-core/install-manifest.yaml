@@ -1,5 +1,5 @@
 version: 4.31.0
-installed_at: '2025-07-21T15:33:08.176Z'
+installed_at: '2025-07-25T04:33:13.393Z'
 install_type: full
 agent: null
 ides_setup:
@@ -75,18 +75,6 @@ files:
   - path: .bmad-core/templates/architecture-tmpl.yaml
     hash: df1b0cec27c7e861
     modified: false
-  - path: .bmad-core/data/technical-preferences.md
-    hash: 6530bed845540b0d
-    modified: false
-  - path: .bmad-core/data/elicitation-methods.md
-    hash: 6c4d7716010e8d55
-    modified: false
-  - path: .bmad-core/data/brainstorming-techniques.md
-    hash: 2dae43f4464f1ad2
-    modified: false
-  - path: .bmad-core/data/bmad-kb.md
-    hash: fd0d443bd30753c5
-    modified: false
   - path: .bmad-core/tasks/validate-next-story.md
     hash: e38e62f4fc2c1da2
     modified: false
@@ -137,6 +125,18 @@ files:
     modified: false
   - path: .bmad-core/tasks/advanced-elicitation.md
     hash: 28e3b538dc6fe104
+    modified: false
+  - path: .bmad-core/data/technical-preferences.md
+    hash: 6530bed845540b0d
+    modified: false
+  - path: .bmad-core/data/elicitation-methods.md
+    hash: 6c4d7716010e8d55
+    modified: false
+  - path: .bmad-core/data/brainstorming-techniques.md
+    hash: 2dae43f4464f1ad2
+    modified: false
+  - path: .bmad-core/data/bmad-kb.md
+    hash: fd0d443bd30753c5
     modified: false
   - path: .bmad-core/checklists/story-draft-checklist.md
     hash: d3a5783fcd5bf5e9

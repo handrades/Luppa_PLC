@@ -25,9 +25,9 @@ function Test-Command {
 # Default task
 Task Default -Depends Lint
 
-# Main linting task that runs all linters
-Task Lint -Depends LintMarkdown, LintJson, LintYaml {
-    Write-Host "`nAll linting checks completed! ✓" -ForegroundColor Green
+# Main linting task that runs all linters and tests
+Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckNewlines, Test {
+    Write-Host "`nAll linting checks and tests completed! ✓" -ForegroundColor Green
 }
 
 # Markdown linting task
@@ -51,9 +51,9 @@ Task LintMarkdown {
     Push-Location $PSScriptRoot
     try {
         if ($script:MarkdownFixMode -or $MarkdownFix) {
-            exec { markdownlint "**/*.md" --ignore node_modules --fix } "Markdown linting with fixes failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
         } else {
-            exec { markdownlint "**/*.md" --ignore node_modules } "Markdown linting failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json } "Markdown linting failed"
         }
         Write-Host "✓ Markdown linting passed" -ForegroundColor Green
     }
@@ -103,12 +103,15 @@ Task LintJson {
 Task LintYaml {
     Write-Host "`nChecking YAML files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "yamllint")) {
-        throw "yamllint not found. Install with: pip install yamllint"
+    if (-not (Test-Command "pnpm")) {
+        throw "pnpm not found. Install Node.js and pnpm first"
     }
     
-    $yamlFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.yml", "*.yaml" -Recurse | 
-                 Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
+    # Use a more robust approach to find YAML files including hidden directories
+    $yamlFiles = @()
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yml" -Recurse -Force
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yaml" -Recurse -Force
+    $yamlFiles = $yamlFiles | Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
     
     if ($yamlFiles.Count -eq 0) {
         Write-Host "No YAML files found to lint" -ForegroundColor Cyan
@@ -116,13 +119,137 @@ Task LintYaml {
     }
     
     Write-Host "Found $($yamlFiles.Count) YAML files" -ForegroundColor Cyan
+    Write-Host "Files found:" -ForegroundColor Cyan
+    $yamlFiles | ForEach-Object { Write-Host "  $($_.FullName)" -ForegroundColor Gray }
     
     $fileList = $yamlFiles | ForEach-Object { $_.FullName }
     
     Push-Location $PSScriptRoot
     try {
-        exec { yamllint $fileList } "YAML linting failed"
+        # Run yaml-lint with config file to catch all issues
+        # Use npx directly instead of pnpm exec for better compatibility
+        $arguments = @("yaml-lint", "--config-file", "config/.yaml-lint.json") + $fileList
+        exec { & npx $arguments } "YAML linting failed"
         Write-Host "✓ YAML linting passed" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+# TypeScript/JavaScript linting task
+Task LintTypeScript {
+    Write-Host "`nChecking TypeScript/JavaScript files..." -ForegroundColor Cyan
+    
+    # Check if we have a package.json and pnpm workspace
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        
+        # Check if lint script exists in package.json
+        if ($packageJson.scripts -and $packageJson.scripts.lint) {
+            Write-Host "Using pnpm workspace lint script..." -ForegroundColor Cyan
+            
+            if (-not (Test-Command "pnpm")) {
+                throw "pnpm not found. Please install pnpm first."
+            }
+            
+            Push-Location $PSScriptRoot
+            try {
+                exec { pnpm lint } "TypeScript/JavaScript linting failed"
+                Write-Host "✓ TypeScript/JavaScript linting passed" -ForegroundColor Green
+            }
+            finally {
+                Pop-Location
+            }
+        } else {
+            Write-Host "No lint script found in package.json - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "No package.json found - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+    }
+}
+
+# Check that all files end with newlines
+Task CheckNewlines {
+    Write-Host "`nChecking that all files end with newlines..." -ForegroundColor Cyan
+    
+    # Define file patterns to check
+    $filePatterns = @("*.md", "*.json", "*.yml", "*.yaml", "*.js", "*.ts", "*.jsx", "*.tsx", "*.ps1", "*.txt", "*.cjs")
+    $failedFiles = @()
+    
+    foreach ($pattern in $filePatterns) {
+        $files = Get-ChildItem -Path $PSScriptRoot -Filter $pattern -Recurse | 
+                 Where-Object { 
+                     $_.FullName -notlike "*node_modules*" -and 
+                     $_.FullName -notlike "*.bmad-core*" -and
+                     $_.FullName -notlike "*\.git\*" -and
+                     $_.FullName -notlike "*\dist\*" -and
+                     $_.FullName -notlike "*\build\*"
+                 }
+        
+        foreach ($file in $files) {
+            # Skip empty files
+            if ($file.Length -eq 0) {
+                continue
+            }
+            
+            # Read the last character of the file
+            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content -and -not $content.EndsWith("`n") -and -not $content.EndsWith("`r`n")) {
+                $failedFiles += $file.FullName
+            }
+        }
+    }
+    
+    if ($failedFiles.Count -gt 0) {
+        Write-Host "❌ The following files do not end with a newline:" -ForegroundColor Red
+        foreach ($file in $failedFiles) {
+            Write-Host "  $file" -ForegroundColor Red
+        }
+        Write-Host ""
+        Write-Host "To fix this, ensure all files end with a newline character." -ForegroundColor Yellow
+        Write-Host "In most editors, this happens automatically when you save." -ForegroundColor Yellow
+        throw "Files missing final newlines"
+    } else {
+        Write-Host "✓ All files end with newlines" -ForegroundColor Green
+    }
+}
+
+# Test task
+Task Test -Description "Run workspace configuration tests" {
+    Write-Host "`nRunning workspace configuration tests..." -ForegroundColor Cyan
+    
+    Push-Location $PSScriptRoot
+    try {
+        # Run Jest tests if available
+        if (Test-Path "package.json") {
+            $packageJson = Get-Content "package.json" | ConvertFrom-Json
+            
+            if ($packageJson.scripts -and $packageJson.scripts.test) {
+                Write-Host "Running Jest tests..." -ForegroundColor Cyan
+                
+                if (-not (Test-Command "pnpm")) {
+                    throw "pnpm not found. Please install pnpm first."
+                }
+                
+                exec { pnpm test } "Jest tests failed"
+                Write-Host "✓ Jest tests passed" -ForegroundColor Green
+            }
+        }
+        
+        # Run validation script
+        if (Test-Path "__tests__/workspace-validation.js") {
+            Write-Host "Running workspace validation script..." -ForegroundColor Cyan
+            
+            if (-not (Test-Command "node")) {
+                throw "Node.js not found. Please install Node.js first."
+            }
+            
+            exec { node "__tests__/workspace-validation.js" } "Workspace validation failed"
+            Write-Host "✓ Workspace validation passed" -ForegroundColor Green
+        }
+        
+        Write-Host "✓ All tests passed" -ForegroundColor Green
     }
     finally {
         Pop-Location
@@ -133,6 +260,8 @@ Task LintYaml {
 Task Markdown -Alias md -Description "Run only markdown linting" -Depends LintMarkdown
 Task Json -Description "Run only JSON linting" -Depends LintJson
 Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
+Task TypeScript -Alias ts -Description "Run only TypeScript/JavaScript linting" -Depends LintTypeScript
+Task Newlines -Description "Check that all files end with newlines" -Depends CheckNewlines
 
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {
@@ -169,19 +298,41 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     Write-Host "`nChecking dependencies..." -ForegroundColor Cyan
     
     $tools = @(
-        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"},
-        @{Name = "jsonlint"; Install = "npm install -g jsonlint"},
-        @{Name = "yamllint"; Install = "pip install yamllint"}
+        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"},
+        @{Name = "jsonlint"; Install = "npm install -g jsonlint"; CheckCommand = "jsonlint"},
+        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "pnpm exec yaml-lint"},
+        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"}
     )
     
     $missing = @()
     
     foreach ($tool in $tools) {
-        if (Test-Command $tool.Name) {
-            Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
-        } else {
-            Write-Host "✗ $($tool.Name) is NOT installed" -ForegroundColor Red
+        $checkCommand = if ($tool.CheckCommand) { $tool.CheckCommand } else { $tool.Name }
+        
+        # Special handling for tools that need pnpm exec
+        if ($checkCommand.StartsWith("pnpm exec")) {
+            # Check if pnpm is available and the local package exists
+            if ((Test-Command "pnpm") -and (Test-Path "package.json")) {
+                try {
+                    $null = & pnpm list $tool.Name --depth=0 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "✓ $($tool.Name) is installed (local)" -ForegroundColor Green
+                        continue
+                    }
+                } catch {
+                    # Package not found locally
+                }
+            }
+            Write-Host "✗ $($tool.Name) is NOT installed (local)" -ForegroundColor Red
             $missing += $tool
+        } else {
+            # Standard global command check
+            if (Test-Command $checkCommand) {
+                Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
+            } else {
+                Write-Host "✗ $($tool.Name) is NOT installed" -ForegroundColor Red
+                $missing += $tool
+            }
         }
     }
     

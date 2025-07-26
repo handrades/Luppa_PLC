@@ -1,0 +1,132 @@
+---
+name: Lint
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Run Linting Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          pnpm install
+
+      - name: Lint Markdown files
+        run: |
+          echo "Checking Markdown files..."
+          if find . -name "*.md" -not -path "./node_modules/*" \
+                     -not -path "./.bmad-core/*" | head -1 | grep -q .; then
+            npx markdownlint "**/*.md" \
+                         --ignore node_modules --ignore .bmad-core \
+                         --config config/.markdownlint.json
+            echo "✓ Markdown linting passed"
+          else
+            echo "No markdown files found to lint"
+          fi
+
+      - name: Lint JSON files
+        run: |
+          echo "Checking JSON files..."
+          json_files=$(find . -name "*.json" -not -path "./node_modules/*" \
+                                 -not -path "./.bmad-core/*")
+          if [ -n "$json_files" ]; then
+            echo "Found JSON files:"
+            echo "$json_files"
+            for file in $json_files; do
+              echo "Checking $file..."
+              npx jsonlint "$file" -q
+              echo "✓ $file"
+            done
+            echo "✓ JSON linting passed"
+          else
+            echo "No JSON files found to lint"
+          fi
+
+      - name: Lint YAML files
+        run: |
+          echo "Checking YAML files..."
+          yaml_files=$(find . \( -name "*.yml" -o -name "*.yaml" \) \
+                             -not -path "./node_modules/*" -not -path "./.bmad-core/*")
+          if [ -n "$yaml_files" ]; then
+            echo "Found YAML files:"
+            echo "$yaml_files"
+            npx yaml-lint --config-file config/.yaml-lint.json $yaml_files
+            echo "✓ YAML linting passed"
+          else
+            echo "No YAML files found to lint"
+          fi
+
+      - name: Lint TypeScript/JavaScript files
+        run: |
+          echo "Checking TypeScript/JavaScript files..."
+          if [ -f "package.json" ]; then
+            if grep -q '"lint"' package.json; then
+              echo "Using pnpm workspace lint script..."
+              pnpm lint
+              echo "✓ TypeScript/JavaScript linting passed"
+            else
+              echo "No lint script found in package.json - skipping TypeScript/JavaScript linting"
+            fi
+          else
+            echo "No package.json found - skipping TypeScript/JavaScript linting"
+          fi
+
+      - name: Check files end with newline
+        run: |
+          echo "Checking that all files end with newlines..."
+          failed_files=()
+          while IFS= read -r -d '' file; do
+            if [[ -f "$file" && ! -s "$file" ]]; then
+              # Empty files are OK
+              continue
+            fi
+            if [[ -f "$file" && $(tail -c1 "$file" | wc -l) -eq 0 ]]; then
+              failed_files+=("$file")
+            fi
+          done < <(find . -type f \
+                      -not -path "./node_modules/*" \
+                      -not -path "./.bmad-core/*" \
+                      -not -path "./.git/*" \
+                      -not -path "./dist/*" \
+                      -not -path "./build/*" \
+                      \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
+                         -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
+                         -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
+                      -print0)
+
+          if [[ ${#failed_files[@]} -gt 0 ]]; then
+            echo "❌ The following files do not end with a newline:"
+            printf '%s\n' "${failed_files[@]}"
+            echo ""
+            echo "To fix this, ensure all files end with a newline character."
+            echo "In most editors, this happens automatically when you save."
+            exit 1
+          else
+            echo "✓ All files end with newlines"
+          fi
+
+      - name: Summary
+        run: |
+          echo "All linting checks completed! ✓"
