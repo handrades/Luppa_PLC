@@ -72,7 +72,7 @@ jobs:
           if [ -n "$yaml_files" ]; then
             echo "Found YAML files:"
             echo "$yaml_files"
-            npx yaml-lint --config-file config/.yaml-lint.json **/*.{yml,yaml}
+            npx yaml-lint --config-file config/.yaml-lint.json $yaml_files
             echo "✓ YAML linting passed"
           else
             echo "No YAML files found to lint"
