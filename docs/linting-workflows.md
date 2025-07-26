@@ -18,17 +18,14 @@ Both workflows perform identical linting checks across multiple file types:
 Install required tools as project dependencies:
 
 ```powershell
-# Install Node.js dependencies (already included in package.json)
+# Install Node.js dependencies (includes all linting tools)
 pnpm install
-
-# Install Python dependencies
-pip install -r requirements.txt
 
 # Verify psake is installed
 Install-Module -Name psake -Scope CurrentUser
 ```
 
-**Note:** The project uses pinned versions of linting tools as dev dependencies to ensure reproducibility. All tools are available via local scripts rather than global installs.
+**Note:** The project uses pinned versions of all linting tools as Node.js dev dependencies to ensure reproducibility. All tools are available via local scripts rather than global installs.
 
 ### Available Tasks
 
@@ -83,12 +80,9 @@ The GitHub workflow runs on:
    - Checkout repository
    - Setup Node.js v20.x
    - Setup pnpm package manager
-   - Setup Python for yamllint
 
 2. **Install Dependencies**
-   - Install markdownlint-cli globally
-   - Install jsonlint globally
-   - Install yamllint via pip
+   - Install all linting tools via pnpm (includes markdownlint-cli, jsonlint, yaml-lint)
 
 3. **Run Linting Checks**
    - Lint all markdown files (excluding node_modules and .bmad-core)

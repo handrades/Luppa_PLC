@@ -29,15 +29,9 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      - name: Setup Python for yamllint
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Install dependencies
         run: |
           pnpm install
-          pip install -r requirements.txt
 
       - name: Lint Markdown files
         run: |
@@ -78,7 +72,7 @@ jobs:
           if [ -n "$yaml_files" ]; then
             echo "Found YAML files:"
             echo "$yaml_files"
-            yamllint --config-file config/.yamllint.yml $yaml_files
+            npx yaml-lint --config-file config/.yaml-lint.json **/*.{yml,yaml}
             echo "✓ YAML linting passed"
           else
             echo "No YAML files found to lint"

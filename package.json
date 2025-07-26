@@ -21,7 +21,7 @@
     "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write",
     "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json",
     "lint:json": "jsonlint **/*.json",
-    "lint:yaml": "yamllint --config-file config/.yamllint.yml ."
+    "lint:yaml": "yaml-lint --config-file config/.yaml-lint.json **/*.{yml,yaml}"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -33,6 +33,7 @@
     "jest": "^30.0.0",
     "jsonlint": "^1.6.3",
     "markdownlint-cli": "^0.39.0",
+    "yaml-lint": "^1.7.0",
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
     "typescript": "5.8.3",

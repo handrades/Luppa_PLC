@@ -103,8 +103,8 @@ Task LintJson {
 Task LintYaml {
     Write-Host "`nChecking YAML files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "yamllint")) {
-        throw "yamllint not found. Install with: pip install yamllint"
+    if (-not (Test-Command "pnpm")) {
+        throw "pnpm not found. Install Node.js and pnpm first"
     }
     
     # Use a more robust approach to find YAML files including hidden directories
@@ -126,8 +126,10 @@ Task LintYaml {
     
     Push-Location $PSScriptRoot
     try {
-        # Run yamllint with format parsable and config file to catch all issues
-        exec { yamllint --format parsable --config-file config/.yamllint.yml $fileList } "YAML linting failed"
+        # Run yaml-lint with config file to catch all issues
+        # Use npx directly instead of pnpm exec for better compatibility
+        $arguments = @("yaml-lint", "--config-file", "config/.yaml-lint.json") + $fileList
+        exec { & npx $arguments } "YAML linting failed"
         Write-Host "✓ YAML linting passed" -ForegroundColor Green
     }
     finally {
@@ -298,7 +300,7 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     $tools = @(
         @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"},
         @{Name = "jsonlint"; Install = "npm install -g jsonlint"},
-        @{Name = "yamllint"; Install = "pip install yamllint"},
+        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"},
         @{Name = "pnpm"; Install = "npm install -g pnpm"}
     )
     
