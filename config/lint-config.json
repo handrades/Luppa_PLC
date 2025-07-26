@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "description": "Shared linting configuration for both local psake and GitHub Actions",
+  "tools": {
+    "markdownlint": {
+      "configFile": "config/.markdownlint.json",
+      "command": "markdownlint",
+      "patterns": ["**/*.md"],
+      "ignorePatterns": ["node_modules", ".bmad-core"],
+      "options": ["--config", "config/.markdownlint.json"]
+    },
+    "jsonlint": {
+      "command": "jsonlint",
+      "patterns": ["**/*.json"],
+      "ignorePatterns": ["node_modules", ".bmad-core"],
+      "options": ["-q"]
+    },
+    "yamllint": {
+      "configFile": "config/.yamllint.yml",
+      "command": "yamllint",
+      "patterns": ["**/*.yml", "**/*.yaml"],
+      "ignorePatterns": ["node_modules", ".bmad-core"],
+      "options": ["--config-file", "config/.yamllint.yml"]
+    },
+    "eslint": {
+      "configFile": "config/.eslintrc.cjs",
+      "command": "eslint",
+      "patterns": ["**/*.{js,ts,jsx,tsx}"],
+      "ignorePatterns": ["node_modules", ".bmad-core", "dist", "build"],
+      "options": ["--config", "config/.eslintrc.cjs", "."]
+    }
+  },
+  "installCommands": {
+    "npm": [
+      "npm install -g markdownlint-cli@latest",
+      "npm install -g jsonlint@latest"
+    ],
+    "pip": [
+      "pip install yamllint"
+    ],
+    "pnpm": [
+      "pnpm install"
+    ]
+  }
+}

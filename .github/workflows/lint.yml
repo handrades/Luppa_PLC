@@ -12,6 +12,7 @@ jobs:
   lint:
     name: Run Linting Checks
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,7 +45,8 @@ jobs:
           echo "Checking Markdown files..."
           if find . -name "*.md" -not -path "./node_modules/*" \
                      -not -path "./.bmad-core/*" | head -1 | grep -q .; then
-            markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core \
+            markdownlint "**/*.md" \
+                         --ignore node_modules --ignore .bmad-core \
                          --config config/.markdownlint.json
             echo "✓ Markdown linting passed"
           else
