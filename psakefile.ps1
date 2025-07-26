@@ -107,8 +107,11 @@ Task LintYaml {
         throw "yamllint not found. Install with: pip install yamllint"
     }
     
-    $yamlFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.yml", "*.yaml" -Recurse | 
-                 Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
+    # Use a more robust approach to find YAML files including hidden directories
+    $yamlFiles = @()
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yml" -Recurse -Force
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yaml" -Recurse -Force
+    $yamlFiles = $yamlFiles | Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
     
     if ($yamlFiles.Count -eq 0) {
         Write-Host "No YAML files found to lint" -ForegroundColor Cyan
@@ -116,12 +119,15 @@ Task LintYaml {
     }
     
     Write-Host "Found $($yamlFiles.Count) YAML files" -ForegroundColor Cyan
+    Write-Host "Files found:" -ForegroundColor Cyan
+    $yamlFiles | ForEach-Object { Write-Host "  $($_.FullName)" -ForegroundColor Gray }
     
     $fileList = $yamlFiles | ForEach-Object { $_.FullName }
     
     Push-Location $PSScriptRoot
     try {
-        exec { yamllint $fileList } "YAML linting failed"
+        # Run yamllint with format parsable to catch all issues
+        exec { yamllint --format parsable $fileList } "YAML linting failed"
         Write-Host "✓ YAML linting passed" -ForegroundColor Green
     }
     finally {
