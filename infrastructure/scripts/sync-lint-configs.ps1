@@ -18,6 +18,75 @@ if (-not (Test-Path $configFile)) {
 Write-Host "Loading shared linting configuration..." -ForegroundColor Cyan
 $config = Get-Content $configFile | ConvertFrom-Json
 
+# Define expected schema for validation
+function Test-ConfigSchema {
+    param($config)
+    
+    $requiredProperties = @(
+        'version',
+        'description', 
+        'tools',
+        'installCommands'
+    )
+    
+    $requiredTools = @(
+        'markdownlint',
+        'jsonlint', 
+        'yamllint',
+        'eslint'
+    )
+    
+    $requiredToolProperties = @(
+        'command',
+        'patterns',
+        'ignorePatterns',
+        'options'
+    )
+    
+    $requiredInstallCommands = @(
+        'npm',
+        'pip',
+        'pnpm'
+    )
+    
+    # Check top-level properties
+    foreach ($prop in $requiredProperties) {
+        if (-not $config.PSObject.Properties.Name.Contains($prop)) {
+            throw "Missing required property: $prop"
+        }
+    }
+    
+    # Check tools structure
+    foreach ($tool in $requiredTools) {
+        if (-not $config.tools.PSObject.Properties.Name.Contains($tool)) {
+            throw "Missing required tool: $tool"
+        }
+        
+        foreach ($toolProp in $requiredToolProperties) {
+            if (-not $config.tools.$tool.PSObject.Properties.Name.Contains($toolProp)) {
+                throw "Missing required property '$toolProp' for tool '$tool'"
+            }
+        }
+    }
+    
+    # Check installCommands structure
+    foreach ($cmd in $requiredInstallCommands) {
+        if (-not $config.installCommands.PSObject.Properties.Name.Contains($cmd)) {
+            throw "Missing required install command: $cmd"
+        }
+    }
+    
+    Write-Host "✓ Configuration schema validation passed" -ForegroundColor Green
+}
+
+# Validate the loaded configuration
+try {
+    Test-ConfigSchema -config $config
+} catch {
+    Write-Host "❌ Configuration validation failed: $_" -ForegroundColor Red
+    exit 1
+}
+
 function Update-GitHubWorkflow {
     Write-Host "Updating GitHub Actions workflow..." -ForegroundColor Yellow
     

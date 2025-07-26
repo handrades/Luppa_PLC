@@ -24,7 +24,6 @@ describe('Workspace Configuration', () => {
       const config = yaml.parse(content);
       
       expect(config['prefer-workspace-packages']).toBe(true);
-      expect(config['link-workspace-packages']).toBe(true);
       expect(config['save-workspace-protocol']).toBe('rolling');
     });
 

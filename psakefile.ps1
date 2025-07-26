@@ -26,7 +26,7 @@ function Test-Command {
 Task Default -Depends Lint
 
 # Main linting task that runs all linters and tests
-Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, Test {
+Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckNewlines, Test {
     Write-Host "`nAll linting checks and tests completed! ✓" -ForegroundColor Green
 }
 
@@ -167,6 +167,52 @@ Task LintTypeScript {
     }
 }
 
+# Check that all files end with newlines
+Task CheckNewlines {
+    Write-Host "`nChecking that all files end with newlines..." -ForegroundColor Cyan
+    
+    # Define file patterns to check
+    $filePatterns = @("*.md", "*.json", "*.yml", "*.yaml", "*.js", "*.ts", "*.jsx", "*.tsx", "*.ps1", "*.txt", "*.cjs")
+    $failedFiles = @()
+    
+    foreach ($pattern in $filePatterns) {
+        $files = Get-ChildItem -Path $PSScriptRoot -Filter $pattern -Recurse | 
+                 Where-Object { 
+                     $_.FullName -notlike "*node_modules*" -and 
+                     $_.FullName -notlike "*.bmad-core*" -and
+                     $_.FullName -notlike "*\.git\*" -and
+                     $_.FullName -notlike "*\dist\*" -and
+                     $_.FullName -notlike "*\build\*"
+                 }
+        
+        foreach ($file in $files) {
+            # Skip empty files
+            if ($file.Length -eq 0) {
+                continue
+            }
+            
+            # Read the last character of the file
+            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content -and -not $content.EndsWith("`n") -and -not $content.EndsWith("`r`n")) {
+                $failedFiles += $file.FullName
+            }
+        }
+    }
+    
+    if ($failedFiles.Count -gt 0) {
+        Write-Host "❌ The following files do not end with a newline:" -ForegroundColor Red
+        foreach ($file in $failedFiles) {
+            Write-Host "  $file" -ForegroundColor Red
+        }
+        Write-Host ""
+        Write-Host "To fix this, ensure all files end with a newline character." -ForegroundColor Yellow
+        Write-Host "In most editors, this happens automatically when you save." -ForegroundColor Yellow
+        throw "Files missing final newlines"
+    } else {
+        Write-Host "✓ All files end with newlines" -ForegroundColor Green
+    }
+}
+
 # Test task
 Task Test -Description "Run workspace configuration tests" {
     Write-Host "`nRunning workspace configuration tests..." -ForegroundColor Cyan
@@ -213,6 +259,7 @@ Task Markdown -Alias md -Description "Run only markdown linting" -Depends LintMa
 Task Json -Description "Run only JSON linting" -Depends LintJson
 Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
 Task TypeScript -Alias ts -Description "Run only TypeScript/JavaScript linting" -Depends LintTypeScript
+Task Newlines -Description "Check that all files end with newlines" -Depends CheckNewlines
 
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {

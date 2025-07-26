@@ -9,7 +9,7 @@ starting with a PLC equipment inventory system. The project is designed for solo
 open-source technologies, industrial compliance, and scalable architecture.
 
 ## CRITICAL: Project Initialization Status
-for es lint does that applies for all lan
+
 **Current State:** The project has comprehensive documentation (PRD, Architecture, Frontend Spec) but NO executable code exists yet.
 Epic 0 (Project Initialization) must be completed before any work on Epic 1-5 can begin.
 

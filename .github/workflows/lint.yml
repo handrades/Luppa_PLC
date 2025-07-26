@@ -17,14 +17,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
 
       - name: Setup Python for yamllint
         uses: actions/setup-python@v5
@@ -91,8 +94,11 @@ jobs:
           if [ -f "package.json" ]; then
             if grep -q '"lint"' package.json; then
               echo "Using pnpm workspace lint script..."
-              pnpm install --frozen-lockfile || \
-                echo "No lockfile found, installing dependencies..."
+              if [ -f pnpm-lock.yaml ]; then
+                pnpm install --frozen-lockfile
+              else
+                pnpm install
+              fi
               pnpm lint
               echo "✓ TypeScript/JavaScript linting passed"
             else
@@ -100,6 +106,40 @@ jobs:
             fi
           else
             echo "No package.json found - skipping TypeScript/JavaScript linting"
+          fi
+
+      - name: Check files end with newline
+        run: |
+          echo "Checking that all files end with newlines..."
+          failed_files=()
+          while IFS= read -r -d '' file; do
+            if [[ -f "$file" && ! -s "$file" ]]; then
+              # Empty files are OK
+              continue
+            fi
+            if [[ -f "$file" && $(tail -c1 "$file" | wc -l) -eq 0 ]]; then
+              failed_files+=("$file")
+            fi
+          done < <(find . -type f \
+                      -not -path "./node_modules/*" \
+                      -not -path "./.bmad-core/*" \
+                      -not -path "./.git/*" \
+                      -not -path "./dist/*" \
+                      -not -path "./build/*" \
+                      \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
+                         -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
+                         -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
+                      -print0)
+          
+          if [[ ${#failed_files[@]} -gt 0 ]]; then
+            echo "❌ The following files do not end with a newline:"
+            printf '%s\n' "${failed_files[@]}"
+            echo ""
+            echo "To fix this, ensure all files end with a newline character."
+            echo "In most editors, this happens automatically when you save."
+            exit 1
+          else
+            echo "✓ All files end with newlines"
           fi
 
       - name: Summary

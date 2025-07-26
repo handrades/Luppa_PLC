@@ -18,7 +18,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
       "@shared-types/*": ["packages/shared-types/src/*"],
       "@ui-components/*": ["packages/ui-components/src/*"],
