@@ -30,7 +30,7 @@ The project is designed for solo development with a focus on open-source technol
 
 ### Prerequisites
 
-- Node.js v20.x LTS (specified in `.nvmrc`)
+- Node.js v20.19.4 (specified in `.nvmrc`)
 - pnpm >= 9.0.0
 - Docker and Docker Compose (for full development environment)
 

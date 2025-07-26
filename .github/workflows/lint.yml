@@ -84,11 +84,6 @@ jobs:
           if [ -f "package.json" ]; then
             if grep -q '"lint"' package.json; then
               echo "Using pnpm workspace lint script..."
-              if [ -f pnpm-lock.yaml ]; then
-                pnpm install --frozen-lockfile
-              else
-                pnpm install
-              fi
               pnpm lint
               echo "✓ TypeScript/JavaScript linting passed"
             else

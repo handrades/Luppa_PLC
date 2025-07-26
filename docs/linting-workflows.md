@@ -8,7 +8,7 @@ Both workflows perform identical linting checks across multiple file types:
 
 - **Markdown files** (`.md`) - Using markdownlint
 - **JSON files** (`.json`) - Using jsonlint  
-- **YAML files** (`.yml`, `.yaml`) - Using yamllint
+- **YAML files** (`.yml`, `.yaml`) - Using yaml-lint
 - **TypeScript/JavaScript files** - Using pnpm workspace lint scripts
 
 ## Local Development (psake)
@@ -82,7 +82,7 @@ The GitHub workflow runs on:
    - Setup pnpm package manager
 
 2. **Install Dependencies**
-   - Install all linting tools via pnpm (includes markdownlint-cli, jsonlint, yaml-lint)
+   - Install all linting tools via pnpm (includes markdownlint-cli, jsonlint, yaml-lint with pinned versions)
 
 3. **Run Linting Checks**
    - Lint all markdown files (excluding node_modules and .bmad-core)
@@ -123,8 +123,8 @@ Both workflows are designed to produce identical results:
 - No configuration needed - validates JSON syntax
 
 ### YAML Linting
-- Default yamllint configuration
-- Validates YAML syntax and formatting
+- Configuration: `config/.yaml-lint.json`
+- Validates YAML syntax and formatting using yaml-lint
 
 ### TypeScript/JavaScript Linting
 - Uses workspace-level lint scripts defined in `package.json`
@@ -142,18 +142,17 @@ Both workflows are designed to produce identical results:
 
 ### Missing Dependencies
 
-If you see dependency errors, install missing tools:
+If you see dependency errors, ensure all tools are installed as project dependencies:
 
 ```powershell
 # Check what's missing
 Invoke-psake CheckDependencies
 
-# Install Node.js tools
-npm install -g markdownlint-cli jsonlint pnpm
-
-# Install Python tools  
-pip install yamllint
+# Reinstall project dependencies (includes all linting tools)
+pnpm install
 ```
+
+**Note:** All linting tools are installed as local project dependencies with pinned versions. Avoid global installs to ensure reproducibility and prevent environment pollution.
 
 ### PowerShell Execution Policy
 
@@ -165,9 +164,17 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### pnpm Not Found
 
-Ensure pnpm is installed globally:
+Ensure pnpm is available. Use one of these options:
 
 ```powershell
+# Option 1: Use npm/npx (recommended for CI environments)
+npx pnpm --version
+
+# Option 2: Install globally if needed for development
 npm install -g pnpm
 pnpm --version
+
+# Option 3: Use Corepack (Node.js 16.10+)
+corepack enable
+corepack prepare pnpm@latest --activate
 ```
