@@ -1,0 +1,45 @@
+{
+  "name": "industrial-inventory-framework",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-app framework for industrial equipment inventory management",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
+    "build": "pnpm -r build",
+    "test": "jest --config config/jest.config.js",
+    "lint": "eslint --config config/.eslintrc.cjs .",
+    "lint:fix": "eslint --config config/.eslintrc.cjs . --fix",
+    "type-check": "tsc --project config/tsconfig.json",
+    "setup": "pnpm install && pnpm build:types && pnpm db:setup",
+    "build:types": "pnpm -C packages/shared-types build",
+    "db:setup": "pnpm -C apps/api db:migrate && pnpm -C apps/api db:seed",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "reset": "pnpm clean && pnpm install",
+    "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
+    "typescript": "5.8.3",
+    "yaml": "^2.4.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

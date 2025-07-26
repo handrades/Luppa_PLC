@@ -9,7 +9,7 @@ starting with a PLC equipment inventory system. The project is designed for solo
 open-source technologies, industrial compliance, and scalable architecture.
 
 ## CRITICAL: Project Initialization Status
-
+for es lint does that applies for all lan
 **Current State:** The project has comprehensive documentation (PRD, Architecture, Frontend Spec) but NO executable code exists yet.
 Epic 0 (Project Initialization) must be completed before any work on Epic 1-5 can begin.
 
@@ -87,7 +87,9 @@ docker-compose -f docker-compose.dev.yml up
 
 ### Linting
 
-#### Psake Build Script (Recommended)
+The project uses matching lint workflows for both local development (psake) and GitHub Actions CI. See [Linting Workflows Documentation](docs/linting-workflows.md) for complete details.
+
+#### Local Development (Recommended)
 
 ```powershell
 # Install psake if not already installed
@@ -97,36 +99,39 @@ Install-Module -Name psake -Scope CurrentUser
 Invoke-psake
 
 # Run specific linters
-Invoke-psake Markdown
-Invoke-psake Json
-Invoke-psake Yaml
+Invoke-psake Markdown      # Markdown files only
+Invoke-psake Json          # JSON files only  
+Invoke-psake Yaml          # YAML files only
+Invoke-psake TypeScript    # TypeScript/JavaScript files only
 
 # Auto-fix markdown issues
 Invoke-psake FixMarkdown
 
-# Run CI checks (includes dependency verification)
+# Run CI checks (matches GitHub workflow exactly)
 Invoke-psake CI
+
+# Check if all dependencies are installed
+Invoke-psake CheckDependencies
 
 # Show all available tasks
 Invoke-psake ?
 ```
 
-#### Bash Commands (Alternative)
+#### Supported File Types
 
-```bash
-# Markdown linting
-markdownlint "**/*.md" --ignore node_modules
+- **Markdown** (`.md`) - markdownlint with relaxed rules (120 char lines)
+- **JSON** (`.json`) - jsonlint for syntax validation
+- **YAML** (`.yml`, `.yaml`) - yamllint for syntax and formatting
+- **TypeScript/JavaScript** - ESLint + Prettier via pnpm workspace scripts
 
-# JSON linting
-find . -name "*.json" -not -path "./node_modules/*" -not -path "./.bmad-core/*" -exec jsonlint {} \;
+#### GitHub Actions
 
-# YAML linting (requires: pip install yamllint)
-find . -name "*.yml" -o -name "*.yaml" -not -path "./node_modules/*" -not -path "./.bmad-core/*" | xargs yamllint
-```
+The lint workflow runs automatically on:
+- Push to main/master/develop branches
+- Pull requests to main/master/develop branches
+- Manual workflow dispatch
 
-The project uses relaxed markdown linting rules (see `.markdownlint.json`) with:
-- Line length: 120 characters
-- Disabled: heading spacing, list spacing, trailing punctuation rules
+Both workflows exclude: `node_modules/`, `.bmad-core/`
 
 ## Industrial Environment Considerations
 

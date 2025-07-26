@@ -25,9 +25,9 @@ function Test-Command {
 # Default task
 Task Default -Depends Lint
 
-# Main linting task that runs all linters
-Task Lint -Depends LintMarkdown, LintJson, LintYaml {
-    Write-Host "`nAll linting checks completed! ✓" -ForegroundColor Green
+# Main linting task that runs all linters and tests
+Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, Test {
+    Write-Host "`nAll linting checks and tests completed! ✓" -ForegroundColor Green
 }
 
 # Markdown linting task
@@ -51,9 +51,9 @@ Task LintMarkdown {
     Push-Location $PSScriptRoot
     try {
         if ($script:MarkdownFixMode -or $MarkdownFix) {
-            exec { markdownlint "**/*.md" --ignore node_modules --fix } "Markdown linting with fixes failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
         } else {
-            exec { markdownlint "**/*.md" --ignore node_modules } "Markdown linting failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json } "Markdown linting failed"
         }
         Write-Host "✓ Markdown linting passed" -ForegroundColor Green
     }
@@ -129,10 +129,84 @@ Task LintYaml {
     }
 }
 
+# TypeScript/JavaScript linting task
+Task LintTypeScript {
+    Write-Host "`nChecking TypeScript/JavaScript files..." -ForegroundColor Cyan
+    
+    # Check if we have a package.json and pnpm workspace
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        
+        # Check if lint script exists in package.json
+        if ($packageJson.scripts -and $packageJson.scripts.lint) {
+            Write-Host "Using pnpm workspace lint script..." -ForegroundColor Cyan
+            
+            if (-not (Test-Command "pnpm")) {
+                throw "pnpm not found. Please install pnpm first."
+            }
+            
+            Push-Location $PSScriptRoot
+            try {
+                exec { pnpm lint } "TypeScript/JavaScript linting failed"
+                Write-Host "✓ TypeScript/JavaScript linting passed" -ForegroundColor Green
+            }
+            finally {
+                Pop-Location
+            }
+        } else {
+            Write-Host "No lint script found in package.json - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "No package.json found - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+    }
+}
+
+# Test task
+Task Test -Description "Run workspace configuration tests" {
+    Write-Host "`nRunning workspace configuration tests..." -ForegroundColor Cyan
+    
+    Push-Location $PSScriptRoot
+    try {
+        # Run Jest tests if available
+        if (Test-Path "package.json") {
+            $packageJson = Get-Content "package.json" | ConvertFrom-Json
+            
+            if ($packageJson.scripts -and $packageJson.scripts.test) {
+                Write-Host "Running Jest tests..." -ForegroundColor Cyan
+                
+                if (-not (Test-Command "pnpm")) {
+                    throw "pnpm not found. Please install pnpm first."
+                }
+                
+                exec { pnpm test } "Jest tests failed"
+                Write-Host "✓ Jest tests passed" -ForegroundColor Green
+            }
+        }
+        
+        # Run validation script
+        if (Test-Path "__tests__/workspace-validation.js") {
+            Write-Host "Running workspace validation script..." -ForegroundColor Cyan
+            
+            if (-not (Test-Command "node")) {
+                throw "Node.js not found. Please install Node.js first."
+            }
+            
+            exec { node "__tests__/workspace-validation.js" } "Workspace validation failed"
+            Write-Host "✓ Workspace validation passed" -ForegroundColor Green
+        }
+        
+        Write-Host "✓ All tests passed" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 # Individual convenience tasks
 Task Markdown -Alias md -Description "Run only markdown linting" -Depends LintMarkdown
 Task Json -Description "Run only JSON linting" -Depends LintJson
 Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
+Task TypeScript -Alias ts -Description "Run only TypeScript/JavaScript linting" -Depends LintTypeScript
 
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {
@@ -171,7 +245,8 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     $tools = @(
         @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"},
         @{Name = "jsonlint"; Install = "npm install -g jsonlint"},
-        @{Name = "yamllint"; Install = "pip install yamllint"}
+        @{Name = "yamllint"; Install = "pip install yamllint"},
+        @{Name = "pnpm"; Install = "npm install -g pnpm"}
     )
     
     $missing = @()
