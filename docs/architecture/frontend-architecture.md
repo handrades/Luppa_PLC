@@ -107,7 +107,12 @@ const plcSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
-  ipAddress: z.string().ip({ version: 'v4' }).optional().or(z.literal('')),
+  ipAddress: z
+    .string()
+    .trim()
+    .ip({ version: 'v4' })
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
   firmwareVersion: z.string().optional()
 });
 
@@ -132,7 +137,6 @@ export const PLCForm: React.FC<PLCFormProps> = ({
       description: '',
       make: '',
       model: '',
-      ipAddress: '',
       firmwareVersion: '',
       ...initialData
     }
