@@ -31,6 +31,7 @@ If these don't exist, recommend completing Epic 0 first.
 ## Architecture Vision
 
 ### Multi-App Framework Approach
+
 The project follows a **layered framework architecture** designed to support multiple industrial applications:
 
 1. **Infrastructure Foundation**: Docker Swarm orchestration with PostgreSQL, Redis, Nginx, and Grafana/Prometheus monitoring
@@ -39,6 +40,7 @@ The project follows a **layered framework architecture** designed to support mul
 4. **Frontend Framework**: React component library with industrial theming and reusable widgets
 
 ### Technology Stack
+
 - **Frontend**: React + Vite + TypeScript + Material-UI
 - **Backend**: Node.js + Express + TypeORM + Joi validation
 - **Database**: PostgreSQL (primary) + Redis (caching/sessions)
@@ -51,11 +53,13 @@ The project follows a **layered framework architecture** designed to support mul
 The database follows a **shared foundation + app-specific schemas** pattern:
 
 ### Core Tables (Shared)
+
 - `users`, `roles`, `permissions` - Authentication and authorization
 - `audit_logs` - ISO compliance tracking with proper foreign keys and cascading
 - `notifications`, `app_settings`, `feature_flags`
 
 ### PLC Inventory Schema
+
 Based on `notes for future.md`, the main entities include:
 - **PLC records**: id, description, make, model, ip, tags (TEXT array with GIN indexing)
 - **Site hierarchy**: site_name, cell_type, cell_id
@@ -136,6 +140,7 @@ Both workflows exclude: `node_modules/`, `.bmad-core/`
 ## Industrial Environment Considerations
 
 ### Deployment Context
+
 - **Air-gapped networks** with minimal internet access
 - **On-premise only** - no cloud dependencies
 - **Industrial reliability** requirements with local backups
@@ -143,6 +148,7 @@ Both workflows exclude: `node_modules/`, `.bmad-core/`
 - **ISO compliance** focus with comprehensive audit trails
 
 ### Performance Targets
+
 - Support 300+ PLCs initially, scale to 10,000+
 - Query response: <100ms for filtered results
 - Page load: <2 seconds initial, <500ms navigation
@@ -155,6 +161,7 @@ Both workflows exclude: `node_modules/`, `.bmad-core/`
 3. **PLC Inventory Application** (3-4 weeks): First app implementation as framework example
 
 ## Future Applications
+
 The framework is designed to support additional industrial apps:
 - PLC Emulator with metrics generation
 - Factory Dashboard for production lines
@@ -164,6 +171,7 @@ The framework is designed to support additional industrial apps:
 - Document Manager
 
 ## Key Constraints
+
 - **Solo developer** with average skills
 - **Open source only** (budget constraint)
 - **No existing infrastructure** - building from scratch

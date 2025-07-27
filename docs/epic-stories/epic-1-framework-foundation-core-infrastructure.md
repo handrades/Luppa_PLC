@@ -5,11 +5,13 @@ It delivers the core Docker environment, authentication system, and a basic heal
 operational status, providing immediate value while setting up essential services.
 
 ## Story 1.1: Docker Environment Setup
+
 As a DevOps engineer,
 I want to configure the complete Docker Swarm environment with all service definitions,
 so that the application can be deployed consistently across environments.
 
 ### Acceptance Criteria
+
 1: Docker Compose configuration defines all services: app, postgres, redis, nginx, grafana, prometheus
 2: PostgreSQL service includes connection pooling configuration and persistent volume mapping
 3: Redis service configured with appropriate memory limits and persistence settings
@@ -20,11 +22,13 @@ so that the application can be deployed consistently across environments.
 8: Documentation includes setup instructions and troubleshooting guide
 
 ## Story 1.2: Database Schema Foundation
+
 As a developer,
 I want to create the core database schema with user management tables,
 so that authentication and authorization can be implemented.
 
 ### Acceptance Criteria
+
 1: PostgreSQL database created with proper encoding and locale settings
 2: Core tables created: users, roles, permissions, user_roles with proper constraints
 3: UUID primary keys implemented with gen_random_uuid() function
@@ -35,11 +39,13 @@ so that authentication and authorization can be implemented.
 8: Connection pooling configured with appropriate limits
 
 ## Story 1.3: JWT Authentication Implementation
+
 As a system user,
 I want to authenticate using email and password to receive a JWT token,
 so that I can access protected resources securely.
 
 ### Acceptance Criteria
+
 1: POST /auth/login endpoint accepts email/password and returns JWT token
 2: Passwords hashed using bcrypt with appropriate salt rounds
 3: JWT tokens include user ID, roles, and 24-hour expiration
@@ -50,11 +56,13 @@ so that I can access protected resources securely.
 8: Session tracking implemented in Redis with token blacklist capability
 
 ## Story 1.4: Basic Health Check & System Info
+
 As a system administrator,
 I want to verify the application and all services are operational,
 so that I can monitor system health and troubleshoot issues.
 
 ### Acceptance Criteria
+
 1: GET /health endpoint returns 200 OK with service status information
 2: Health check verifies database connectivity and returns connection pool stats
 3: Redis connectivity verified with memory usage information

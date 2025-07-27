@@ -6,6 +6,7 @@
 **Session Type**: Structured Ideation & Strategic Planning  
 
 ## Project Overview
+
 **Goal**: Create a minimalist, modern CRUD web app for industrial PLC equipment inventory that serves as a
 foundation framework for multiple future applications.
 
@@ -23,15 +24,21 @@ foundation framework for multiple future applications.
 We'll explore ideas across these key areas:
 
 ### 1. Technical Architecture & Framework Design
+
 ### 2. User Interface & Experience Design  
+
 ### 3. Security & Monitoring Features
+
 ### 4. Database Schema & Data Modeling
+
 ### 5. Docker Containerization Strategy
+
 ### 6. Multi-App Framework Extensibility
 
 ---
 
 ## Brainstorming Method: Hybrid Approach
+
 **Combining Building Blocks + Problem-Solution Mapping + Future-Back Planning**
 
 1. **Future-Back Vision**: Start with end-state multi-app ecosystem
@@ -47,6 +54,7 @@ We'll explore ideas across these key areas:
 **Vision**: Industrial management platform with multiple specialized apps sharing common framework
 
 #### Potential Future Applications:
+
 - **Inventory** (Phase 1) - Equipment cataloging & tracking
 - **PLC Emulator** - Equipment emulator that generates metrics
 - **Factory Dashboard** - Production lines viewer
@@ -57,6 +65,7 @@ We'll explore ideas across these key areas:
 - **Vendor Portal** - Supplier & contract management
 
 #### Shared Framework Services Needed:
+
 - **Authentication Hub** - Single sign-on across all apps
 - **Notification Engine** - Email, SMS, dashboard alerts
 - **Report Generator** - Common reporting engine
@@ -73,6 +82,7 @@ We'll explore ideas across these key areas:
 Working backwards from our vision, let's define the foundational layers:
 
 ### Layer 1: Infrastructure Foundation
+
 **Docker Orchestration:**
 - **Core Services Container**: Auth, logging, monitoring, file storage
 - **Database Container**: PostgreSQL with automated backups
@@ -81,6 +91,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Monitoring Stack**: Grafana/Prometheus or ELK stack
 
 ### Layer 2: Data & Security Foundation  
+
 **Database Architecture:**
 - **Shared Tables**: users, roles, permissions, audit_logs, notifications
 - **App-Specific Schemas**: plc_inventory, maintenance_schedule, etc.
@@ -94,6 +105,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Security Headers**: CORS, CSP, HSTS implementation
 
 ### Layer 3: Shared Business Logic
+
 **Common Services:**
 - **User Management API**: Registration, profiles, password reset
 - **Notification Service**: Email templates, SMS integration, in-app alerts  
@@ -103,6 +115,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Configuration Service**: Feature flags and app settings management
 
 ### Layer 4: Frontend Framework
+
 **React Component Library:**
 - **Common Components**: Forms, tables, modals, navigation
 - **Layout System**: Consistent headers, sidebars, responsive grid
@@ -115,6 +128,7 @@ Working backwards from our vision, let's define the foundational layers:
 ## PHASE 3: PROBLEM-SOLUTION MAPPING 🧩
 
 ### Challenge Category 1: Solo Developer Complexity
+
 **Problem**: Managing full-stack architecture alone with limited resources
 **Solutions:**
 - **Monorepo Strategy**: Single repository with shared components
@@ -124,6 +138,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Incremental Approach**: Build framework as you build first app
 
 ### Challenge Category 2: Open Source Technology Selection
+
 **Problem**: Choosing reliable, free technologies that work well together
 **Solutions:**
 - **Frontend**: React + Vite + TypeScript + Material-UI
@@ -134,6 +149,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **CI/CD**: GitHub Actions (free tier)
 
 ### Challenge Category 3: Security & Compliance Implementation
+
 **Problem**: Implementing robust security without enterprise tools
 **Solutions:**
 - **Authentication**: PassportJS + JWT + bcrypt password hashing
@@ -144,6 +160,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **HTTPS**: Let's Encrypt certificates in production
 
 ### Challenge Category 4: Scalability & Performance
+
 **Problem**: Building framework that won't break as apps multiply
 **Solutions:**
 - **Database**: Connection pooling, indexed queries, partitioning
@@ -157,6 +174,7 @@ Working backwards from our vision, let's define the foundational layers:
 ## DEEP DIVE: SCALABILITY & PERFORMANCE FOCUS 🚀
 
 ### Inventory Application Specifications
+
 **User Persona**: Process and Controls Engineers
 **Compliance**: ISO standards
 **Performance Priority**: High - Multi-app framework must scale efficiently
@@ -164,6 +182,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Scalability Architecture Deep Dive
 
 #### API Performance Strategies
+
 **Query Optimization:**
 - **Pagination**: Cursor-based for large datasets
 - **Filtering**: Multi-field search with indexed columns
@@ -177,6 +196,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Local Static Asset Cache**: Nginx-served static assets and cached API responses for read-heavy endpoints
 
 #### Frontend Performance Architecture
+
 **Data Management:**
 - **Virtual Scrolling**: Handle 10,000+ PLC records efficiently  
 - **Smart Pagination**: Load data as user scrolls/navigates
@@ -193,6 +213,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Multi-App Framework Performance Patterns
 
 #### Shared Performance Infrastructure
+
 **Database Connection Management:**
 - **Connection Pooling**: Shared pool across all apps (pg-pool)
 - **Read Replicas**: Separate read/write databases for heavy reporting
@@ -212,6 +233,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Application Metrics**: Custom business metrics (PLCs per site, etc.)
 
 #### ISO Compliance Performance Considerations
+
 **Audit Trail Efficiency:**
 - **Asynchronous Logging**: Don't slow down main operations
 - **Batch Audit Writes**: Group audit entries for better performance
@@ -219,6 +241,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Compliance Reporting**: Pre-computed reports for ISO requirements
 
 #### Process Engineer UX Performance
+
 **Industrial Context Optimizations:**
 - **Offline Capability**: Service worker for plant floor connectivity issues
 - **Quick Filters**: Predefined filters for common engineer workflows
@@ -227,6 +250,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Mobile Performance**: Optimized for tablets used in industrial settings
 
 ### Implementation Priority Framework
+
 **Phase 1 (MVP)**: Core performance foundation
 - Database with proper indexes
 - Basic caching with Redis
@@ -246,6 +270,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Performance testing automation
 
 ### Performance Testing Strategy
+
 **Load Testing Scenarios:**
 - **Single User**: 1000+ PLC records with complex filtering
 - **Multi User**: 50 concurrent engineers accessing different sites
@@ -258,6 +283,7 @@ Working backwards from our vision, let's define the foundational layers:
 ## FINAL SPECIFICATIONS & ACTION PLAN 🎯
 
 ### Project Parameters (Confirmed)
+
 - **Initial Data Volume**: 300 PLCs
 - **Growth Rate**: 10% annually (~330 year 1, ~360 year 2)
 - **Critical Performance Scenarios**:
@@ -267,6 +293,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Deployment**: On-premise industrial environment
 
 ### Industrial Environment Considerations
+
 **On-Premise Deployment Optimizations:**
 - **Network Reliability**: Offline-first architecture with sync capabilities
 - **Hardware Constraints**: Optimized for industrial-grade servers/workstations
@@ -275,6 +302,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Backup Strategy**: Local backup solutions with industrial redundancy
 
 ### Recommended Technology Stack (Finalized)
+
 **Infrastructure:**
 - **Docker Swarm**: Better for on-premise than Kubernetes complexity
 - **PostgreSQL**: Primary database with automated local backups
@@ -291,6 +319,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Implementation Phases Refined
 
 #### Phase 1: Framework Foundation (4-6 weeks)
+
 **Infrastructure:**
 - Docker Swarm setup with service definitions
 - PostgreSQL with connection pooling and backup automation
@@ -306,6 +335,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Common middleware (auth, validation, error handling)
 
 #### Phase 2: Shared Frontend Framework (2-3 weeks)
+
 **Component Library:**
 - Industrial-themed Material-UI customization
 - Common layouts and navigation patterns
@@ -314,6 +344,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Dashboard widgets for KPIs
 
 #### Phase 3: Inventory Application (3-4 weeks)
+
 **Database Implementation:**
 - Inventory table with optimized indexes
 - Audit trail integration
@@ -332,6 +363,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Export functionality for reports
 
 ### Performance Targets for 300 PLCs
+
 **Database Performance:**
 - Query response time: <100ms for filtered results
 - Full table scan: <200ms
@@ -348,6 +380,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Storage: <5GB including logs and backups
 
 ### Next Steps Action Items
+
 1. **Set up development environment** with Docker Compose
 2. **Create framework repository structure** with monorepo organization
 3. **Implement core authentication and user management**
@@ -356,6 +389,7 @@ Working backwards from our vision, let's define the foundational layers:
 6. **Develop Inventory module** as first application example
 
 ### Industrial Environment Deployment Guide
+
 **Hardware Requirements:**
 - Minimum: 8GB RAM, 4-core CPU, 100GB SSD
 - Recommended: 16GB RAM, 8-core CPU, 250GB SSD

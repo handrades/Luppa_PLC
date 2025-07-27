@@ -51,9 +51,9 @@ Task LintMarkdown {
     Push-Location $PSScriptRoot
     try {
         if ($script:MarkdownFixMode -or $MarkdownFix) {
-            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
         } else {
-            exec { markdownlint "**/*.md" --ignore node_modules --config config/.markdownlint.json } "Markdown linting failed"
+            exec { markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json } "Markdown linting failed"
         }
         Write-Host "✓ Markdown linting passed" -ForegroundColor Green
     }

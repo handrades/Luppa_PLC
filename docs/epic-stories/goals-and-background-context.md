@@ -1,6 +1,7 @@
 # Goals and Background Context
 
 ## Goals
+
 - Deploy a functional inventory application for cataloging industrial equipment (PLCs, sensors, controllers) that
   serves process and controls engineers
 - Establish a reusable multi-app framework foundation that accelerates future industrial application development
@@ -12,6 +13,7 @@
 - Enable efficient equipment tracking with site hierarchy and flexible tagging system
 
 ## Background Context
+
 The industrial equipment management landscape lacks modern, user-friendly solutions tailored for process
 engineers working in on-premise, air-gapped environments. Current systems are often outdated, expensive,
 or cloud-dependent, making them unsuitable for industrial operations that require reliable offline

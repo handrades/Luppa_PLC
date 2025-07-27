@@ -5,11 +5,13 @@ It includes comprehensive audit logging for ISO compliance, user management APIs
 core middleware that ensure consistent behavior across the platform.
 
 ## Story 2.1: Audit Logging Service
+
 As a compliance officer,
 I want all data modifications automatically logged with full context,
 so that we maintain ISO compliance and can track all system changes.
 
 ### Acceptance Criteria
+
 1: audit_logs table created with proper foreign keys and cascading deletes
 2: Audit middleware automatically captures user, timestamp, action, and changes for all mutations
 3: JSON diff stored for before/after states of modified records
@@ -20,11 +22,13 @@ so that we maintain ISO compliance and can track all system changes.
 8: Audit entries include IP address and user agent information
 
 ## Story 2.2: User Management API
+
 As an administrator,
 I want to manage user accounts through a complete API,
 so that I can onboard engineers and control system access.
 
 ### Acceptance Criteria
+
 1: POST /api/users endpoint creates new users with email validation
 2: GET /api/users lists all users with pagination and role filtering
 3: PUT /api/users/:id updates user details with audit logging
@@ -35,11 +39,13 @@ so that I can onboard engineers and control system access.
 8: API returns consistent error formats with appropriate HTTP status codes
 
 ## Story 2.3: Monitoring Dashboard Setup
+
 As a system administrator,
 I want to view real-time system metrics and performance data,
 so that I can proactively identify and resolve issues.
 
 ### Acceptance Criteria
+
 1: Prometheus configured to scrape application metrics every 30 seconds
 2: Application exposes /metrics endpoint with custom business metrics
 3: Grafana dashboards created for system resources, API performance, and error rates
@@ -50,11 +56,13 @@ so that I can proactively identify and resolve issues.
 8: Dashboards accessible via Nginx reverse proxy at /monitoring
 
 ## Story 2.4: Core Middleware Implementation
+
 As a developer,
 I want consistent request handling across all endpoints,
 so that the application behaves predictably and securely.
 
 ### Acceptance Criteria
+
 1: Request ID middleware generates unique ID for request tracing
 2: Error handling middleware catches all errors and returns consistent format
 3: Request validation middleware uses Joi schemas with detailed error messages
