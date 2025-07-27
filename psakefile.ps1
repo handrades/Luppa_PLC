@@ -26,7 +26,7 @@ function Test-Command {
 Task Default -Depends Lint
 
 # Main linting task that runs all linters and tests
-Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckNewlines, Test {
+Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckNewlines, CheckSecurity, CheckApiHealth, Test {
     Write-Host "`nAll linting checks and tests completed! ✓" -ForegroundColor Green
 }
 
@@ -184,7 +184,8 @@ Task CheckNewlines {
                      $_.FullName -notlike "*.bmad-core*" -and
                      $_.FullName -notlike "*\.git\*" -and
                      $_.FullName -notlike "*\dist\*" -and
-                     $_.FullName -notlike "*\build\*"
+                     $_.FullName -notlike "*\build\*" -and
+                     $_.FullName -notlike "*\coverage\*"
                  }
         
         foreach ($file in $files) {
@@ -212,6 +213,159 @@ Task CheckNewlines {
         throw "Files missing final newlines"
     } else {
         Write-Host "✓ All files end with newlines" -ForegroundColor Green
+    }
+}
+
+# Security checks for dependencies and code
+Task CheckSecurity {
+    Write-Host "`nRunning security checks..." -ForegroundColor Cyan
+    
+    Push-Location $PSScriptRoot
+    try {
+        # Check for npm audit if pnpm is available
+        if ((Test-Path "package.json") -and (Test-Command "pnpm")) {
+            Write-Host "Checking for security vulnerabilities in dependencies..." -ForegroundColor Cyan
+            
+            try {
+                exec { pnpm audit --audit-level moderate } "Dependency security audit found issues"
+                Write-Host "✓ No security vulnerabilities found in dependencies" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "⚠️  Security vulnerabilities found. Run 'pnpm audit' for details." -ForegroundColor Yellow
+                # Don't fail the build for security issues, just warn
+            }
+        }
+        
+        # Check for common security anti-patterns in code
+        Write-Host "Scanning for security anti-patterns..." -ForegroundColor Cyan
+        $securityIssues = @()
+        
+        # Look for hardcoded secrets patterns
+        $secretPatterns = @(
+            "password\s*[:=]\s*[`"'].*[`"']",
+            "secret\s*[:=]\s*[`"'].*[`"']",
+            "api_key\s*[:=]\s*[`"'].*[`"']",
+            "apikey\s*[:=]\s*[`"'].*[`"']",
+            "private_key\s*[:=]\s*[`"'].*[`"']",
+            "access_token\s*[:=]\s*[`"'].*[`"']"
+        )
+        
+        $codeFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.ts", "*.js", "*.tsx", "*.jsx" -Recurse |
+                     Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" -and $_.FullName -notlike "*\dist\*" }
+        
+        foreach ($file in $codeFiles) {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content) {
+                foreach ($pattern in $secretPatterns) {
+                    if ($content -match $pattern) {
+                        $securityIssues += "Potential hardcoded secret in $($file.FullName): matches pattern '$pattern'"
+                    }
+                }
+            }
+        }
+        
+        if ($securityIssues.Count -gt 0) {
+            Write-Host "⚠️  Security issues found:" -ForegroundColor Yellow
+            foreach ($issue in $securityIssues) {
+                Write-Host "  $issue" -ForegroundColor Yellow
+            }
+            Write-Host "Please review and ensure no real secrets are hardcoded" -ForegroundColor Yellow
+        } else {
+            Write-Host "✓ No security anti-patterns detected" -ForegroundColor Green
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+# API Health checks for development environment
+Task CheckApiHealth {
+    Write-Host "`nChecking API health and configuration..." -ForegroundColor Cyan
+    
+    # Check if API package exists
+    if (-not (Test-Path "apps/api/package.json")) {
+        Write-Host "⚠️  API package not found, skipping health checks" -ForegroundColor Yellow
+        return
+    }
+    
+    Push-Location "apps/api"
+    try {
+        # Check if API builds successfully
+        Write-Host "Verifying API builds correctly..." -ForegroundColor Cyan
+        if (Test-Command "pnpm") {
+            try {
+                exec { pnpm build } "API build failed"
+                Write-Host "✓ API builds successfully" -ForegroundColor Green
+            }
+            catch {
+                throw "API build verification failed"
+            }
+        }
+        
+        # Check TypeScript configuration
+        Write-Host "Validating TypeScript configuration..." -ForegroundColor Cyan
+        if (Test-Path "tsconfig.json") {
+            try {
+                exec { pnpm type-check } "TypeScript type checking failed"
+                Write-Host "✓ TypeScript configuration is valid" -ForegroundColor Green
+            }
+            catch {
+                throw "TypeScript configuration validation failed"
+            }
+        }
+        
+        # Validate package.json required scripts
+        Write-Host "Checking required npm scripts..." -ForegroundColor Cyan
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        $requiredScripts = @("dev", "build", "start", "test", "lint")
+        $missingScripts = @()
+        
+        foreach ($script in $requiredScripts) {
+            if (-not ($packageJson.scripts -and $packageJson.scripts.$script)) {
+                $missingScripts += $script
+            }
+        }
+        
+        if ($missingScripts.Count -gt 0) {
+            throw "Missing required npm scripts: $($missingScripts -join ', ')"
+        }
+        
+        Write-Host "✓ All required npm scripts are present" -ForegroundColor Green
+        
+        # Check for proper dependency versions
+        Write-Host "Validating dependency versions..." -ForegroundColor Cyan
+        $requiredDeps = @{
+            "express" = "^4.19.0"
+            "winston" = "^3.17.0"
+            "helmet" = "^7.1.0"
+            "cors" = "^2.8.5"
+        }
+        
+        $versionIssues = @()
+        foreach ($dep in $requiredDeps.GetEnumerator()) {
+            if ($packageJson.dependencies -and $packageJson.dependencies.($dep.Key)) {
+                $actualVersion = $packageJson.dependencies.($dep.Key)
+                if ($actualVersion -ne $dep.Value) {
+                    $versionIssues += "$($dep.Key): expected $($dep.Value), got $actualVersion"
+                }
+            } else {
+                $versionIssues += "$($dep.Key): missing dependency"
+            }
+        }
+        
+        if ($versionIssues.Count -gt 0) {
+            Write-Host "⚠️  Dependency version issues:" -ForegroundColor Yellow
+            foreach ($issue in $versionIssues) {
+                Write-Host "  $issue" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "✓ All core dependencies have correct versions" -ForegroundColor Green
+        }
+        
+    }
+    finally {
+        Pop-Location
     }
 }
 
@@ -249,6 +403,22 @@ Task Test -Description "Run workspace configuration tests" {
             Write-Host "✓ Workspace validation passed" -ForegroundColor Green
         }
         
+        # Run API-specific tests if they exist
+        if (Test-Path "apps/api/package.json") {
+            Write-Host "Running API-specific tests..." -ForegroundColor Cyan
+            
+            Push-Location "apps/api"
+            try {
+                if (Test-Command "pnpm") {
+                    exec { pnpm test } "API tests failed"
+                    Write-Host "✓ API tests passed" -ForegroundColor Green
+                }
+            }
+            finally {
+                Pop-Location
+            }
+        }
+        
         Write-Host "✓ All tests passed" -ForegroundColor Green
     }
     finally {
@@ -262,6 +432,8 @@ Task Json -Description "Run only JSON linting" -Depends LintJson
 Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
 Task TypeScript -Alias ts -Description "Run only TypeScript/JavaScript linting" -Depends LintTypeScript
 Task Newlines -Description "Check that all files end with newlines" -Depends CheckNewlines
+Task Security -Description "Run only security checks" -Depends CheckSecurity
+Task ApiHealth -Description "Run only API health checks" -Depends CheckApiHealth
 
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {
