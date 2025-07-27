@@ -1,0 +1,24 @@
+{
+  "watch": [
+    "src",
+    ".env"
+  ],
+  "ext": "ts,js,json",
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "dist/**/*",
+    "node_modules/**/*",
+    "logs/**/*",
+    "__tests__/**/*"
+  ],
+  "exec": "tsx src/server.ts",
+  "env": {
+    "NODE_ENV": "development",
+    "PORT": "3001"
+  },
+  "restartable": "rs",
+  "colours": true,
+  "legacyWatch": false,
+  "delay": 500
+}
