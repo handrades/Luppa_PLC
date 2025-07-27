@@ -9,7 +9,11 @@ const logsDir = join(process.cwd(), 'logs');
 try {
   mkdirSync(logsDir, { recursive: true });
 } catch (error) {
-  // Directory already exists or other error, ignore
+  // If we can't create logs directory, fallback to console-only logging
+  if (error instanceof Error && !error.message.includes('EEXIST')) {
+    // eslint-disable-next-line no-console
+    console.warn(`Warning: Could not create logs directory: ${error.message}`);
+  }
 }
 
 // Define log format

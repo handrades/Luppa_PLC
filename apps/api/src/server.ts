@@ -1,11 +1,10 @@
 import { createApp } from './app';
 import { logger } from './config/logger';
+import { config, validateEnvironment } from './config/env';
 import { Server } from 'http';
 
-// Environment configuration
-const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = process.env.HOST || 'localhost';
-const NODE_ENV = process.env.NODE_ENV || 'development';
+// Validate environment variables early
+validateEnvironment();
 
 // Global error handlers
 process.on('uncaughtException', (error: Error) => {
@@ -31,11 +30,11 @@ let server: Server;
 // Start server
 const startServer = async (): Promise<void> => {
   try {
-    server = app.listen(PORT, HOST, () => {
+    server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {
-        port: PORT,
-        host: HOST,
-        environment: NODE_ENV,
+        port: config.port,
+        host: config.host,
+        environment: config.env,
         processId: process.pid,
         nodeVersion: process.version
       });
@@ -44,9 +43,9 @@ const startServer = async (): Promise<void> => {
     // Handle server errors
     server.on('error', (error: NodeJS.ErrnoException) => {
       if (error.code === 'EADDRINUSE') {
-        logger.error(`Port ${PORT} is already in use`);
+        logger.error(`Port ${config.port} is already in use`);
       } else if (error.code === 'EACCES') {
-        logger.error(`Permission denied to bind to port ${PORT}`);
+        logger.error(`Permission denied to bind to port ${config.port}`);
       } else {
         logger.error('Server error', { error: error.message, code: error.code });
       }
