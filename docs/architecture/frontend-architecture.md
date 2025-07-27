@@ -133,11 +133,11 @@ export const PLCForm: React.FC<PLCFormProps> = ({
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<Partial<PLCInput>>({
     resolver: zodResolver(plcSchema),
     defaultValues: {
-      tagId: undefined,
-      description: undefined,
-      make: undefined,
-      model: undefined,
-      firmwareVersion: undefined,
+      tagId: '',
+      description: '',
+      make: '',
+      model: '',
+      firmwareVersion: '',
       ...initialData
     }
   });
@@ -154,8 +154,9 @@ export const PLCForm: React.FC<PLCFormProps> = ({
     }
   });
 
-  const onSubmit = (data: PLCInput) => {
-    createPLCMutation.mutate(data);
+  const onSubmit = (data: Partial<PLCInput>) => {
+    // Zod validation ensures all required fields are present
+    createPLCMutation.mutate(data as PLCInput);
   };
 
   return (
@@ -228,7 +229,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
                 <FormControl fullWidth error={!!errors.make}>
                   <FormLabel>Make</FormLabel>
                   <Select {...field}>
-                    <MenuItem value={undefined}>Select Make</MenuItem>
+                    <MenuItem value="">Select Make</MenuItem>
                     <MenuItem value="Allen-Bradley">Allen-Bradley</MenuItem>
                     <MenuItem value="Siemens">Siemens</MenuItem>
                     <MenuItem value="Schneider">Schneider</MenuItem>
