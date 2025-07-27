@@ -98,7 +98,7 @@ CREATE TABLE plcs (
     CONSTRAINT fk_plcs_created_by FOREIGN KEY (created_by) REFERENCES users(id),
     CONSTRAINT fk_plcs_updated_by FOREIGN KEY (updated_by) REFERENCES users(id),
     CONSTRAINT uk_plcs_ip_address UNIQUE (ip_address),
-    CONSTRAINT check_ip_format CHECK (ip_address IS NULL OR family(ip_address) = 4)
+    CONSTRAINT check_ip_format CHECK (ip_address IS NULL OR family(ip_address) IN (4, 6))
 );
 
 -- Tags table
