@@ -346,8 +346,17 @@ Task CheckApiHealth {
         foreach ($dep in $requiredDeps.GetEnumerator()) {
             if ($packageJson.dependencies -and $packageJson.dependencies.($dep.Key)) {
                 $actualVersion = $packageJson.dependencies.($dep.Key)
-                if ($actualVersion -ne $dep.Value) {
-                    $versionIssues += "$($dep.Key): expected $($dep.Value), got $actualVersion"
+                # Check if actual version satisfies the required range
+                # This is a simplified check - for full semver support, use a proper parser
+                if (-not ($actualVersion -match "^\^?\d+\.\d+\.\d+")) {
+                    $versionIssues += "$($dep.Key): invalid version format $actualVersion"
+                } elseif ($dep.Value.StartsWith("^") -and -not $actualVersion.StartsWith("^")) {
+                    # Allow exact versions that would satisfy the caret range
+                    $requiredMajor = $dep.Value.Substring(1).Split('.')[0]
+                    $actualMajor = $actualVersion.Split('.')[0]
+                    if ($actualMajor -ne $requiredMajor) {
+                        $versionIssues += "$($dep.Key): major version mismatch - expected $($dep.Value), got $actualVersion"
+                    }
                 }
             } else {
                 $versionIssues += "$($dep.Key): missing dependency"

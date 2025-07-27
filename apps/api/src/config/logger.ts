@@ -1,9 +1,16 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { join } from 'path';
+import { mkdirSync } from 'fs';
 
 // Create logs directory if it doesn't exist
 const logsDir = join(process.cwd(), 'logs');
+
+try {
+  mkdirSync(logsDir, { recursive: true });
+} catch (error) {
+  // Directory already exists or other error, ignore
+}
 
 // Define log format
 const logFormat = winston.format.combine(
