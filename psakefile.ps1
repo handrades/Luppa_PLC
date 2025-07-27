@@ -182,10 +182,10 @@ Task CheckNewlines {
                  Where-Object { 
                      $_.FullName -notlike "*node_modules*" -and 
                      $_.FullName -notlike "*.bmad-core*" -and
-                     $_.FullName -notlike "*\.git\*" -and
-                     $_.FullName -notlike "*\dist\*" -and
-                     $_.FullName -notlike "*\build\*" -and
-                     $_.FullName -notlike "*\coverage\*"
+                     $_.FullName -notlike "*/.git/*" -and
+                     $_.FullName -notlike "*/dist/*" -and
+                     $_.FullName -notlike "*/build/*" -and
+                     $_.FullName -notlike "*/coverage/*"
                  }
         
         foreach ($file in $files) {
@@ -481,7 +481,7 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     $tools = @(
         @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"},
         @{Name = "jsonlint"; Install = "npm install -g jsonlint"; CheckCommand = "jsonlint"},
-        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "pnpm exec yaml-lint"},
+        @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "npx yaml-lint"; IsLocal = $true},
         @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"}
     )
     
@@ -490,21 +490,19 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     foreach ($tool in $tools) {
         $checkCommand = if ($tool.CheckCommand) { $tool.CheckCommand } else { $tool.Name }
         
-        # Special handling for tools that need pnpm exec
-        if ($checkCommand.StartsWith("pnpm exec")) {
-            # Check if pnpm is available and the local package exists
-            if ((Test-Command "pnpm") -and (Test-Path "package.json")) {
-                try {
-                    $null = & pnpm list $tool.Name --depth=0 2>$null
-                    if ($LASTEXITCODE -eq 0) {
-                        Write-Host "✓ $($tool.Name) is installed (local)" -ForegroundColor Green
-                        continue
-                    }
-                } catch {
-                    # Package not found locally
+        # Special handling for local tools that use npx
+        if ($tool.IsLocal) {
+            # Check if the tool is available through npx (checks node_modules/.bin and registry)
+            try {
+                $null = & npx --yes --quiet $tool.Name --version 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "✓ $($tool.Name) is available (local/npx)" -ForegroundColor Green
+                    continue
                 }
+            } catch {
+                # Tool not available through npx
             }
-            Write-Host "✗ $($tool.Name) is NOT installed (local)" -ForegroundColor Red
+            Write-Host "✗ $($tool.Name) is NOT available (local/npx)" -ForegroundColor Red
             $missing += $tool
         } else {
             # Standard global command check
