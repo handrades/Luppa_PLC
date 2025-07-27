@@ -4,10 +4,11 @@ import cors from 'cors';
 import compression from 'compression';
 import { config } from 'dotenv';
 
-// Import middleware
+// Import middleware and configuration
 import { requestIdMiddleware } from './middleware/requestId';
 import { ValidationError, errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
+import { config as appConfig } from './config/env';
 
 // Import routes
 import healthRouter from './routes/health';
@@ -37,10 +38,7 @@ export const createApp = (): express.Application => {
 
   // CORS configuration
   const corsOptions: cors.CorsOptions = {
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ],
+    origin: appConfig.allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
