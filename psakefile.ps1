@@ -66,8 +66,8 @@ Task LintMarkdown {
 Task LintJson {
     Write-Host "`nChecking JSON files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Please install pnpm first."
+    if (-not (Test-Command "jsonlint")) {
+        throw "jsonlint not found. Install with: npm install -g jsonlint"
     }
     
     $jsonFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.json" -Recurse | 
@@ -83,7 +83,7 @@ Task LintJson {
     $hasErrors = $false
     foreach ($file in $jsonFiles) {
         try {
-            exec { npx "@prantlf/jsonlint" $file.FullName } "JSON linting failed for $($file.Name)"
+            exec { jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
             Write-Host "✓ $($file.Name)" -ForegroundColor DarkGreen
         }
         catch {
@@ -471,9 +471,6 @@ Task ? -Alias help -Description "Show available tasks" {
     Write-Host "  Invoke-psake                    # Run default task (all linting)" -ForegroundColor Gray
     Write-Host "  Invoke-psake Markdown           # Run only markdown linting" -ForegroundColor Gray
     Write-Host "  Invoke-psake FixMarkdown        # Run markdown linting with auto-fix" -ForegroundColor Gray
-    Write-Host "  Invoke-psake StartApi           # Start backend API server" -ForegroundColor Gray
-    Write-Host "  Invoke-psake StartWeb           # Start frontend web application" -ForegroundColor Gray
-    Write-Host "  Invoke-psake Build              # Build both applications for production" -ForegroundColor Gray
     Write-Host "  Invoke-psake ?                  # Show this help" -ForegroundColor Gray
 }
 
@@ -482,16 +479,17 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     Write-Host "`nChecking dependencies..." -ForegroundColor Cyan
     
     $tools = @(
-        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"},
-        @{Name = "@prantlf/jsonlint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "npx @prantlf/jsonlint"; IsLocal = $true},
+        @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"; Alternative = "npx markdownlint-cli"},
+        @{Name = "jsonlint"; Install = "npm install -g jsonlint"; CheckCommand = "jsonlint"; Alternative = "npx jsonlint"},
         @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "npx yaml-lint"; IsLocal = $true},
-        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"}
+        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"; Alternative = "npm"}
     )
     
     $missing = @()
     
     foreach ($tool in $tools) {
         $checkCommand = if ($tool.CheckCommand) { $tool.CheckCommand } else { $tool.Name }
+        $available = $false
         
         # Special handling for local tools that use npx
         if ($tool.IsLocal) {
@@ -500,150 +498,50 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
                 $null = & npx --yes --quiet $tool.Name --version 2>$null
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "✓ $($tool.Name) is available (local/npx)" -ForegroundColor Green
-                    continue
+                    $available = $true
                 }
             } catch {
                 # Tool not available through npx
             }
-            Write-Host "✗ $($tool.Name) is NOT available (local/npx)" -ForegroundColor Red
-            $missing += $tool
         } else {
-            # Standard global command check
+            # Check primary command
             if (Test-Command $checkCommand) {
                 Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
-            } else {
-                Write-Host "✗ $($tool.Name) is NOT installed" -ForegroundColor Red
-                $missing += $tool
+                $available = $true
+            } elseif ($tool.Alternative) {
+                # Check alternative command (like npx version)
+                try {
+                    $testCmd = $tool.Alternative.Split(' ')[0]
+                    if (Test-Command $testCmd) {
+                        Write-Host "✓ $($tool.Name) is available (via $($tool.Alternative))" -ForegroundColor Green
+                        $available = $true
+                    }
+                } catch {
+                    # Alternative not available
+                }
             }
+        }
+        
+        if (-not $available) {
+            Write-Host "✗ $($tool.Name) is NOT available" -ForegroundColor Red
+            $missing += $tool
         }
     }
     
     if ($missing.Count -gt 0) {
-        Write-Host "`nTo install missing dependencies:" -ForegroundColor Yellow
+        Write-Host "`nSome dependencies are missing, but CI will attempt to continue:" -ForegroundColor Yellow
         foreach ($tool in $missing) {
             Write-Host "  $($tool.Install)" -ForegroundColor Gray
         }
-        throw "Missing required dependencies"
+        Write-Host "`nNote: Individual linting tasks will fail if required tools are unavailable." -ForegroundColor Yellow
+        Write-Host "The linting tasks may still work through workspace dependencies or npx." -ForegroundColor Cyan
+        # Don't throw - let individual tasks handle their own dependencies
+    } else {
+        Write-Host "`nAll dependencies are available! ✓" -ForegroundColor Green
     }
-    
-    Write-Host "`nAll dependencies are installed! ✓" -ForegroundColor Green
 }
 
 # CI task for continuous integration
 Task CI -Depends CheckDependencies, Lint -Description "Run all CI checks" {
     Write-Host "`nCI checks passed! ✓" -ForegroundColor Green
-}
-
-# Application development tasks
-Task StartApi -Alias api -Description "Start the backend API server in development mode" {
-    Write-Host "`nStarting API server..." -ForegroundColor Cyan
-    
-    if (-not (Test-Path "apps/api/package.json")) {
-        throw "API package not found. Make sure apps/api exists."
-    }
-    
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Please install pnpm first."
-    }
-    
-    Push-Location "apps/api"
-    try {
-        Write-Host "Starting API server on port 3101..." -ForegroundColor Green
-        Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
-        exec { pnpm dev } "Failed to start API server"
-    }
-    finally {
-        Pop-Location
-    }
-}
-
-Task StartWeb -Alias web -Description "Start the frontend web application in development mode" {
-    Write-Host "`nStarting web application..." -ForegroundColor Cyan
-    
-    if (-not (Test-Path "apps/web/package.json")) {
-        throw "Web package not found. Make sure apps/web exists."
-    }
-    
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Please install pnpm first."
-    }
-    
-    Push-Location "apps/web"
-    try {
-        Write-Host "Starting web application on http://localhost:3100..." -ForegroundColor Green
-        Write-Host "The application will proxy API requests to http://localhost:3101" -ForegroundColor Yellow
-        Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
-        exec { pnpm dev } "Failed to start web application"
-    }
-    finally {
-        Pop-Location
-    }
-}
-
-Task StartBoth -Alias dev -Description "Start both API and web applications (requires two terminals)" {
-    Write-Host "`nTo start both applications, run these commands in separate terminals:" -ForegroundColor Cyan
-    Write-Host "Terminal 1: Invoke-psake StartApi" -ForegroundColor Yellow
-    Write-Host "Terminal 2: Invoke-psake StartWeb" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Or use VS Code tasks (Ctrl+Shift+P > 'Tasks: Run Task'):" -ForegroundColor Cyan
-    Write-Host "- 'Start API Server'" -ForegroundColor Yellow
-    Write-Host "- 'Start Web Application'" -ForegroundColor Yellow
-    Write-Host "- 'Start Both (API + Web)'" -ForegroundColor Yellow
-}
-
-Task Build -Description "Build both API and web applications for production" {
-    Write-Host "`nBuilding applications for production..." -ForegroundColor Cyan
-    
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Please install pnpm first."
-    }
-    
-    # Build API
-    if (Test-Path "apps/api/package.json") {
-        Write-Host "Building API..." -ForegroundColor Yellow
-        Push-Location "apps/api"
-        try {
-            exec { pnpm build } "API build failed"
-            Write-Host "✓ API build completed" -ForegroundColor Green
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    
-    # Build Web
-    if (Test-Path "apps/web/package.json") {
-        Write-Host "Building web application..." -ForegroundColor Yellow
-        Push-Location "apps/web"
-        try {
-            exec { pnpm build } "Web build failed"
-            Write-Host "✓ Web build completed" -ForegroundColor Green
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    
-    Write-Host "`n✓ All applications built successfully!" -ForegroundColor Green
-}
-
-Task TestFrontend -Alias test-web -Description "Run frontend tests" {
-    Write-Host "`nRunning frontend tests..." -ForegroundColor Cyan
-    
-    if (-not (Test-Path "apps/web/package.json")) {
-        throw "Web package not found. Make sure apps/web exists."
-    }
-    
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Please install pnpm first."
-    }
-    
-    Push-Location "apps/web"
-    try {
-        exec { pnpm test } "Frontend tests failed"
-        Write-Host "✓ Frontend tests passed" -ForegroundColor Green
-    }
-    finally {
-        Pop-Location
-    }
 }
