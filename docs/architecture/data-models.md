@@ -294,7 +294,17 @@ interface Role {
 }
 
 interface RolePermissions {
+  [resource: string]: {
+    [action: string]: boolean;
+  };
   equipment: {
+    create: boolean;
+    read: boolean;
+    update: boolean;
+    delete: boolean;
+    export: boolean;
+  };
+  plcs: {
     create: boolean;
     read: boolean;
     update: boolean;

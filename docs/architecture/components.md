@@ -13,7 +13,7 @@
 
 **Technology Stack:** TypeScript, Express middleware, JWT tokens with 24-hour expiry, Redis for token blacklisting
 
-## Site Management Service
+## Site Service
 **Responsibility:** CRUD operations for sites, validation of site names, cascade handling for site deletion
 
 **Key Interfaces:**
@@ -113,7 +113,7 @@
 - `generateComplianceReport(dateRange: DateRange): Promise<Report>`
 - `calculateRiskLevel(change: AuditEntry): RiskLevel`
 
-**Dependencies:** PostgreSQL (audit_logs table), User Service
+**Dependencies:** PostgreSQL (audit_logs table), Auth Service
 
 **Technology Stack:** TypeScript, PostgreSQL triggers, scheduled checksums for integrity
 

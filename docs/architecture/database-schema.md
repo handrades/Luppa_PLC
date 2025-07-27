@@ -1,8 +1,9 @@
 # Database Schema
 
 ```sql
--- Enable UUID extension
+-- Enable UUID extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Create custom types
 CREATE TYPE equipment_type AS ENUM ('PRESS', 'ROBOT', 'OVEN', 'CONVEYOR', 'ASSEMBLY_TABLE', 'OTHER');
