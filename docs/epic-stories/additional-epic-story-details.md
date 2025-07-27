@@ -9,6 +9,7 @@
 **Dependencies:** None - this is the foundational epic that enables all others
 
 **Success Metrics:**
+
 - Developer can set up local environment in under 5 minutes
 - All health checks pass in local Docker environment  
 - CI/CD pipeline runs successfully on main branch

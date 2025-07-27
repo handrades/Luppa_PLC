@@ -59,12 +59,14 @@
 ## Iconography
 
 **Icon Library:** Material-UI Icons + Custom Industrial Supplements
+
 - Base: Material-UI icon set for consistency and completeness
 - Custom: Industrial-specific icons (PLC types, sensors, controllers)
 - Style: Outlined style for better visibility at small sizes
 - Size: 24px standard, 20px compact, 16px inline
 
 **Usage Guidelines:**
+
 - Always pair icons with text labels in navigation
 - Use consistent icon metaphors across framework apps
 - Ensure 3:1 color contrast ratio for icon visibility
@@ -73,11 +75,13 @@
 ## Spacing & Layout
 
 **Grid System:** Material-UI 12-column responsive grid
+
 - Breakpoints: xs(0px), sm(600px), md(960px), lg(1280px), xl(1920px)
 - Container max-width: 1200px for optimal data table viewing
 - Gutters: 16px mobile, 24px desktop
 
 **Spacing Scale:** 8px base unit system
+
 - xs: 4px, sm: 8px, md: 16px, lg: 24px, xl: 32px, xxl: 48px
 - Consistent spacing creates visual rhythm
 - Based on 8px grid for pixel-perfect alignment

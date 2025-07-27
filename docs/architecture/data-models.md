@@ -5,6 +5,7 @@
 **Purpose:** Core authentication and authorization entity for all framework applications
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier using gen_random_uuid()
 - email: string - Unique email for authentication
 - password_hash: string - bcrypt hashed password
@@ -43,6 +44,7 @@ interface User {
 **Purpose:** Top-level organizational unit representing physical locations
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier using gen_random_uuid()
 - name: string - Site name (e.g., "Plant-A", "Facility-North")
 - created_at: timestamp - Creation time
@@ -73,6 +75,7 @@ interface Site {
 **Purpose:** Production cells or areas within a site
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - site_id: UUID - Foreign key to sites table
 - name: string - Cell name (e.g., "Assembly-Line-1")
@@ -108,6 +111,7 @@ interface Cell {
 **Purpose:** Physical equipment units within a cell
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - cell_id: UUID - Foreign key to cells table
 - name: string - Equipment name/identifier
@@ -152,6 +156,7 @@ enum EquipmentType {
 **Purpose:** Programmable Logic Controllers and industrial control devices
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - equipment_id: UUID - Foreign key to equipment table
 - tag_id: string - Unique PLC identifier/tag
@@ -195,6 +200,7 @@ interface PLC {
 **Purpose:** Data points and I/O tags associated with PLCs
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - plc_id: UUID - Foreign key to plcs table
 - name: string - Tag name (e.g., "START_BUTTON", "TEMP_SENSOR_1")
@@ -243,6 +249,7 @@ enum TagDataType {
 **Purpose:** ISO compliance tracking for all data modifications across the framework
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - table_name: string - Table where change occurred
 - record_id: UUID - ID of modified record
@@ -287,6 +294,7 @@ enum AuditAction {
 **Purpose:** Define permission sets for RBAC across all framework applications
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - name: string - Role name (Admin, Engineer, Viewer)
 - permissions: JSONB - Permission configuration

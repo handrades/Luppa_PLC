@@ -75,6 +75,7 @@ Invoke-psake Test
 ## 🚀 CI/CD Integration
 
 The GitHub Actions workflow is automatically generated from the shared configuration and includes:
+
 - ✅ Markdown linting with consistent rules
 - ✅ JSON syntax validation
 - ✅ YAML linting with auto-generated file exclusions
