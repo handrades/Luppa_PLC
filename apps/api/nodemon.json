@@ -15,7 +15,7 @@
   "exec": "tsx src/server.ts",
   "env": {
     "NODE_ENV": "development",
-    "PORT": "3001"
+    "PORT": "3101"
   },
   "restartable": "rs",
   "colours": true,

@@ -9,7 +9,7 @@ const createValidatedConfig = () => {
   // Parse environment variables with defaults
   const rawEnv = {
     NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT: process.env.PORT || '3001',
+    PORT: process.env.PORT || '3101',
     HOST: process.env.HOST || 'localhost',
     LOG_LEVEL: process.env.LOG_LEVEL,
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
@@ -34,7 +34,7 @@ const createValidatedConfig = () => {
 
   // Parse allowed origins
   const allowedOrigins = rawEnv.ALLOWED_ORIGINS?.split(',') || [
-    'http://localhost:3000',
+    'http://localhost:3100',
     'http://localhost:5173'
   ];
 

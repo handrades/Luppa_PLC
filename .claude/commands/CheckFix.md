@@ -2,6 +2,6 @@
 
 - Can you review latest PR
 - Check for any failed github actions
-- Check for any comments AND nested comments by coderabbitai that haven't been resolved
-- Fix ALL not resolved comments
+- Check for any coderabbitai comments (including nested) that are still unresolved
+- Resolve all outstanding comments
 - Run psake
