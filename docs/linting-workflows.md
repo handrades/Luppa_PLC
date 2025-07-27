@@ -96,6 +96,7 @@ The GitHub workflow runs on:
 ### File Exclusions
 
 Both workflows exclude the same directories:
+
 - `node_modules/`
 - `.bmad-core/`
 

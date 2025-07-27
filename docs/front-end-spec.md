@@ -93,11 +93,13 @@ Equipment), providing clear location context and quick navigation back to parent
 **User Goal:** Process engineer needs to quickly locate specific equipment during plant troubleshooting
 
 **Entry Points:**
+
 - Dashboard search bar
 - Equipment list page
 - Direct navigation from site hierarchy
 
 **Success Criteria:**
+
 - Find target equipment in <30 seconds
 - Access equipment details immediately
 - Clear path to edit if needed
@@ -142,6 +144,7 @@ graph TD
 ### Primary Design Files
 
 **Primary Design Files:** React Storybook + Component Library
+
 - Build components directly in React/TypeScript for living design system
 - Use Storybook for component documentation and testing
 - Material-UI base with industrial theme customization
@@ -154,11 +157,13 @@ graph TD
 **Purpose:** Central hub optimized for both desktop efficiency and tablet mobility
 
 **Key Elements:**
+
 - **Desktop:** Full data grid with 8-10 columns, persistent filter sidebar, keyboard navigation support
 - **Tablet:** Card-based layout with 4-5 key fields, collapsible filter drawer, touch-optimized interactions
 - **Both:** Prominent search bar, bulk action toolbar, quick add button, consistent search logic
 
 **Interaction Notes:**
+
 - **Desktop:** Mouse hover states, right-click context menus, keyboard shortcuts, multi-selection
 - **Tablet:** Touch-friendly 44px+ targets, swipe gestures for actions, long-press context menus
 - **Both:** Virtual scrolling for 10,000+ records, debounced search, GSAP animations for state transitions
@@ -170,11 +175,13 @@ graph TD
 **Purpose:** Comprehensive editing optimized for each device context
 
 **Key Elements:**
+
 - **Desktop:** Two-column form layout, inline validation, tabbed sections for complex data
 - **Tablet:** Single-column layout, larger touch targets, accordion sections for organization
 - **Both:** Auto-complete dropdowns, tag chips, visual validation feedback, auto-save with confirmation
 
 **Interaction Notes:**
+
 - **Desktop:** Tab navigation between fields, Enter to save, Esc to cancel, keyboard shortcuts
 - **Tablet:** Virtual keyboard optimization, touch-friendly date pickers, gesture support
 - **Both:** Auto-save with visual confirmation, unsaved changes warnings, consistent validation
@@ -186,11 +193,13 @@ graph TD
 **Purpose:** Information priority adjusted for device usage context
 
 **Key Elements:**
+
 - **Desktop:** Multi-column layout with detailed charts and data tables, concurrent information display
 - **Tablet:** Stacked cards prioritizing actionable information, simplified charts, swipe navigation
 - **Both:** Status indicators, quick actions, search widget, real-time updates, offline indicators
 
 **Interaction Notes:**
+
 - **Desktop:** Detailed hover tooltips, multiple simultaneous chart interactions, keyboard navigation
 - **Tablet:** Touch-optimized charts, swipe navigation between sections, pull-to-refresh
 - **Both:** GSAP-animated data transitions, automatic updates every 5 minutes, responsive chart rendering
@@ -202,6 +211,7 @@ graph TD
 ### Design System Approach
 
 **React Component Library with Material-UI Industrial Theme**
+
 - Base: Material-UI components customized for industrial contexts
 - Enhancement: GSAP animations for professional micro-interactions  
 - Framework: Storybook for component development and documentation
@@ -214,17 +224,20 @@ graph TD
 **Purpose:** High-performance equipment listing with industrial-grade functionality
 
 **Variants:**
+
 - Standard Grid (desktop): Full feature set with 8+ columns, advanced filtering
 - Compact Grid (tablet): Condensed view with key fields only, touch optimization
 - Card View (mobile): Stacked cards for touch interaction, essential information
 
 **States:**
+
 - Loading (skeleton animation with GSAP shimmer effect)
 - Empty (helpful guidance state with clear next actions)
 - Error (clear recovery options with retry mechanisms)
 - Selection (bulk operation mode with multi-select capabilities)
 
 **Usage Guidelines:**
+
 - Use for any tabular equipment data >50 records
 - Always include virtual scrolling for performance with large datasets
 - Provide keyboard navigation for power users and accessibility
@@ -234,11 +247,13 @@ graph TD
 **Purpose:** Consistent form experience across all equipment data entry
 
 **Variants:**
+
 - Create Mode: Empty form with smart defaults and field suggestions
 - Edit Mode: Pre-populated with change tracking and audit logging
 - View Mode: Read-only with clear edit trigger and permission awareness
 
 **States:**
+
 - Pristine (no changes made, clean initial state)
 - Dirty (unsaved changes with auto-save indicator and visual feedback)
 - Validating (real-time validation feedback with GSAP animations)
@@ -246,6 +261,7 @@ graph TD
 - Error (field-level error messaging with clear recovery guidance)
 
 **Usage Guidelines:**
+
 - Always include auto-save with visual confirmation every 30 seconds
 - Use touch-friendly targets (44px minimum) for industrial tablet usage
 - Provide clear required field indicators and validation feedback
@@ -255,17 +271,20 @@ graph TD
 **Purpose:** Consistent information display for dashboard and summary views
 
 **Variants:**
+
 - Metric Card: Single number with trend indicator and historical context
 - Chart Card: Embedded visualization with touch/click interactions
 - Action Card: Quick actions with prominent call-to-action buttons
 
 **States:**
+
 - Loading (animated placeholder with professional skeleton design)
 - Loaded (data with GSAP entrance animation and smooth transitions)
 - Error (retry mechanism with clear error messaging)
 - Interactive (hover/touch feedback with subtle GSAP effects)
 
 **Usage Guidelines:**
+
 - Use GSAP for smooth data transitions and professional feel
 - Keep information hierarchy clear with proper typography scale
 - Ensure touch targets meet industrial glove requirements (44px+)
@@ -275,16 +294,19 @@ graph TD
 **Purpose:** Consistent navigation across all framework applications
 
 **Variants:**
+
 - Expanded: Full labels and icons for desktop efficiency
 - Collapsed: Icons only for space efficiency with tooltips
 - Mobile: Drawer overlay for small screens with touch optimization
 
 **States:**
+
 - Active Section (visual emphasis on current area with clear highlighting)
 - Hover/Focus (GSAP micro-interactions with subtle feedback)
 - Loading (navigation state feedback during route transitions)
 
 **Usage Guidelines:**
+
 - Maintain consistency across all framework apps for user familiarity
 - Use breadcrumbs for deep navigation and clear location context
 - Provide full keyboard navigation support for accessibility
@@ -350,12 +372,14 @@ graph TD
 ### Iconography
 
 **Icon Library:** Material-UI Icons + Custom Industrial Supplements
+
 - Base: Material-UI icon set for consistency and completeness
 - Custom: Industrial-specific icons (PLC types, sensors, controllers)
 - Style: Outlined style for better visibility at small sizes
 - Size: 24px standard, 20px compact, 16px inline
 
 **Usage Guidelines:**
+
 - Always pair icons with text labels in navigation
 - Use consistent icon metaphors across framework apps
 - Ensure 3:1 color contrast ratio for icon visibility
@@ -364,11 +388,13 @@ graph TD
 ### Spacing & Layout
 
 **Grid System:** Material-UI 12-column responsive grid
+
 - Breakpoints: xs(0px), sm(600px), md(960px), lg(1280px), xl(1920px)
 - Container max-width: 1200px for optimal data table viewing
 - Gutters: 16px mobile, 24px desktop
 
 **Spacing Scale:** 8px base unit system
+
 - xs: 4px, sm: 8px, md: 16px, lg: 24px, xl: 32px, xxl: 48px
 - Consistent spacing creates visual rhythm
 - Based on 8px grid for pixel-perfect alignment
@@ -383,16 +409,19 @@ graph TD
 ### Key Requirements
 
 **Visual:**
+
 - Color contrast ratios: 4.5:1 minimum for normal text, 3:1 for large text and UI components (both light and dark modes tested)
 - Focus indicators: High-contrast 3px outline with 2px offset, visible in both themes, GSAP-animated for smooth transitions
 - Text sizing: Minimum 16px base size, scalable to 200% without horizontal scrolling, readable with safety glasses
 
 **Interaction:**
+
 - Keyboard navigation: Full application navigable via keyboard only, logical tab order, skip links for data tables, custom key shortcuts for power users
 - Screen reader support: Proper ARIA labels, live regions for status updates, structured headings, descriptive link text, table headers properly associated
 - Touch targets: Minimum 44px for all interactive elements, adequate spacing between targets, works reliably with work gloves
 
 **Content:**
+
 - Alternative text: Descriptive alt text for all equipment diagrams and status icons, empty alt for decorative images
 - Heading structure: Logical H1-H6 hierarchy, each page starts with H1, no skipped heading levels
 - Form labels: Every form field has associated label, required fields clearly marked, error messages descriptive and linked to fields
@@ -423,21 +452,25 @@ graph TD
 ### Adaptation Patterns
 
 **Layout Changes:**
+
 - **Desktop/Wide:** Multi-column layouts with sidebar navigation, full data tables, multiple concurrent views
 - **Tablet:** Single-column primary content with collapsible navigation, card-based data display, touch-optimized spacing
 - **Mobile:** Stacked navigation, essential information only, progressive disclosure for complex data
 
 **Navigation Changes:**
+
 - **Desktop/Wide:** Persistent sidebar with full labels, breadcrumb navigation, tabbed interfaces
 - **Tablet:** Collapsible drawer navigation, prominent search, swipe gestures for quick actions
 - **Mobile:** Bottom navigation or hamburger menu, search-first approach, simplified hierarchy
 
 **Content Priority:**
+
 - **Desktop/Wide:** High information density, multiple data columns, detailed status information, advanced filtering always visible
 - **Tablet:** Key information prioritized, secondary details on tap/expand, simplified filtering with drawer panels
 - **Mobile:** Essential data only, drill-down for details, single-action focus
 
 **Interaction Changes:**
+
 - **Desktop/Wide:** Hover states, right-click context menus, keyboard shortcuts, multi-selection with Shift/Ctrl
 - **Tablet:** Touch-first interactions, long-press context menus, swipe gestures, drag-and-drop for reordering
 - **Mobile:** Large touch targets, tap-to-reveal actions, pull-to-refresh, simplified gestures
@@ -447,6 +480,7 @@ graph TD
 ### Motion Principles
 
 **Industrial Motion Design Philosophy:**
+
 1. **Functional First:** Every animation serves a clear purpose (feedback, transition, or guidance)
 2. **Subtle & Professional:** Enhance usability without drawing attention to the animation itself
 3. **Performance Conscious:** Smooth 60fps animations that don't impact data processing

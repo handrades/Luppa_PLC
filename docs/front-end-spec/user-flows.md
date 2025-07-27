@@ -5,11 +5,13 @@
 **User Goal:** Process engineer needs to quickly locate specific equipment during plant troubleshooting
 
 **Entry Points:**
+
 - Dashboard search bar
 - Equipment list page
 - Direct navigation from site hierarchy
 
 **Success Criteria:**
+
 - Find target equipment in <30 seconds
 - Access equipment details immediately
 - Clear path to edit if needed

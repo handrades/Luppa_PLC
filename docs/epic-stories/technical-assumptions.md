@@ -3,6 +3,7 @@
 ## Repository Structure: Monorepo
 
 **Monorepo** approach using a single repository containing:
+
 - Shared framework components and libraries
 - Backend API services
 - Frontend React applications
@@ -16,6 +17,7 @@ workflows.
 
 **Layered Monolith with Framework Foundation** - A structured monolithic application with clear separation
 of concerns:
+
 - **Infrastructure Layer**: Docker Swarm orchestration, PostgreSQL, Redis, Nginx
 - **Framework Layer**: Shared authentication, audit logging, user management, notification services
 - **Application Layer**: Inventory application with dedicated schemas and business logic
@@ -25,6 +27,7 @@ This approach balances development simplicity for a solo developer while providi
 application expansion.
 
 The monolith will be structured with clear module boundaries using:
+
 - **Workspace Management**: Organized with Nx workspaces, Yarn workspaces, or pnpm workspaces to maintain clear
   separation between modules
 - **Module Independence**: Each major feature area (auth, inventory, monitoring) in separate workspace packages with
@@ -36,6 +39,7 @@ The monolith will be structured with clear module boundaries using:
 ## Testing Requirements
 
 **Unit + Integration Testing** strategy:
+
 - **Unit Tests**: Jest for backend logic and React Testing Library for components
 - **Integration Tests**: API endpoint testing with supertest, database integration tests
 - **Manual Testing Convenience**: Postman collections for API testing and development

@@ -11,6 +11,7 @@
 foundation framework for multiple future applications.
 
 **Key Requirements**:
+
 - React frontend, PostgreSQL database
 - Open source technologies only (budget constraint)
 - Solo developer with average skills
@@ -84,6 +85,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Layer 1: Infrastructure Foundation
 
 **Docker Orchestration:**
+
 - **Core Services Container**: Auth, logging, monitoring, file storage
 - **Database Container**: PostgreSQL with automated backups
 - **Web Gateway Container**: Nginx reverse proxy + SSL termination
@@ -93,11 +95,13 @@ Working backwards from our vision, let's define the foundational layers:
 ### Layer 2: Data & Security Foundation  
 
 **Database Architecture:**
+
 - **Shared Tables**: users, roles, permissions, audit_logs, notifications
 - **App-Specific Schemas**: plc_inventory, maintenance_schedule, etc.
 - **Configuration Tables**: app_settings, feature_flags, api_keys
 
 **Security Framework:**
+
 - **JWT Authentication**: Centralized token management
 - **RBAC System**: Role-based access control across apps
 - **API Rate Limiting**: Prevent abuse and ensure performance
@@ -107,6 +111,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Layer 3: Shared Business Logic
 
 **Common Services:**
+
 - **User Management API**: Registration, profiles, password reset
 - **Notification Service**: Email templates, SMS integration, in-app alerts  
 - **File Upload Service**: Secure file handling with virus scanning
@@ -117,6 +122,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Layer 4: Frontend Framework
 
 **React Component Library:**
+
 - **Common Components**: Forms, tables, modals, navigation
 - **Layout System**: Consistent headers, sidebars, responsive grid
 - **Theme System**: Dark/light mode, industrial color schemes
@@ -131,6 +137,7 @@ Working backwards from our vision, let's define the foundational layers:
 
 **Problem**: Managing full-stack architecture alone with limited resources
 **Solutions:**
+
 - **Monorepo Strategy**: Single repository with shared components
 - **Docker Compose**: Simplified local development environment
 - **Code Generators**: Automated CRUD generation for new apps
@@ -141,6 +148,7 @@ Working backwards from our vision, let's define the foundational layers:
 
 **Problem**: Choosing reliable, free technologies that work well together
 **Solutions:**
+
 - **Frontend**: React + Vite + TypeScript + Material-UI
 - **Backend**: Node.js + Express + TypeORM + Joi validation
 - **Database**: PostgreSQL + Redis for caching
@@ -152,6 +160,7 @@ Working backwards from our vision, let's define the foundational layers:
 
 **Problem**: Implementing robust security without enterprise tools
 **Solutions:**
+
 - **Authentication**: PassportJS + JWT + bcrypt password hashing
 - **Authorization**: CASL for permissions, role-based access
 - **Data Protection**: Helmet.js security headers, input validation
@@ -163,6 +172,7 @@ Working backwards from our vision, let's define the foundational layers:
 
 **Problem**: Building framework that won't break as apps multiply
 **Solutions:**
+
 - **Database**: Connection pooling, indexed queries, partitioning
 - **Caching**: Redis for session storage and frequent queries  
 - **API Design**: GraphQL or REST with pagination and filtering
@@ -184,6 +194,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### API Performance Strategies
 
 **Query Optimization:**
+
 - **Pagination**: Cursor-based for large datasets
 - **Filtering**: Multi-field search with indexed columns
 - **Sorting**: Optimized queries for common sort patterns
@@ -191,6 +202,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Search**: Full-text search on description field
 
 **Caching Strategy:**
+
 - **Redis Cache**: Frequent queries (by site, by equipment type)
 - **Application Cache**: Static data (countries, equipment types)
 - **Local Static Asset Cache**: Nginx-served static assets and cached API responses for read-heavy endpoints
@@ -198,6 +210,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### Frontend Performance Architecture
 
 **Data Management:**
+
 - **Virtual Scrolling**: Handle 10,000+ PLC records efficiently  
 - **Smart Pagination**: Load data as user scrolls/navigates
 - **Local State**: RTK Query for client-side caching
@@ -205,6 +218,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Optimistic Updates**: Immediate UI feedback for better UX
 
 **Component Architecture:**
+
 - **Code Splitting**: Separate bundles for each app module
 - **Lazy Loading**: Load PLC detail views on demand
 - **Memoization**: React.memo for expensive list components
@@ -215,18 +229,21 @@ Working backwards from our vision, let's define the foundational layers:
 #### Shared Performance Infrastructure
 
 **Database Connection Management:**
+
 - **Connection Pooling**: Shared pool across all apps (pg-pool)
 - **Read Replicas**: Separate read/write databases for heavy reporting
 - **Query Performance**: Shared query optimization middleware
 - **Database Migrations**: Versioned schema changes across apps
 
 **API Gateway Performance:**
+
 - **Rate Limiting**: Per-user and per-app quotas
 - **Response Compression**: Gzip/Brotli for large JSON responses
 - **Request Batching**: GraphQL federation or REST batch endpoints
 - **API Versioning**: Backward compatibility without performance impact
 
 **Monitoring & Alerting:**
+
 - **Performance Metrics**: Response times, query duration, memory usage
 - **Error Tracking**: Sentry for production error monitoring
 - **Database Monitoring**: Slow query logs and index usage stats
@@ -235,6 +252,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### ISO Compliance Performance Considerations
 
 **Audit Trail Efficiency:**
+
 - **Asynchronous Logging**: Don't slow down main operations
 - **Batch Audit Writes**: Group audit entries for better performance
 - **Audit Data Retention**: Automated archiving of old audit records
@@ -243,6 +261,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### Process Engineer UX Performance
 
 **Industrial Context Optimizations:**
+
 - **Offline Capability**: Service worker for plant floor connectivity issues
 - **Quick Filters**: Predefined filters for common engineer workflows
 - **Bulk Operations**: Multi-select actions for batch updates
@@ -252,18 +271,21 @@ Working backwards from our vision, let's define the foundational layers:
 ### Implementation Priority Framework
 
 **Phase 1 (MVP)**: Core performance foundation
+
 - Database with proper indexes
 - Basic caching with Redis
 - Pagination and search
 - Audit logging
 
 **Phase 2 (Scale)**: Advanced performance features  
+
 - Virtual scrolling and lazy loading
 - Advanced caching strategies
 - Performance monitoring
 - Bulk operations
 
 **Phase 3 (Multi-App)**: Shared performance services
+
 - API gateway optimization
 - Cross-app performance metrics
 - Advanced monitoring dashboard
@@ -272,6 +294,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Performance Testing Strategy
 
 **Load Testing Scenarios:**
+
 - **Single User**: 1000+ PLC records with complex filtering
 - **Multi User**: 50 concurrent engineers accessing different sites
 - **Bulk Import**: CSV upload of 10,000+ PLC records
@@ -295,6 +318,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Industrial Environment Considerations
 
 **On-Premise Deployment Optimizations:**
+
 - **Network Reliability**: Offline-first architecture with sync capabilities
 - **Hardware Constraints**: Optimized for industrial-grade servers/workstations
 - **Security**: Air-gapped network considerations, no external dependencies
@@ -304,6 +328,7 @@ Working backwards from our vision, let's define the foundational layers:
 ### Recommended Technology Stack (Finalized)
 
 **Infrastructure:**
+
 - **Docker Swarm**: Better for on-premise than Kubernetes complexity
 - **PostgreSQL**: Primary database with automated local backups
 - **Redis**: Local caching and session storage
@@ -311,6 +336,7 @@ Working backwards from our vision, let's define the foundational layers:
 - **Grafana + Prometheus**: Self-hosted monitoring stack
 
 **Application Framework:**
+
 - **Backend**: Node.js + Express + TypeORM (robust for industrial use)
 - **Frontend**: React + Vite + TypeScript + Material-UI
 - **Authentication**: Local JWT with bcrypt (no external auth providers)
@@ -321,6 +347,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### Phase 1: Framework Foundation (4-6 weeks)
 
 **Infrastructure:**
+
 - Docker Swarm setup with service definitions
 - PostgreSQL with connection pooling and backup automation
 - Redis caching layer implementation
@@ -328,6 +355,7 @@ Working backwards from our vision, let's define the foundational layers:
 - Basic monitoring with Grafana/Prometheus
 
 **Core Services:**
+
 - User management API with RBAC
 - Audit logging service (ISO compliance ready)
 - Configuration management service
@@ -337,6 +365,7 @@ Working backwards from our vision, let's define the foundational layers:
 #### Phase 2: Shared Frontend Framework (2-3 weeks)
 
 **Component Library:**
+
 - Industrial-themed Material-UI customization
 - Common layouts and navigation patterns
 - Data grid with virtual scrolling (handles 300+ records easily)
@@ -346,17 +375,20 @@ Working backwards from our vision, let's define the foundational layers:
 #### Phase 3: Inventory Application (3-4 weeks)
 
 **Database Implementation:**
+
 - Inventory table with optimized indexes
 - Audit trail integration
 - Data validation and constraints
 
 **API Implementation:**
+
 - RESTful endpoints with pagination
 - Advanced filtering by site/equipment/model
 - Bulk operations for data import/export
 - Search functionality across all fields
 
 **Frontend Implementation:**
+
 - PLC listing with advanced filtering
 - CRUD forms for PLC management
 - Dashboard with site/equipment summaries
@@ -365,16 +397,19 @@ Working backwards from our vision, let's define the foundational layers:
 ### Performance Targets for 300 PLCs
 
 **Database Performance:**
+
 - Query response time: <100ms for filtered results
 - Full table scan: <200ms
 - Bulk import: 300 records in <5 seconds
 
 **Frontend Performance:**
+
 - Initial page load: <2 seconds
 - Filter application: <500ms
 - Table scroll/pagination: <100ms
 
 **System Resources (Industrial Hardware):**
+
 - RAM usage: <2GB total
 - CPU usage: <20% during normal operations
 - Storage: <5GB including logs and backups
@@ -391,11 +426,13 @@ Working backwards from our vision, let's define the foundational layers:
 ### Industrial Environment Deployment Guide
 
 **Hardware Requirements:**
+
 - Minimum: 8GB RAM, 4-core CPU, 100GB SSD
 - Recommended: 16GB RAM, 8-core CPU, 250GB SSD
 - Network: Isolated industrial network with minimal internet access
 
 **Security Considerations:**
+
 - Local certificate authority for HTTPS
 - Network segmentation from production systems
 - Regular security updates via offline packages

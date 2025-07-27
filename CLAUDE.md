@@ -14,6 +14,7 @@ open-source technologies, industrial compliance, and scalable architecture.
 Epic 0 (Project Initialization) must be completed before any work on Epic 1-5 can begin.
 
 **Epic 0 Requirements:**
+
 - Initialize monorepo structure with pnpm workspaces
 - Create Docker development environment
 - Scaffold backend (Express + TypeScript) and frontend (React + Vite)
@@ -21,6 +22,7 @@ Epic 0 (Project Initialization) must be completed before any work on Epic 1-5 ca
 - Establish development tooling and documentation
 
 **When asked about implementation:** Always check if Epic 0 has been completed by looking for:
+
 - `/apps/api` and `/apps/web` directories
 - `package.json` files in the workspace
 - `docker-compose.dev.yml` file
@@ -61,12 +63,14 @@ The database follows a **shared foundation + app-specific schemas** pattern:
 ### PLC Inventory Schema
 
 Based on `notes for future.md`, the main entities include:
+
 - **PLC records**: id, description, make, model, ip, tags (TEXT array with GIN indexing)
 - **Site hierarchy**: site_name, cell_type, cell_id
 - **Equipment mapping**: equipment_id, equipment_type
 - **Audit compliance**: All changes tracked with user context and timestamps
 
 Key database patterns:
+
 - UUID primary keys with `gen_random_uuid()`
 - Proper foreign key constraints with `ON DELETE CASCADE`
 - GIN indexes for array fields (tags)
@@ -131,6 +135,7 @@ Invoke-psake ?
 #### GitHub Actions
 
 The lint workflow runs automatically on:
+
 - Push to main/master/develop branches
 - Pull requests to main/master/develop branches
 - Manual workflow dispatch
@@ -163,6 +168,7 @@ Both workflows exclude: `node_modules/`, `.bmad-core/`
 ## Future Applications
 
 The framework is designed to support additional industrial apps:
+
 - PLC Emulator with metrics generation
 - Factory Dashboard for production lines
 - Maintenance Scheduler

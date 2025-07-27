@@ -136,6 +136,7 @@ The project is designed for solo development with a focus on open-source technol
 ## Future Applications
 
 The framework is designed to support additional industrial apps:
+
 - PLC Emulator with metrics generation
 - Factory Dashboard for production lines
 - Maintenance Scheduler

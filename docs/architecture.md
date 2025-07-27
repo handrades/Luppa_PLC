@@ -41,6 +41,7 @@ a reusable foundation for future industrial applications while maintaining compa
 **Structure:** Monorepo with clear module boundaries
 **Monorepo Tool:** pnpm workspaces (better performance and disk efficiency than npm/yarn)
 **Package Organization:**
+
 - `/apps` - Application packages (web, api)
 - `/packages` - Shared libraries (ui, shared-types, config)
 - `/infrastructure` - Docker configs and deployment scripts
@@ -136,6 +137,7 @@ This is the DEFINITIVE technology selection for the entire project. All developm
 **Purpose:** Core authentication and authorization entity for all framework applications
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier using gen_random_uuid()
 - email: string - Unique email for authentication
 - password_hash: string - bcrypt hashed password
@@ -174,6 +176,7 @@ interface User {
 **Purpose:** Top-level organizational unit representing physical locations
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier using gen_random_uuid()
 - name: string - Site name (e.g., "Plant-A", "Facility-North")
 - created_at: timestamp - Creation time
@@ -204,6 +207,7 @@ interface Site {
 **Purpose:** Production cells or areas within a site
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - site_id: UUID - Foreign key to sites table
 - name: string - Cell name (e.g., "Assembly-Line-1")
@@ -239,6 +243,7 @@ interface Cell {
 **Purpose:** Physical equipment units within a cell
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - cell_id: UUID - Foreign key to cells table
 - name: string - Equipment name/identifier
@@ -283,6 +288,7 @@ enum EquipmentType {
 **Purpose:** Programmable Logic Controllers and industrial control devices
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - equipment_id: UUID - Foreign key to equipment table
 - tag_id: string - Unique PLC identifier/tag
@@ -326,6 +332,7 @@ interface PLC {
 **Purpose:** Data points and I/O tags associated with PLCs
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - plc_id: UUID - Foreign key to plcs table
 - name: string - Tag name (e.g., "START_BUTTON", "TEMP_SENSOR_1")
@@ -374,6 +381,7 @@ enum TagDataType {
 **Purpose:** ISO compliance tracking for all data modifications across the framework
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - table_name: string - Table where change occurred
 - record_id: UUID - ID of modified record
@@ -418,6 +426,7 @@ enum AuditAction {
 **Purpose:** Define permission sets for RBAC across all framework applications
 
 **Key Attributes:**
+
 - id: UUID - Unique identifier
 - name: string - Role name (Admin, Engineer, Viewer)
 - permissions: JSONB - Permission configuration
@@ -762,6 +771,7 @@ components:
 **Responsibility:** Handle all authentication and authorization logic including JWT token management, password hashing, role validation, and session management
 
 **Key Interfaces:**
+
 - `login(email: string, password: string): Promise<AuthResponse>`
 - `validateToken(token: string): Promise<User>`
 - `refreshToken(token: string): Promise<string>`
@@ -776,6 +786,7 @@ components:
 **Responsibility:** CRUD operations for sites, validation of site names, cascade handling for site deletion
 
 **Key Interfaces:**
+
 - `createSite(data: SiteInput): Promise<Site>`
 - `getSites(filters: SiteFilters): Promise<PaginatedResponse<Site>>`
 - `updateSite(id: string, data: SiteUpdate): Promise<Site>`
@@ -790,6 +801,7 @@ components:
 **Responsibility:** Manage production cells within sites, enforce site-cell relationships, handle cell-to-equipment cascade operations
 
 **Key Interfaces:**
+
 - `createCell(siteId: string, data: CellInput): Promise<Cell>`
 - `getCellsBySite(siteId: string): Promise<Cell[]>`
 - `moveCell(cellId: string, newSiteId: string): Promise<Cell>`
@@ -804,6 +816,7 @@ components:
 **Responsibility:** Equipment lifecycle management, type validation, equipment-to-PLC relationship management
 
 **Key Interfaces:**
+
 - `createEquipment(cellId: string, data: EquipmentInput): Promise<Equipment>`
 - `getEquipmentByCell(cellId: string): Promise<Equipment[]>`
 - `moveEquipment(equipmentId: string, newCellId: string): Promise<Equipment>`
@@ -818,6 +831,7 @@ components:
 **Responsibility:** Core PLC management including IP address uniqueness, tag ID validation, firmware tracking, search functionality
 
 **Key Interfaces:**
+
 - `createPLC(equipmentId: string, data: PLCInput): Promise<PLC>`
 - `searchPLCs(filters: PLCSearchFilters): Promise<PLCWithHierarchy[]>`
 - `updatePLCFirmware(plcId: string, version: string): Promise<PLC>`
@@ -832,6 +846,7 @@ components:
 **Responsibility:** PLC tag management, data type validation, address conflict detection
 
 **Key Interfaces:**
+
 - `createTag(plcId: string, data: TagInput): Promise<Tag>`
 - `getTagsByPLC(plcId: string): Promise<Tag[]>`
 - `bulkCreateTags(plcId: string, tags: TagInput[]): Promise<Tag[]>`
@@ -846,6 +861,7 @@ components:
 **Responsibility:** Complex hierarchy queries, tree generation, breadcrumb creation, move operations across levels
 
 **Key Interfaces:**
+
 - `getFullHierarchy(): Promise<HierarchyNode[]>`
 - `getBreadcrumbs(entityType: string, entityId: string): Promise<Breadcrumb[]>`
 - `getAncestors(plcId: string): Promise<HierarchyPath>`
@@ -860,6 +876,7 @@ components:
 **Responsibility:** Bulk data operations, CSV parsing/generation, hierarchy validation during import, auto-creation of missing entities
 
 **Key Interfaces:**
+
 - `importPLCs(file: Buffer, options: ImportOptions): Promise<ImportResult>`
 - `exportPLCs(filters: PLCFilters, format: ExportFormat): Promise<Buffer>`
 - `validateCSV(file: Buffer): Promise<ValidationResult>`
@@ -874,6 +891,7 @@ components:
 **Responsibility:** Comprehensive audit logging, risk assessment, compliance reporting, audit log integrity
 
 **Key Interfaces:**
+
 - `logChange(change: AuditEntry): Promise<void>`
 - `getAuditTrail(entityId: string): Promise<AuditLog[]>`
 - `generateComplianceReport(dateRange: DateRange): Promise<Report>`
@@ -888,6 +906,7 @@ components:
 **Responsibility:** In-app notifications, system alerts, batch notification processing
 
 **Key Interfaces:**
+
 - `createNotification(userId: string, notification: NotificationInput): Promise<void>`
 - `getUserNotifications(userId: string): Promise<Notification[]>`
 - `markAsRead(notificationId: string): Promise<void>`

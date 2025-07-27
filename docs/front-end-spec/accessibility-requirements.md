@@ -7,16 +7,19 @@
 ## Key Requirements
 
 **Visual:**
+
 - Color contrast ratios: 4.5:1 minimum for normal text, 3:1 for large text and UI components (both light and dark modes tested)
 - Focus indicators: High-contrast 3px outline with 2px offset, visible in both themes, GSAP-animated for smooth transitions
 - Text sizing: Minimum 16px base size, scalable to 200% without horizontal scrolling, readable with safety glasses
 
 **Interaction:**
+
 - Keyboard navigation: Full application navigable via keyboard only, logical tab order, skip links for data tables, custom key shortcuts for power users
 - Screen reader support: Proper ARIA labels, live regions for status updates, structured headings, descriptive link text, table headers properly associated
 - Touch targets: Minimum 44px for all interactive elements, adequate spacing between targets, works reliably with work gloves
 
 **Content:**
+
 - Alternative text: Descriptive alt text for all equipment diagrams and status icons, empty alt for decorative images
 - Heading structure: Logical H1-H6 hierarchy, each page starts with H1, no skipped heading levels
 - Form labels: Every form field has associated label, required fields clearly marked, error messages descriptive and linked to fields

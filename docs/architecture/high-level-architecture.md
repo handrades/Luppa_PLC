@@ -20,6 +20,7 @@ a reusable foundation for future industrial applications while maintaining compa
 **Structure:** Monorepo with clear module boundaries
 **Monorepo Tool:** pnpm workspaces (better performance and disk efficiency than npm/yarn)
 **Package Organization:**
+
 - `/apps` - Application packages (web, api)
 - `/packages` - Shared libraries (ui, shared-types, config)
 - `/infrastructure` - Docker configs and deployment scripts

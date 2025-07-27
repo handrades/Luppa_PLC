@@ -5,6 +5,7 @@
 **Responsibility:** Handle all authentication and authorization logic including JWT token management, password hashing, role validation, and session management
 
 **Key Interfaces:**
+
 - `login(email: string, password: string): Promise<AuthResponse>`
 - `validateToken(token: string): Promise<User>`
 - `refreshToken(token: string): Promise<string>`
@@ -19,6 +20,7 @@
 **Responsibility:** CRUD operations for sites, validation of site names, cascade handling for site deletion
 
 **Key Interfaces:**
+
 - `createSite(data: SiteInput): Promise<Site>`
 - `getSites(filters: SiteFilters): Promise<PaginatedResponse<Site>>`
 - `updateSite(id: string, data: SiteUpdate): Promise<Site>`
@@ -33,6 +35,7 @@
 **Responsibility:** Manage production cells within sites, enforce site-cell relationships, handle cell-to-equipment cascade operations
 
 **Key Interfaces:**
+
 - `createCell(siteId: string, data: CellInput): Promise<Cell>`
 - `getCellsBySite(siteId: string): Promise<Cell[]>`
 - `moveCell(cellId: string, newSiteId: string): Promise<Cell>`
@@ -47,6 +50,7 @@
 **Responsibility:** Equipment lifecycle management, type validation, equipment-to-PLC relationship management
 
 **Key Interfaces:**
+
 - `createEquipment(cellId: string, data: EquipmentInput): Promise<Equipment>`
 - `getEquipmentByCell(cellId: string): Promise<Equipment[]>`
 - `moveEquipment(equipmentId: string, newCellId: string): Promise<Equipment>`
@@ -61,6 +65,7 @@
 **Responsibility:** Core PLC management including IP address uniqueness, tag ID validation, firmware tracking, search functionality
 
 **Key Interfaces:**
+
 - `createPLC(equipmentId: string, data: PLCInput): Promise<PLC>`
 - `searchPLCs(filters: PLCSearchFilters): Promise<PLCWithHierarchy[]>`
 - `updatePLCFirmware(plcId: string, version: string): Promise<PLC>`
@@ -75,6 +80,7 @@
 **Responsibility:** PLC tag management, data type validation, address conflict detection
 
 **Key Interfaces:**
+
 - `createTag(plcId: string, data: TagInput): Promise<Tag>`
 - `getTagsByPLC(plcId: string): Promise<Tag[]>`
 - `bulkCreateTags(plcId: string, tags: TagInput[]): Promise<Tag[]>`
@@ -89,6 +95,7 @@
 **Responsibility:** Complex hierarchy queries, tree generation, breadcrumb creation, move operations across levels
 
 **Key Interfaces:**
+
 - `getFullHierarchy(): Promise<HierarchyNode[]>`
 - `getBreadcrumbs(entityType: string, entityId: string): Promise<Breadcrumb[]>`
 - `getAncestors(plcId: string): Promise<HierarchyPath>`
@@ -103,6 +110,7 @@
 **Responsibility:** Bulk data operations, CSV parsing/generation, hierarchy validation during import, auto-creation of missing entities
 
 **Key Interfaces:**
+
 - `importPLCs(file: Buffer, options: ImportOptions): Promise<ImportResult>`
 - `exportPLCs(filters: PLCFilters, format: ExportFormat): Promise<Buffer>`
 - `validateCSV(file: Buffer): Promise<ValidationResult>`
@@ -117,6 +125,7 @@
 **Responsibility:** Comprehensive audit logging, risk assessment, compliance reporting, audit log integrity
 
 **Key Interfaces:**
+
 - `logChange(change: AuditEntry): Promise<void>`
 - `getAuditTrail(entityId: string): Promise<AuditLog[]>`
 - `generateComplianceReport(dateRange: DateRange): Promise<Report>`
@@ -131,6 +140,7 @@
 **Responsibility:** In-app notifications, system alerts, batch notification processing
 
 **Key Interfaces:**
+
 - `createNotification(userId: string, notification: NotificationInput): Promise<void>`
 - `getUserNotifications(userId: string): Promise<Notification[]>`
 - `markAsRead(notificationId: string): Promise<void>`
