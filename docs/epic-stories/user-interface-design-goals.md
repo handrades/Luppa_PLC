@@ -39,6 +39,7 @@ supports users who may have visual or motor accessibility needs.
 ## Branding
 
 **Industrial/Technical aesthetic** with:
+
 - Clean, high-contrast color scheme suitable for industrial monitors
 - Sans-serif typography optimized for readability
 - Consistent iconography using industrial symbols where appropriate
@@ -48,6 +49,7 @@ supports users who may have visual or motor accessibility needs.
 ## Target Device and Platforms: Web Responsive
 
 **Web Responsive** supporting:
+
 - Desktop workstations (primary use case for office work)
 - Tablet devices for plant floor access
 - Rugged industrial tablets with touch-optimized interactions

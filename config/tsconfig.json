@@ -26,7 +26,13 @@
       "@config/*": ["packages/config/src/*"]
     }
   },
-  "files": [],
-  "include": [],
+  "include": [
+    "../apps/**/*.ts",
+    "../apps/**/*.tsx", 
+    "../packages/**/*.ts",
+    "../packages/**/*.tsx",
+    "../__tests__/**/*.ts",
+    "../**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

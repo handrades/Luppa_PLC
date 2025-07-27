@@ -3,6 +3,7 @@
 ## Motion Principles
 
 **Industrial Motion Design Philosophy:**
+
 1. **Functional First:** Every animation serves a clear purpose (feedback, transition, or guidance)
 2. **Subtle & Professional:** Enhance usability without drawing attention to the animation itself
 3. **Performance Conscious:** Smooth 60fps animations that don't impact data processing
