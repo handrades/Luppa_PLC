@@ -10,7 +10,7 @@ a reusable foundation for future industrial applications while maintaining compa
 
 ## Platform and Infrastructure Choice
 **Platform:** On-Premise Docker Swarm
-**Key Services:** PostgreSQL 15, Redis 7, Nginx 1.24, Grafana 9.x, Prometheus 2.x
+**Key Services:** PostgreSQL 17.5, Redis 7, Nginx 1.24, Grafana 9.x, Prometheus 2.x
 **Deployment Host and Regions:** Single on-premise data center (air-gapped industrial network)
 
 ## Repository Structure

@@ -133,11 +133,11 @@ export const PLCForm: React.FC<PLCFormProps> = ({
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<PLCInput>({
     resolver: zodResolver(plcSchema),
     defaultValues: {
-      tagId: '',
-      description: '',
-      make: '',
-      model: '',
-      firmwareVersion: '',
+      tagId: undefined,
+      description: undefined,
+      make: undefined,
+      model: undefined,
+      firmwareVersion: undefined,
       ...initialData
     }
   });
@@ -228,7 +228,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
                 <FormControl fullWidth error={!!errors.make}>
                   <FormLabel>Make</FormLabel>
                   <Select {...field}>
-                    <MenuItem value="">Select Make</MenuItem>
+                    <MenuItem value={undefined}>Select Make</MenuItem>
                     <MenuItem value="Allen-Bradley">Allen-Bradley</MenuItem>
                     <MenuItem value="Siemens">Siemens</MenuItem>
                     <MenuItem value="Schneider">Schneider</MenuItem>
@@ -295,7 +295,9 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
-      isAuthenticated: false,
+      get isAuthenticated() {
+        return !!get().token;
+      },
       isLoading: false,
       
       login: async (credentials) => {
@@ -305,7 +307,6 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: response.user,
             token: response.token,
-            isAuthenticated: true,
             isLoading: false
           });
         } catch (error) {
@@ -318,8 +319,7 @@ export const useAuthStore = create<AuthState>()(
         authService.logout();
         set({
           user: null,
-          token: null,
-          isAuthenticated: false
+          token: null
         });
       },
       

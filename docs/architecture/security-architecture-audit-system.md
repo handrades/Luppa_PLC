@@ -5,11 +5,47 @@
 ### JWT Implementation Strategy
 
 ```typescript
+// Required interfaces and types
+interface CacheService {
+  storeSession(sessionId: string, data: SessionData): Promise<void>;
+  getSession(sessionId: string): Promise<SessionData | null>;
+  invalidateSession(sessionId: string): Promise<void>;
+}
+
+interface SessionData {
+  userId: string;
+  loginTime: Date;
+  ipAddress: string;
+  userAgent: string;
+}
+
+interface Request {
+  ip?: string;
+  headers: Record<string, string | string[]>;
+}
+
 // JWT service with enhanced security
 export class AuthService {
   private readonly JWT_SECRET = process.env.JWT_SECRET!;
   private readonly JWT_EXPIRES_IN = '24h';
   private readonly REFRESH_TOKEN_EXPIRES_IN = '7d';
+
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly request?: Request // For accessing IP and User-Agent
+  ) {}
+
+  private getCurrentIP(): string {
+    // Extract IP from request headers, handling proxies
+    return this.request?.ip || 
+           this.request?.headers['x-forwarded-for'] as string ||
+           this.request?.headers['x-real-ip'] as string ||
+           'unknown';
+  }
+
+  private getCurrentUserAgent(): string {
+    return this.request?.headers['user-agent'] || 'unknown';
+  }
 
   async generateTokens(user: User): Promise<AuthTokens> {
     const payload = {
@@ -76,9 +112,25 @@ export class AuthService {
 ### RBAC Implementation
 
 ```typescript
+// Audit service interface
+interface AuditService {
+  logSecurityEvent(event: SecurityEvent): Promise<void>;
+}
+
+interface SecurityEvent {
+  userId: string;
+  action: string;
+  resource: string;
+  requestedAction: string;
+  ipAddress: string;
+  userAgent: string;
+}
+
 // Role-based access control middleware
 export class RBACMiddleware {
-  static authorize(resource: string, action: string) {
+  constructor(private readonly auditService: AuditService) {}
+
+  authorize(resource: string, action: string) {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         const user = req.user; // Set by JWT middleware
@@ -111,7 +163,7 @@ export class RBACMiddleware {
     };
   }
 
-  private static checkPermission(
+  private checkPermission(
     permissions: RolePermissions, 
     resource: string, 
     action: string
@@ -121,16 +173,20 @@ export class RBACMiddleware {
   }
 }
 
+// Create middleware instances with dependencies
+const auditService = new AuditService();
+const rbacMiddleware = new RBACMiddleware(auditService);
+
 // Usage in routes
 router.get('/plcs', 
   authMiddleware.authenticate,
-  RBACMiddleware.authorize('plcs', 'read'),
+  rbacMiddleware.authorize('plcs', 'read'),
   PLCController.list
 );
 
 router.post('/plcs',
   authMiddleware.authenticate,
-  RBACMiddleware.authorize('plcs', 'create'),
+  rbacMiddleware.authorize('plcs', 'create'),
   validationMiddleware.validate(plcCreateSchema),
   PLCController.create
 );
@@ -159,7 +215,15 @@ BEGIN
     audit_user_agent := current_setting('app.user_agent', true);
     audit_session_id := current_setting('app.session_id', true);
     
-    -- Enhanced risk assessment
+    -- Calculate changed fields for UPDATE operations first
+    IF (TG_OP = 'UPDATE') THEN
+        SELECT array_agg(key) INTO changed_fields
+        FROM jsonb_each(to_jsonb(NEW))
+        WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key
+        AND key NOT IN ('updated_at', 'updated_by'); -- Exclude automatic fields
+    END IF;
+    
+    -- Enhanced risk assessment (now changed_fields is available)
     risk_level := CASE 
         -- Critical: System tables, user management
         WHEN TG_TABLE_NAME IN ('users', 'roles') AND TG_OP = 'DELETE' THEN 'CRITICAL'
@@ -180,14 +244,6 @@ BEGIN
         
         ELSE 'LOW'
     END;
-    
-    -- Calculate changed fields for UPDATE operations
-    IF (TG_OP = 'UPDATE') THEN
-        SELECT array_agg(key) INTO changed_fields
-        FROM jsonb_each(to_jsonb(NEW))
-        WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key
-        AND key NOT IN ('updated_at', 'updated_by'); -- Exclude automatic fields
-    END IF;
     
     -- Insert comprehensive audit record
     INSERT INTO audit_logs (

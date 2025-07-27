@@ -5,7 +5,7 @@
 - **Interaction Response:** User interactions (clicks, typing) respond within 100ms
 - **Animation FPS:** Maintain 60fps for all GSAP animations, even with large datasets
 - **Data Operations:** Equipment search/filtering <100ms for datasets up to 10,000 records
-- **Memory Usage:** Total application memory footprint <2GB as specified in requirements
+- **Memory Usage:** Total application memory footprint <500MB (desktop), <200MB (mobile) for optimal browser stability
 
 ## Design Strategies
 

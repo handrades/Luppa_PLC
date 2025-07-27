@@ -272,6 +272,59 @@ paths:
                   format: uuid
                   
 components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SiteIdParam:
+      name: siteId
+      in: path
+      description: Unique identifier for the site
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CellIdParam:
+      name: cellId
+      in: path
+      description: Unique identifier for the cell
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EquipmentIdParam:
+      name: equipmentId
+      in: path
+      description: Unique identifier for the equipment
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PLCIdParam:
+      name: plcId
+      in: path
+      description: Unique identifier for the PLC
+      required: true
+      schema:
+        type: string
+        format: uuid
+
   schemas:
     PLCWithHierarchy:
       allOf:
