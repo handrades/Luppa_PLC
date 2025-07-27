@@ -130,7 +130,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<PLCInput>({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<Partial<PLCInput>>({
     resolver: zodResolver(plcSchema),
     defaultValues: {
       tagId: undefined,
@@ -283,7 +283,6 @@ import { authService } from '@/services/auth.service';
 interface AuthState {
   user: User | null;
   token: string | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
@@ -295,9 +294,6 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
-      get isAuthenticated() {
-        return !!get().token;
-      },
       isLoading: false,
       
       login: async (credentials) => {
@@ -344,6 +340,9 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Selector for isAuthenticated
+export const useIsAuthenticated = () => useAuthStore(state => !!state.token);
 
 // stores/plc.store.ts
 interface PLCFilters {

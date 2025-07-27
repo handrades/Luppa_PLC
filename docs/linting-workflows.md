@@ -116,17 +116,21 @@ Both workflows are designed to produce identical results:
 ## Configuration Files
 
 ### Markdown Linting
+
 - Configuration: `.markdownlint.json`
 - Rules: Relaxed rules with 120 character line limit
 
 ### JSON Linting
+
 - No configuration needed - validates JSON syntax
 
 ### YAML Linting
+
 - Configuration: `config/.yaml-lint.json`
 - Validates YAML syntax and formatting using yaml-lint
 
 ### TypeScript/JavaScript Linting
+
 - Uses workspace-level lint scripts defined in `package.json`
 - Leverages ESLint configuration in `.eslintrc.js`
 - Prettier formatting rules in `.prettierrc`

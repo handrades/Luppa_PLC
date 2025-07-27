@@ -129,6 +129,7 @@ graph TD
 ```
 
 #### Edge Cases & Error Handling:
+
 - No search results found → Suggest similar terms, check spelling
 - Network timeout in air-gapped environment → Show cached results, retry option
 - Equipment found but access restricted → Clear permission message
@@ -139,6 +140,7 @@ graph TD
 ## Wireframes & Mockups
 
 ### Primary Design Files
+
 **Primary Design Files:** React Storybook + Component Library
 - Build components directly in React/TypeScript for living design system
 - Use Storybook for component documentation and testing
@@ -330,6 +332,7 @@ graph TD
 ### Typography
 
 #### Font Families
+
 - **Primary:** 'Roboto', sans-serif (Material-UI default, excellent readability)
 - **Secondary:** 'Roboto Condensed', sans-serif (for data-dense areas, space efficiency)  
 - **Monospace:** 'Roboto Mono', monospace (for IP addresses, technical codes, data values)
@@ -374,6 +377,7 @@ graph TD
 ## Accessibility Requirements
 
 ### Compliance Target
+
 **Standard:** WCAG 2.1 AA compliance with industrial environment enhancements
 
 ### Key Requirements
@@ -469,6 +473,7 @@ graph TD
 ## Performance Considerations
 
 ### Performance Goals
+
 - **Page Load:** Initial application load <2 seconds, subsequent navigation <500ms
 - **Interaction Response:** User interactions (clicks, typing) respond within 100ms
 - **Animation FPS:** Maintain 60fps for all GSAP animations, even with large datasets

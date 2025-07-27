@@ -1,6 +1,7 @@
 # Performance Considerations
 
 ## Performance Goals
+
 - **Page Load:** Initial application load <2 seconds, subsequent navigation <500ms
 - **Interaction Response:** User interactions (clicks, typing) respond within 100ms
 - **Animation FPS:** Maintain 60fps for all GSAP animations, even with large datasets

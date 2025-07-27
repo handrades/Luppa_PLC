@@ -1,6 +1,7 @@
 # Data Models
 
 ## User
+
 **Purpose:** Core authentication and authorization entity for all framework applications
 
 **Key Attributes:**
@@ -32,11 +33,13 @@ interface User {
 ```
 
 ### User Relationships
+
 - Has one Role (many-to-one with roles table)
 - Has many AuditLogs (one-to-many with audit_logs)
 - Has many Notifications (one-to-many with notifications)
 
 ## Site
+
 **Purpose:** Top-level organizational unit representing physical locations
 
 **Key Attributes:**
@@ -61,10 +64,12 @@ interface Site {
 ```
 
 ### Site Relationships
+
 - Has many Cells (one-to-many with cells)
 - Created/Updated by User (many-to-one with users)
 
 ## Cell
+
 **Purpose:** Production cells or areas within a site
 
 **Key Attributes:**
@@ -93,11 +98,13 @@ interface Cell {
 ```
 
 ### Cell Relationships
+
 - Belongs to Site (many-to-one with sites)
 - Has many Equipment (one-to-many with equipment)
 - Created/Updated by User (many-to-one with users)
 
 ## Equipment
+
 **Purpose:** Physical equipment units within a cell
 
 **Key Attributes:**
@@ -135,11 +142,13 @@ enum EquipmentType {
 ```
 
 ### Equipment Relationships
+
 - Belongs to Cell (many-to-one with cells)
 - Has many PLCs (one-to-many with plcs)
 - Created/Updated by User (many-to-one with users)
 
 ## PLC
+
 **Purpose:** Programmable Logic Controllers and industrial control devices
 
 **Key Attributes:**
@@ -176,11 +185,13 @@ interface PLC {
 ```
 
 ### PLC Relationships
+
 - Belongs to Equipment (many-to-one with equipment)
 - Has many Tags (one-to-many with tags)
 - Created/Updated by User (many-to-one with users)
 
 ## Tag
+
 **Purpose:** Data points and I/O tags associated with PLCs
 
 **Key Attributes:**
@@ -223,10 +234,12 @@ enum TagDataType {
 ```
 
 ### Tag Relationships
+
 - Belongs to PLC (many-to-one with plcs)
 - Created/Updated by User (many-to-one with users)
 
 ## AuditLog
+
 **Purpose:** ISO compliance tracking for all data modifications across the framework
 
 **Key Attributes:**
@@ -265,10 +278,12 @@ enum AuditAction {
 ```
 
 ### AuditLog Relationships
+
 - Belongs to User (many-to-one with users)
 - Polymorphic relationship to any audited table via table_name/record_id
 
 ## Role
+
 **Purpose:** Define permission sets for RBAC across all framework applications
 
 **Key Attributes:**
@@ -325,4 +340,5 @@ interface RolePermissions {
 ```
 
 ### Role Relationships
+
 - Has many Users (one-to-many with users)

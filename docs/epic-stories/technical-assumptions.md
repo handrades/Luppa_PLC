@@ -1,6 +1,7 @@
 # Technical Assumptions
 
 ## Repository Structure: Monorepo
+
 **Monorepo** approach using a single repository containing:
 - Shared framework components and libraries
 - Backend API services
@@ -12,6 +13,7 @@ This supports the multi-app framework vision while maintaining code sharing and 
 workflows.
 
 ## Service Architecture
+
 **Layered Monolith with Framework Foundation** - A structured monolithic application with clear separation
 of concerns:
 - **Infrastructure Layer**: Docker Swarm orchestration, PostgreSQL, Redis, Nginx
@@ -32,6 +34,7 @@ The monolith will be structured with clear module boundaries using:
 - **Independent Build Artifacts**: Module structure that allows extracting services as separate deployables when needed
 
 ## Testing Requirements
+
 **Unit + Integration Testing** strategy:
 - **Unit Tests**: Jest for backend logic and React Testing Library for components
 - **Integration Tests**: API endpoint testing with supertest, database integration tests
@@ -42,6 +45,7 @@ The monolith will be structured with clear module boundaries using:
 - No requirement for full E2E automation initially due to resource constraints
 
 ## Additional Technical Assumptions and Requests
+
 - **Database Strategy**: PostgreSQL primary with Redis for session management and caching
 - **Authentication**: Local JWT-based auth with bcrypt password hashing (no external providers)
 - **API Design**: RESTful APIs with consistent error handling and response formats

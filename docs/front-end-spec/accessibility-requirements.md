@@ -1,6 +1,7 @@
 # Accessibility Requirements
 
 ## Compliance Target
+
 **Standard:** WCAG 2.1 AA compliance with industrial environment enhancements
 
 ## Key Requirements

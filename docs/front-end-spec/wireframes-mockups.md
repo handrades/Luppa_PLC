@@ -1,6 +1,7 @@
 # Wireframes & Mockups
 
 ## Primary Design Files
+
 **Primary Design Files:** React Storybook + Component Library
 - Build components directly in React/TypeScript for living design system
 - Use Storybook for component documentation and testing

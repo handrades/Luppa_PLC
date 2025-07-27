@@ -5,6 +5,7 @@
 ## Goals and Background Context
 
 ### Goals
+
 - Deploy a functional inventory application for cataloging industrial equipment (PLCs, sensors, controllers) that
   serves process and controls engineers
 - Establish a reusable multi-app framework foundation that accelerates future industrial application development
@@ -16,6 +17,7 @@
 - Enable efficient equipment tracking with site hierarchy and flexible tagging system
 
 ### Background Context
+
 The industrial equipment management landscape lacks modern, user-friendly solutions tailored for process
 engineers working in on-premise, air-gapped environments. Current systems are often outdated, expensive,
 or cloud-dependent, making them unsuitable for industrial operations that require reliable offline
@@ -45,6 +47,7 @@ consistency and compliance across the platform.
 ## Requirements
 
 ### Functional Requirements
+
 **FR1:** The system shall provide CRUD operations (Create, Read, Update, Delete) for industrial equipment
 records including PLCs, sensors, controllers, and related equipment  
 **FR2:** The system shall organize equipment using a hierarchical structure with site_name, cell_type, and
@@ -62,6 +65,7 @@ all equipment fields
 **FR12:** The system shall support configuration management through app settings and feature flags
 
 ### Non-Functional Requirements
+
 **NFR1:** System response time for filtered queries must be under 100ms  
 **NFR2:** Page load times must be under 2 seconds for initial load and under 500ms for navigation  
 **NFR3:** System must support scaling from 300 to 10,000+ equipment records without performance degradation  
@@ -78,12 +82,14 @@ all equipment fields
 ## User Interface Design Goals
 
 ### Overall UX Vision
+
 The interface should prioritize **industrial efficiency and data clarity** with a clean, functional design
 that supports rapid information access during plant visits and troubleshooting scenarios. The UX should feel
 familiar to technical users while being intuitive enough for occasional users. Focus on **information
 density** and **task completion speed** over aesthetic flourishes.
 
 ### Key Interaction Paradigms
+
 - **Table-centric views** with advanced filtering and sorting for equipment listings
 - **Modal dialogs** for CRUD operations to maintain context
 - **Keyboard shortcuts** for power users who need rapid data entry
@@ -96,6 +102,7 @@ density** and **task completion speed** over aesthetic flourishes.
 - **Offline-First Design**: Clear visual indicators for sync status and local changes pending upload
 
 ### Core Screens and Views
+
 - **Equipment Listing Screen** - Primary data grid with advanced filtering
 - **Equipment Detail/Edit Screen** - Comprehensive CRUD form with validation
 - **Dashboard Screen** - Site summaries, KPIs, and quick access panels
@@ -106,10 +113,12 @@ density** and **task completion speed** over aesthetic flourishes.
 - **Site Hierarchy Navigator** - Visual tree view of site organization
 
 ### Accessibility: WCAG AA
+
 Meeting WCAG AA standards ensures usability in industrial environments with varying lighting conditions and
 supports users who may have visual or motor accessibility needs.
 
 ### Branding
+
 **Industrial/Technical aesthetic** with:
 - Clean, high-contrast color scheme suitable for industrial monitors
 - Sans-serif typography optimized for readability
@@ -118,6 +127,7 @@ supports users who may have visual or motor accessibility needs.
 - Minimal animations to avoid distraction in critical work environments
 
 ### Target Device and Platforms: Web Responsive
+
 **Web Responsive** supporting:
 - Desktop workstations (primary use case for office work)
 - Tablet devices for plant floor access
@@ -127,6 +137,7 @@ supports users who may have visual or motor accessibility needs.
 ## Technical Assumptions
 
 ### Repository Structure: Monorepo
+
 **Monorepo** approach using a single repository containing:
 - Shared framework components and libraries
 - Backend API services
@@ -138,6 +149,7 @@ This supports the multi-app framework vision while maintaining code sharing and 
 workflows.
 
 ### Service Architecture
+
 **Layered Monolith with Framework Foundation** - A structured monolithic application with clear separation
 of concerns:
 - **Infrastructure Layer**: Docker Swarm orchestration, PostgreSQL, Redis, Nginx
@@ -158,6 +170,7 @@ The monolith will be structured with clear module boundaries using:
 - **Independent Build Artifacts**: Module structure that allows extracting services as separate deployables when needed
 
 ### Testing Requirements
+
 **Unit + Integration Testing** strategy:
 - **Unit Tests**: Jest for backend logic and React Testing Library for components
 - **Integration Tests**: API endpoint testing with supertest, database integration tests
@@ -168,6 +181,7 @@ The monolith will be structured with clear module boundaries using:
 - No requirement for full E2E automation initially due to resource constraints
 
 ### Additional Technical Assumptions and Requests
+
 - **Database Strategy**: PostgreSQL primary with Redis for session management and caching
 - **Authentication**: Local JWT-based auth with bcrypt password hashing (no external providers)
 - **API Design**: RESTful APIs with consistent error handling and response formats
@@ -211,11 +225,13 @@ before any feature development can begin. It transforms the project from documen
 codebase with working health checks and basic UI routing.
 
 ### Story 0.1: Monorepo Structure & Package Management
+
 As a developer,
 I want a properly structured monorepo with package management configured,
 so that I can organize code modules and share dependencies efficiently.
 
 #### Acceptance Criteria
+
 1: Initialize pnpm workspace with pnpm-workspace.yaml defining apps/*, packages/* locations
 2: Create folder structure: /apps (web, api), /packages (shared-types, ui-components, config), /infrastructure (docker, scripts)
 3: Configure root package.json with workspace scripts: dev, build, test, lint
@@ -226,11 +242,13 @@ so that I can organize code modules and share dependencies efficiently.
 8: Configure ESLint and Prettier with workspace-wide rules and .editorconfig
 
 ### Story 0.2: Backend Application Scaffolding
+
 As a backend developer,
 I want a working Express application with TypeScript and basic middleware,
 so that I can start implementing API endpoints.
 
 #### Acceptance Criteria
+
 1: Initialize Express + TypeScript application in /apps/api with proper structure
 2: Implement GET /health endpoint returning status, timestamp, version, environment
 3: Configure essential middleware: helmet, cors, compression, express.json, request-id
@@ -241,11 +259,13 @@ so that I can start implementing API endpoints.
 8: Implement graceful shutdown handling and port configuration from environment
 
 ### Story 0.3: Frontend Application Scaffolding
+
 As a frontend developer,
 I want a working React application with routing and Material-UI configured,
 so that I can start building user interfaces.
 
 #### Acceptance Criteria
+
 1: Initialize Vite + React + TypeScript project in /apps/web
 2: Install and configure Material-UI v7 with custom industrial theme
 3: Set up React Router with routes: /login, / (dashboard), /equipment, 404
@@ -256,11 +276,13 @@ so that I can start building user interfaces.
 8: Set up development proxy to backend API for local development
 
 ### Story 0.4: Docker Development Environment
+
 As a developer,
 I want a complete Docker Compose setup for local development,
 so that I can run all services with a single command.
 
 #### Acceptance Criteria
+
 1: Create docker-compose.dev.yml with services: api, web, postgres, redis, nginx
 2: Configure PostgreSQL 17 with initialization scripts and persistent volumes
 3: Configure Redis 8 with memory limits and AOF persistence
@@ -271,11 +293,13 @@ so that I can run all services with a single command.
 8: Add health checks for all services with appropriate intervals
 
 ### Story 0.5: Database Schema & Migration Setup
+
 As a developer,
 I want database migrations and initial schema configured,
 so that I can manage database changes systematically.
 
 #### Acceptance Criteria
+
 1: Install and configure TypeORM with PostgreSQL driver and connection pooling
 2: Create TypeORM configuration with environment-based settings
 3: Create initial migration with users, roles tables and update_timestamp trigger
@@ -286,11 +310,13 @@ so that I can manage database changes systematically.
 8: Create database backup script for development environment
 
 ### Story 0.6: CI/CD Pipeline Foundation
+
 As a DevOps engineer,
 I want automated testing and building via GitHub Actions,
 so that code quality is maintained and deployments are reliable.
 
 #### Acceptance Criteria
+
 1: Create .github/workflows/ci.yml with lint, type-check, test, and build jobs
 2: Configure job matrix for Node.js versions with parallel execution
 3: Set up caching for pnpm dependencies and build artifacts
@@ -301,11 +327,13 @@ so that code quality is maintained and deployments are reliable.
 8: Configure branch protection rules for main branch
 
 ### Story 0.7: Development Tooling & Scripts
+
 As a developer,
 I want comprehensive development tools and scripts configured,
 so that I can maintain code quality and productivity.
 
 #### Acceptance Criteria
+
 1: Configure Git hooks with Husky for pre-commit, commit-msg, and pre-push
 2: Set up lint-staged for incremental linting on staged files
 3: Configure Jest testing framework with coverage thresholds
@@ -316,11 +344,13 @@ so that I can maintain code quality and productivity.
 8: Add Plop.js templates for component and API endpoint generation
 
 ### Story 0.8: Documentation & Onboarding
+
 As a new developer,
 I want comprehensive documentation and quick start guides,
 so that I can begin contributing within 30 minutes.
 
 #### Acceptance Criteria
+
 1: Create SETUP.md with prerequisites, quick start, and detailed instructions
 2: Create CONTRIBUTING.md with code style, branching, and PR guidelines
 3: Create ARCHITECTURE.md with system overview and key decisions
@@ -337,11 +367,13 @@ It delivers the core Docker environment, authentication system, and a basic heal
 operational status, providing immediate value while setting up essential services.
 
 ### Story 1.1: Docker Environment Setup
+
 As a DevOps engineer,
 I want to configure the complete Docker Swarm environment with all service definitions,
 so that the application can be deployed consistently across environments.
 
 #### Acceptance Criteria
+
 1: Docker Compose configuration defines all services: app, postgres, redis, nginx, grafana, prometheus
 2: PostgreSQL service includes connection pooling configuration and persistent volume mapping
 3: Redis service configured with appropriate memory limits and persistence settings
@@ -352,11 +384,13 @@ so that the application can be deployed consistently across environments.
 8: Documentation includes setup instructions and troubleshooting guide
 
 ### Story 1.2: Database Schema Foundation
+
 As a developer,
 I want to create the core database schema with user management tables,
 so that authentication and authorization can be implemented.
 
 #### Acceptance Criteria
+
 1: PostgreSQL database created with proper encoding and locale settings
 2: Core tables created: users, roles, permissions, user_roles with proper constraints
 3: UUID primary keys implemented with gen_random_uuid() function
@@ -367,11 +401,13 @@ so that authentication and authorization can be implemented.
 8: Connection pooling configured with appropriate limits
 
 ### Story 1.3: JWT Authentication Implementation
+
 As a system user,
 I want to authenticate using email and password to receive a JWT token,
 so that I can access protected resources securely.
 
 #### Acceptance Criteria
+
 1: POST /auth/login endpoint accepts email/password and returns JWT token
 2: Passwords hashed using bcrypt with appropriate salt rounds
 3: JWT tokens include user ID, roles, and 24-hour expiration
@@ -382,11 +418,13 @@ so that I can access protected resources securely.
 8: Session tracking implemented in Redis with token blacklist capability
 
 ### Story 1.4: Basic Health Check & System Info
+
 As a system administrator,
 I want to verify the application and all services are operational,
 so that I can monitor system health and troubleshoot issues.
 
 #### Acceptance Criteria
+
 1: GET /health endpoint returns 200 OK with service status information
 2: Health check verifies database connectivity and returns connection pool stats
 3: Redis connectivity verified with memory usage information
@@ -403,11 +441,13 @@ It includes comprehensive audit logging for ISO compliance, user management APIs
 core middleware that ensure consistent behavior across the platform.
 
 ### Story 2.1: Audit Logging Service
+
 As a compliance officer,
 I want all data modifications automatically logged with full context,
 so that we maintain ISO compliance and can track all system changes.
 
 #### Acceptance Criteria
+
 1: audit_logs table created with proper foreign keys and cascading deletes
 2: Audit middleware automatically captures user, timestamp, action, and changes for all mutations
 3: JSON diff stored for before/after states of modified records
@@ -418,11 +458,13 @@ so that we maintain ISO compliance and can track all system changes.
 8: Audit entries include IP address and user agent information
 
 ### Story 2.2: User Management API
+
 As an administrator,
 I want to manage user accounts through a complete API,
 so that I can onboard engineers and control system access.
 
 #### Acceptance Criteria
+
 1: POST /api/users endpoint creates new users with email validation
 2: GET /api/users lists all users with pagination and role filtering
 3: PUT /api/users/:id updates user details with audit logging
@@ -433,11 +475,13 @@ so that I can onboard engineers and control system access.
 8: API returns consistent error formats with appropriate HTTP status codes
 
 ### Story 2.3: Monitoring Dashboard Setup
+
 As a system administrator,
 I want to view real-time system metrics and performance data,
 so that I can proactively identify and resolve issues.
 
 #### Acceptance Criteria
+
 1: Prometheus configured to scrape application metrics every 30 seconds
 2: Application exposes /metrics endpoint with custom business metrics
 3: Grafana dashboards created for system resources, API performance, and error rates
@@ -448,11 +492,13 @@ so that I can proactively identify and resolve issues.
 8: Dashboards accessible via Nginx reverse proxy at /monitoring
 
 ### Story 2.4: Core Middleware Implementation
+
 As a developer,
 I want consistent request handling across all endpoints,
 so that the application behaves predictably and securely.
 
 #### Acceptance Criteria
+
 1: Request ID middleware generates unique ID for request tracing
 2: Error handling middleware catches all errors and returns consistent format
 3: Request validation middleware uses Joi schemas with detailed error messages
@@ -469,11 +515,13 @@ delivers industrial-themed components, responsive layouts, and a high-performanc
 development of the inventory app and all future applications.
 
 ### Story 3.1: React Project Setup & Theme Configuration
+
 As a frontend developer,
 I want a properly configured React project with industrial theming,
 so that all UI components have consistent styling.
 
 #### Acceptance Criteria
+
 1: React project created with Vite, TypeScript, and Material-UI dependencies
 2: Industrial color palette defined with high contrast for manufacturing environments
 3: Typography scale configured for optimal readability on varied displays
@@ -484,11 +532,13 @@ so that all UI components have consistent styling.
 8: Build process outputs optimized bundles under 500KB initial load
 
 ### Story 3.2: Layout Components & Navigation
+
 As a user,
 I want consistent page layouts with intuitive navigation,
 so that I can efficiently move between different application sections.
 
 #### Acceptance Criteria
+
 1: AppLayout component with header, sidebar, and main content areas
 2: Responsive sidebar collapses to hamburger menu on mobile devices
 3: Breadcrumb navigation shows current location in app hierarchy
@@ -499,11 +549,13 @@ so that I can efficiently move between different application sections.
 8: All layouts tested across desktop, tablet, and mobile viewports
 
 ### Story 3.3: Industrial Data Grid Component
+
 As an engineer,
 I want a high-performance data grid for viewing equipment lists,
 so that I can efficiently browse and manage large datasets.
 
 #### Acceptance Criteria
+
 1: Virtual scrolling supports 10,000+ rows without performance degradation
 2: Column sorting works with proper visual indicators
 3: Advanced filtering per column with appropriate input types
@@ -514,11 +566,13 @@ so that I can efficiently browse and manage large datasets.
 8: Keyboard navigation supports arrow keys and tab
 
 ### Story 3.4: Form Components & Validation UI
+
 As a user,
 I want clear form inputs with helpful validation feedback,
 so that I can accurately enter equipment data.
 
 #### Acceptance Criteria
+
 1: Text, number, select, and date picker components styled consistently
 2: Form validation displays inline error messages below fields
 3: Required field indicators clearly visible
@@ -535,11 +589,13 @@ tracking. It establishes the data model, CRUD operations, and basic UI for manag
 with proper site hierarchy organization.
 
 ### Story 4.1: Inventory Database Schema
+
 As a database administrator,
 I want the equipment inventory tables properly structured,
 so that all equipment data is stored efficiently with proper relationships.
 
 #### Acceptance Criteria
+
 1: equipment_inventory table created with columns: id, description, make, model, ip, site_name, cell_type, cell_id
 2: equipment_id and equipment_type columns link to equipment classification system
 3: tags column implemented as TEXT array with GIN index for fast searching
@@ -550,11 +606,13 @@ so that all equipment data is stored efficiently with proper relationships.
 8: Migration includes seed data for testing with 50 sample records
 
 ### Story 4.2: Equipment CRUD API
+
 As an API developer,
 I want RESTful endpoints for equipment management,
 so that the frontend can perform all necessary operations.
 
 #### Acceptance Criteria
+
 1: POST /api/equipment creates new equipment with validation
 2: GET /api/equipment lists all equipment with pagination (default 50 per page)
 3: GET /api/equipment/:id returns single equipment record with full details
@@ -565,11 +623,13 @@ so that the frontend can perform all necessary operations.
 8: API returns consistent error format with field-level validation errors
 
 ### Story 4.3: Equipment List UI
+
 As an engineer,
 I want to view all equipment in a searchable list,
 so that I can quickly find specific PLCs or controllers.
 
 #### Acceptance Criteria
+
 1: Equipment list page displays data grid with virtual scrolling
 2: Default columns show: description, make, model, IP, site, cell type
 3: Search box filters across all text fields with debouncing
@@ -580,11 +640,13 @@ so that I can quickly find specific PLCs or controllers.
 8: Loading state shows skeleton screen during data fetch
 
 ### Story 4.4: Equipment Form UI
+
 As an engineer,
 I want to create and edit equipment records through an intuitive form,
 so that I can maintain accurate inventory data.
 
 #### Acceptance Criteria
+
 1: Form displays all equipment fields with appropriate input types
 2: Site name autocompletes from existing values in database
 3: Tag input allows adding multiple tags with chip display
@@ -595,11 +657,13 @@ so that I can maintain accurate inventory data.
 8: Form pre-populates when editing existing equipment
 
 ### Story 4.5: Site Hierarchy Management
+
 As a **process engineer**,  
 I want **to organize equipment by site hierarchy**,  
 so that **I can quickly locate equipment by physical location and organization structure**.
 
 #### Acceptance Criteria
+
 1: Site dropdown populated from existing equipment data
 2: Cell type and cell ID fields with validation
 3: Hierarchical display option in equipment listing
@@ -613,11 +677,13 @@ large equipment datasets. It delivers bulk operations, advanced filtering, compr
 dashboards that transform the basic CRUD system into a complete industrial inventory solution.
 
 ### Story 5.1: Advanced Filtering System
+
 As an engineer,
 I want to filter equipment using multiple criteria simultaneously,
 so that I can quickly narrow down to specific equipment subsets.
 
 #### Acceptance Criteria
+
 1: Filter panel allows selection of multiple sites, cell types, and equipment types
 2: Date range filters for created and updated timestamps
 3: IP address range filtering with CIDR notation support
@@ -628,11 +694,13 @@ so that I can quickly narrow down to specific equipment subsets.
 8: URL updates to reflect current filters for shareable links
 
 ### Story 5.2: Full-Text Search Implementation
+
 As an engineer,
 I want to search across all equipment fields with a single query,
 so that I can find equipment without knowing exact field values.
 
 #### Acceptance Criteria
+
 1: PostgreSQL full-text search configured with proper indexes
 2: Search includes description, make, model, tags, and site fields
 3: Search supports partial matches and fuzzy matching
@@ -643,11 +711,13 @@ so that I can find equipment without knowing exact field values.
 8: API endpoint GET /api/equipment/search with pagination
 
 ### Story 5.3: Bulk Import/Export Operations
+
 As a data administrator,
 I want to import and export equipment data in bulk,
 so that I can efficiently manage large datasets and migrations.
 
 #### Acceptance Criteria
+
 1: CSV template downloadable with all required fields
 2: Drag-and-drop CSV upload with progress indicator
 3: Import preview shows first 10 rows with validation status
@@ -658,11 +728,13 @@ so that I can efficiently manage large datasets and migrations.
 8: Import history log with rollback capability
 
 ### Story 5.4: Equipment Analytics Dashboard
+
 As a manager,
 I want to view equipment distribution and statistics,
 so that I can make informed decisions about inventory management.
 
 #### Acceptance Criteria
+
 1: Dashboard displays total equipment count with trend indicator
 2: Pie charts show distribution by site, make, and equipment type
 3: Bar chart displays top 10 models by count
@@ -689,6 +761,7 @@ so that I can make informed decisions about inventory management.
 - Another developer successfully onboards using only documentation
 
 ### Epic 5 Additional Stories: Advanced Inventory Features
+
 - **Story 5.5**: Flexible Tagging System Implementation
 - **Story 5.6**: Multi-Format Data Export (PDF, Excel, CSV)
 - **Story 5.7**: CSV Import Functionality with Advanced Validation
@@ -696,6 +769,7 @@ so that I can make informed decisions about inventory management.
 - **Story 5.9**: Audit Trail Viewer with Filtering and Search
 
 ### Future Epic Considerations: Compliance & Reporting Enhancement
+
 - **Story X.1**: Advanced User Activity Tracking and History
 - **Story X.2**: Automated Compliance Report Scheduling
 - **Story X.3**: Real-time Equipment Status and Health Indicators
@@ -705,6 +779,7 @@ so that I can make informed decisions about inventory management.
 ## Checklist Results Report
 
 ### Executive Summary
+
 - **Overall PRD Completeness**: 92% - The PRD is comprehensive with clear goals, requirements, and well-structured epics
 - **MVP Scope Appropriateness**: Just Right - Well-balanced between functionality and feasibility
 - **Readiness for Architecture Phase**: Ready - All critical elements are defined for architectural design
@@ -743,6 +818,7 @@ so that I can make informed decisions about inventory management.
 - Future enhancement roadmap could include more technical debt considerations
 
 ### MVP Scope Assessment
+
 **Scope Evaluation**: **Just Right**
 - Epic 1-2 provide solid MVP foundation with immediate user value
 - Epic 3-5 provide clear progression without feature bloat
@@ -767,6 +843,7 @@ so that I can make informed decisions about inventory management.
 - Dark mode support could be post-MVP
 
 ### Technical Readiness
+
 **Assessment**: **Nearly Ready**
 - Technical constraints are clearly articulated
 - Technology stack choices are well-justified
@@ -798,6 +875,7 @@ so that I can make informed decisions about inventory management.
    - Consider breaking down larger stories if they exceed 4-hour implementation estimates
 
 ### Final Decision
+
 **NEARLY READY FOR ARCHITECT**: The PRD provides excellent foundation with clear requirements,
 well-structured epics, and appropriate technical guidance. Minor refinements to user journey details and data
 modeling would strengthen the handoff to the architecture phase.
@@ -805,10 +883,12 @@ modeling would strengthen the handoff to the architecture phase.
 ## Next Steps
 
 ### UX Expert Prompt
+
 Review the UI/UX design goals and create detailed wireframes and user journey maps for the core equipment
 management workflows, focusing on industrial efficiency and accessibility requirements.
 
 ### Architect Prompt
+
 Design the technical architecture for this multi-app industrial inventory framework, focusing on database
 performance optimization, containerized deployment strategy, and offline capability implementation while
 maintaining the specified performance targets and scalability requirements.

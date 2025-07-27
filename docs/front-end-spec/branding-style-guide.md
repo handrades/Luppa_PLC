@@ -41,6 +41,7 @@
 ## Typography
 
 ### Font Families
+
 - **Primary:** 'Roboto', sans-serif (Material-UI default, excellent readability)
 - **Secondary:** 'Roboto Condensed', sans-serif (for data-dense areas, space efficiency)  
 - **Monospace:** 'Roboto Mono', monospace (for IP addresses, technical codes, data values)

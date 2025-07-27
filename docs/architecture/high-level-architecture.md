@@ -1,6 +1,7 @@
 # High Level Architecture
 
 ## Technical Summary
+
 The Industrial Inventory Multi-App Framework employs a layered monolithic architecture deployed via Docker Swarm
 for on-premise industrial environments. Built with React + TypeScript frontend and Node.js + Express backend, the
 system provides RESTful APIs for communication between layers. The architecture leverages PostgreSQL for persistent
@@ -9,11 +10,13 @@ the PRD goals of high performance (<100ms queries), ISO compliance through compr
 a reusable foundation for future industrial applications while maintaining compatibility with air-gapped networks.
 
 ## Platform and Infrastructure Choice
+
 **Platform:** On-Premise Docker Swarm
 **Key Services:** PostgreSQL 17.5, Redis 7, Nginx 1.24, Grafana 9.x, Prometheus 2.x
 **Deployment Host and Regions:** Single on-premise data center (air-gapped industrial network)
 
 ## Repository Structure
+
 **Structure:** Monorepo with clear module boundaries
 **Monorepo Tool:** pnpm workspaces (better performance and disk efficiency than npm/yarn)
 **Package Organization:**
@@ -65,6 +68,7 @@ graph TB
 ```
 
 ## Architectural Patterns
+
 - **Layered Architecture:** Clear separation between presentation, business logic, and data layers - *Rationale:* Simplifies development and maintenance for solo developer while enabling future team scaling
 - **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - *Rationale:* Accelerates development of future apps within the framework
 - **Repository Pattern:** Abstract data access through TypeORM repositories - *Rationale:* Enables testing and potential future database migrations

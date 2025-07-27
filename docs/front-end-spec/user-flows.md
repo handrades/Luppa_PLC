@@ -41,6 +41,7 @@ graph TD
 ```
 
 ### Edge Cases & Error Handling:
+
 - No search results found → Suggest similar terms, check spelling
 - Network timeout in air-gapped environment → Show cached results, retry option
 - Equipment found but access restricted → Clear permission message

@@ -9,6 +9,7 @@ streamlining the development process for modern fullstack applications where the
 intertwined.
 
 ## Starter Template or Existing Project
+
 N/A - Greenfield project
 
 ## Change Log
@@ -21,6 +22,7 @@ N/A - Greenfield project
 ## High Level Architecture
 
 ### Technical Summary
+
 The Industrial Inventory Multi-App Framework employs a layered monolithic architecture deployed via Docker Swarm
 for on-premise industrial environments. Built with React + TypeScript frontend and Node.js + Express backend, the
 system provides RESTful APIs for communication between layers. The architecture leverages PostgreSQL for persistent
@@ -29,11 +31,13 @@ the PRD goals of high performance (<100ms queries), ISO compliance through compr
 a reusable foundation for future industrial applications while maintaining compatibility with air-gapped networks.
 
 ### Platform and Infrastructure Choice
+
 **Platform:** On-Premise Docker Swarm
 **Key Services:** PostgreSQL 15, Redis 7, Nginx 1.24, Grafana 9.x, Prometheus 2.x
 **Deployment Host and Regions:** Single on-premise data center (air-gapped industrial network)
 
 ### Repository Structure
+
 **Structure:** Monorepo with clear module boundaries
 **Monorepo Tool:** pnpm workspaces (better performance and disk efficiency than npm/yarn)
 **Package Organization:**
@@ -85,6 +89,7 @@ graph TB
 ```
 
 ### Architectural Patterns
+
 - **Layered Architecture:** Clear separation between presentation, business logic, and data layers - *Rationale:* Simplifies development and maintenance for solo developer while enabling future team scaling
 - **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - *Rationale:* Accelerates development of future apps within the framework
 - **Repository Pattern:** Abstract data access through TypeORM repositories - *Rationale:* Enables testing and potential future database migrations
@@ -127,6 +132,7 @@ This is the DEFINITIVE technology selection for the entire project. All developm
 ## Data Models
 
 ### User
+
 **Purpose:** Core authentication and authorization entity for all framework applications
 
 **Key Attributes:**
@@ -158,11 +164,13 @@ interface User {
 ```
 
 #### User Relationships
+
 - Has one Role (many-to-one with roles table)
 - Has many AuditLogs (one-to-many with audit_logs)
 - Has many Notifications (one-to-many with notifications)
 
 ### Site
+
 **Purpose:** Top-level organizational unit representing physical locations
 
 **Key Attributes:**
@@ -187,10 +195,12 @@ interface Site {
 ```
 
 #### Site Relationships
+
 - Has many Cells (one-to-many with cells)
 - Created/Updated by User (many-to-one with users)
 
 ### Cell
+
 **Purpose:** Production cells or areas within a site
 
 **Key Attributes:**
@@ -219,11 +229,13 @@ interface Cell {
 ```
 
 #### Cell Relationships
+
 - Belongs to Site (many-to-one with sites)
 - Has many Equipment (one-to-many with equipment)
 - Created/Updated by User (many-to-one with users)
 
 ### Equipment
+
 **Purpose:** Physical equipment units within a cell
 
 **Key Attributes:**
@@ -261,11 +273,13 @@ enum EquipmentType {
 ```
 
 #### Equipment Relationships
+
 - Belongs to Cell (many-to-one with cells)
 - Has many PLCs (one-to-many with plcs)
 - Created/Updated by User (many-to-one with users)
 
 ### PLC
+
 **Purpose:** Programmable Logic Controllers and industrial control devices
 
 **Key Attributes:**
@@ -302,11 +316,13 @@ interface PLC {
 ```
 
 #### PLC Relationships
+
 - Belongs to Equipment (many-to-one with equipment)
 - Has many Tags (one-to-many with tags)
 - Created/Updated by User (many-to-one with users)
 
 ### Tag
+
 **Purpose:** Data points and I/O tags associated with PLCs
 
 **Key Attributes:**
@@ -349,10 +365,12 @@ enum TagDataType {
 ```
 
 #### Tag Relationships
+
 - Belongs to PLC (many-to-one with plcs)
 - Created/Updated by User (many-to-one with users)
 
 ### AuditLog
+
 **Purpose:** ISO compliance tracking for all data modifications across the framework
 
 **Key Attributes:**
@@ -391,10 +409,12 @@ enum AuditAction {
 ```
 
 #### AuditLog Relationships
+
 - Belongs to User (many-to-one with users)
 - Polymorphic relationship to any audited table via table_name/record_id
 
 ### Role
+
 **Purpose:** Define permission sets for RBAC across all framework applications
 
 **Key Attributes:**
@@ -441,6 +461,7 @@ interface RolePermissions {
 ```
 
 #### Role Relationships
+
 - Has many Users (one-to-many with users)
 
 ## API Specification
@@ -737,6 +758,7 @@ components:
 ## Components
 
 ### Auth Service
+
 **Responsibility:** Handle all authentication and authorization logic including JWT token management, password hashing, role validation, and session management
 
 **Key Interfaces:**
@@ -750,6 +772,7 @@ components:
 **Technology Stack:** TypeScript, Express middleware, JWT tokens with 24-hour expiry, Redis for token blacklisting
 
 ### Site Management Service
+
 **Responsibility:** CRUD operations for sites, validation of site names, cascade handling for site deletion
 
 **Key Interfaces:**
@@ -763,6 +786,7 @@ components:
 **Technology Stack:** TypeScript, TypeORM repositories, Joi validation
 
 ### Cell Management Service
+
 **Responsibility:** Manage production cells within sites, enforce site-cell relationships, handle cell-to-equipment cascade operations
 
 **Key Interfaces:**
@@ -776,6 +800,7 @@ components:
 **Technology Stack:** TypeScript, TypeORM with relations, transaction support
 
 ### Equipment Service
+
 **Responsibility:** Equipment lifecycle management, type validation, equipment-to-PLC relationship management
 
 **Key Interfaces:**
@@ -789,6 +814,7 @@ components:
 **Technology Stack:** TypeScript, TypeORM, enum validation for equipment types
 
 ### PLC Service
+
 **Responsibility:** Core PLC management including IP address uniqueness, tag ID validation, firmware tracking, search functionality
 
 **Key Interfaces:**
@@ -802,6 +828,7 @@ components:
 **Technology Stack:** TypeScript, PostgreSQL full-text search, Redis caching for frequent queries
 
 ### Tag Service
+
 **Responsibility:** PLC tag management, data type validation, address conflict detection
 
 **Key Interfaces:**
@@ -815,6 +842,7 @@ components:
 **Technology Stack:** TypeScript, batch operations for performance, enum validation for data types
 
 ### Hierarchy Service
+
 **Responsibility:** Complex hierarchy queries, tree generation, breadcrumb creation, move operations across levels
 
 **Key Interfaces:**
@@ -828,6 +856,7 @@ components:
 **Technology Stack:** TypeScript, PostgreSQL recursive queries, Redis caching for tree structure
 
 ### Import/Export Service
+
 **Responsibility:** Bulk data operations, CSV parsing/generation, hierarchy validation during import, auto-creation of missing entities
 
 **Key Interfaces:**
@@ -841,6 +870,7 @@ components:
 **Technology Stack:** TypeScript, streaming for large files, transaction support for atomic imports
 
 ### Audit Service
+
 **Responsibility:** Comprehensive audit logging, risk assessment, compliance reporting, audit log integrity
 
 **Key Interfaces:**
@@ -854,6 +884,7 @@ components:
 **Technology Stack:** TypeScript, PostgreSQL triggers, scheduled checksums for integrity
 
 ### Notification Service
+
 **Responsibility:** In-app notifications, system alerts, batch notification processing
 
 **Key Interfaces:**
@@ -2047,6 +2078,7 @@ export const usePLCStore = create<PLCState>((set) => ({
 ### Database Performance Strategy for <100ms Queries with 10,000+ Records
 
 #### Indexing Strategy
+
 **Query Performance Requirements:** All equipment queries must execute in <100ms with datasets up to 10,000+ records.
 
 **Critical Indexes for Performance:**
@@ -3630,42 +3662,49 @@ $$ LANGUAGE plpgsql;
 This comprehensive technical architecture document addresses all identified gaps from the PO validation and provides detailed guidance for Epic 0 implementation:
 
 #### ✅ Database Schema Design
+
 - Complete PostgreSQL schema with performance-optimized indexing
 - Comprehensive audit system with risk-based classification
 - Full-text search capabilities with GIN indexes
 - Connection pooling and query optimization strategies
 
 #### ✅ API Architecture
+
 - RESTful endpoint design with OpenAPI 3.1 specification
 - JWT authentication with Redis session management
 - RBAC middleware with fine-grained permissions
 - Comprehensive validation using Joi schemas
 
 #### ✅ Frontend Architecture
+
 - React + TypeScript + Material-UI industrial theme
 - Zustand state management with performance optimization
 - Virtual scrolling for 10,000+ record datasets
 - GSAP animations for professional UX
 
 #### ✅ Infrastructure Architecture
+
 - Docker Swarm production configuration
 - Nginx reverse proxy with load balancing
 - Prometheus + Grafana monitoring stack
 - Comprehensive logging and metrics collection
 
 #### ✅ Performance Optimization
+
 - <100ms query performance strategies validated
 - Redis caching architecture for search results
 - Database indexing for common query patterns
 - Frontend optimization with virtual scrolling
 
 #### ✅ Security Architecture
+
 - JWT implementation with session validation
 - RBAC system with audit logging
 - Database-level audit triggers with risk assessment
 - Security headers and rate limiting
 
 #### ✅ Development Workflow
+
 - PowerShell setup scripts for Epic 0 initialization
 - Comprehensive testing strategy with performance validation
 - CI/CD pipeline configuration

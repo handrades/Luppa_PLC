@@ -1,6 +1,7 @@
 # Requirements
 
 ## Functional Requirements
+
 **FR1:** The system shall provide CRUD operations (Create, Read, Update, Delete) for industrial equipment
 records including PLCs, sensors, controllers, and related equipment  
 **FR2:** The system shall organize equipment using a hierarchical structure with site_name, cell_type, and
@@ -18,6 +19,7 @@ all equipment fields
 **FR12:** The system shall support configuration management through app settings and feature flags
 
 ## Non-Functional Requirements
+
 **NFR1:** System response time for filtered queries must be under 100ms  
 **NFR2:** Page load times must be under 2 seconds for initial load and under 500ms for navigation  
 **NFR3:** System must support scaling from 300 to 10,000+ equipment records without performance degradation  

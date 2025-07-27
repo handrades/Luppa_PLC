@@ -1,6 +1,7 @@
 # Components
 
 ## Auth Service
+
 **Responsibility:** Handle all authentication and authorization logic including JWT token management, password hashing, role validation, and session management
 
 **Key Interfaces:**
@@ -14,6 +15,7 @@
 **Technology Stack:** TypeScript, Express middleware, JWT tokens with 24-hour expiry, Redis for token blacklisting
 
 ## Site Service
+
 **Responsibility:** CRUD operations for sites, validation of site names, cascade handling for site deletion
 
 **Key Interfaces:**
@@ -27,6 +29,7 @@
 **Technology Stack:** TypeScript, TypeORM repositories, Joi validation
 
 ## Cell Management Service
+
 **Responsibility:** Manage production cells within sites, enforce site-cell relationships, handle cell-to-equipment cascade operations
 
 **Key Interfaces:**
@@ -40,6 +43,7 @@
 **Technology Stack:** TypeScript, TypeORM with relations, transaction support
 
 ## Equipment Service
+
 **Responsibility:** Equipment lifecycle management, type validation, equipment-to-PLC relationship management
 
 **Key Interfaces:**
@@ -53,6 +57,7 @@
 **Technology Stack:** TypeScript, TypeORM, enum validation for equipment types
 
 ## PLC Service
+
 **Responsibility:** Core PLC management including IP address uniqueness, tag ID validation, firmware tracking, search functionality
 
 **Key Interfaces:**
@@ -66,6 +71,7 @@
 **Technology Stack:** TypeScript, PostgreSQL full-text search, Redis caching for frequent queries
 
 ## Tag Service
+
 **Responsibility:** PLC tag management, data type validation, address conflict detection
 
 **Key Interfaces:**
@@ -79,6 +85,7 @@
 **Technology Stack:** TypeScript, batch operations for performance, enum validation for data types
 
 ## Hierarchy Service
+
 **Responsibility:** Complex hierarchy queries, tree generation, breadcrumb creation, move operations across levels
 
 **Key Interfaces:**
@@ -92,6 +99,7 @@
 **Technology Stack:** TypeScript, PostgreSQL recursive queries, Redis caching for tree structure
 
 ## Import/Export Service
+
 **Responsibility:** Bulk data operations, CSV parsing/generation, hierarchy validation during import, auto-creation of missing entities
 
 **Key Interfaces:**
@@ -105,6 +113,7 @@
 **Technology Stack:** TypeScript, streaming for large files, transaction support for atomic imports
 
 ## Audit Service
+
 **Responsibility:** Comprehensive audit logging, risk assessment, compliance reporting, audit log integrity
 
 **Key Interfaces:**
@@ -118,6 +127,7 @@
 **Technology Stack:** TypeScript, PostgreSQL triggers, scheduled checksums for integrity
 
 ## Notification Service
+
 **Responsibility:** In-app notifications, system alerts, batch notification processing
 
 **Key Interfaces:**

@@ -57,6 +57,10 @@ paths:
       responses:
         200:
           description: Site details with cell count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteWithCellCount'
           
   # Cell Management
   /sites/{siteId}/cells:
@@ -68,6 +72,12 @@ paths:
       responses:
         200:
           description: Cell list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cell'
           
     post:
       tags: [Cells]
@@ -88,6 +98,10 @@ paths:
       responses:
         200:
           description: Cell details with equipment count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellWithEquipmentCount'
           
   # Equipment Management
   /cells/{cellId}/equipment:
@@ -99,6 +113,12 @@ paths:
       responses:
         200:
           description: Equipment list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Equipment'
           
     post:
       tags: [Equipment]
@@ -110,6 +130,13 @@ paths:
     get:
       tags: [Equipment]
       summary: Get equipment details
+      responses:
+        200:
+          description: Equipment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
       
   # PLC Management
   /equipment/{equipmentId}/plcs:
@@ -118,6 +145,15 @@ paths:
     get:
       tags: [PLCs]
       summary: List PLCs in equipment
+      responses:
+        200:
+          description: PLC list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PLC'
       
     post:
       tags: [PLCs]
@@ -326,6 +362,152 @@ components:
         format: uuid
 
   schemas:
+    # Core Entity Schemas
+    Site:
+      type: object
+      required: [id, name, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    SiteInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          
+    SiteWithCellCount:
+      allOf:
+        - $ref: '#/components/schemas/Site'
+        - type: object
+          properties:
+            cellCount:
+              type: integer
+              minimum: 0
+              
+    Cell:
+      type: object
+      required: [id, name, cellType, siteId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        cellType:
+          type: string
+          maxLength: 100
+        siteId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    CellInput:
+      type: object
+      required: [name, cellType]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        cellType:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          
+    CellWithEquipmentCount:
+      allOf:
+        - $ref: '#/components/schemas/Cell'
+        - type: object
+          properties:
+            equipmentCount:
+              type: integer
+              minimum: 0
+              
+    Equipment:
+      type: object
+      required: [id, name, equipmentType, cellId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        equipmentType:
+          type: string
+          maxLength: 100
+        cellId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    PLC:
+      type: object
+      required: [id, tagId, equipmentId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tagId:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+        make:
+          type: string
+          maxLength: 100
+        model:
+          type: string
+          maxLength: 100
+        ipAddress:
+          type: string
+          format: ipv4
+        equipmentId:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
     PLCWithHierarchy:
       allOf:
         - $ref: '#/components/schemas/PLC'
@@ -340,4 +522,47 @@ components:
                   $ref: '#/components/schemas/Cell'
                 equipment:
                   $ref: '#/components/schemas/Equipment'
+                  
+    PaginatedSites:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Site'
+        pagination:
+          type: object
+          required: [page, pageSize, total, totalPages]
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            pageSize:
+              type: integer
+              minimum: 1
+            total:
+              type: integer
+              minimum: 0
+            totalPages:
+              type: integer
+              minimum: 0
+              
+    PLCFilters:
+      type: object
+      properties:
+        search:
+          type: string
+        siteId:
+          type: string
+          format: uuid
+        cellId:
+          type: string
+          format: uuid
+        make:
+          type: string
+        model:
+          type: string
+        hasIpAddress:
+          type: boolean
 ```

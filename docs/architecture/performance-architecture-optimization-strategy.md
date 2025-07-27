@@ -3,6 +3,7 @@
 ## Database Performance Strategy for <100ms Queries with 10,000+ Records
 
 ### Indexing Strategy
+
 **Query Performance Requirements:** All equipment queries must execute in <100ms with datasets up to 10,000+ records.
 
 **Critical Indexes for Performance:**
@@ -116,16 +117,16 @@ export class CacheService {
   private redis: RedisClientType;
   
   constructor() {
+    // Updated for node-redis v4 - uses url string or socket object
     this.redis = createClient({
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT || '6379'),
+      url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
       
-      // Performance settings
-      connectTimeout: 5000,
-      commandTimeout: 3000,
-      retryDelayOnFailover: 100,
-      enableAutoPipelining: true,
-      maxRetriesPerRequest: 3,
+      // Performance settings (v4 compatible)
+      socket: {
+        connectTimeout: 5000,
+        commandTimeout: 3000,
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+      }
     });
   }
 
@@ -205,7 +206,8 @@ export const IndustrialDataGrid: React.FC<DataGridProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
   
-  // Virtual scrolling with react-window
+  // Virtual scrolling with @tanstack/react-virtual (not react-window)
+  // Using single container for both row and column virtualization
   const rowVirtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => parentRef.current,

@@ -5,7 +5,12 @@
 ### JWT Implementation Strategy
 
 ```typescript
-// Required interfaces and types
+// Required imports and interfaces
+import { Repository, getRepository } from 'typeorm';
+import { User } from '@/entities/User';
+import { AuditLog } from '@/entities/AuditLog';
+import { NotificationService } from '@/services/NotificationService';
+
 interface CacheService {
   storeSession(sessionId: string, data: SessionData): Promise<void>;
   getSession(sessionId: string): Promise<SessionData | null>;
@@ -32,6 +37,7 @@ export class AuthService {
 
   constructor(
     private readonly cacheService: CacheService,
+    private readonly userRepository: Repository<User>,
     private readonly request?: Request // For accessing IP and User-Agent
   ) {}
 
@@ -113,7 +119,7 @@ export class AuthService {
 
 ```typescript
 // Audit service interface
-interface AuditService {
+interface IAuditService {
   logSecurityEvent(event: SecurityEvent): Promise<void>;
 }
 
@@ -128,7 +134,7 @@ interface SecurityEvent {
 
 // Role-based access control middleware
 export class RBACMiddleware {
-  constructor(private readonly auditService: AuditService) {}
+  constructor(private readonly auditService: IAuditService) {}
 
   authorize(resource: string, action: string) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -174,8 +180,12 @@ export class RBACMiddleware {
 }
 
 // Create middleware instances with dependencies
-const auditService = new AuditService();
-const rbacMiddleware = new RBACMiddleware(auditService);
+// Note: These would typically be injected via dependency injection container
+const auditRepository = getRepository(AuditLog); // Or your preferred DI method
+const notificationService = new NotificationService(); // Or inject from container
+
+const auditServiceInstance = new AuditService(auditRepository, notificationService);
+const rbacMiddleware = new RBACMiddleware(auditServiceInstance);
 
 // Usage in routes
 router.get('/plcs', 

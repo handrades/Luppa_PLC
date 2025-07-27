@@ -1,12 +1,14 @@
 # User Interface Design Goals
 
 ## Overall UX Vision
+
 The interface should prioritize **industrial efficiency and data clarity** with a clean, functional design
 that supports rapid information access during plant visits and troubleshooting scenarios. The UX should feel
 familiar to technical users while being intuitive enough for occasional users. Focus on **information
 density** and **task completion speed** over aesthetic flourishes.
 
 ## Key Interaction Paradigms
+
 - **Table-centric views** with advanced filtering and sorting for equipment listings
 - **Modal dialogs** for CRUD operations to maintain context
 - **Keyboard shortcuts** for power users who need rapid data entry
@@ -19,6 +21,7 @@ density** and **task completion speed** over aesthetic flourishes.
 - **Offline-First Design**: Clear visual indicators for sync status and local changes pending upload
 
 ## Core Screens and Views
+
 - **Equipment Listing Screen** - Primary data grid with advanced filtering
 - **Equipment Detail/Edit Screen** - Comprehensive CRUD form with validation
 - **Dashboard Screen** - Site summaries, KPIs, and quick access panels
@@ -29,10 +32,12 @@ density** and **task completion speed** over aesthetic flourishes.
 - **Site Hierarchy Navigator** - Visual tree view of site organization
 
 ## Accessibility: WCAG AA
+
 Meeting WCAG AA standards ensures usability in industrial environments with varying lighting conditions and
 supports users who may have visual or motor accessibility needs.
 
 ## Branding
+
 **Industrial/Technical aesthetic** with:
 - Clean, high-contrast color scheme suitable for industrial monitors
 - Sans-serif typography optimized for readability
@@ -41,6 +46,7 @@ supports users who may have visual or motor accessibility needs.
 - Minimal animations to avoid distraction in critical work environments
 
 ## Target Device and Platforms: Web Responsive
+
 **Web Responsive** supporting:
 - Desktop workstations (primary use case for office work)
 - Tablet devices for plant floor access
