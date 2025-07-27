@@ -67,40 +67,54 @@ apiClient.interceptors.response.use(
           
         case 403:
           // Forbidden - insufficient permissions
-          // eslint-disable-next-line no-console
-          console.error('Insufficient permissions')
+          if (env.ENABLE_CONSOLE_LOGS) {
+            // eslint-disable-next-line no-console
+            console.error('Insufficient permissions')
+          }
           break
           
         case 404:
           // Not found
-          // eslint-disable-next-line no-console
-          console.error('Resource not found')
+          if (env.ENABLE_CONSOLE_LOGS) {
+            // eslint-disable-next-line no-console
+            console.error('Resource not found')
+          }
           break
           
         case 422:
           // Validation error
-          // eslint-disable-next-line no-console
-          console.error('Validation error:', data)
+          if (env.ENABLE_CONSOLE_LOGS) {
+            // eslint-disable-next-line no-console
+            console.error('Validation error:', data)
+          }
           break
           
         case 500:
           // Server error
-          // eslint-disable-next-line no-console
-          console.error('Internal server error')
+          if (env.ENABLE_CONSOLE_LOGS) {
+            // eslint-disable-next-line no-console
+            console.error('Internal server error')
+          }
           break
           
         default:
-          // eslint-disable-next-line no-console
-          console.error('Unexpected error:', status, data)
+          if (env.ENABLE_CONSOLE_LOGS) {
+            // eslint-disable-next-line no-console
+            console.error('Unexpected error:', status, data)
+          }
       }
     } else if (error.request) {
       // Network error
-      // eslint-disable-next-line no-console
-      console.error('Network error - server not reachable')
+      if (env.ENABLE_CONSOLE_LOGS) {
+        // eslint-disable-next-line no-console
+        console.error('Network error - server not reachable')
+      }
     } else {
       // Request setup error
-      // eslint-disable-next-line no-console
-      console.error('Request setup error:', error.message)
+      if (env.ENABLE_CONSOLE_LOGS) {
+        // eslint-disable-next-line no-console
+        console.error('Request setup error:', error.message)
+      }
     }
     
     return Promise.reject(error)
