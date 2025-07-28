@@ -626,24 +626,33 @@ function Invoke-DockerCompose {
     
     # Try modern Docker Compose plugin first
     try {
-        $null = & docker compose version 2>&1
-        if ($LASTEXITCODE -eq 0) {
+        $output = & docker compose version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $output -match "Docker Compose version") {
             $fullArgs = @("compose", "-f", $script:ComposeFile, "-p", $script:ProjectName) + $Arguments
             exec { & docker $fullArgs } $ErrorMessage
             return
         }
     }
     catch {
-        # Docker Compose plugin not available, fall back to standalone
+        # Docker Compose plugin not available, continue to standalone check
     }
     
     # Fallback to standalone docker-compose if available
-    if (Test-Command "docker-compose") {
-        $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $Arguments
-        exec { & docker-compose $fullArgs } $ErrorMessage
-    } else {
-        throw "Neither 'docker compose' plugin nor standalone 'docker-compose' is available. Please install Docker Compose."
+    try {
+        if (Test-Command "docker-compose") {
+            $output = & docker-compose version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $Arguments
+                exec { & docker-compose $fullArgs } $ErrorMessage
+                return
+            }
+        }
     }
+    catch {
+        # Standalone docker-compose also failed
+    }
+    
+    throw "Neither 'docker compose' plugin nor standalone 'docker-compose' is available. Please install Docker Compose."
 }
 
 # Helper function to run docker compose exec commands
@@ -667,24 +676,33 @@ function Invoke-DockerComposeExec {
     
     # Try modern Docker Compose plugin first
     try {
-        $null = & docker compose version 2>&1
-        if ($LASTEXITCODE -eq 0) {
+        $output = & docker compose version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $output -match "Docker Compose version") {
             $fullArgs = @("compose", "-f", $script:ComposeFile, "-p", $script:ProjectName) + $allArgs
             exec { & docker $fullArgs } $ErrorMessage
             return
         }
     }
     catch {
-        # Docker Compose plugin not available, fall back to standalone
+        # Docker Compose plugin not available, continue to standalone check
     }
     
     # Fallback to standalone docker-compose if available
-    if (Test-Command "docker-compose") {
-        $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $allArgs
-        exec { & docker-compose $fullArgs } $ErrorMessage
-    } else {
-        throw "Neither 'docker compose' plugin nor standalone 'docker-compose' is available. Please install Docker Compose."
+    try {
+        if (Test-Command "docker-compose") {
+            $output = & docker-compose version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $allArgs
+                exec { & docker-compose $fullArgs } $ErrorMessage
+                return
+            }
+        }
     }
+    catch {
+        # Standalone docker-compose also failed
+    }
+    
+    throw "Neither 'docker compose' plugin nor standalone 'docker-compose' is available. Please install Docker Compose."
 }
 
 # Start all development services
