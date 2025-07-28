@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/common/Feedback/ErrorBoundary'
 import { AppLayout } from './components/common/Layout/AppLayout'
 import { PublicLayout } from './components/common/Layout/PublicLayout'
+import { ProtectedRoute } from './components/common/Auth/ProtectedRoute'
 import { LoginPage } from './pages/auth/LoginPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { EquipmentPage } from './pages/plcs/EquipmentPage'
@@ -20,15 +21,19 @@ function App() {
         
         {/* Protected routes */}
         <Route path="/" element={
-          <AppLayout>
-            <DashboardPage />
-          </AppLayout>
+          <ProtectedRoute>
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
         } />
         
         <Route path="/equipment" element={
-          <AppLayout>
-            <EquipmentPage />
-          </AppLayout>
+          <ProtectedRoute>
+            <AppLayout>
+              <EquipmentPage />
+            </AppLayout>
+          </ProtectedRoute>
         } />
         
         {/* 404 route */}
