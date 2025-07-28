@@ -56,7 +56,7 @@ jobs:
             echo "$json_files"
             for file in $json_files; do
               echo "Checking $file..."
-              npx jsonlint "$file" -q
+              npx "@prantlf/jsonlint" "$file"
               echo "✓ $file"
             done
             echo "✓ JSON linting passed"

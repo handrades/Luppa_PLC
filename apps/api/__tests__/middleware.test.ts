@@ -31,7 +31,7 @@ describe('Middleware Integration', () => {
     it('should handle CORS preflight requests', async () => {
       const response = await request(app)
         .options('/health')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'http://localhost:3100')
         .set('Access-Control-Request-Method', 'GET')
         .expect(204);
 
@@ -41,10 +41,10 @@ describe('Middleware Integration', () => {
     it('should allow configured origins', async () => {
       const response = await request(app)
         .get('/health')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'http://localhost:3100')
         .expect(200);
 
-      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3100');
     });
   });
 
