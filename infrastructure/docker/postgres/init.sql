@@ -297,7 +297,7 @@ AND p.name IN ('plc.read', 'equipment.read');
 
 -- Create default admin user (password: admin123 - should be changed in production)
 INSERT INTO core.users (username, email, password_hash, first_name, last_name)
-VALUES ('admin', 'admin@luppa.local', '$2b$10$8K6p3p3p3p3p3p3p3p3p3.O', 'System', 'Administrator');
+VALUES ('admin', 'admin@luppa.local', '$2b$10$K4L4x4x4x4x4x4x4x4x4x.eO8JWqMcmTEAabYrz8DGJEfNJ/R8t3a', 'System', 'Administrator');
 
 -- Assign admin role to default admin user
 INSERT INTO core.user_roles (user_id, role_id)

@@ -1104,7 +1104,7 @@ Task DockerBackupDb -Alias backup-db -Description "Backup database to file" {
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $backupFile = "backups/luppa_dev_$timestamp.sql"
     
-    exec { docker compose -f $script:ComposeFile -p $script:ProjectName exec -T postgres pg_dump -U postgres -d luppa_dev > $backupFile } "Failed to create database backup"
+    Invoke-DockerComposeExec -Service "postgres" -Command @("pg_dump", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "Failed to create database backup" | Out-File -FilePath $backupFile -Encoding utf8
     
     Write-Host "Database backup created: $backupFile" -ForegroundColor Green
 }
@@ -1123,7 +1123,7 @@ Task DockerRestoreDb -Alias restore-db -Description "Restore database from backu
     
     Test-Docker
     
-    exec { Get-Content $BackupFile | docker compose -f $script:ComposeFile -p $script:ProjectName exec -T postgres psql -U postgres -d luppa_dev } "Failed to restore database"
+    Get-Content $BackupFile | Invoke-DockerComposeExec -Service "postgres" -Command @("psql", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "Failed to restore database"
     
     Write-Host "Database restore completed." -ForegroundColor Green
 }
