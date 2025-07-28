@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   luppa-dev:
     driver: bridge
@@ -77,8 +75,8 @@ services:
 
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: apps/api/Dockerfile.dev
     container_name: luppa-api-dev
     networks:
       - luppa-dev
@@ -99,9 +97,9 @@ services:
     ports:
       - "${API_PORT:-3001}:${API_PORT:-3001}"
     volumes:
-      - ./apps/api:/app
-      - /app/node_modules
-      - ./apps/api/logs:/app/logs
+      - ./apps/api:/workspace/apps/api
+      - /workspace/node_modules
+      - ./apps/api/logs:/workspace/apps/api/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -125,8 +123,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
     container_name: luppa-web-dev
     networks:
       - luppa-dev
@@ -138,9 +136,9 @@ services:
     ports:
       - "${WEB_PORT:-5173}:5173"
     volumes:
-      - ./apps/web:/app
-      - /app/node_modules
-      - /app/dist
+      - ./apps/web:/workspace/apps/web
+      - /workspace/node_modules
+      - /workspace/apps/web/dist
     depends_on:
       - api
     healthcheck:

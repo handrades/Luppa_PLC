@@ -61,8 +61,8 @@ describe('Docker Compose Configuration', () => {
   });
 
   describe('Basic Structure', () => {
-    test('should have correct version', () => {
-      expect(dockerCompose.version).toBe('3.8');
+    test('should not have obsolete version field', () => {
+      expect(dockerCompose.version).toBeUndefined();
     });
 
     test('should define required services', () => {
@@ -169,8 +169,8 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(apiService.build).toBeDefined();
-      expect(apiService.build.context).toBe('./apps/api');
-      expect(apiService.build.dockerfile).toBe('Dockerfile.dev');
+      expect(apiService.build.context).toBe('.');
+      expect(apiService.build.dockerfile).toBe('apps/api/Dockerfile.dev');
     });
 
     test('should depend on database services', () => {
@@ -186,8 +186,8 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have volume mounts for development', () => {
-      expect(apiService.volumes).toContain('./apps/api:/app');
-      expect(apiService.volumes).toContain('/app/node_modules');
+      expect(apiService.volumes).toContain('./apps/api:/workspace/apps/api');
+      expect(apiService.volumes).toContain('/workspace/node_modules');
     });
 
     test('should have health check configured', () => {
@@ -205,8 +205,8 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(webService.build).toBeDefined();
-      expect(webService.build.context).toBe('./apps/web');
-      expect(webService.build.dockerfile).toBe('Dockerfile.dev');
+      expect(webService.build.context).toBe('.');
+      expect(webService.build.dockerfile).toBe('apps/web/Dockerfile.dev');
     });
 
     test('should depend on API service', () => {
@@ -219,8 +219,8 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have volume mounts for development', () => {
-      expect(webService.volumes).toContain('./apps/web:/app');
-      expect(webService.volumes).toContain('/app/node_modules');
+      expect(webService.volumes).toContain('./apps/web:/workspace/apps/web');
+      expect(webService.volumes).toContain('/workspace/node_modules');
     });
   });
 
