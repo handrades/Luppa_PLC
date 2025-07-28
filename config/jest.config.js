@@ -7,7 +7,7 @@ export default {
     }],
   },
   testEnvironment: 'node',
-  roots: ['<rootDir>/../__tests__', '<rootDir>/../apps', '<rootDir>/../packages'],
+  roots: ['<rootDir>/../__tests__', '<rootDir>/../apps', '<rootDir>/../packages', '<rootDir>/../infrastructure'],
   testMatch: [
     '**/__tests__/**/*.test.ts',
     '**/?(*.)+(spec|test).ts',

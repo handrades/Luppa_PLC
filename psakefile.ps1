@@ -482,7 +482,9 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
         @{Name = "markdownlint"; Install = "npm install -g markdownlint-cli"; CheckCommand = "markdownlint"; Alternative = "npx markdownlint-cli"},
         @{Name = "jsonlint"; Install = "npm install -g jsonlint"; CheckCommand = "jsonlint"; Alternative = "npx jsonlint"},
         @{Name = "yaml-lint"; Install = "pnpm install (included in dev dependencies)"; CheckCommand = "npx yaml-lint"; IsLocal = $true},
-        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"; Alternative = "npm"}
+        @{Name = "pnpm"; Install = "npm install -g pnpm"; CheckCommand = "pnpm"; Alternative = "npm"},
+        @{Name = "docker"; Install = "Install Docker Desktop from https://docs.docker.com/desktop/"; CheckCommand = "docker"; IsDocker = $true},
+        @{Name = "docker-compose"; Install = "Included with Docker Desktop or install separately"; CheckCommand = "docker compose version"; IsDockerCompose = $true}
     )
     
     $missing = @()
@@ -502,6 +504,27 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
                 }
             } catch {
                 # Tool not available through npx
+            }
+        } elseif ($tool.IsDocker) {
+            # Special handling for Docker
+            if (Test-Command "docker") {
+                Write-Host "✓ $($tool.Name) is installed" -ForegroundColor Green
+                $available = $true
+            }
+        } elseif ($tool.IsDockerCompose) {
+            # Special handling for Docker Compose - check modern plugin first
+            try {
+                $null = & docker compose version 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "✓ $($tool.Name) is available (Docker Compose plugin)" -ForegroundColor Green
+                    $available = $true
+                }
+            } catch {
+                # Try standalone docker-compose
+                if (Test-Command "docker-compose") {
+                    Write-Host "✓ $($tool.Name) is available (standalone docker-compose)" -ForegroundColor Green
+                    $available = $true
+                }
             }
         } else {
             # Check primary command
@@ -544,4 +567,674 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
 # CI task for continuous integration
 Task CI -Depends CheckDependencies, Lint -Description "Run all CI checks" {
     Write-Host "`nCI checks passed! ✓" -ForegroundColor Green
+}
+
+# ==================================================================
+# Docker Development Environment Management Tasks
+# ==================================================================
+
+# Variables for Docker configuration
+$script:ComposeFile = "docker-compose.dev.yml"
+$script:ProjectName = "luppa-dev"
+$script:Services = @("postgres", "redis", "api", "web", "nginx")
+
+# Helper function to check if Docker is available
+function Test-Docker {
+    if (-not (Test-Command "docker")) {
+        throw "Docker not found. Please install Docker Desktop first."
+    }
+    
+    # Test modern Docker Compose (plugin) - preferred
+    try {
+        $null = & docker compose version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            return $true
+        }
+    }
+    catch {
+        # Docker Compose plugin not available, check for standalone docker-compose
+    }
+    
+    # Fallback to standalone docker-compose command
+    if (-not (Test-Command "docker-compose")) {
+        throw @"
+Docker Compose not found. Please install Docker Compose using one of these methods:
+
+1. Install Docker Desktop (includes Docker Compose plugin) - RECOMMENDED
+   Visit: https://docs.docker.com/desktop/
+
+2. Install Docker Compose standalone:
+   Visit: https://docs.docker.com/compose/install/
+
+3. On Linux, you can also install via package manager:
+   sudo apt-get install docker-compose-plugin  # Ubuntu/Debian
+   sudo yum install docker-compose-plugin      # RHEL/CentOS
+"@
+    }
+}
+
+# Helper function to run docker compose commands
+function Invoke-DockerCompose {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string[]]$Arguments,
+        
+        [string]$ErrorMessage = "Docker Compose command failed"
+    )
+    
+    Test-Docker
+    
+    # Try modern Docker Compose plugin first
+    try {
+        $null = & docker compose version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $fullArgs = @("compose", "-f", $script:ComposeFile, "-p", $script:ProjectName) + $Arguments
+            exec { & docker $fullArgs } $ErrorMessage
+            return
+        }
+    }
+    catch {
+        # Docker Compose plugin not available, fall back to standalone
+    }
+    
+    # Fallback to standalone docker-compose
+    $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $Arguments
+    exec { & docker-compose $fullArgs } $ErrorMessage
+}
+
+# Helper function to run docker compose exec commands
+function Invoke-DockerComposeExec {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Service,
+        
+        [Parameter(Mandatory=$true)]
+        [string[]]$Command,
+        
+        [switch]$Interactive = $true,
+        
+        [string]$ErrorMessage = "Docker Compose exec command failed"
+    )
+    
+    Test-Docker
+    
+    $execArgs = if ($Interactive) { @("exec", $Service) } else { @("exec", "-T", $Service) }
+    $allArgs = $execArgs + $Command
+    
+    # Try modern Docker Compose plugin first
+    try {
+        $null = & docker compose version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $fullArgs = @("compose", "-f", $script:ComposeFile, "-p", $script:ProjectName) + $allArgs
+            exec { & docker $fullArgs } $ErrorMessage
+            return
+        }
+    }
+    catch {
+        # Docker Compose plugin not available, fall back to standalone
+    }
+    
+    # Fallback to standalone docker-compose
+    $fullArgs = @("-f", $script:ComposeFile, "-p", $script:ProjectName) + $allArgs
+    exec { & docker-compose $fullArgs } $ErrorMessage
+}
+
+# Start all development services
+Task DockerUp -Alias up -Description "Start all development services" {
+    Write-Host "`nStarting Luppa PLC Inventory development environment..." -ForegroundColor Cyan
+    
+    Invoke-DockerCompose -Arguments @("up", "-d")
+    
+    Write-Host "`nServices started successfully!" -ForegroundColor Green
+    Write-Host "Access the application at: http://localhost:3000" -ForegroundColor Yellow
+    Write-Host "API health check: http://localhost:3000/api/health" -ForegroundColor Yellow
+    
+    Invoke-Task DockerStatus
+}
+
+# Stop and remove all containers
+Task DockerDown -Alias down -Description "Stop and remove all containers" {
+    Write-Host "`nStopping Luppa PLC Inventory development environment..." -ForegroundColor Cyan
+    
+    Invoke-DockerCompose -Arguments @("down")
+    
+    Write-Host "All services stopped and containers removed." -ForegroundColor Green
+}
+
+# Restart all services
+Task DockerRestart -Alias restart -Description "Restart all services" {
+    Write-Host "`nRestarting all services..." -ForegroundColor Cyan
+    
+    Invoke-Task DockerDown
+    Start-Sleep -Seconds 2
+    Invoke-Task DockerUp
+}
+
+# Build or rebuild all services
+Task DockerBuild -Alias build -Description "Build or rebuild all services" {
+    Write-Host "`nBuilding all services..." -ForegroundColor Cyan
+    
+    Invoke-DockerCompose -Arguments @("build", "--no-cache")
+    
+    Write-Host "All services built successfully!" -ForegroundColor Green
+}
+
+# View logs from all services
+Task DockerLogs -Alias logs -Description "View logs from all services" {
+    Write-Host "`nShowing logs from all services (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# View API service logs only
+Task DockerLogsApi -Alias logs-api -Description "View API service logs only" {
+    Write-Host "`nShowing API service logs (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f", "api")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# View web service logs only
+Task DockerLogsWeb -Alias logs-web -Description "View web service logs only" {
+    Write-Host "`nShowing web service logs (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f", "web")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# View PostgreSQL service logs only
+Task DockerLogsPostgres -Alias logs-postgres -Description "View PostgreSQL service logs only" {
+    Write-Host "`nShowing PostgreSQL service logs (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f", "postgres")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# View Redis service logs only
+Task DockerLogsRedis -Alias logs-redis -Description "View Redis service logs only" {
+    Write-Host "`nShowing Redis service logs (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f", "redis")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# View Nginx service logs only
+Task DockerLogsNginx -Alias logs-nginx -Description "View Nginx service logs only" {
+    Write-Host "`nShowing Nginx service logs (Ctrl+C to exit)..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("logs", "-f", "nginx")
+    }
+    catch {
+        Write-Host "`nLog viewing stopped." -ForegroundColor Yellow
+    }
+}
+
+# Access backend container shell
+Task DockerShellApi -Alias shell-api -Description "Access backend container shell" {
+    Write-Host "`nOpening shell in API container..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "api" -Command @("sh") -ErrorMessage "Failed to access API container shell"
+}
+
+# Access frontend container shell
+Task DockerShellWeb -Alias shell-web -Description "Access frontend container shell" {
+    Write-Host "`nOpening shell in web container..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "web" -Command @("sh") -ErrorMessage "Failed to access web container shell"
+}
+
+# Access PostgreSQL container shell
+Task DockerShellPostgres -Alias shell-postgres -Description "Access PostgreSQL container shell" {
+    Write-Host "`nOpening shell in PostgreSQL container..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "postgres" -Command @("bash") -ErrorMessage "Failed to access PostgreSQL container shell"
+}
+
+# Access Redis container shell
+Task DockerShellRedis -Alias shell-redis -Description "Access Redis container shell" {
+    Write-Host "`nOpening shell in Redis container..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "redis" -Command @("sh") -ErrorMessage "Failed to access Redis container shell"
+}
+
+# Connect to PostgreSQL database
+Task DockerPsql -Alias psql -Description "Connect to PostgreSQL database" {
+    Write-Host "`nConnecting to PostgreSQL database..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "postgres" -Command @("psql", "-U", "postgres", "-d", "luppa_dev") -ErrorMessage "Failed to connect to PostgreSQL database"
+}
+
+# Connect to Redis CLI
+Task DockerRedisCli -Alias redis-cli -Description "Connect to Redis CLI" {
+    Write-Host "`nConnecting to Redis CLI..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "redis" -Command @("redis-cli", "-a", "dev_redis_password") -ErrorMessage "Failed to connect to Redis CLI"
+}
+
+# Reset database to initial state
+Task DockerResetDb -Alias reset-db -Description "Reset database to initial state" {
+    Write-Host "`nWARNING: This will delete all data in the database!" -ForegroundColor Red
+    $response = Read-Host "Press Enter to continue or Ctrl+C to cancel"
+    
+    Write-Host "`nResetting database..." -ForegroundColor Cyan
+    
+    Test-Docker
+    
+    # Stop postgres container
+    Invoke-DockerCompose -Arguments @("stop", "postgres") -ErrorMessage "Failed to stop PostgreSQL container"
+    
+    # Remove postgres container
+    Invoke-DockerCompose -Arguments @("rm", "-f", "postgres") -ErrorMessage "Failed to remove PostgreSQL container"
+    
+    # Remove postgres volume
+    try {
+        exec { docker volume rm luppa-postgres-data } "Failed to remove PostgreSQL volume"
+    }
+    catch {
+        Write-Host "PostgreSQL volume may not exist or may be in use - continuing..." -ForegroundColor Yellow
+    }
+    
+    Write-Host "Database reset completed. Starting PostgreSQL..." -ForegroundColor Green
+    
+    # Start postgres container
+    Invoke-DockerCompose -Arguments @("up", "-d", "postgres") -ErrorMessage "Failed to start PostgreSQL container"
+    
+    Write-Host "Database reinitialized with fresh data." -ForegroundColor Green
+}
+
+# Reset Redis cache
+Task DockerResetRedis -Alias reset-redis -Description "Reset Redis cache" {
+    Write-Host "`nResetting Redis cache..." -ForegroundColor Cyan
+    
+    Invoke-DockerComposeExec -Service "redis" -Command @("redis-cli", "-a", "dev_redis_password", "FLUSHALL") -Interactive:$false -ErrorMessage "Failed to reset Redis cache"
+    
+    Write-Host "Redis cache cleared." -ForegroundColor Green
+}
+
+# Reset all data (database and cache)
+Task DockerResetAll -Alias reset-all -Description "Reset all data (database and cache)" {
+    Write-Host "`nWARNING: This will delete ALL data!" -ForegroundColor Red
+    $response = Read-Host "Press Enter to continue or Ctrl+C to cancel"
+    
+    Invoke-Task DockerResetDb
+    Invoke-Task DockerResetRedis
+    
+    Write-Host "All data reset completed." -ForegroundColor Green
+}
+
+# Show status of all services
+Task DockerStatus -Alias status -Description "Show status of all services" {
+    Write-Host "`nService Status:" -ForegroundColor Cyan
+    
+    Invoke-DockerCompose -Arguments @("ps") -ErrorMessage "Failed to get service status"
+}
+
+# Check health of all services
+Task DockerHealth -Alias health -Description "Check health of all services" {
+    Write-Host "`nHealth Check Results:" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Test-Docker
+    
+    # PostgreSQL health check
+    Write-Host "PostgreSQL:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerComposeExec -Service "postgres" -Command @("pg_isready", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "PostgreSQL health check failed"
+        Write-Host "✓ PostgreSQL: HEALTHY" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ PostgreSQL: UNHEALTHY" -ForegroundColor Red
+    }
+    
+    Write-Host ""
+    
+    # Redis health check
+    Write-Host "Redis:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerComposeExec -Service "redis" -Command @("redis-cli", "--no-auth-warning", "-a", "dev_redis_password", "ping") -Interactive:$false -ErrorMessage "Redis health check failed"
+        Write-Host "✓ Redis: HEALTHY" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ Redis: UNHEALTHY" -ForegroundColor Red
+    }
+    
+    Write-Host ""
+    
+    # API health check
+    Write-Host "API:" -ForegroundColor Yellow
+    try {
+        if (Test-Command "curl") {
+            $null = & curl -s -f http://localhost:3001/health 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✓ API: HEALTHY" -ForegroundColor Green
+            } else {
+                Write-Host "✗ API: UNHEALTHY" -ForegroundColor Red
+            }
+        } else {
+            # Fallback using PowerShell
+            try {
+                $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -TimeoutSec 5 -ErrorAction Stop
+                if ($response.StatusCode -eq 200) {
+                    Write-Host "✓ API: HEALTHY" -ForegroundColor Green
+                } else {
+                    Write-Host "✗ API: UNHEALTHY" -ForegroundColor Red
+                }
+            }
+            catch {
+                Write-Host "✗ API: UNHEALTHY" -ForegroundColor Red
+            }
+        }
+    }
+    catch {
+        Write-Host "✗ API: UNHEALTHY" -ForegroundColor Red
+    }
+    
+    Write-Host ""
+    
+    # Nginx health check
+    Write-Host "Web (via Nginx):" -ForegroundColor Yellow
+    try {
+        if (Test-Command "curl") {
+            $null = & curl -s -f http://localhost:3000/health 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✓ Nginx: HEALTHY" -ForegroundColor Green
+            } else {
+                Write-Host "✗ Nginx: UNHEALTHY" -ForegroundColor Red
+            }
+        } else {
+            # Fallback using PowerShell
+            try {
+                $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 5 -ErrorAction Stop
+                if ($response.StatusCode -eq 200) {
+                    Write-Host "✓ Nginx: HEALTHY" -ForegroundColor Green
+                } else {
+                    Write-Host "✗ Nginx: UNHEALTHY" -ForegroundColor Red
+                }
+            }
+            catch {
+                Write-Host "✗ Nginx: UNHEALTHY" -ForegroundColor Red
+            }
+        }
+    }
+    catch {
+        Write-Host "✗ Nginx: UNHEALTHY" -ForegroundColor Red
+    }
+}
+
+# Run tests in all services
+Task DockerTest -Alias docker-test -Description "Run tests in all services" {
+    Write-Host "`nRunning tests..." -ForegroundColor Cyan
+    
+    Write-Host "API Tests:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "api", "pnpm", "test")
+        Write-Host "✓ API tests passed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ API tests failed" -ForegroundColor Red
+        throw "API tests failed"
+    }
+    
+    Write-Host "`nWeb Tests:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "web", "pnpm", "test")
+        Write-Host "✓ Web tests passed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ Web tests failed" -ForegroundColor Red
+        throw "Web tests failed"
+    }
+}
+
+# Run linting checks in containers
+Task DockerLint -Alias docker-lint -Description "Run linting checks in containers" {
+    Write-Host "`nRunning linting checks..." -ForegroundColor Cyan
+    
+    Write-Host "API Linting:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "api", "pnpm", "lint")
+        Write-Host "✓ API linting passed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ API linting failed" -ForegroundColor Red
+        throw "API linting failed"
+    }
+    
+    Write-Host "`nWeb Linting:" -ForegroundColor Yellow
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "web", "pnpm", "lint")
+        Write-Host "✓ Web linting passed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ Web linting failed" -ForegroundColor Red
+        throw "Web linting failed"
+    }
+}
+
+# Build production images
+Task DockerBuildProd -Alias build-prod -Description "Build production images" {
+    Write-Host "`nBuilding production images..." -ForegroundColor Cyan
+    
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "api", "pnpm", "build")
+        Write-Host "✓ API production build completed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ API production build failed" -ForegroundColor Red
+        throw "API production build failed"
+    }
+    
+    try {
+        Invoke-DockerCompose -Arguments @("exec", "web", "pnpm", "build")
+        Write-Host "✓ Web production build completed" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✗ Web production build failed" -ForegroundColor Red
+        throw "Web production build failed"
+    }
+    
+    Write-Host "Production builds completed." -ForegroundColor Green
+}
+
+# Clean up Docker resources
+Task DockerClean -Alias clean-docker -Description "Clean up Docker resources" {
+    Write-Host "`nCleaning up Docker resources..." -ForegroundColor Cyan
+    
+    Test-Docker
+    
+    # Stop and remove containers with volumes
+    Invoke-DockerCompose -Arguments @("down", "-v", "--remove-orphans") -ErrorMessage "Failed to clean up containers"
+    
+    # Clean up unused Docker resources
+    exec { docker system prune -f } "Failed to clean up Docker system"
+    
+    Write-Host "Cleanup completed." -ForegroundColor Green
+}
+
+# Complete cleanup including volumes and images
+Task DockerCleanAll -Alias clean-all -Description "Clean up everything including volumes and images" {
+    Write-Host "`nWARNING: This will remove all containers, volumes, and images!" -ForegroundColor Red
+    $response = Read-Host "Press Enter to continue or Ctrl+C to cancel"
+    
+    Test-Docker
+    
+    # Stop and remove everything
+    Invoke-DockerCompose -Arguments @("down", "-v", "--rmi", "all", "--remove-orphans") -ErrorMessage "Failed to clean up everything"
+    
+    # Clean up all unused resources
+    exec { docker volume prune -f } "Failed to clean up volumes"
+    exec { docker image prune -a -f } "Failed to clean up images"
+    
+    Write-Host "Complete cleanup finished." -ForegroundColor Green
+}
+
+# Backup database to file
+Task DockerBackupDb -Alias backup-db -Description "Backup database to file" {
+    Write-Host "`nCreating database backup..." -ForegroundColor Cyan
+    
+    Test-Docker
+    
+    # Create backups directory if it doesn't exist
+    if (-not (Test-Path "backups")) {
+        New-Item -ItemType Directory -Path "backups" | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $backupFile = "backups/luppa_dev_$timestamp.sql"
+    
+    Invoke-DockerComposeExec -Service "postgres" -Command @("pg_dump", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "Failed to create database backup" | Out-File -FilePath $backupFile -Encoding utf8
+    
+    Write-Host "Database backup created: $backupFile" -ForegroundColor Green
+}
+
+# Restore database from backup file
+Task DockerRestoreDb -Alias restore-db -Description "Restore database from backup file (use -Properties @{BackupFile='path/to/backup.sql'})" {
+    if (-not $BackupFile) {
+        throw "Please specify backup file with -Properties @{BackupFile='path/to/backup.sql'}"
+    }
+    
+    if (-not (Test-Path $BackupFile)) {
+        throw "Backup file not found: $BackupFile"
+    }
+    
+    Write-Host "`nRestoring database from $BackupFile..." -ForegroundColor Cyan
+    
+    Test-Docker
+    
+    Get-Content $BackupFile | Invoke-DockerComposeExec -Service "postgres" -Command @("psql", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "Failed to restore database"
+    
+    Write-Host "Database restore completed." -ForegroundColor Green
+}
+
+# Update Docker images
+Task DockerUpdate -Alias update -Description "Pull latest images and rebuild" {
+    Write-Host "`nUpdating Docker images..." -ForegroundColor Cyan
+    
+    Test-Docker
+    
+    # Pull latest images
+    Invoke-DockerCompose -Arguments @("pull") -ErrorMessage "Failed to pull latest images"
+    
+    # Rebuild with latest images
+    Invoke-DockerCompose -Arguments @("build", "--pull") -ErrorMessage "Failed to rebuild with latest images"
+    
+    Write-Host "Images updated successfully." -ForegroundColor Green
+}
+
+# Check environment configuration
+Task DockerEnvCheck -Alias env-check -Description "Check environment configuration" {
+    Write-Host "`nEnvironment Configuration Check:" -ForegroundColor Cyan
+    
+    # Check for .env file
+    if (Test-Path ".env") {
+        Write-Host "✓ .env file exists" -ForegroundColor Green
+    } else {
+        Write-Host "✗ .env file missing" -ForegroundColor Red
+        Write-Host "  Copy .env.example to .env and configure your settings" -ForegroundColor Yellow
+    }
+    
+    Write-Host ""
+    Write-Host "Required directories:" -ForegroundColor Yellow
+    
+    if (Test-Path "infrastructure/docker") {
+        Write-Host "✓ infrastructure/docker exists" -ForegroundColor Green
+    } else {
+        Write-Host "✗ infrastructure/docker missing" -ForegroundColor Red
+    }
+    
+    if (Test-Path "infrastructure/docker/postgres/init.sql") {
+        Write-Host "✓ PostgreSQL init script exists" -ForegroundColor Green
+    } else {
+        Write-Host "✗ PostgreSQL init script missing" -ForegroundColor Red
+    }
+    
+    if (Test-Path "infrastructure/docker/nginx.conf") {
+        Write-Host "✓ Nginx configuration exists" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Nginx configuration missing" -ForegroundColor Red
+    }
+    
+    if (Test-Path $script:ComposeFile) {
+        Write-Host "✓ Docker Compose file exists" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Docker Compose file missing" -ForegroundColor Red
+    }
+}
+
+# Docker help - show available Docker commands
+Task DockerHelp -Alias docker-help -Description "Show available Docker commands" {
+    Write-Host "`nLuppa PLC Inventory System - Docker Management" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Available Docker commands:" -ForegroundColor Yellow
+    Write-Host ""
+    
+    $dockerTasks = @(
+        @{Name="DockerUp (up)"; Description="Start all development services"},
+        @{Name="DockerDown (down)"; Description="Stop and remove all containers"},
+        @{Name="DockerRestart (restart)"; Description="Restart all services"},
+        @{Name="DockerBuild (build)"; Description="Build or rebuild all services"},
+        @{Name="DockerLogs (logs)"; Description="View logs from all services"},
+        @{Name="DockerLogsApi (logs-api)"; Description="View API service logs only"},
+        @{Name="DockerLogsWeb (logs-web)"; Description="View web service logs only"},
+        @{Name="DockerLogsPostgres (logs-postgres)"; Description="View PostgreSQL service logs only"},
+        @{Name="DockerLogsRedis (logs-redis)"; Description="View Redis service logs only"},
+        @{Name="DockerLogsNginx (logs-nginx)"; Description="View Nginx service logs only"},
+        @{Name="DockerShellApi (shell-api)"; Description="Access backend container shell"},
+        @{Name="DockerShellWeb (shell-web)"; Description="Access frontend container shell"},
+        @{Name="DockerShellPostgres (shell-postgres)"; Description="Access PostgreSQL container shell"},
+        @{Name="DockerShellRedis (shell-redis)"; Description="Access Redis container shell"},
+        @{Name="DockerPsql (psql)"; Description="Connect to PostgreSQL database"},
+        @{Name="DockerRedisCli (redis-cli)"; Description="Connect to Redis CLI"},
+        @{Name="DockerResetDb (reset-db)"; Description="Reset database to initial state"},
+        @{Name="DockerResetRedis (reset-redis)"; Description="Reset Redis cache"},
+        @{Name="DockerResetAll (reset-all)"; Description="Reset all data (database and cache)"},
+        @{Name="DockerStatus (status)"; Description="Show status of all services"},
+        @{Name="DockerHealth (health)"; Description="Check health of all services"},
+        @{Name="DockerTest (docker-test)"; Description="Run tests in all services"},
+        @{Name="DockerLint (docker-lint)"; Description="Run linting checks in containers"},
+        @{Name="DockerBuildProd (build-prod)"; Description="Build production images"},
+        @{Name="DockerClean (clean-docker)"; Description="Clean up Docker resources"},
+        @{Name="DockerCleanAll (clean-all)"; Description="Clean up everything including volumes and images"},
+        @{Name="DockerBackupDb (backup-db)"; Description="Backup database to file"},
+        @{Name="DockerRestoreDb (restore-db)"; Description="Restore database from backup file"},
+        @{Name="DockerUpdate (update)"; Description="Pull latest images and rebuild"},
+        @{Name="DockerEnvCheck (env-check)"; Description="Check environment configuration"}
+    )
+    
+    foreach ($task in $dockerTasks) {
+        Write-Host "  $($task.Name.PadRight(35)) $($task.Description)" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    Write-Host "Usage examples:" -ForegroundColor Yellow
+    Write-Host "  Invoke-psake DockerUp                 # Start all services" -ForegroundColor Gray
+    Write-Host "  Invoke-psake up                       # Start all services (alias)" -ForegroundColor Gray
+    Write-Host "  Invoke-psake DockerHealth             # Check service health" -ForegroundColor Gray
+    Write-Host "  Invoke-psake shell-api                # Access API container shell" -ForegroundColor Gray
+    Write-Host "  Invoke-psake DockerHelp               # Show this help" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Access the application at: http://localhost:3000" -ForegroundColor Green
+    Write-Host "API health check: http://localhost:3000/api/health" -ForegroundColor Green
 }

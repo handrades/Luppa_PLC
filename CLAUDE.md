@@ -90,7 +90,7 @@ pnpm setup
 # Start development environment
 pnpm dev
 # OR
-docker-compose -f docker-compose.dev.yml up
+Invoke-psake up  # Start all Docker services
 ```
 
 ### Linting
