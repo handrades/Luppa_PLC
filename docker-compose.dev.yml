@@ -1,0 +1,189 @@
+version: '3.8'
+
+networks:
+  luppa-dev:
+    driver: bridge
+    name: luppa-dev-network
+
+volumes:
+  postgres-data:
+    name: luppa-postgres-data
+  redis-data:
+    name: luppa-redis-data
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: luppa-postgres-dev
+    networks:
+      - luppa-dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-luppa_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-scram-sha-256}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-luppa_dev}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  redis:
+    image: redis:8-alpine
+    container_name: luppa-redis-dev
+    networks:
+      - luppa-dev
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory ${REDIS_MAX_MEMORY:-256mb}
+      --maxmemory-policy ${REDIS_EVICTION_POLICY:-allkeys-lru}
+      --requirepass ${REDIS_PASSWORD:-dev_redis_password}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-dev_redis_password}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    container_name: luppa-api-dev
+    networks:
+      - luppa-dev
+    environment:
+      NODE_ENV: development
+      PORT: ${API_PORT:-3001}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-luppa_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-dev_redis_password}
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${API_PORT:-3001}:${API_PORT:-3001}"
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+      - ./apps/api/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-3001}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    container_name: luppa-web-dev
+    networks:
+      - luppa-dev
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api}
+      VITE_APP_VERSION: ${VITE_APP_VERSION:-dev}
+      VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-debug}
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: luppa-nginx-dev
+    networks:
+      - luppa-dev
+    ports:
+      - "${NGINX_PORT:-3000}:80"
+    volumes:
+      - ./infrastructure/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - api
+      - web
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
