@@ -84,3 +84,4 @@ export const authService = {
     return user?.roles.includes(role) ?? false
   },
 }
+

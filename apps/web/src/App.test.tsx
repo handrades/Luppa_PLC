@@ -36,3 +36,4 @@ describe('App', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
 })
+

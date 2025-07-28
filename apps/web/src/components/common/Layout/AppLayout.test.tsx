@@ -47,3 +47,4 @@ describe('AppLayout', () => {
     expect(screen.getByText('Equipment')).toBeInTheDocument()
   })
 })
+
