@@ -141,6 +141,7 @@ services:
       - "${WEB_PORT:-5174}:5173"
     volumes:
       - ./apps/web:/workspace/apps/web
+      - ./config:/workspace/config
       - /workspace/node_modules
       - /workspace/apps/web/dist
     depends_on:

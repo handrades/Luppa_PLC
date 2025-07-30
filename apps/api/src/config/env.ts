@@ -9,10 +9,21 @@ const createValidatedConfig = () => {
   // Parse environment variables with defaults
   const rawEnv = {
     NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT: process.env.PORT || '3101',
-    HOST: process.env.HOST || 'localhost',
+    PORT: process.env.PORT || '3010',
+    HOST: process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'),
     LOG_LEVEL: process.env.LOG_LEVEL,
-    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
+    // Database configuration
+    DB_HOST: process.env.DB_HOST,
+    DB_PORT: process.env.DB_PORT,
+    DB_NAME: process.env.DB_NAME,
+    DB_USER: process.env.DB_USER,
+    DB_PASSWORD: process.env.DB_PASSWORD,
+    DB_SSL_MODE: process.env.DB_SSL_MODE,
+    DB_POOL_MIN: process.env.DB_POOL_MIN,
+    DB_POOL_MAX: process.env.DB_POOL_MAX,
+    DB_CONNECTION_TIMEOUT: process.env.DB_CONNECTION_TIMEOUT,
+    DB_IDLE_TIMEOUT: process.env.DB_IDLE_TIMEOUT,
   };
 
   // Validate and parse PORT
@@ -43,7 +54,20 @@ const createValidatedConfig = () => {
     port,
     host: rawEnv.HOST,
     logLevel,
-    allowedOrigins
+    allowedOrigins,
+    // Database configuration (validation handled in database.ts)
+    database: {
+      host: rawEnv.DB_HOST,
+      port: rawEnv.DB_PORT,
+      name: rawEnv.DB_NAME,
+      user: rawEnv.DB_USER,
+      password: rawEnv.DB_PASSWORD,
+      sslMode: rawEnv.DB_SSL_MODE,
+      poolMin: rawEnv.DB_POOL_MIN,
+      poolMax: rawEnv.DB_POOL_MAX,
+      connectionTimeout: rawEnv.DB_CONNECTION_TIMEOUT,
+      idleTimeout: rawEnv.DB_IDLE_TIMEOUT,
+    }
   } as const;
 };
 

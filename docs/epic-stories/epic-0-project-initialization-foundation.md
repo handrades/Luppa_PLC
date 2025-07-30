@@ -117,7 +117,7 @@ so that I can maintain code quality and productivity.
 1: Configure Git hooks with Husky for pre-commit, commit-msg, and pre-push
 2: Set up lint-staged for incremental linting on staged files
 3: Configure Jest testing framework with coverage thresholds
-4: Create utility scripts: setup.sh, reset-db.sh, generate-types.sh
+4: Create utility scripts: setup.ps1, reset-db.ps1, generate-types.ps1
 5: Configure VS Code workspace settings and recommended extensions
 6: Create troubleshooting guide for common issues
 7: Set up conventional commits with commitizen

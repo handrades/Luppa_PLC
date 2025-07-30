@@ -27,7 +27,7 @@ describe('AppLayout', () => {
       </TestWrapper>
     )
     
-    expect(screen.getByText('Luppa PLC Inventory')).toBeInTheDocument()
+    expect(screen.getByText('Luppa Inventory')).toBeInTheDocument()
     expect(screen.getByText('Test Content')).toBeInTheDocument()
   })
 

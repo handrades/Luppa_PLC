@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import { isDatabaseHealthy } from '../config/database';
 
 const router: Router = Router();
 
@@ -8,6 +9,9 @@ interface HealthResponse {
   version: string;
   environment: string;
   uptime: number;
+  database: {
+    status: 'connected' | 'disconnected';
+  };
 }
 
 // Get version from package.json - simplified approach for testing compatibility
@@ -21,16 +25,38 @@ const getVersion = (): string => {
   }
 };
 
-router.get('/health', (_req: Request, res: Response) => {
-  const healthResponse: HealthResponse = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    version: getVersion(),
-    environment: process.env.NODE_ENV || 'development',
-    uptime: Math.floor(process.uptime())
-  };
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const dbHealthy = await isDatabaseHealthy();
+    const overallHealthy = dbHealthy;
 
-  res.status(200).json(healthResponse);
+    const healthResponse: HealthResponse = {
+      status: overallHealthy ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      version: getVersion(),
+      environment: process.env.NODE_ENV || 'development',
+      uptime: Math.floor(process.uptime()),
+      database: {
+        status: dbHealthy ? 'connected' : 'disconnected'
+      }
+    };
+
+    const statusCode = overallHealthy ? 200 : 503;
+    res.status(statusCode).json(healthResponse);
+  } catch (error) {
+    const healthResponse: HealthResponse = {
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      version: getVersion(),
+      environment: process.env.NODE_ENV || 'development',
+      uptime: Math.floor(process.uptime()),
+      database: {
+        status: 'disconnected'
+      }
+    };
+
+    res.status(503).json(healthResponse);
+  }
 });
 
 export default router;

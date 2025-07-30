@@ -2,6 +2,13 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 import type { Express } from 'express';
 
+// Mock database health check for health endpoint tests
+jest.mock('../src/config/database', () => ({
+  isDatabaseHealthy: jest.fn().mockResolvedValue(true),
+  initializeDatabase: jest.fn().mockResolvedValue(undefined),
+  closeDatabase: jest.fn().mockResolvedValue(undefined)
+}));
+
 describe('Health Endpoint', () => {
   let app: Express;
 
@@ -28,6 +35,8 @@ describe('Health Endpoint', () => {
       expect(response.body).toHaveProperty('version');
       expect(response.body).toHaveProperty('environment');
       expect(response.body).toHaveProperty('uptime');
+      expect(response.body).toHaveProperty('database');
+      expect(response.body.database).toHaveProperty('status');
     });
 
     it('should return healthy status', async () => {
@@ -36,6 +45,14 @@ describe('Health Endpoint', () => {
         .expect(200);
 
       expect(response.body.status).toBe('healthy');
+    });
+
+    it('should return connected database status', async () => {
+      const response = await request(app)
+        .get('/health')
+        .expect(200);
+
+      expect(response.body.database.status).toBe('connected');
     });
 
     it('should return valid timestamp in ISO format', async () => {

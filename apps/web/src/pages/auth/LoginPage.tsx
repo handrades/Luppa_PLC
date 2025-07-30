@@ -12,7 +12,7 @@ export function LoginPage() {
       <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" textAlign="center" mb={3}>
-            Luppa PLC Inventory
+            Luppa Inventory
           </Typography>
           <Typography variant="body1" textAlign="center" mb={4} color="text.secondary">
             Sign in to access the system

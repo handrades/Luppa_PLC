@@ -707,7 +707,7 @@ function Invoke-DockerComposeExec {
 
 # Start all development services
 Task DockerUp -Alias up -Description "Start all development services" {
-    Write-Host "`nStarting Luppa PLC Inventory development environment..." -ForegroundColor Cyan
+    Write-Host "`nStarting Luppa Inventory development environment..." -ForegroundColor Cyan
     
     Invoke-DockerCompose -Arguments @("up", "-d")
     
@@ -720,7 +720,7 @@ Task DockerUp -Alias up -Description "Start all development services" {
 
 # Stop and remove all containers
 Task DockerDown -Alias down -Description "Stop and remove all containers" {
-    Write-Host "`nStopping Luppa PLC Inventory development environment..." -ForegroundColor Cyan
+    Write-Host "`nStopping Luppa Inventory development environment..." -ForegroundColor Cyan
     
     Invoke-DockerCompose -Arguments @("down")
     
@@ -1211,7 +1211,7 @@ Task DockerEnvCheck -Alias env-check -Description "Check environment configurati
 
 # Docker help - show available Docker commands
 Task DockerHelp -Alias docker-help -Description "Show available Docker commands" {
-    Write-Host "`nLuppa PLC Inventory System - Docker Management" -ForegroundColor Cyan
+    Write-Host "`nLuppa Inventory System - Docker Management" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Available Docker commands:" -ForegroundColor Yellow
     Write-Host ""

@@ -1,6 +1,8 @@
+import 'reflect-metadata';
 import { createApp } from './app';
 import { logger } from './config/logger';
 import { config, validateEnvironment } from './config/env';
+import { closeDatabase, initializeDatabase } from './config/database';
 import { Server } from 'http';
 
 // Validate environment variables early
@@ -30,6 +32,10 @@ let server: Server;
 // Start server
 const startServer = async (): Promise<void> => {
   try {
+    // Initialize database connection
+    await initializeDatabase();
+    logger.info('Database initialized successfully');
+
     server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {
         port: config.port,
@@ -75,8 +81,15 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
       logger.info('HTTP server closed');
       
       // Close database connections, cleanup resources, etc.
-      // For now, just exit gracefully
-      process.exit(0);
+      closeDatabase()
+        .then(() => {
+          logger.info('Database connections closed');
+          process.exit(0);
+        })
+        .catch((error) => {
+          logger.error('Error closing database connections', { error: error.message });
+          process.exit(1);
+        });
     });
 
     // Force close after timeout

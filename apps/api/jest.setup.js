@@ -1,4 +1,5 @@
 // Jest setup file for API tests
+require('reflect-metadata');
 const { config } = require('dotenv');
 
 // Load test environment variables
@@ -21,6 +22,8 @@ jest.mock('./src/config/logger', () => ({
     write: jest.fn()
   }
 }));
+
+// Note: Database health check mocking is handled in individual test files as needed
 
 // Increase timeout for integration tests
 jest.setTimeout(10000);

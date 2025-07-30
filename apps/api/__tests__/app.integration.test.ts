@@ -2,6 +2,13 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 import type { Express } from 'express';
 
+// Mock database health check for integration tests
+jest.mock('../src/config/database', () => ({
+  isDatabaseHealthy: jest.fn().mockResolvedValue(true),
+  initializeDatabase: jest.fn().mockResolvedValue(undefined),
+  closeDatabase: jest.fn().mockResolvedValue(undefined)
+}));
+
 describe('Application Integration Tests', () => {
   let app: Express;
 
@@ -45,6 +52,7 @@ describe('Application Integration Tests', () => {
       expect(response.body.version).toBe('1.0.0');
       expect(response.body.environment).toBe('test');
       expect(typeof response.body.uptime).toBe('number');
+      expect(response.body.database.status).toBe('connected');
       
       // Verify headers
       expect(response.headers['x-request-id']).toBe('integration-test-123');

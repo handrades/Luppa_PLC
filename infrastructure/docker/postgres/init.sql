@@ -1,4 +1,4 @@
--- PostgreSQL initialization script for Luppa PLC Inventory System
+-- PostgreSQL initialization script for Luppa Inventory System
 -- This script runs automatically when the PostgreSQL container starts for the first time
 
 -- Enable required extensions
@@ -342,7 +342,7 @@ VALUES ('database', 'INITIALIZE', '{"status": "completed", "tables_created": 15,
 -- Display success message
 DO $$
 BEGIN
-    RAISE NOTICE 'Luppa PLC Inventory Database initialized successfully!';
+    RAISE NOTICE 'Luppa Inventory Database initialized successfully!';
     RAISE NOTICE 'Created schemas: core, plc_inventory, audit';
     RAISE NOTICE 'Default admin user: admin / admin123 (change password!)';
 END $$;

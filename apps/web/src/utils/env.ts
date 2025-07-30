@@ -14,7 +14,7 @@ export const env = {
   BUILD_MINIFY: import.meta.env.VITE_BUILD_MINIFY === 'true',
   
   // Application Settings
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'Luppa PLC Inventory',
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'Luppa Inventory',
   APP_VERSION: import.meta.env.VITE_APP_VERSION || '0.1.0',
   APP_ENVIRONMENT: import.meta.env.VITE_APP_ENVIRONMENT || 'development',
   
