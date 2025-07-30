@@ -125,7 +125,7 @@ function Test-Prerequisites {
             Write-Log "Found gzip for compression" -Level INFO
         } catch {
             Write-Log "gzip not found but compression requested. Continuing without compression." -Level WARN
-            $Script:Compress = $false
+            $Compress = $false
         }
     }
     
@@ -275,10 +275,13 @@ function Invoke-DatabaseBackup {
         if ($BackupType -eq 'schema') {
             $pgDumpArgs += "--schema-only"
             Write-Log "Performing schema-only backup" -Level INFO
-        } else {
+        } elseif ($BackupType -eq 'data') {
             $pgDumpArgs += "--data-only"
             $pgDumpArgs += "--inserts"  # Use INSERT statements instead of COPY for better portability
-            Write-Log "Performing full data backup with INSERT statements" -Level INFO
+            Write-Log "Performing data-only backup with INSERT statements" -Level INFO
+        } else {
+            # Full backup includes both schema and data by default
+            Write-Log "Performing full backup with schema and data" -Level INFO
         }
         
         # Execute backup

@@ -21,7 +21,12 @@ const createDatabaseConfig = () => {
     database: process.env.DB_NAME || 'luppa_plc',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
-    ssl: process.env.DB_SSL_MODE === 'require' ? { rejectUnauthorized: false } : false,
+    ssl: process.env.DB_SSL_MODE === 'require' ? { 
+      rejectUnauthorized: process.env.NODE_ENV === 'production',
+      ca: process.env.DB_SSL_CA ? process.env.DB_SSL_CA : undefined,
+      cert: process.env.DB_SSL_CERT ? process.env.DB_SSL_CERT : undefined,
+      key: process.env.DB_SSL_KEY ? process.env.DB_SSL_KEY : undefined
+    } : false,
   };
 
   // Connection pool settings
@@ -78,8 +83,12 @@ const createDataSource = () => {
 
     // Entity and migration locations
     entities: [User, Role],
-    migrations: ['src/database/migrations/**/*.ts'],
-    subscribers: ['src/database/subscribers/**/*.ts'],
+    migrations: [process.env.NODE_ENV === 'production' 
+      ? 'dist/database/migrations/**/*.js' 
+      : 'src/database/migrations/**/*.ts'],
+    subscribers: [process.env.NODE_ENV === 'production' 
+      ? 'dist/database/subscribers/**/*.js' 
+      : 'src/database/subscribers/**/*.ts'],
 
     // Development settings
     synchronize: false, // Always use migrations for schema changes

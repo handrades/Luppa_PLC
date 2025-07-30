@@ -9,7 +9,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       tsconfig: {
-        module: 'commonjs'
+        module: 'commonjs',
+        experimentalDecorators: true,
+        emitDecoratorMetadata: true
       }
     }]
   },

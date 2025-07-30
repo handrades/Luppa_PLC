@@ -243,13 +243,12 @@ export class InitialSchema20250729082147 implements MigrationInterface {
           audit_user_id := NULL;
         END;
         
-        -- Skip audit logging if no user context is available (e.g., during migrations)
+        -- Handle missing user context with fallback and warning
         IF audit_user_id IS NULL THEN
-          IF TG_OP = 'DELETE' THEN
-            RETURN OLD;
-          ELSE
-            RETURN NEW;
-          END IF;
+          -- Use system user ID as fallback for untracked changes
+          audit_user_id := '00000000-0000-0000-0000-000000000000'::UUID;
+          -- Log warning about missing user context
+          RAISE WARNING 'Audit logging: Missing user context for % operation on table %, using system fallback', TG_OP, TG_TABLE_NAME;
         END IF;
         
         BEGIN

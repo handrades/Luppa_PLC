@@ -3,12 +3,14 @@
  * DEVELOPMENT ONLY - Creates sample users for testing
  * 
  * WARNING: This script should NEVER be run in production
+ * NOTE: Contains development passwords that are randomly generated - not hardcoded secrets
  */
 
 /* eslint-disable no-console */
 
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { User } from '../../entities/User.js';
 import { Role } from '../../entities/Role.js';
 
@@ -33,12 +35,15 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
     throw new Error('Required roles not found. Please run role seeding first.');
   }
 
-  // Generate secure random passwords for development
+  // Generate cryptographically secure random passwords for development
   const generateSecurePassword = (): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*';
+    // nosemgrep: generic.secrets.security.detected-generic-secret - Dynamic password generation, not hardcoded
     let password = '';
+    const randomValues = randomBytes(16);
+    
     for (let i = 0; i < 16; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+      password += chars.charAt(randomValues[i] % chars.length);
     }
     return password;
   };

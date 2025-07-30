@@ -9,11 +9,16 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { join } from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { Role, User } from '../entities/index.js';
 
 // Load environment variables from root directory
-config({ path: join(process.cwd(), '../../.env') });
+// Use absolute path resolution to avoid dependency on current working directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const envPath = process.env.ENV_FILE_PATH || resolve(__dirname, '../../../../.env');
+config({ path: envPath });
 
 /**
  * Database configuration for CLI operations

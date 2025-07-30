@@ -1,4 +1,5 @@
 // Jest setup file for API tests
+require('reflect-metadata');
 const { config } = require('dotenv');
 
 // Load test environment variables

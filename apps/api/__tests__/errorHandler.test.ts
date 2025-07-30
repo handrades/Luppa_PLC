@@ -1,3 +1,11 @@
+// Mock the database module to avoid TypeORM decorator issues in tests
+jest.mock('../src/config/database', () => ({
+  isDatabaseHealthy: jest.fn().mockResolvedValue(true),
+  AppDataSource: {
+    isInitialized: false
+  }
+}));
+
 import request from 'supertest';
 import express from 'express';
 import { createApp } from '../src/app';
