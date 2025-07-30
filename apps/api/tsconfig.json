@@ -12,6 +12,8 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
       "@shared-types/*": ["../../packages/shared-types/src/*"],

@@ -6,7 +6,7 @@ Object.defineProperty(window, 'import', {
     meta: {
       env: {
         VITE_API_URL: 'http://localhost:3101/api',
-        VITE_APP_NAME: 'Luppa PLC Inventory Test',
+        VITE_APP_NAME: 'Luppa Inventory Test',
         DEV: true,
         PROD: false,
         MODE: 'test',

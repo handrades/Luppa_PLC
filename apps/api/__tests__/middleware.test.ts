@@ -2,6 +2,13 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 import type { Express } from 'express';
 
+// Mock database health check for middleware tests
+jest.mock('../src/config/database', () => ({
+  isDatabaseHealthy: jest.fn().mockResolvedValue(true),
+  initializeDatabase: jest.fn().mockResolvedValue(undefined),
+  closeDatabase: jest.fn().mockResolvedValue(undefined)
+}));
+
 describe('Middleware Integration', () => {
   let app: Express;
 

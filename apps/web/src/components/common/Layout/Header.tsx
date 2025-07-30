@@ -44,7 +44,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </IconButton>
         
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Luppa PLC Inventory
+          Luppa Inventory
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>

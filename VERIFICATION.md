@@ -87,7 +87,7 @@ pnpm build
 
 ### Dashboard Page
 
-- Header with "Luppa PLC Inventory" title and menu icon
+- Header with "Luppa Inventory" title and menu icon
 - Four metric cards showing "Total PLCs", "Online", "Alerts", "Sites"
   (all showing 0)
 - "Recent Activity" section
