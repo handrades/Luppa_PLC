@@ -34,7 +34,9 @@ const createSeedDataSource = (): DataSource => {
     ssl: dbConfig.ssl,
 
     // Use same entities as main application
-    entities: ['src/entities/**/*.ts'],
+    entities: process.env.NODE_ENV === 'production' 
+      ? ['dist/entities/**/*.js'] 
+      : ['src/entities/**/*.ts'],
     
     // Synchronize should be false in seeding
     synchronize: false,

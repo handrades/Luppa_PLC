@@ -10,7 +10,7 @@ const createValidatedConfig = () => {
   const rawEnv = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: process.env.PORT || '3010',
-    HOST: process.env.HOST || '0.0.0.0',
+    HOST: process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'),
     LOG_LEVEL: process.env.LOG_LEVEL,
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
     // Database configuration

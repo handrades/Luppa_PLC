@@ -135,7 +135,7 @@ function Test-Prerequisites {
             Write-Log "Detected compressed backup file" -Level INFO
             # Check if gzip is available
             try {
-                & gzip --version > $null 2>&1
+                & gzip --version *> $null
                 Write-Log "gzip available for decompression" -Level INFO
             } catch {
                 Write-Log "gzip not found but compressed file provided" -Level ERROR
@@ -344,7 +344,7 @@ function Invoke-DatabaseRestore {
             & gzip -dc $BackupFile | & psql @psqlArgs
         } else {
             Write-Log "Restoring from uncompressed backup..." -Level INFO
-            Get-Content $BackupFile | & psql @psqlArgs
+            & psql @psqlArgs --file=$BackupFile
         }
         
         $restoreEndTime = Get-Date
