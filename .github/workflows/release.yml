@@ -55,17 +55,17 @@ jobs:
           mkdir -p release-artifacts
           
           # Create API artifact
-          tar -czf release-artifacts/luppa-api-${{ github.ref_name }}.tar.gz \
+          tar -czf release-artifacts/luppa-api-${{ github.ref_name || inputs.version }}.tar.gz \
             -C apps/api \
             dist/ package.json README.md
             
           # Create Web artifact
-          tar -czf release-artifacts/luppa-web-${{ github.ref_name }}.tar.gz \
+          tar -czf release-artifacts/luppa-web-${{ github.ref_name || inputs.version }}.tar.gz \
             -C apps/web \
             dist/ package.json README.md
             
           # Create full application bundle
-          tar -czf release-artifacts/luppa-full-${{ github.ref_name }}.tar.gz \
+          tar -czf release-artifacts/luppa-full-${{ github.ref_name || inputs.version }}.tar.gz \
             --exclude=node_modules \
             --exclude=.git \
             --exclude=logs \

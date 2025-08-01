@@ -25,7 +25,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      
   # API app dependencies
   - package-ecosystem: "npm"
     directory: "/apps/api"
@@ -74,8 +73,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
-          
-  # Web app dependencies  
+
+  # Web app dependencies
   - package-ecosystem: "npm"
     directory: "/apps/web"
     schedule:
