@@ -99,7 +99,7 @@ jobs:
           name: Release ${{ github.ref_name || inputs.version }}
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') || contains(inputs.version, '-') }}
+          prerelease: ${{ contains(github.ref_name || inputs.version || '', '-') }}
           files: |
             release-artifacts/*.tar.gz
           generate_release_notes: true
