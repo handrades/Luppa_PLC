@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.17.0'
+          node-version: '20'
           cache: 'pnpm'
           
       - name: Install pnpm
@@ -46,9 +46,9 @@ jobs:
         
       - name: Build applications
         run: |
-          pnpm -C packages/shared-types build
-          pnpm -C apps/api build
-          pnpm -C apps/web build
+          pnpm --filter ./packages/shared-types run build
+          pnpm --filter ./apps/api run build
+          pnpm --filter ./apps/web run build
           
       - name: Create release artifacts
         run: |

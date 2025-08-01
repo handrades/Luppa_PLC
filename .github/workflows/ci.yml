@@ -50,7 +50,7 @@ jobs:
         run: pnpm lint
 
       - name: Run Prettier check
-        run: pnpm format --check
+        run: pnpm format:check
 
       - name: Run Markdown lint
         run: pnpm lint:markdown
@@ -89,13 +89,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared types
-        run: pnpm -C packages/shared-types build || echo "No shared-types package found"
+        run: pnpm --filter ./packages/shared-types run build || echo "No shared-types package found"
 
       - name: Type check API
-        run: pnpm -C apps/api type-check
+        run: pnpm --filter ./apps/api run type-check
 
       - name: Type check Web
-        run: pnpm -C apps/web type-check
+        run: pnpm --filter ./apps/web run type-check
 
   test:
     name: Run Tests
@@ -177,16 +177,12 @@ jobs:
           EOF
 
       - name: Run API tests with coverage
-        run: |
-          cd apps/api
-          pnpm test --coverage --passWithNoTests
+        run: pnpm --filter ./apps/api run test --coverage --passWithNoTests
         env:
           NODE_ENV: test
 
       - name: Run Web tests with coverage
-        run: |
-          cd apps/web
-          pnpm test --coverage --passWithNoTests
+        run: pnpm --filter ./apps/web run test --coverage --passWithNoTests
 
       - name: Run workspace tests
         run: pnpm test --coverage --passWithNoTests
@@ -226,13 +222,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared types
-        run: pnpm -C packages/shared-types build
+        run: pnpm --filter ./packages/shared-types run build
 
       - name: Build API
-        run: pnpm -C apps/api build
+        run: pnpm --filter ./apps/api run build
 
       - name: Build Web
-        run: pnpm -C apps/web build
+        run: pnpm --filter ./apps/web run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
