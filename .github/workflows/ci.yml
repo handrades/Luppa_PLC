@@ -177,15 +177,19 @@ jobs:
           EOF
 
       - name: Run API tests with coverage
-        run: pnpm --filter ./apps/api run test --coverage --passWithNoTests
+        run: |
+          cd apps/api
+          pnpm test --coverage --passWithNoTests
         env:
           NODE_ENV: test
 
       - name: Run Web tests with coverage
-        run: pnpm --filter ./apps/web run test --coverage --passWithNoTests
+        run: |
+          cd apps/web
+          pnpm test --coverage --passWithNoTests
 
       - name: Run workspace tests
-        run: pnpm test --coverage --passWithNoTests
+        run: pnpm test --passWithNoTests
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
