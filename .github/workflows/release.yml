@@ -69,14 +69,14 @@ jobs:
             --exclude=node_modules \
             --exclude=.git \
             --exclude=logs \
-            --exclude=**/*.log \
+            --exclude='**/*.log' \
             .
             
       - name: Generate changelog
         id: changelog
         run: |
           # Get the previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           
           # Generate changelog
           if [ -n "$PREV_TAG" ]; then
