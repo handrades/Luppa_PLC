@@ -1,6 +1,11 @@
 ---
 name: Lint
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 on:
   push:
     branches: [main, master, develop]

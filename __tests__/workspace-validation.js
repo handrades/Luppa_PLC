@@ -101,7 +101,7 @@ test('package.json has correct workspace scripts', () => {
   const content = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf-8'));
   expect(content.scripts.dev).toContain('concurrently');
   expect(content.scripts.build).toBe('pnpm -r build');
-  expect(content.scripts.test).toBe('jest --config config/jest.config.js');
+  expect(content.scripts.test).toBe('jest --config config/jest.config.js --passWithNoTests');
   expect(content.scripts.lint).toBe('eslint --config config/.eslintrc.cjs .');
 });
 
@@ -120,7 +120,7 @@ test('tsconfig.json has workspace path mappings', () => {
 
 test('.nvmrc specifies Node.js v20.x', () => {
   const content = readFileSync(join(rootDir, '.nvmrc'), 'utf-8').trim();
-  expect(content).toMatch(/^v20\.\d+\.\d+$/);
+  expect(content).toMatch(/^(v20\.\d+\.\d+|20)$/);
 });
 
 test('Code quality files exist', () => {

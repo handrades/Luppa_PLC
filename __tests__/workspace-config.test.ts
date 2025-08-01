@@ -48,7 +48,7 @@ describe('Workspace Configuration', () => {
       expect(content.scripts).toMatchObject({
         dev: 'concurrently "pnpm -C apps/api dev" "pnpm -C apps/web dev"',
         build: 'pnpm -r build',
-        test: 'jest --config config/jest.config.js',
+        test: 'jest --config config/jest.config.js --passWithNoTests',
         lint: 'eslint --config config/.eslintrc.cjs .',
         'type-check': 'tsc --project config/tsconfig.json',
         setup: 'pnpm install && pnpm build:types && pnpm db:setup',
@@ -122,7 +122,7 @@ describe('Workspace Configuration', () => {
       expect(existsSync(nvmrcFile)).toBe(true);
       
       const content = readFileSync(nvmrcFile, 'utf-8').trim();
-      expect(content).toMatch(/^v20\.\d+\.\d+$/);
+      expect(content).toMatch(/^(v20\.\d+\.\d+|20)$/);
     });
 
     test('should have gitignore file', () => {

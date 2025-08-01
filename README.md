@@ -1,5 +1,11 @@
 # Industrial Inventory Multi-App Framework
 
+[![CI Pipeline](https://github.com/handrades/Luppa_PLC/actions/workflows/ci.yml/badge.svg)](https://github.com/handrades/Luppa_PLC/actions/workflows/ci.yml)
+[![Release](https://github.com/handrades/Luppa_PLC/actions/workflows/release.yml/badge.svg)](https://github.com/handrades/Luppa_PLC/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/handrades/Luppa_PLC/branch/main/graph/badge.svg)](https://codecov.io/gh/handrades/Luppa_PLC)
+[![Latest Release](https://img.shields.io/github/v/release/handrades/Luppa_PLC)](https://github.com/handrades/Luppa_PLC/releases/latest)
+[![License](https://img.shields.io/github/license/handrades/Luppa_PLC)](LICENSE)
+
 A comprehensive multi-application framework designed for industrial equipment inventory management,
 built with modern TypeScript, React, and Node.js technologies optimized for air-gapped industrial environments.
 
@@ -109,6 +115,55 @@ The project is designed for solo development with a focus on open-source technol
 4. **Epic 3**: Frontend Framework & Component Library
 5. **Epic 4**: Inventory Core Functionality
 6. **Epic 5**: Advanced Inventory Features
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+### Workflows
+
+- **CI Pipeline** (`.github/workflows/ci.yml`)
+  - Triggered on push to main/master/develop branches and pull requests
+  - Parallel execution of lint, type-check, test, and build jobs
+  - Node.js 20.17.0 matrix with Ubuntu runner
+  - Comprehensive caching for pnpm, TypeScript builds, and Jest
+  - 60% minimum code coverage requirement
+  - PostgreSQL and Redis test services
+
+- **Release Pipeline** (`.github/workflows/release.yml`)
+  - Triggered on version tags (v*) or manual dispatch
+  - Builds and packages applications for distribution
+  - Creates GitHub releases with changelogs
+  - Builds and pushes Docker images to GitHub Container Registry
+
+### Branch Protection
+
+- Main branch requires CI status checks to pass
+- All tests must pass with 60% code coverage
+- Automated dependency updates via Dependabot
+
+### Local Development
+
+Run all checks locally using PowerShell (psake):
+
+```powershell
+# Run all CI checks (matches GitHub workflow)
+Invoke-psake CI
+
+# Individual checks
+Invoke-psake Markdown     # Markdown linting
+Invoke-psake Json         # JSON validation
+Invoke-psake Yaml         # YAML validation
+Invoke-psake TypeScript   # ESLint + Prettier
+```
+
+### Quality Standards
+
+- ESLint + Prettier for code formatting
+- TypeScript strict mode for type safety
+- Jest for comprehensive test coverage
+- Markdownlint for documentation consistency
+- JSON/YAML validation for configuration files
 
 ## Documentation
 
