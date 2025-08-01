@@ -1,0 +1,244 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: ['20.17.0']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          
+      - name: Cache TypeScript build
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/*/dist
+            packages/*/dist
+            **/tsconfig.tsbuildinfo
+          key: ${{ runner.os }}-typescript-${{ hashFiles('**/tsconfig.json', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-typescript-
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run ESLint
+        run: pnpm lint
+        
+      - name: Run Prettier check
+        run: pnpm format --check
+        
+      - name: Run Markdown lint
+        run: pnpm lint:markdown
+        
+      - name: Run JSON lint
+        run: pnpm lint:json
+        
+      - name: Run YAML lint
+        run: pnpm lint:yaml
+
+  type-check:
+    name: Type Check
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: ['20.17.0']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Build shared types
+        run: pnpm -C packages/shared-types build || echo "No shared-types package found"
+        
+      - name: Type check API
+        run: pnpm -C apps/api type-check
+        
+      - name: Type check Web
+        run: pnpm -C apps/web type-check
+
+  test:
+    name: Run Tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: ['20.17.0']
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: luppa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7.2
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          
+      - name: Cache Jest
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules/.cache/jest
+            **/.jest-cache
+          key: ${{ runner.os }}-jest-${{ hashFiles('**/jest.config.*', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-jest-
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Create test environment file
+        run: |
+          cat > apps/api/.env.test << EOF
+          NODE_ENV=test
+          PORT=3001
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USERNAME=testuser
+          DB_PASSWORD=testpass
+          DB_DATABASE=luppa_test
+          REDIS_HOST=localhost
+          REDIS_PORT=6379
+          JWT_SECRET=test-secret-key-for-ci
+          BCRYPT_ROUNDS=4
+          LOG_LEVEL=error
+          EOF
+        
+      - name: Run API tests with coverage
+        run: |
+          cd apps/api
+          pnpm test --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+          
+      - name: Run Web tests with coverage
+        run: |
+          cd apps/web
+          pnpm test --coverage --passWithNoTests
+        
+      - name: Run workspace tests
+        run: pnpm test --coverage --passWithNoTests
+        
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
+          verbose: true
+
+  build:
+    name: Build Applications
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: [lint, type-check]
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: ['20.17.0']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Build shared types
+        run: pnpm -C packages/shared-types build
+        
+      - name: Build API
+        run: pnpm -C apps/api build
+        
+      - name: Build Web
+        run: pnpm -C apps/web build
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/api/dist/
+            apps/web/dist/
+          retention-days: 7
