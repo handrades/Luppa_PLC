@@ -10,23 +10,23 @@
 
 ```sql
 -- Composite indexes for common query patterns
-CREATE INDEX idx_plcs_search_composite ON plcs(equipment_id, make, model, ip_address) 
+CREATE INDEX idx_plcs_search_composite ON plcs(equipment_id, make, model, ip_address)
 WHERE ip_address IS NOT NULL;
 
 -- Partial indexes for filtered queries
-CREATE INDEX idx_plcs_active_equipment ON plcs(equipment_id) 
+CREATE INDEX idx_plcs_active_equipment ON plcs(equipment_id)
 WHERE equipment_id IS NOT NULL;
 
 -- Full-text search optimization
-CREATE INDEX idx_plcs_fulltext ON plcs USING gin(to_tsvector('english', 
+CREATE INDEX idx_plcs_fulltext ON plcs USING gin(to_tsvector('english',
   description || ' ' || make || ' ' || model || ' ' || COALESCE(tag_id, '')));
 
 -- Site hierarchy navigation optimization
-CREATE INDEX idx_hierarchy_path ON equipment(cell_id) 
+CREATE INDEX idx_hierarchy_path ON equipment(cell_id)
 INCLUDE (id, name, equipment_type, created_at);
 
 -- Audit performance optimization
-CREATE INDEX idx_audit_logs_performance ON audit_logs(table_name, timestamp DESC) 
+CREATE INDEX idx_audit_logs_performance ON audit_logs(table_name, timestamp DESC)
 WHERE risk_level IN ('HIGH', 'CRITICAL');
 ```
 
@@ -41,23 +41,23 @@ const dbConfig = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   type: 'postgres' as const,
-  
+
   // Performance optimization settings
   pool: {
-    min: 2,                    // Minimum connections
-    max: 10,                   // Maximum connections for industrial workload
-    acquireTimeoutMillis: 60000,  // Connection timeout
-    idleTimeoutMillis: 30000,     // Idle connection timeout
+    min: 2, // Minimum connections
+    max: 10, // Maximum connections for industrial workload
+    acquireTimeoutMillis: 60000, // Connection timeout
+    idleTimeoutMillis: 30000, // Idle connection timeout
   },
-  
+
   // Query optimization
   extra: {
     connectionLimit: 10,
-    statement_timeout: '30s',     // Prevent long-running queries
-    lock_timeout: '10s',          // Prevent lock contention
+    statement_timeout: '30s', // Prevent long-running queries
+    lock_timeout: '10s', // Prevent lock contention
     idle_in_transaction_session_timeout: '5min',
   },
-  
+
   // Enable query logging for performance monitoring
   logging: process.env.NODE_ENV === 'development' ? 'all' : ['error', 'warn'],
 };
@@ -75,17 +75,27 @@ export class PLCService {
       .leftJoinAndSelect('equipment.cell', 'cell')
       .leftJoinAndSelect('cell.site', 'site')
       .select([
-        'plc.id', 'plc.tagId', 'plc.description', 'plc.make', 'plc.model', 'plc.ipAddress',
-        'equipment.id', 'equipment.name', 'equipment.equipmentType',
-        'cell.id', 'cell.name', 'cell.lineNumber',
-        'site.id', 'site.name'
+        'plc.id',
+        'plc.tagId',
+        'plc.description',
+        'plc.make',
+        'plc.model',
+        'plc.ipAddress',
+        'equipment.id',
+        'equipment.name',
+        'equipment.equipmentType',
+        'cell.id',
+        'cell.name',
+        'cell.lineNumber',
+        'site.id',
+        'site.name',
       ]);
 
     // Apply filters with optimized WHERE conditions
     if (filters.siteId) {
       queryBuilder.andWhere('site.id = :siteId', { siteId: filters.siteId });
     }
-    
+
     if (filters.search) {
       queryBuilder.andWhere(
         `to_tsvector('english', plc.description || ' ' || plc.make || ' ' || plc.model) 
@@ -115,18 +125,18 @@ export class PLCService {
 // Cache configuration for optimal performance
 export class CacheService {
   private redis: RedisClientType;
-  
+
   constructor() {
     // Updated for node-redis v4 - uses url string or socket object
     this.redis = createClient({
       url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
-      
+
       // Performance settings (v4 compatible)
       socket: {
         connectTimeout: 5000,
         commandTimeout: 3000,
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
-      }
+        reconnectStrategy: retries => Math.min(retries * 50, 500),
+      },
     });
   }
 
@@ -158,11 +168,11 @@ export class CacheService {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,      // 5 minutes stale time
-      cacheTime: 10 * 60 * 1000,     // 10 minutes cache time
+      staleTime: 5 * 60 * 1000, // 5 minutes stale time
+      cacheTime: 10 * 60 * 1000, // 10 minutes cache time
       retry: 3,
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      
+
       // Network mode for air-gapped environments
       networkMode: 'offlineFirst',
     },
@@ -179,8 +189,8 @@ export const usePLCSearch = (filters: PLCFilters) => {
     queryKey: ['plcs', 'search', filters],
     queryFn: () => plcService.searchPLCs(filters),
     enabled: Boolean(Object.keys(filters).length),
-    staleTime: 2 * 60 * 1000,  // 2 minutes for search results
-    select: useCallback((data) => {
+    staleTime: 2 * 60 * 1000, // 2 minutes for search results
+    select: useCallback(data => {
       // Transform data for UI optimization
       return data.map(plc => ({
         ...plc,
@@ -198,14 +208,14 @@ export const usePLCSearch = (filters: PLCFilters) => {
 
 ```typescript
 // High-performance data grid with virtual scrolling
-export const IndustrialDataGrid: React.FC<DataGridProps> = ({ 
-  data, 
-  columns, 
+export const IndustrialDataGrid: React.FC<DataGridProps> = ({
+  data,
+  columns,
   onRowClick,
-  height = 600 
+  height = 600
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   // Virtual scrolling with @tanstack/react-virtual (not react-window)
   // Using single container for both row and column virtualization
   const rowVirtualizer = useVirtualizer({
@@ -271,10 +281,10 @@ export const usePLCStore = create<PLCState>((set, get) => ({
   filteredPLCs: [],
   filters: {},
   isLoading: false,
-  
+
   // Optimized actions
-  setFilters: (newFilters) => {
-    set((state) => {
+  setFilters: newFilters => {
+    set(state => {
       const filters = { ...state.filters, ...newFilters };
       return {
         filters,
@@ -282,10 +292,10 @@ export const usePLCStore = create<PLCState>((set, get) => ({
       };
     });
   },
-  
+
   // Bulk operations for performance
-  updatePLCs: (plcs) => {
-    set((state) => ({
+  updatePLCs: plcs => {
+    set(state => ({
       plcs,
       filteredPLCs: applyFilters(plcs, state.filters),
     }));

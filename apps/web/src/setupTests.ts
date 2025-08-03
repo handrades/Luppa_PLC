@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // Mock environment variables for tests
 Object.defineProperty(window, 'import', {
@@ -13,14 +13,14 @@ Object.defineProperty(window, 'import', {
       },
     },
   },
-})
+});
 
 // Mock crypto.randomUUID for tests
 Object.defineProperty(global, 'crypto', {
   value: {
     randomUUID: (() => {
-      let counter = 0
-      return () => `test-uuid-${++counter}`
+      let counter = 0;
+      return () => `test-uuid-${++counter}`;
     })(),
   },
-})
+});

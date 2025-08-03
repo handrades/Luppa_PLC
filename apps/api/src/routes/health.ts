@@ -37,8 +37,8 @@ router.get('/health', async (_req: Request, res: Response) => {
       environment: process.env.NODE_ENV || 'development',
       uptime: Math.floor(process.uptime()),
       database: {
-        status: dbHealthy ? 'connected' : 'disconnected'
-      }
+        status: dbHealthy ? 'connected' : 'disconnected',
+      },
     };
 
     const statusCode = overallHealthy ? 200 : 503;
@@ -51,8 +51,8 @@ router.get('/health', async (_req: Request, res: Response) => {
       environment: process.env.NODE_ENV || 'development',
       uptime: Math.floor(process.uptime()),
       database: {
-        status: 'disconnected'
-      }
+        status: 'disconnected',
+      },
     };
 
     res.status(503).json(healthResponse);

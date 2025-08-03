@@ -9,8 +9,12 @@ export class InitialSchema20250729082147 implements MigrationInterface {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
     // Create custom types
-    await queryRunner.query(`CREATE TYPE equipment_type AS ENUM ('PRESS', 'ROBOT', 'OVEN', 'CONVEYOR', 'ASSEMBLY_TABLE', 'OTHER')`);
-    await queryRunner.query(`CREATE TYPE tag_data_type AS ENUM ('BOOL', 'INT', 'DINT', 'REAL', 'STRING', 'TIMER', 'COUNTER')`);
+    await queryRunner.query(
+      `CREATE TYPE equipment_type AS ENUM ('PRESS', 'ROBOT', 'OVEN', 'CONVEYOR', 'ASSEMBLY_TABLE', 'OTHER')`
+    );
+    await queryRunner.query(
+      `CREATE TYPE tag_data_type AS ENUM ('BOOL', 'INT', 'DINT', 'REAL', 'STRING', 'TIMER', 'COUNTER')`
+    );
     await queryRunner.query(`CREATE TYPE audit_action AS ENUM ('INSERT', 'UPDATE', 'DELETE')`);
     await queryRunner.query(`CREATE TYPE risk_level AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')`);
 
@@ -186,11 +190,17 @@ export class InitialSchema20250729082147 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX idx_tags_data_type ON tags(data_type)`);
 
     // Audit log indexes
-    await queryRunner.query(`CREATE INDEX idx_audit_logs_table_record ON audit_logs(table_name, record_id)`);
-    await queryRunner.query(`CREATE INDEX idx_audit_logs_user_timestamp ON audit_logs(user_id, timestamp DESC)`);
+    await queryRunner.query(
+      `CREATE INDEX idx_audit_logs_table_record ON audit_logs(table_name, record_id)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_audit_logs_user_timestamp ON audit_logs(user_id, timestamp DESC)`
+    );
     await queryRunner.query(`CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`);
     await queryRunner.query(`CREATE INDEX idx_audit_logs_action ON audit_logs(action)`);
-    await queryRunner.query(`CREATE INDEX idx_audit_logs_risk_level ON audit_logs(risk_level) WHERE risk_level IN ('HIGH', 'CRITICAL')`);
+    await queryRunner.query(
+      `CREATE INDEX idx_audit_logs_risk_level ON audit_logs(risk_level) WHERE risk_level IN ('HIGH', 'CRITICAL')`
+    );
 
     // Created/Updated by indexes for all tables
     await queryRunner.query(`CREATE INDEX idx_sites_created_by ON sites(created_by)`);
@@ -216,13 +226,27 @@ export class InitialSchema20250729082147 implements MigrationInterface {
     `);
 
     // Apply update triggers to all tables
-    await queryRunner.query(`CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_sites_updated_at BEFORE UPDATE ON sites FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_cells_updated_at BEFORE UPDATE ON cells FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_equipment_updated_at BEFORE UPDATE ON equipment FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_plcs_updated_at BEFORE UPDATE ON plcs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    await queryRunner.query(`CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
+    await queryRunner.query(
+      `CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_sites_updated_at BEFORE UPDATE ON sites FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_cells_updated_at BEFORE UPDATE ON cells FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_equipment_updated_at BEFORE UPDATE ON equipment FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_plcs_updated_at BEFORE UPDATE ON plcs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+    );
 
     // Create comprehensive audit trigger function
     await queryRunner.query(`
@@ -310,13 +334,27 @@ export class InitialSchema20250729082147 implements MigrationInterface {
     `);
 
     // Apply audit triggers to all tables
-    await queryRunner.query(`CREATE TRIGGER audit_sites AFTER INSERT OR UPDATE OR DELETE ON sites FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_cells AFTER INSERT OR UPDATE OR DELETE ON cells FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_equipment AFTER INSERT OR UPDATE OR DELETE ON equipment FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_plcs AFTER INSERT OR UPDATE OR DELETE ON plcs FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_tags AFTER INSERT OR UPDATE OR DELETE ON tags FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_users AFTER INSERT OR UPDATE OR DELETE ON users FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
-    await queryRunner.query(`CREATE TRIGGER audit_roles AFTER INSERT OR UPDATE OR DELETE ON roles FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`);
+    await queryRunner.query(
+      `CREATE TRIGGER audit_sites AFTER INSERT OR UPDATE OR DELETE ON sites FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_cells AFTER INSERT OR UPDATE OR DELETE ON cells FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_equipment AFTER INSERT OR UPDATE OR DELETE ON equipment FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_plcs AFTER INSERT OR UPDATE OR DELETE ON plcs FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_tags AFTER INSERT OR UPDATE OR DELETE ON tags FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_users AFTER INSERT OR UPDATE OR DELETE ON users FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
+    await queryRunner.query(
+      `CREATE TRIGGER audit_roles AFTER INSERT OR UPDATE OR DELETE ON roles FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()`
+    );
 
     // Create views for common queries
 

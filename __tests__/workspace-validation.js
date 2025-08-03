@@ -19,21 +19,21 @@ function test(description, testFn) {
 
 function expect(actual) {
   return {
-    toBe: (expected) => {
+    toBe: expected => {
       if (actual !== expected) {
         throw new Error(`Expected ${expected}, got ${actual}`);
       }
     },
-    toContain: (expected) => {
+    toContain: expected => {
       if (!actual.includes(expected)) {
         throw new Error(`Expected "${actual}" to contain "${expected}"`);
       }
     },
-    toMatch: (pattern) => {
+    toMatch: pattern => {
       if (!pattern.test(actual)) {
         throw new Error(`Expected "${actual}" to match ${pattern}`);
       }
-    }
+    },
   };
 }
 

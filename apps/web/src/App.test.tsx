@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
-import { ThemeProvider } from '@mui/material/styles'
-import App from './App'
-import { theme } from './styles/theme'
+import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import App from './App';
+import { theme } from './styles/theme';
 
 const AppWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter
@@ -11,11 +11,9 @@ const AppWrapper = ({ children }: { children: React.ReactNode }) => (
       v7_relativeSplatPath: true,
     }}
   >
-    <ThemeProvider theme={theme}>
-      {children}
-    </ThemeProvider>
+    <ThemeProvider theme={theme}>{children}</ThemeProvider>
   </BrowserRouter>
-)
+);
 
 describe('App', () => {
   test('renders without crashing', () => {
@@ -23,17 +21,16 @@ describe('App', () => {
       <AppWrapper>
         <App />
       </AppWrapper>
-    )
-  })
+    );
+  });
 
   test('renders dashboard by default', () => {
     render(
       <AppWrapper>
         <App />
       </AppWrapper>
-    )
-    
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
-  })
-})
+    );
 
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  });
+});

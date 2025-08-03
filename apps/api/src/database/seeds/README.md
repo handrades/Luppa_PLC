@@ -36,7 +36,7 @@ pnpm seed:users
 - Can manage users, equipment, PLCs, and system settings
 - Has audit log access and system backup capabilities
 
-### Engineer Role  
+### Engineer Role
 
 - **Equipment and PLC management** for process engineers
 - Can create, read, update equipment and PLCs (no deletion)
@@ -55,7 +55,7 @@ pnpm seed:users
 The seed script creates three test users (development only):
 
 - `admin@luppa-plc.local` - Admin role
-- `engineer@luppa-plc.local` - Engineer role  
+- `engineer@luppa-plc.local` - Engineer role
 - `viewer@luppa-plc.local` - Viewer role
 
 **Security Notes:**
@@ -70,7 +70,7 @@ Set these variables for consistent development passwords:
 
 ```bash
 DEV_ADMIN_PASSWORD=your-admin-password
-DEV_ENGINEER_PASSWORD=your-engineer-password  
+DEV_ENGINEER_PASSWORD=your-engineer-password
 DEV_VIEWER_PASSWORD=your-viewer-password
 ```
 

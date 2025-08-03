@@ -12,7 +12,7 @@ validateEnvironment();
 process.on('uncaughtException', (error: Error) => {
   logger.error('Uncaught Exception', {
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
   process.exit(1);
 });
@@ -20,7 +20,7 @@ process.on('uncaughtException', (error: Error) => {
 process.on('unhandledRejection', (reason: unknown) => {
   logger.error('Unhandled Rejection', {
     reason: reason instanceof Error ? reason.message : String(reason),
-    stack: reason instanceof Error ? reason.stack : undefined
+    stack: reason instanceof Error ? reason.stack : undefined,
   });
   process.exit(1);
 });
@@ -42,7 +42,7 @@ const startServer = async (): Promise<void> => {
         host: config.host,
         environment: config.env,
         processId: process.pid,
-        nodeVersion: process.version
+        nodeVersion: process.version,
       });
     });
 
@@ -57,10 +57,9 @@ const startServer = async (): Promise<void> => {
       }
       process.exit(1);
     });
-
   } catch (error) {
     logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     process.exit(1);
   }
@@ -72,21 +71,21 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
 
   // Stop accepting new connections
   if (server) {
-    server.close((error) => {
+    server.close(error => {
       if (error) {
         logger.error('Error during server close', { error: error.message });
         process.exit(1);
       }
 
       logger.info('HTTP server closed');
-      
+
       // Close database connections, cleanup resources, etc.
       closeDatabase()
         .then(() => {
           logger.info('Database connections closed');
           process.exit(0);
         })
-        .catch((error) => {
+        .catch(error => {
           logger.error('Error closing database connections', { error: error.message });
           process.exit(1);
         });
@@ -107,9 +106,9 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Start the server
-startServer().catch((error) => {
+startServer().catch(error => {
   logger.error('Fatal error during server startup', {
-    error: error instanceof Error ? error.message : 'Unknown error'
+    error: error instanceof Error ? error.message : 'Unknown error',
   });
   process.exit(1);
 });

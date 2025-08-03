@@ -141,7 +141,7 @@ enum EquipmentType {
   OVEN = 'OVEN',
   CONVEYOR = 'CONVEYOR',
   ASSEMBLY_TABLE = 'ASSEMBLY_TABLE',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 ```
 
@@ -235,7 +235,7 @@ enum TagDataType {
   REAL = 'REAL',
   STRING = 'STRING',
   TIMER = 'TIMER',
-  COUNTER = 'COUNTER'
+  COUNTER = 'COUNTER',
 }
 ```
 
@@ -280,7 +280,7 @@ interface AuditLog {
 enum AuditAction {
   INSERT = 'INSERT',
   UPDATE = 'UPDATE',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
 }
 ```
 

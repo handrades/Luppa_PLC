@@ -68,25 +68,25 @@ The project is designed for solo development with a focus on open-source technol
    ```bash
    # Option 1: Local development
    pnpm dev
-   
+
    # Option 2: Full Docker environment
    pnpm docker:dev
    ```
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development servers for all apps |
-| `pnpm build` | Build all packages and applications |
-| `pnpm test` | Run tests across all packages |
-| `pnpm lint` | Run linting across all packages |
-| `pnpm type-check` | Run TypeScript type checking |
-| `pnpm setup` | Initial project setup (install + build types + db setup) |
-| `pnpm docker:dev` | Start full Docker development environment |
-| `pnpm docker:down` | Stop Docker development environment |
-| `pnpm clean` | Clean all build artifacts and node_modules |
-| `pnpm reset` | Clean and reinstall everything |
+| Script             | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `pnpm dev`         | Start development servers for all apps                   |
+| `pnpm build`       | Build all packages and applications                      |
+| `pnpm test`        | Run tests across all packages                            |
+| `pnpm lint`        | Run linting across all packages                          |
+| `pnpm type-check`  | Run TypeScript type checking                             |
+| `pnpm setup`       | Initial project setup (install + build types + db setup) |
+| `pnpm docker:dev`  | Start full Docker development environment                |
+| `pnpm docker:down` | Stop Docker development environment                      |
+| `pnpm clean`       | Clean all build artifacts and node_modules               |
+| `pnpm reset`       | Clean and reinstall everything                           |
 
 ## Project Structure
 
@@ -131,7 +131,7 @@ The project uses GitHub Actions for continuous integration and deployment:
   - PostgreSQL and Redis test services
 
 - **Release Pipeline** (`.github/workflows/release.yml`)
-  - Triggered on version tags (v*) or manual dispatch
+  - Triggered on version tags (v\*) or manual dispatch
   - Builds and packages applications for distribution
   - Creates GitHub releases with changelogs
   - Builds and pushes Docker images to GitHub Container Registry

@@ -10,7 +10,7 @@ import { Role, RolePermissions } from '../../entities/Role.js';
 
 export const seedRoles = async (dataSource: DataSource): Promise<void> => {
   console.log('🌱 Seeding system roles...');
-  
+
   const roleRepository = dataSource.getRepository(Role);
 
   // Define role permissions based on industrial PLC management requirements
@@ -22,7 +22,8 @@ export const seedRoles = async (dataSource: DataSource): Promise<void> => {
   }> = [
     {
       name: 'Admin',
-      description: 'Full system administration access with user management and system configuration',
+      description:
+        'Full system administration access with user management and system configuration',
       isSystem: true,
       permissions: {
         // User Management
@@ -154,9 +155,7 @@ export const seedRoles = async (dataSource: DataSource): Promise<void> => {
   });
 
   const existingRoleNames = existingRoles.map(role => role.name);
-  const rolesToCreate = rolePermissions.filter(
-    role => !existingRoleNames.includes(role.name)
-  );
+  const rolesToCreate = rolePermissions.filter(role => !existingRoleNames.includes(role.name));
 
   if (rolesToCreate.length === 0) {
     console.log('✅ System roles already exist, skipping seed');

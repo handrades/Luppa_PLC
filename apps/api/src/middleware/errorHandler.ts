@@ -17,9 +17,14 @@ export class AppError extends Error {
   public readonly isOperational: boolean;
   public readonly details?: unknown;
 
-  constructor(message: string, statusCode: number = 500, code: string = 'INTERNAL_ERROR', details?: unknown) {
+  constructor(
+    message: string,
+    statusCode: number = 500,
+    code: string = 'INTERNAL_ERROR',
+    details?: unknown
+  ) {
     super(message);
-    
+
     this.statusCode = statusCode;
     this.code = code;
     this.isOperational = true;
@@ -89,7 +94,7 @@ export const errorHandler = (
     code,
     message: error.message,
     stack: error.stack,
-    details
+    details,
   });
 
   // Send error response
@@ -98,8 +103,8 @@ export const errorHandler = (
       message,
       code,
       requestId,
-      timestamp
-    }
+      timestamp,
+    },
   };
 
   if (details) {

@@ -35,7 +35,7 @@ consistency and compliance across the platform.
 
 ## Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-07-23 | 1.0 | Initial PRD creation based on project brief | John (PM) |
-| 2025-07-25 | 1.1 | Added Epic 0 for project initialization based on PO validation | Sarah (PO) |
+| Date       | Version | Description                                                    | Author     |
+| ---------- | ------- | -------------------------------------------------------------- | ---------- |
+| 2025-07-23 | 1.0     | Initial PRD creation based on project brief                    | John (PM)  |
+| 2025-07-25 | 1.1     | Added Epic 0 for project initialization based on PO validation | Sarah (PO) |

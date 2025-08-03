@@ -39,10 +39,10 @@ consistency and compliance across the platform.
 
 ### Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-07-23 | 1.0 | Initial PRD creation based on project brief | John (PM) |
-| 2025-07-25 | 1.1 | Added Epic 0 for project initialization based on PO validation | Sarah (PO) |
+| Date       | Version | Description                                                    | Author     |
+| ---------- | ------- | -------------------------------------------------------------- | ---------- |
+| 2025-07-23 | 1.0     | Initial PRD creation based on project brief                    | John (PM)  |
+| 2025-07-25 | 1.1     | Added Epic 0 for project initialization based on PO validation | Sarah (PO) |
 
 ## Requirements
 
@@ -238,7 +238,7 @@ so that I can organize code modules and share dependencies efficiently.
 
 #### Acceptance Criteria
 
-1: Initialize pnpm workspace with pnpm-workspace.yaml defining apps/*, packages/* locations
+1: Initialize pnpm workspace with pnpm-workspace.yaml defining apps/_, packages/_ locations
 2: Create folder structure: /apps (web, api), /packages (shared-types, ui-components, config), /infrastructure (docker, scripts)
 3: Configure root package.json with workspace scripts: dev, build, test, lint
 4: Set up TypeScript with base tsconfig.json and package-specific configurations
@@ -763,7 +763,7 @@ so that I can make informed decisions about inventory management.
 **Success Metrics:**
 
 - Developer can set up local environment in under 5 minutes
-- All health checks pass in local Docker environment  
+- All health checks pass in local Docker environment
 - CI/CD pipeline runs successfully on main branch
 - Another developer successfully onboards using only documentation
 
@@ -794,17 +794,17 @@ so that I can make informed decisions about inventory management.
 
 ### Category Analysis Table
 
-| Category                         | Status  | Critical Issues |
-| -------------------------------- | ------- | --------------- |
-| 1. Problem Definition & Context  | PASS    | None - Well defined from project brief |
-| 2. MVP Scope Definition          | PASS    | Excellent epic structure and scope boundaries |
-| 3. User Experience Requirements  | PARTIAL | User flows need more detail, edge cases limited |
-| 4. Functional Requirements       | PASS    | Comprehensive FR/NFR with clear acceptance criteria |
-| 5. Non-Functional Requirements   | PASS    | Strong performance and compliance requirements |
+| Category                         | Status  | Critical Issues                                       |
+| -------------------------------- | ------- | ----------------------------------------------------- |
+| 1. Problem Definition & Context  | PASS    | None - Well defined from project brief                |
+| 2. MVP Scope Definition          | PASS    | Excellent epic structure and scope boundaries         |
+| 3. User Experience Requirements  | PARTIAL | User flows need more detail, edge cases limited       |
+| 4. Functional Requirements       | PASS    | Comprehensive FR/NFR with clear acceptance criteria   |
+| 5. Non-Functional Requirements   | PASS    | Strong performance and compliance requirements        |
 | 6. Epic & Story Structure        | PASS    | Well-sequenced epics with appropriate story breakdown |
-| 7. Technical Guidance            | PASS    | Clear architectural direction and constraints |
-| 8. Cross-Functional Requirements | PARTIAL | Data relationships need more specificity |
-| 9. Clarity & Communication       | PASS    | Well-structured and clearly written |
+| 7. Technical Guidance            | PASS    | Clear architectural direction and constraints         |
+| 8. Cross-Functional Requirements | PARTIAL | Data relationships need more specificity              |
+| 9. Clarity & Communication       | PASS    | Well-structured and clearly written                   |
 
 ### Top Issues by Priority
 

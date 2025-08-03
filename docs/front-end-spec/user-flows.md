@@ -24,18 +24,18 @@ graph TD
     B -->|Text search| C[Full-text search results]
     B -->|Filter-based| D[Apply filters]
     B -->|Site navigation| E[Browse site hierarchy]
-    
+
     C --> F[Results list with highlighting]
     D --> G[Filtered equipment list]
     E --> H[Equipment by location]
-    
+
     F --> I{Found target?}
     G --> I
     H --> I
-    
+
     I -->|Yes| J[Click equipment row]
     I -->|No| K[Refine search/filters]
-    
+
     K --> B
     J --> L[Equipment detail view]
     L --> M[Edit equipment if needed]

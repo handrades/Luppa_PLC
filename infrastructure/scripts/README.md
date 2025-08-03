@@ -109,23 +109,23 @@ pwsh infrastructure/scripts/restore-db.ps1 -BackupFile "./backups/backup.sql" -D
 
 ### backup-db.ps1 Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `BackupType` | String | 'full' | Type of backup: 'full' or 'schema' |
-| `OutputDir` | String | './backups' | Directory to store backup files |
-| `DatabaseName` | String | (from env) | Override database name |
-| `Compress` | Boolean | true | Whether to compress with gzip |
-| `Verbose` | Switch | false | Enable verbose logging |
+| Parameter      | Type    | Default     | Description                        |
+| -------------- | ------- | ----------- | ---------------------------------- |
+| `BackupType`   | String  | 'full'      | Type of backup: 'full' or 'schema' |
+| `OutputDir`    | String  | './backups' | Directory to store backup files    |
+| `DatabaseName` | String  | (from env)  | Override database name             |
+| `Compress`     | Boolean | true        | Whether to compress with gzip      |
+| `Verbose`      | Switch  | false       | Enable verbose logging             |
 
 ### restore-db.ps1 Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `BackupFile` | String | (required) | Path to backup file to restore |
-| `DatabaseName` | String | (from env) | Override database name |
-| `CreateDatabase` | Switch | false | Create database if it doesn't exist |
-| `DropExisting` | Switch | false | Drop existing database before restore |
-| `Verbose` | Switch | false | Enable verbose logging |
+| Parameter        | Type   | Default    | Description                           |
+| ---------------- | ------ | ---------- | ------------------------------------- |
+| `BackupFile`     | String | (required) | Path to backup file to restore        |
+| `DatabaseName`   | String | (from env) | Override database name                |
+| `CreateDatabase` | Switch | false      | Create database if it doesn't exist   |
+| `DropExisting`   | Switch | false      | Drop existing database before restore |
+| `Verbose`        | Switch | false      | Enable verbose logging                |
 
 ## File Naming Convention
 
@@ -215,7 +215,7 @@ The scripts work seamlessly with the Docker development environment defined in `
 # From docker-compose.dev.yml
 postgres:
   ports:
-    - "5433:5432"  # Maps container port 5432 to host port 5433
+    - '5433:5432' # Maps container port 5432 to host port 5433
   environment:
     POSTGRES_DB: luppa_dev
     POSTGRES_USER: postgres

@@ -47,6 +47,6 @@ export class Role extends BaseEntity {
   })
   isSystem!: boolean;
 
-  @OneToMany(() => User, (user) => user.role)
+  @OneToMany(() => User, user => user.role)
   users!: User[];
 }

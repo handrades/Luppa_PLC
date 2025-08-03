@@ -184,14 +184,14 @@ jobs:
       - name: Run API tests with coverage
         run: |
           cd apps/api
-          pnpm test --coverage --passWithNoTests
+          pnpm test:coverage --passWithNoTests
         env:
           NODE_ENV: test
 
       - name: Run Web tests with coverage
         run: |
           cd apps/web
-          pnpm test --coverage --passWithNoTests
+          pnpm test:coverage --passWithNoTests
 
       - name: Run workspace tests
         run: pnpm test --passWithNoTests

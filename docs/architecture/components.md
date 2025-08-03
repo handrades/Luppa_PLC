@@ -157,7 +157,7 @@ graph TD
     subgraph "API Layer"
         REST[REST API Controllers]
     end
-    
+
     subgraph "Service Layer"
         Auth[Auth Service]
         Site[Site Service]
@@ -170,12 +170,12 @@ graph TD
         Audit[Audit Service]
         Notify[Notification Service]
     end
-    
+
     subgraph "Data Layer"
         PG[(PostgreSQL)]
         Redis[(Redis)]
     end
-    
+
     REST --> Auth
     REST --> Site
     REST --> Cell
@@ -184,23 +184,23 @@ graph TD
     REST --> Tag
     REST --> Hierarchy
     REST --> Import
-    
+
     Site --> Audit
     Cell --> Audit
     Equipment --> Audit
     PLC --> Audit
     Tag --> Audit
-    
+
     Import --> Site
     Import --> Cell
     Import --> Equipment
     Import --> PLC
-    
+
     Hierarchy --> Site
     Hierarchy --> Cell
     Hierarchy --> Equipment
     Hierarchy --> PLC
-    
+
     Auth --> PG
     Auth --> Redis
     Site --> PG
@@ -210,7 +210,7 @@ graph TD
     Tag --> PG
     Audit --> PG
     Notify --> PG
-    
+
     PLC --> Redis
     Hierarchy --> Redis
 ```

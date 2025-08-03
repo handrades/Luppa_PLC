@@ -31,6 +31,6 @@ on equipment distribution, status monitoring, and operational insights.
 
 ## Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-07-24 | 1.0 | Initial UI/UX specification creation | Sally (UX Expert) |
+| Date       | Version | Description                          | Author            |
+| ---------- | ------- | ------------------------------------ | ----------------- |
+| 2025-07-24 | 1.0     | Initial UI/UX specification creation | Sally (UX Expert) |

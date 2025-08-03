@@ -1,21 +1,21 @@
-import { ReactNode } from 'react'
-import { Box } from '@mui/material'
+import { ReactNode } from 'react';
+import { Box } from '@mui/material';
 
 interface PublicLayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function PublicLayout({ children }: PublicLayoutProps) {
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         minHeight: '100vh',
         bgcolor: 'background.default',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       {children}
     </Box>
-  )
+  );
 }

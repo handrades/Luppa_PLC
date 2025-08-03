@@ -43,10 +43,12 @@ export class AuthService {
 
   private getCurrentIP(): string {
     // Extract IP from request headers, handling proxies
-    return this.request?.ip || 
-           this.request?.headers['x-forwarded-for'] as string ||
-           this.request?.headers['x-real-ip'] as string ||
-           'unknown';
+    return (
+      this.request?.ip ||
+      (this.request?.headers['x-forwarded-for'] as string) ||
+      (this.request?.headers['x-real-ip'] as string) ||
+      'unknown'
+    );
   }
 
   private getCurrentUserAgent(): string {
@@ -69,11 +71,9 @@ export class AuthService {
       algorithm: 'HS256',
     });
 
-    const refreshToken = jwt.sign(
-      { userId: user.id, sessionId: payload.sessionId },
-      this.JWT_SECRET,
-      { expiresIn: this.REFRESH_TOKEN_EXPIRES_IN }
-    );
+    const refreshToken = jwt.sign({ userId: user.id, sessionId: payload.sessionId }, this.JWT_SECRET, {
+      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+    });
 
     // Store session in Redis for validation
     await this.cacheService.storeSession(payload.sessionId, {
@@ -90,7 +90,7 @@ export class AuthService {
   async validateToken(token: string): Promise<JWTPayload> {
     try {
       const payload = jwt.verify(token, this.JWT_SECRET) as JWTPayload;
-      
+
       // Validate session still exists
       const session = await this.cacheService.getSession(payload.sessionId);
       if (!session) {
@@ -156,7 +156,7 @@ export class RBACMiddleware {
             userAgent: req.get('User-Agent'),
           });
 
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'Insufficient permissions',
             required: `${resource}:${action}`,
           });
@@ -169,11 +169,7 @@ export class RBACMiddleware {
     };
   }
 
-  private checkPermission(
-    permissions: RolePermissions, 
-    resource: string, 
-    action: string
-  ): boolean {
+  private checkPermission(permissions: RolePermissions, resource: string, action: string): boolean {
     const resourcePermissions = permissions[resource];
     return resourcePermissions?.[action] === true;
   }
@@ -188,13 +184,10 @@ const auditServiceInstance = new AuditService(auditRepository, notificationServi
 const rbacMiddleware = new RBACMiddleware(auditServiceInstance);
 
 // Usage in routes
-router.get('/plcs', 
-  authMiddleware.authenticate,
-  rbacMiddleware.authorize('plcs', 'read'),
-  PLCController.list
-);
+router.get('/plcs', authMiddleware.authenticate, rbacMiddleware.authorize('plcs', 'read'), PLCController.list);
 
-router.post('/plcs',
+router.post(
+  '/plcs',
   authMiddleware.authenticate,
   rbacMiddleware.authorize('plcs', 'create'),
   validationMiddleware.validate(plcCreateSchema),
@@ -224,7 +217,7 @@ BEGIN
     audit_ip := current_setting('app.client_ip', true)::INET;
     audit_user_agent := current_setting('app.user_agent', true);
     audit_session_id := current_setting('app.session_id', true);
-    
+
     -- Calculate changed fields for UPDATE operations first
     IF (TG_OP = 'UPDATE') THEN
         SELECT array_agg(key) INTO changed_fields
@@ -232,33 +225,33 @@ BEGIN
         WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key
         AND key NOT IN ('updated_at', 'updated_by'); -- Exclude automatic fields
     END IF;
-    
+
     -- Enhanced risk assessment (now changed_fields is available)
-    risk_level := CASE 
+    risk_level := CASE
         -- Critical: System tables, user management
         WHEN TG_TABLE_NAME IN ('users', 'roles') AND TG_OP = 'DELETE' THEN 'CRITICAL'
         WHEN TG_TABLE_NAME = 'users' AND OLD.is_active = true AND NEW.is_active = false THEN 'CRITICAL'
-        
+
         -- High: Sensitive field changes, equipment deletion
         WHEN TG_TABLE_NAME = 'plcs' AND TG_OP = 'DELETE' THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'users' AND OLD.role_id IS DISTINCT FROM NEW.role_id THEN 'HIGH'
         WHEN TG_OP = 'UPDATE' AND EXISTS(
-            SELECT 1 FROM unnest(sensitive_fields) AS sf 
+            SELECT 1 FROM unnest(sensitive_fields) AS sf
             WHERE to_jsonb(OLD) ? sf AND to_jsonb(OLD)->sf IS DISTINCT FROM to_jsonb(NEW)->sf
         ) THEN 'HIGH'
-        
+
         -- Medium: IP changes, equipment modifications
         WHEN TG_TABLE_NAME = 'plcs' AND OLD.ip_address IS DISTINCT FROM NEW.ip_address THEN 'MEDIUM'
         WHEN TG_OP = 'DELETE' THEN 'MEDIUM'
         WHEN TG_OP = 'UPDATE' AND array_length(changed_fields, 1) > 5 THEN 'MEDIUM'
-        
+
         ELSE 'LOW'
     END;
-    
+
     -- Insert comprehensive audit record
     INSERT INTO audit_logs (
         table_name, record_id, action, old_values, new_values,
-        changed_fields, user_id, ip_address, user_agent, session_id, 
+        changed_fields, user_id, ip_address, user_agent, session_id,
         risk_level, compliance_notes, timestamp
     ) VALUES (
         TG_TABLE_NAME,
@@ -272,17 +265,17 @@ BEGIN
         audit_user_agent,
         audit_session_id,
         risk_level,
-        CASE 
+        CASE
             WHEN risk_level IN ('HIGH', 'CRITICAL') THEN 'Review required for compliance'
-            ELSE NULL 
+            ELSE NULL
         END,
         CURRENT_TIMESTAMP
     );
-    
+
     -- Return appropriate record
-    RETURN CASE TG_OP 
-        WHEN 'DELETE' THEN OLD 
-        ELSE NEW 
+    RETURN CASE TG_OP
+        WHEN 'DELETE' THEN OLD
+        ELSE NEW
     END;
 END;
 $$ LANGUAGE plpgsql;
@@ -326,10 +319,7 @@ export class AuditService {
   }
 
   // Compliance reporting
-  async generateComplianceReport(
-    startDate: Date, 
-    endDate: Date
-  ): Promise<ComplianceReport> {
+  async generateComplianceReport(startDate: Date, endDate: Date): Promise<ComplianceReport> {
     const auditLogs = await this.auditRepository
       .createQueryBuilder('audit')
       .leftJoinAndSelect('audit.user', 'user')
@@ -345,12 +335,8 @@ export class AuditService {
       totalChanges: auditLogs.length,
       riskBreakdown: this.calculateRiskBreakdown(auditLogs),
       userActivity: this.calculateUserActivity(auditLogs),
-      systemChanges: auditLogs.filter(log => 
-        ['users', 'roles', 'permissions'].includes(log.tableName)
-      ),
-      equipmentChanges: auditLogs.filter(log => 
-        ['plcs', 'equipment', 'sites', 'cells'].includes(log.tableName)
-      ),
+      systemChanges: auditLogs.filter(log => ['users', 'roles', 'permissions'].includes(log.tableName)),
+      equipmentChanges: auditLogs.filter(log => ['plcs', 'equipment', 'sites', 'cells'].includes(log.tableName)),
     };
   }
 
@@ -359,12 +345,11 @@ export class AuditService {
     if (changeData.tableName === 'users' && changeData.action === 'DELETE') {
       return 'CRITICAL';
     }
-    
-    if (changeData.tableName === 'plcs' && 
-        changeData.oldValues?.ip_address !== changeData.newValues?.ip_address) {
+
+    if (changeData.tableName === 'plcs' && changeData.oldValues?.ip_address !== changeData.newValues?.ip_address) {
       return 'MEDIUM';
     }
-    
+
     return 'LOW';
   }
 }

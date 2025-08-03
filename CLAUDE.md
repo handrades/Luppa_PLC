@@ -108,7 +108,7 @@ Invoke-psake
 
 # Run specific linters
 Invoke-psake Markdown      # Markdown files only
-Invoke-psake Json          # JSON files only  
+Invoke-psake Json          # JSON files only
 Invoke-psake Yaml          # YAML files only
 Invoke-psake TypeScript    # TypeScript/JavaScript files only
 

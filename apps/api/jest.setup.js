@@ -16,11 +16,11 @@ jest.mock('./src/config/logger', () => ({
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    debug: jest.fn()
+    debug: jest.fn(),
   },
   httpLogStream: {
-    write: jest.fn()
-  }
+    write: jest.fn(),
+  },
 }));
 
 // Note: Database health check mocking is handled in individual test files as needed
