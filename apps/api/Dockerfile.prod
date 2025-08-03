@@ -1,0 +1,78 @@
+# Multi-stage production Dockerfile for API
+# Stage 1: Build dependencies and compile TypeScript
+FROM node:20-alpine AS builder
+
+# Install curl for health checks (will be copied to final image)
+RUN apk add --no-cache curl
+
+# Set working directory to workspace root
+WORKDIR /workspace
+
+# Install pnpm globally
+RUN npm install -g pnpm@9
+
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy package.json files for all workspace packages
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+# Note: Add packages/*/package.json when they exist
+
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code for API
+COPY apps/api ./apps/api
+
+# Set working directory to API for build
+WORKDIR /workspace/apps/api
+
+# Build the TypeScript application
+RUN pnpm build
+
+# Stage 2: Production runtime
+FROM node:20-alpine AS production
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm globally
+RUN npm install -g pnpm@9
+
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
+
+# Install only production dependencies
+RUN pnpm install --prod --frozen-lockfile
+
+# Copy built application from builder stage
+COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
+
+# Create logs directory with proper permissions
+RUN mkdir -p /app/apps/api/logs && \
+    chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Set working directory to API
+WORKDIR /app/apps/api
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+# Start production server
+CMD ["pnpm", "start"]
