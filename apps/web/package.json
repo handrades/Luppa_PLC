@@ -12,8 +12,7 @@
     "lint:fix": "eslint src --ext ts,tsx --fix",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "react": "^18.3.1",

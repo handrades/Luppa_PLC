@@ -89,14 +89,13 @@ jest.mock('../../config/database', () => {
 });
 
 // Import the mocked functions after the mock is set up
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const {
+import {
   AppDataSource,
   closeDatabase,
   getDatabaseConfig,
   initializeDatabase,
   isDatabaseHealthy,
-} = require('../../config/database');
+} from '../../config/database';
 
 describe('Database Configuration', () => {
   // Test environment variables setup
