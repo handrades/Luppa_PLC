@@ -3,12 +3,19 @@
 // Helper function to get environment variables with fallback for Jest
 function getEnvVar(key: string, defaultValue?: string): string {
   // For Jest/Node.js environment
-  if (typeof window === 'undefined' && typeof process !== 'undefined') {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
     return process.env[key] || defaultValue || '';
   }
-  
+
   // For Vite/browser environment
-  return (import.meta as { env?: Record<string, string> })?.env?.[key] || defaultValue || '';
+  if (typeof window !== 'undefined' || typeof process === 'undefined') {
+    // Use dynamic import to avoid static analysis issues in Jest
+    const meta = (globalThis as { __VITE_ENV__?: Record<string, string> }).__VITE_ENV__ || {};
+    return meta[key] || defaultValue || '';
+  }
+
+  // Fallback to process.env for Node.js environments
+  return process.env[key] || defaultValue || '';
 }
 
 function getBooleanEnvVar(key: string, defaultValue = false): boolean {
