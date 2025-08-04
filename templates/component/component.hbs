@@ -1,0 +1,200 @@
+import React{{#if (eq type 'context')}}, { createContext, useContext, ReactNode }{{/if}}{{#if (eq type 'form')}}, { useState, FormEvent }{{/if}} from 'react';
+{{#if (eq type 'page')}}import { useDocumentTitle } from '../../hooks/useDocumentTitle';{{/if}}
+
+{{#if (eq type 'context')}}
+// Context type definition
+interface {{pascalCase name}}ContextType {
+  // Add your context properties here
+  value: string;
+  setValue: (value: string) => void;
+}
+
+// Create context
+const {{pascalCase name}}Context = createContext<{{pascalCase name}}ContextType | undefined>(undefined);
+
+// Custom hook to use the context
+export const use{{pascalCase name}} = () => {
+  const context = useContext({{pascalCase name}}Context);
+  if (context === undefined) {
+    throw new Error('use{{pascalCase name}} must be used within a {{pascalCase name}}Provider');
+  }
+  return context;
+};
+{{/if}}
+
+// Component props interface
+export interface {{pascalCase name}}Props {
+  /**
+   * CSS class name for styling
+   */
+  className?: string;
+  /**
+   * Child components
+   */
+  children?: React.ReactNode;
+  {{#if (eq type 'form')}}
+  /**
+   * Form submission handler
+   */
+  onSubmit?: (data: any) => void;
+  /**
+   * Initial form values
+   */
+  initialValues?: Record<string, any>;
+  {{/if}}
+  {{#if (eq type 'context')}}
+  /**
+   * Initial context value
+   */
+  initialValue?: string;
+  {{/if}}
+}
+
+{{#if (eq type 'context')}}
+// Provider component props
+interface {{pascalCase name}}ProviderProps {
+  children: ReactNode;
+  initialValue?: string;
+}
+
+// Provider component
+export const {{pascalCase name}}Provider: React.FC<{{pascalCase name}}ProviderProps> = ({ 
+  children, 
+  initialValue = '' 
+}) => {
+  const [value, setValue] = useState(initialValue);
+
+  const contextValue: {{pascalCase name}}ContextType = {
+    value,
+    setValue,
+  };
+
+  return (
+    <{{pascalCase name}}Context.Provider value={contextValue}>
+      {children}
+    </{{pascalCase name}}Context.Provider>
+  );
+};
+{{/if}}
+
+/**
+ * {{pascalCase name}} Component
+ * 
+ * {{#if (eq type 'functional')}}A reusable functional component for the Luppa PLC Inventory Framework.{{/if}}
+ * {{#if (eq type 'context')}}A context provider component that manages shared state.{{/if}}
+ * {{#if (eq type 'form')}}A form component with built-in state management and validation.{{/if}}
+ * {{#if (eq type 'page')}}A page-level component with document title management.{{/if}}
+ */
+export const {{pascalCase name}}: React.FC<{{pascalCase name}}Props> = ({
+  className = '',
+  children,
+  {{#if (eq type 'form')}}
+  onSubmit,
+  initialValues = {},
+  {{/if}}
+  {{#if (eq type 'context')}}
+  initialValue,
+  {{/if}}
+  ...props
+}) => {
+  {{#if (eq type 'page')}}
+  // Set document title for this page
+  useDocumentTitle('{{pascalCase name}} | Luppa PLC Inventory');
+  {{/if}}
+  
+  {{#if (eq type 'form')}}
+  // Form state management
+  const [formData, setFormData] = useState(initialValues);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    
+    if (onSubmit && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onSubmit(formData);
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  {{/if}}
+
+  {{#if (eq type 'context')}}
+  // If initialValue is provided, wrap in provider
+  if (initialValue !== undefined) {
+    return (
+      <{{pascalCase name}}Provider initialValue={initialValue}>
+        <{{pascalCase name}} className={className} {...props}>
+          {children}
+        </{{pascalCase name}}>
+      </{{pascalCase name}}Provider>
+    );
+  }
+  {{/if}}
+
+  return (
+    <div 
+      className={`{{dashCase name}} ${className}`.trim()}
+      data-testid="{{dashCase name}}"
+      {...props}
+    >
+      {{#if (eq type 'form')}}
+      <form onSubmit={handleSubmit} className="{{dashCase name}}__form">
+        {/* Add your form fields here */}
+        <div className="{{dashCase name}}__field">
+          <label htmlFor="example-field">Example Field:</label>
+          <input
+            id="example-field"
+            type="text"
+            value={formData.example || ''}
+            onChange={(e) => handleInputChange('example', e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        
+        <div className="{{dashCase name}}__actions">
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="{{dashCase name}}__submit-button"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
+        </div>
+        
+        {children}
+      </form>
+      {{else if (eq type 'page')}}
+      <div className="{{dashCase name}}__header">
+        <h1 className="{{dashCase name}}__title">{{pascalCase name}}</h1>
+      </div>
+      
+      <div className="{{dashCase name}}__content">
+        {children}
+      </div>
+      {{else}}
+      {/* Component content */}
+      {children || (
+        <p className="{{dashCase name}}__placeholder">
+          {{pascalCase name}} component is ready for implementation.
+        </p>
+      )}
+      {{/if}}
+    </div>
+  );
+};
+
+{{pascalCase name}}.displayName = '{{pascalCase name}}';
+
+export default {{pascalCase name}};

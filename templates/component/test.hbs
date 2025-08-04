@@ -1,0 +1,52 @@
+import React from 'react';
+import { render, screen{{#if (eq type 'form')}}, fireEvent, waitFor{{/if}} } from '@testing-library/react';
+import '@testing-library/jest-dom';
+{{#if (eq type 'context')}}
+import { {{pascalCase name}}, {{pascalCase name}}Provider, use{{pascalCase name}} } from './{{pascalCase name}}';
+{{else}}
+import { {{pascalCase name}} } from './{{pascalCase name}}';
+{{/if}}
+
+describe('{{pascalCase name}}', () => {
+  it('renders without crashing', () => {
+    render(<{{pascalCase name}} />);
+    expect(screen.getByTestId('{{dashCase name}}')).toBeInTheDocument();
+  });
+
+  it('applies custom className', () => {
+    const customClass = 'custom-class';
+    render(<{{pascalCase name}} className={customClass} />);
+    expect(screen.getByTestId('{{dashCase name}}')).toHaveClass(customClass);
+  });
+
+  {{#if (eq type 'form')}}
+  it('handles form submission', async () => {
+    const mockSubmit = jest.fn();
+    render(<{{pascalCase name}} onSubmit={mockSubmit} />);
+    
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(mockSubmit).toHaveBeenCalled();
+    });
+  });
+  {{/if}}
+
+  {{#if (eq type 'context')}}
+  it('provides context value', () => {
+    const TestComponent = () => {
+      const { value } = use{{pascalCase name}}();
+      return <div data-testid="context-value">{value}</div>;
+    };
+
+    render(
+      <{{pascalCase name}}Provider initialValue="test">
+        <TestComponent />
+      </{{pascalCase name}}Provider>
+    );
+
+    expect(screen.getByTestId('context-value')).toHaveTextContent('test');
+  });
+  {{/if}}
+});
