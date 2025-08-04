@@ -82,7 +82,7 @@ describe('Workspace Configuration', () => {
       // During Epic 0, packages directories may not exist yet as they are placeholders
       // This test validates the expected structure for Epic 1+ when shared packages are implemented
       const packagesDir = join(rootDir, 'packages');
-      
+
       if (existsSync(packagesDir)) {
         // If packages directory exists, check for expected subdirectories
         expect(existsSync(join(rootDir, 'packages/shared-types'))).toBe(true);
@@ -90,6 +90,7 @@ describe('Workspace Configuration', () => {
         expect(existsSync(join(rootDir, 'packages/config'))).toBe(true);
       } else {
         // In Epic 0, packages directory might not exist yet - this is expected
+        // eslint-disable-next-line no-console
         console.log('Packages directory not found - expected for Epic 0 (Project Initialization)');
         expect(true).toBe(true); // Pass the test as this is expected for Epic 0
       }
