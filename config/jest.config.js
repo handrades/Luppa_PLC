@@ -10,23 +10,14 @@ export default {
     ],
   },
   testEnvironment: 'node',
-  roots: [
-    '<rootDir>/../__tests__',
-    '<rootDir>/../apps',
-    '<rootDir>/../infrastructure',
-  ],
+  roots: ['<rootDir>/../__tests__', '<rootDir>/../apps', '<rootDir>/../infrastructure'],
   testMatch: [
     '**/__tests__/**/*.test.ts',
     '**/?(*.)+(spec|test).ts',
     '!**/apps/web/**/*.test.*',
     '!**/apps/web/**/*.spec.*',
   ],
-  collectCoverageFrom: [
-    '../apps/**/*.ts',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-    '!**/dist/**',
-  ],
+  collectCoverageFrom: ['../apps/**/*.ts', '!**/*.d.ts', '!**/node_modules/**', '!**/dist/**'],
   coverageThreshold: {
     global: {
       branches: 70,
