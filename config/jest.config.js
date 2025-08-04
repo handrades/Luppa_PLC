@@ -13,7 +13,6 @@ export default {
   roots: [
     '<rootDir>/../__tests__',
     '<rootDir>/../apps',
-    '<rootDir>/../packages',
     '<rootDir>/../infrastructure',
   ],
   testMatch: [
@@ -24,7 +23,6 @@ export default {
   ],
   collectCoverageFrom: [
     '../apps/**/*.ts',
-    '../packages/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/dist/**',
@@ -38,8 +36,6 @@ export default {
     },
   },
   moduleNameMapper: {
-    '^@shared-types/(.*)$': '<rootDir>/../packages/shared-types/src/$1',
-    '^@ui-components/(.*)$': '<rootDir>/../packages/ui-components/src/$1',
-    '^@config/(.*)$': '<rootDir>/../packages/config/src/$1',
+    // Package aliases will be added when packages are implemented
   },
 };
