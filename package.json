@@ -35,8 +35,8 @@
     "jest": "^30.0.0",
     "markdownlint-cli": "^0.39.0",
     "prettier": "^3.2.5",
-    "ts-jest": "^29.1.2",
-    "typescript": "~5.5.4",
+    "ts-jest": "^29.4.1",
+    "typescript": "~5.9.2",
     "yaml": "^2.4.1",
     "yaml-lint": "^1.7.0"
   },
