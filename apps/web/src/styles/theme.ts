@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles'
+import { createTheme } from '@mui/material/styles';
 
 // Industrial color palette suitable for manufacturing environments
 const industrialColors = {
@@ -42,7 +42,7 @@ const industrialColors = {
     primary: '#212121',
     secondary: '#757575',
   },
-}
+};
 
 export const theme = createTheme({
   palette: industrialColors,
@@ -143,5 +143,4 @@ export const theme = createTheme({
       },
     },
   },
-})
-
+});

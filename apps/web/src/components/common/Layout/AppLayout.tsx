@@ -1,30 +1,30 @@
-import { ReactNode, useState } from 'react'
-import { Box, Toolbar } from '@mui/material'
-import { Header } from './Header'
-import { Sidebar } from './Sidebar'
+import { ReactNode, useState } from 'react';
+import { Box, Toolbar } from '@mui/material';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
 
 interface AppLayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleMenuClick = () => {
-    setSidebarOpen(true)
-  }
+    setSidebarOpen(true);
+  };
 
   const handleSidebarClose = () => {
-    setSidebarOpen(false)
-  }
+    setSidebarOpen(false);
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <Header onMenuClick={handleMenuClick} />
       <Sidebar open={sidebarOpen} onClose={handleSidebarClose} />
-      
+
       <Box
-        component="main"
+        component='main'
         sx={{
           flexGrow: 1,
           bgcolor: 'background.default',
@@ -35,5 +35,5 @@ export function AppLayout({ children }: AppLayoutProps) {
         {children}
       </Box>
     </Box>
-  )
+  );
 }

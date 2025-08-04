@@ -1,6 +1,6 @@
 /**
  * TypeORM Database Configuration
- * 
+ *
  * This file configures the TypeORM DataSource with environment-based settings,
  * connection pooling, and proper SSL/authentication configuration.
  */
@@ -21,12 +21,15 @@ const createDatabaseConfig = () => {
     database: process.env.DB_NAME || 'luppa_plc',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
-    ssl: process.env.DB_SSL_MODE === 'require' ? { 
-      rejectUnauthorized: process.env.NODE_ENV === 'production',
-      ca: process.env.DB_SSL_CA ? process.env.DB_SSL_CA : undefined,
-      cert: process.env.DB_SSL_CERT ? process.env.DB_SSL_CERT : undefined,
-      key: process.env.DB_SSL_KEY ? process.env.DB_SSL_KEY : undefined
-    } : false,
+    ssl:
+      process.env.DB_SSL_MODE === 'require'
+        ? {
+            rejectUnauthorized: process.env.NODE_ENV === 'production',
+            ca: process.env.DB_SSL_CA ? process.env.DB_SSL_CA : undefined,
+            cert: process.env.DB_SSL_CERT ? process.env.DB_SSL_CERT : undefined,
+            key: process.env.DB_SSL_KEY ? process.env.DB_SSL_KEY : undefined,
+          }
+        : false,
   };
 
   // Connection pool settings
@@ -39,12 +42,16 @@ const createDatabaseConfig = () => {
 
   // Validate port number
   if (isNaN(dbConfig.port) || dbConfig.port < 1 || dbConfig.port > 65535) {
-    throw new Error(`Invalid DB_PORT value: ${process.env.DB_PORT}. Must be a number between 1 and 65535.`);
+    throw new Error(
+      `Invalid DB_PORT value: ${process.env.DB_PORT}. Must be a number between 1 and 65535.`
+    );
   }
 
   // Validate pool settings
   if (poolConfig.min < 1 || poolConfig.max < poolConfig.min) {
-    throw new Error(`Invalid pool settings: min=${poolConfig.min}, max=${poolConfig.max}. Min must be >= 1 and max must be >= min.`);
+    throw new Error(
+      `Invalid pool settings: min=${poolConfig.min}, max=${poolConfig.max}. Min must be >= 1 and max must be >= min.`
+    );
   }
 
   // Validate timeout settings
@@ -83,12 +90,16 @@ const createDataSource = () => {
 
     // Entity and migration locations
     entities: [User, Role],
-    migrations: [process.env.NODE_ENV === 'production' 
-      ? 'dist/database/migrations/**/*.js' 
-      : 'src/database/migrations/**/*.ts'],
-    subscribers: [process.env.NODE_ENV === 'production' 
-      ? 'dist/database/subscribers/**/*.js' 
-      : 'src/database/subscribers/**/*.ts'],
+    migrations: [
+      process.env.NODE_ENV === 'production'
+        ? 'dist/database/migrations/**/*.js'
+        : 'src/database/migrations/**/*.ts',
+    ],
+    subscribers: [
+      process.env.NODE_ENV === 'production'
+        ? 'dist/database/subscribers/**/*.js'
+        : 'src/database/subscribers/**/*.ts',
+    ],
 
     // Development settings
     synchronize: false, // Always use migrations for schema changes
@@ -98,7 +109,6 @@ const createDataSource = () => {
     // Migration settings
     migrationsRun: false, // Don't auto-run migrations on startup
     migrationsTableName: 'migration_history',
-
   });
 };
 
@@ -109,7 +119,7 @@ export const AppDataSource = createDataSource();
 
 /**
  * Initialize database connection
- * 
+ *
  * @returns Promise that resolves when connection is established
  */
 export const initializeDatabase = async (): Promise<void> => {
@@ -118,14 +128,16 @@ export const initializeDatabase = async (): Promise<void> => {
       await AppDataSource.initialize();
       // eslint-disable-next-line no-console
       console.log('Database connection initialized successfully');
-      
+
       // Log connection pool info in development
       if (config.env === 'development') {
         const dbConfig = createDatabaseConfig();
         // eslint-disable-next-line no-console
         console.log(`Database pool configured: min=${dbConfig.pool.min}, max=${dbConfig.pool.max}`);
         // eslint-disable-next-line no-console
-        console.log(`Connection timeout: ${dbConfig.pool.connectionTimeoutMillis}ms, idle timeout: ${dbConfig.pool.idleTimeoutMillis}ms`);
+        console.log(
+          `Connection timeout: ${dbConfig.pool.connectionTimeoutMillis}ms, idle timeout: ${dbConfig.pool.idleTimeoutMillis}ms`
+        );
       }
     }
   } catch (error) {
@@ -137,7 +149,7 @@ export const initializeDatabase = async (): Promise<void> => {
 
 /**
  * Close database connection gracefully
- * 
+ *
  * @returns Promise that resolves when connection is closed
  */
 export const closeDatabase = async (): Promise<void> => {
@@ -156,7 +168,7 @@ export const closeDatabase = async (): Promise<void> => {
 
 /**
  * Get database connection health status
- * 
+ *
  * @returns Promise that resolves to boolean indicating if database is connected
  */
 export const isDatabaseHealthy = async (): Promise<boolean> => {

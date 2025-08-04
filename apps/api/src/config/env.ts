@@ -34,10 +34,12 @@ const createValidatedConfig = () => {
 
   // Validate NODE_ENV
   const validEnvironments = ['development', 'production', 'test'] as const;
-  type ValidEnvironment = typeof validEnvironments[number];
+  type ValidEnvironment = (typeof validEnvironments)[number];
   if (!validEnvironments.includes(rawEnv.NODE_ENV as ValidEnvironment)) {
     // eslint-disable-next-line no-console
-    console.warn(`Warning: NODE_ENV '${rawEnv.NODE_ENV}' is not in expected values: ${validEnvironments.join(', ')}`);
+    console.warn(
+      `Warning: NODE_ENV '${rawEnv.NODE_ENV}' is not in expected values: ${validEnvironments.join(', ')}`
+    );
   }
 
   // Determine log level based on environment
@@ -46,7 +48,7 @@ const createValidatedConfig = () => {
   // Parse allowed origins
   const allowedOrigins = rawEnv.ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:3100',
-    'http://localhost:5173'
+    'http://localhost:5173',
   ];
 
   return {
@@ -67,7 +69,7 @@ const createValidatedConfig = () => {
       poolMax: rawEnv.DB_POOL_MAX,
       connectionTimeout: rawEnv.DB_CONNECTION_TIMEOUT,
       idleTimeout: rawEnv.DB_IDLE_TIMEOUT,
-    }
+    },
   } as const;
 };
 

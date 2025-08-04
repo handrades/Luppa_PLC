@@ -5,7 +5,7 @@
 **React Component Library with Material-UI Industrial Theme**
 
 - Base: Material-UI components customized for industrial contexts
-- Enhancement: GSAP animations for professional micro-interactions  
+- Enhancement: GSAP animations for professional micro-interactions
 - Framework: Storybook for component development and documentation
 - Distribution: NPM package for easy sharing across framework apps
 

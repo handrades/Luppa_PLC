@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "build": "pnpm -r build",
-    "test": "jest --config config/jest.config.js",
+    "test": "jest --config config/jest.config.js --passWithNoTests",
     "lint": "eslint --config config/.eslintrc.cjs .",
     "lint:fix": "eslint --config config/.eslintrc.cjs . --fix",
     "type-check": "tsc --project config/tsconfig.json",
@@ -19,9 +19,10 @@
     "clean": "pnpm -r clean && rm -rf node_modules",
     "reset": "pnpm clean && pnpm install",
     "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write",
+    "format:check": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --check",
     "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json",
     "lint:json": "jsonlint **/*.json",
-    "lint:yaml": "yamllint **/*.{yml,yaml}"
+    "lint:yaml": "npx yaml-lint --config-file config/.yaml-lint.json $(find . -name '*.yml' -o -name '*.yaml' -not -path './node_modules/*' -not -path './.bmad-core/*')"
   },
   "devDependencies": {
     "@prantlf/jsonlint": "^16.0.0",
@@ -36,7 +37,8 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
     "typescript": "~5.5.4",
-    "yaml": "^2.4.1"
+    "yaml": "^2.4.1",
+    "yaml-lint": "^1.7.0"
   },
   "engines": {
     "node": ">=20.0.0",

@@ -7,7 +7,7 @@ This document describes the matching lint workflows available for both local dev
 Both workflows perform identical linting checks across multiple file types:
 
 - **Markdown files** (`.md`) - Using markdownlint
-- **JSON files** (`.json`) - Using jsonlint  
+- **JSON files** (`.json`) - Using jsonlint
 - **YAML files** (`.yml`, `.yaml`) - Using yaml-lint
 - **TypeScript/JavaScript files** - Using pnpm workspace lint scripts
 
@@ -29,18 +29,18 @@ Install-Module -Name psake -Scope CurrentUser
 
 ### Available Tasks
 
-| Task | Alias | Description |
-|------|-------|-------------|
-| `Invoke-psake` | | Run all linting checks (default) |
-| `Invoke-psake Lint` | | Run all linting checks |
-| `Invoke-psake Markdown` | `md` | Run only markdown linting |
-| `Invoke-psake Json` | | Run only JSON linting |
-| `Invoke-psake Yaml` | `yml` | Run only YAML linting |
-| `Invoke-psake TypeScript` | `ts` | Run only TypeScript/JavaScript linting |
-| `Invoke-psake FixMarkdown` | `fix-md` | Run markdown linting with auto-fix |
-| `Invoke-psake CheckDependencies` | | Check if all tools are installed |
-| `Invoke-psake CI` | | Run complete CI checks (dependencies + all linting) |
-| `Invoke-psake ?` | `help` | Show available tasks |
+| Task                             | Alias    | Description                                         |
+| -------------------------------- | -------- | --------------------------------------------------- |
+| `Invoke-psake`                   |          | Run all linting checks (default)                    |
+| `Invoke-psake Lint`              |          | Run all linting checks                              |
+| `Invoke-psake Markdown`          | `md`     | Run only markdown linting                           |
+| `Invoke-psake Json`              |          | Run only JSON linting                               |
+| `Invoke-psake Yaml`              | `yml`    | Run only YAML linting                               |
+| `Invoke-psake TypeScript`        | `ts`     | Run only TypeScript/JavaScript linting              |
+| `Invoke-psake FixMarkdown`       | `fix-md` | Run markdown linting with auto-fix                  |
+| `Invoke-psake CheckDependencies` |          | Check if all tools are installed                    |
+| `Invoke-psake CI`                |          | Run complete CI checks (dependencies + all linting) |
+| `Invoke-psake ?`                 | `help`   | Show available tasks                                |
 
 ### Usage Examples
 
@@ -71,7 +71,7 @@ Invoke-psake ?
 The GitHub workflow runs on:
 
 - Push to `main`, `master`, or `develop` branches
-- Pull requests targeting `main`, `master`, or `develop` branches  
+- Pull requests targeting `main`, `master`, or `develop` branches
 - Manual workflow dispatch
 
 ### Workflow Steps
@@ -104,15 +104,15 @@ Both workflows exclude the same directories:
 
 Both workflows are designed to produce identical results:
 
-| Check Type | psake Command | GitHub Action Step |
-|------------|---------------|-------------------|
-| All Linting | `Invoke-psake` | Full workflow run |
-| Dependencies | `Invoke-psake CheckDependencies` | Setup steps |
-| Markdown | `Invoke-psake Markdown` | "Lint Markdown files" step |
-| JSON | `Invoke-psake Json` | "Lint JSON files" step |
-| YAML | `Invoke-psake Yaml` | "Lint YAML files" step |
-| TypeScript/JS | `Invoke-psake TypeScript` | "Lint TypeScript/JavaScript files" step |
-| CI Process | `Invoke-psake CI` | Complete workflow |
+| Check Type    | psake Command                    | GitHub Action Step                      |
+| ------------- | -------------------------------- | --------------------------------------- |
+| All Linting   | `Invoke-psake`                   | Full workflow run                       |
+| Dependencies  | `Invoke-psake CheckDependencies` | Setup steps                             |
+| Markdown      | `Invoke-psake Markdown`          | "Lint Markdown files" step              |
+| JSON          | `Invoke-psake Json`              | "Lint JSON files" step                  |
+| YAML          | `Invoke-psake Yaml`              | "Lint YAML files" step                  |
+| TypeScript/JS | `Invoke-psake TypeScript`        | "Lint TypeScript/JavaScript files" step |
+| CI Process    | `Invoke-psake CI`                | Complete workflow                       |
 
 ## Configuration Files
 

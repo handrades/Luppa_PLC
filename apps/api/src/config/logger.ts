@@ -41,14 +41,14 @@ if (process.env.NODE_ENV !== 'production') {
   transports.push(
     new winston.transports.Console({
       level: 'debug',
-      format: consoleFormat
+      format: consoleFormat,
     })
   );
 } else {
   transports.push(
     new winston.transports.Console({
       level: 'info',
-      format: logFormat
+      format: logFormat,
     })
   );
 }
@@ -63,7 +63,7 @@ transports.push(
     format: logFormat,
     maxSize: '10m',
     maxFiles: '30d',
-    zippedArchive: true
+    zippedArchive: true,
   }),
 
   // Combined logs
@@ -73,7 +73,7 @@ transports.push(
     format: logFormat,
     maxSize: '10m',
     maxFiles: '30d',
-    zippedArchive: true
+    zippedArchive: true,
   })
 );
 
@@ -83,7 +83,7 @@ export const logger = winston.createLogger({
   format: logFormat,
   defaultMeta: {
     service: 'luppa-api',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
   },
   transports,
   // Handle uncaught exceptions and rejections
@@ -93,8 +93,8 @@ export const logger = winston.createLogger({
       datePattern: 'YYYY-MM-DD',
       format: logFormat,
       maxSize: '10m',
-      maxFiles: '30d'
-    })
+      maxFiles: '30d',
+    }),
   ],
   rejectionHandlers: [
     new DailyRotateFile({
@@ -102,14 +102,14 @@ export const logger = winston.createLogger({
       datePattern: 'YYYY-MM-DD',
       format: logFormat,
       maxSize: '10m',
-      maxFiles: '30d'
-    })
-  ]
+      maxFiles: '30d',
+    }),
+  ],
 });
 
 // Create a stream for morgan HTTP logging middleware
 export const httpLogStream = {
   write: (message: string) => {
     logger.info(message.trim(), { source: 'http' });
-  }
+  },
 };

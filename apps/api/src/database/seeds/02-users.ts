@@ -1,7 +1,7 @@
 /**
  * Seed script for sample development users
  * DEVELOPMENT ONLY - Creates sample users for testing
- * 
+ *
  * WARNING: This script should NEVER be run in production
  * NOTE: Contains development passwords that are randomly generated - not hardcoded secrets
  */
@@ -22,7 +22,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
   }
 
   console.log('🌱 Seeding development users...');
-  
+
   const userRepository = dataSource.getRepository(User);
   const roleRepository = dataSource.getRepository(Role);
 
@@ -41,7 +41,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
     // nosemgrep: generic.secrets.security.detected-generic-secret - Dynamic password generation, not hardcoded
     let password = '';
     const randomValues = randomBytes(16);
-    
+
     for (let i = 0; i < 16; i++) {
       password += chars.charAt(randomValues[i] % chars.length);
     }
@@ -79,9 +79,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
   });
 
   const existingEmails = existingUsers.map(user => user.email);
-  const usersToCreate = sampleUsers.filter(
-    user => !existingEmails.includes(user.email)
-  );
+  const usersToCreate = sampleUsers.filter(user => !existingEmails.includes(user.email));
 
   if (usersToCreate.length === 0) {
     console.log('✅ Development users already exist, skipping seed');
@@ -95,7 +93,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
 
   for (const userData of usersToCreate) {
     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-    
+
     const user = new User();
     user.email = userData.email;
     user.firstName = userData.firstName;
@@ -106,7 +104,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
     user.lastLogin = null;
 
     users.push(user);
-    
+
     // Store credentials for display (only in development)
     credentials.push({
       email: userData.email,
@@ -120,7 +118,7 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
   console.log(`✅ Created ${users.length} development users:`);
   console.log('\n📋 Development Login Credentials:');
   console.log('=====================================');
-  
+
   credentials.forEach(cred => {
     console.log(`${cred.role} User:`);
     console.log(`  Email: ${cred.email}`);

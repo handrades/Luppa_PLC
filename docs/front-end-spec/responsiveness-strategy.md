@@ -2,12 +2,12 @@
 
 ## Breakpoints
 
-| Breakpoint | Min Width | Max Width | Target Devices |
-|------------|-----------|-----------|----------------|
-| Mobile | 320px | 599px | Phones (emergency access only) |
-| Tablet | 600px | 959px | Industrial tablets, rugged tablets, field devices |
-| Desktop | 960px | 1279px | Control room workstations, office desktops |
-| Wide | 1280px | - | Large monitors, multi-monitor setups, control centers |
+| Breakpoint | Min Width | Max Width | Target Devices                                        |
+| ---------- | --------- | --------- | ----------------------------------------------------- |
+| Mobile     | 320px     | 599px     | Phones (emergency access only)                        |
+| Tablet     | 600px     | 959px     | Industrial tablets, rugged tablets, field devices     |
+| Desktop    | 960px     | 1279px    | Control room workstations, office desktops            |
+| Wide       | 1280px    | -         | Large monitors, multi-monitor setups, control centers |
 
 ## Adaptation Patterns
 

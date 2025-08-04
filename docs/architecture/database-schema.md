@@ -224,23 +224,23 @@ BEGIN
     audit_ip := current_setting('app.client_ip', true)::INET;
     audit_user_agent := current_setting('app.user_agent', true);
     audit_session_id := current_setting('app.session_id', true);
-    
+
     -- Determine risk level
-    risk_level := CASE 
+    risk_level := CASE
         WHEN TG_TABLE_NAME IN ('users', 'roles') THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'plcs' AND TG_OP = 'DELETE' THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'plcs' AND OLD.ip_address IS DISTINCT FROM NEW.ip_address THEN 'MEDIUM'
         WHEN TG_OP = 'DELETE' THEN 'MEDIUM'
         ELSE 'LOW'
     END;
-    
+
     -- Calculate changed fields for UPDATE
     IF (TG_OP = 'UPDATE') THEN
         SELECT array_agg(key) INTO changed_fields
         FROM jsonb_each(to_jsonb(NEW))
         WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key;
     END IF;
-    
+
     -- Insert audit record
     IF (TG_OP = 'DELETE') THEN
         INSERT INTO audit_logs (
@@ -293,7 +293,7 @@ CREATE TRIGGER audit_roles AFTER INSERT OR UPDATE OR DELETE ON roles
 
 -- Enhanced hierarchy view for PLCs with all tags
 CREATE VIEW v_plc_hierarchy AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id,
     p.description as plc_description,
@@ -320,7 +320,7 @@ SELECT
                 'description', t.description,
                 'address', t.address
             ) ORDER BY t.name
-        ) FILTER (WHERE t.id IS NOT NULL), 
+        ) FILTER (WHERE t.id IS NOT NULL),
         '[]'::json
     ) as tags
 FROM plcs p
@@ -328,7 +328,7 @@ JOIN equipment e ON p.equipment_id = e.id
 JOIN cells c ON e.cell_id = c.id
 JOIN sites s ON c.site_id = s.id
 LEFT JOIN tags t ON p.id = t.plc_id
-GROUP BY 
+GROUP BY
     p.id, p.tag_id, p.description, p.make, p.model, p.ip_address, p.firmware_version,
     e.id, e.name, e.equipment_type,
     c.id, c.name, c.line_number,
@@ -336,7 +336,7 @@ GROUP BY
 
 -- Alternative view with tags as separate rows (for different use cases)
 CREATE VIEW v_plc_hierarchy_with_tag_rows AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id as plc_tag_id,
     p.description as plc_description,
@@ -367,7 +367,7 @@ ORDER BY s.name, c.line_number, e.name, p.tag_id, t.name;
 
 -- View for PLC summary with tag counts
 CREATE VIEW v_plc_summary AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id,
     p.description,
@@ -385,13 +385,13 @@ JOIN equipment e ON p.equipment_id = e.id
 JOIN cells c ON e.cell_id = c.id
 JOIN sites s ON c.site_id = s.id
 LEFT JOIN tags t ON p.id = t.plc_id
-GROUP BY 
+GROUP BY
     p.id, p.tag_id, p.description, p.make, p.model, p.ip_address,
     e.name, e.equipment_type, c.name, s.name;
 
 -- PLC count by site
 CREATE VIEW v_site_plc_counts AS
-SELECT 
+SELECT
     s.id,
     s.name,
     COUNT(DISTINCT c.id) as cell_count,
@@ -407,7 +407,7 @@ GROUP BY s.id, s.name;
 
 -- Recent audit events view
 CREATE VIEW v_recent_audit_events AS
-SELECT 
+SELECT
     al.timestamp,
     al.table_name,
     al.action,
@@ -430,14 +430,14 @@ INSERT INTO roles (name, permissions, description, is_system) VALUES
 
 -- Initial Admin User Setup
 -- ========================
--- For security reasons, the initial admin user must be created through a secure 
+-- For security reasons, the initial admin user must be created through a secure
 -- provisioning process that is NOT committed to source control.
--- 
+--
 -- Options for admin user creation:
 -- 1. Use a secure setup script that prompts for credentials during installation
 -- 2. Create through environment-specific configuration management tools
 -- 3. Use a one-time initialization endpoint that is disabled after first use
--- 
+--
 -- The admin user creation script should:
 -- - Prompt for a strong password or generate one securely
 -- - Hash the password using bcrypt with appropriate cost factor

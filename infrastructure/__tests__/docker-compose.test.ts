@@ -68,7 +68,7 @@ describe('Docker Compose Configuration', () => {
     test('should define required services', () => {
       const requiredServices = ['postgres', 'redis', 'api', 'web', 'nginx'];
       const definedServices = Object.keys(dockerCompose.services);
-      
+
       requiredServices.forEach(service => {
         expect(definedServices).toContain(service);
       });
@@ -116,7 +116,7 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have initialization scripts mounted', () => {
-      const initScriptMount = postgresService.volumes.find(vol => 
+      const initScriptMount = postgresService.volumes.find(vol =>
         vol.includes(':/docker-entrypoint-initdb.d')
       );
       expect(initScriptMount).toBeDefined();
@@ -241,7 +241,7 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have configuration files mounted', () => {
-      const configMount = nginxService.volumes.find(vol => 
+      const configMount = nginxService.volumes.find(vol =>
         vol.includes('nginx.conf:/etc/nginx/nginx.conf')
       );
       expect(configMount).toBeDefined();
@@ -256,7 +256,7 @@ describe('Docker Compose Configuration', () => {
   describe('Network Configuration', () => {
     test('all services should be on the same network', () => {
       const services = Object.values(dockerCompose.services);
-      
+
       services.forEach(service => {
         expect(service.networks).toContain('luppa-dev');
       });
@@ -266,7 +266,7 @@ describe('Docker Compose Configuration', () => {
   describe('Resource Limits', () => {
     test('all services should have resource limits defined', () => {
       const services = Object.values(dockerCompose.services);
-      
+
       services.forEach(service => {
         expect(service.deploy?.resources?.limits).toBeDefined();
         expect(service.deploy.resources.limits.memory).toBeDefined();
@@ -305,7 +305,7 @@ describe('Supporting Files', () => {
   test('psakefile.ps1 should exist with Docker tasks', () => {
     const psakefilePath = path.resolve(__dirname, '../../psakefile.ps1');
     expect(fs.existsSync(psakefilePath)).toBe(true);
-    
+
     // Check that the psakefile contains Docker management tasks
     const psakefileContent = fs.readFileSync(psakefilePath, 'utf8');
     expect(psakefileContent).toContain('Task DockerUp');

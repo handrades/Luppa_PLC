@@ -3,7 +3,7 @@
 **Date**: July 23, 2025  
 **Project Lead**: Solo Developer  
 **Business Analyst**: Mary  
-**Document Version**: 1.0  
+**Document Version**: 1.0
 
 ---
 

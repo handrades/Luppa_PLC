@@ -23,18 +23,20 @@ export const createApp = (): express.Application => {
   app.set('trust proxy', 1);
 
   // Security middleware - helmet should be first
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false, // Allow embedding for industrial UIs
-    frameguard: { action: 'deny' }, // Explicitly set X-Frame-Options to DENY
-  }));
+      crossOriginEmbedderPolicy: false, // Allow embedding for industrial UIs
+      frameguard: { action: 'deny' }, // Explicitly set X-Frame-Options to DENY
+    })
+  );
 
   // CORS configuration
   const corsOptions: cors.CorsOptions = {
@@ -42,39 +44,41 @@ export const createApp = (): express.Application => {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-    exposedHeaders: ['X-Request-ID']
+    exposedHeaders: ['X-Request-ID'],
   };
   app.use(cors(corsOptions));
 
   // Compression middleware
-  app.use(compression({
-    level: 6,
-    threshold: 1024, // Only compress responses > 1KB
-    filter: (req, res) => {
-      // Don't compress if client doesn't support it
-      if (req.headers['x-no-compression']) {
-        return false;
-      }
-      // Use compression filter
-      return compression.filter(req, res);
-    }
-  }));
+  app.use(
+    compression({
+      level: 6,
+      threshold: 1024, // Only compress responses > 1KB
+      filter: (req, res) => {
+        // Don't compress if client doesn't support it
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        // Use compression filter
+        return compression.filter(req, res);
+      },
+    })
+  );
 
   // Request parsing middleware with error handling
   app.use((req, res, next) => {
-    express.json({ 
+    express.json({
       limit: '10mb',
       verify: (req, _res, buf) => {
         // Store raw body for webhook verification if needed
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).rawBody = buf;
-      }
-    })(req, res, (err) => {
+      },
+    })(req, res, err => {
       if (err) {
         // Handle JSON parsing errors
         if (err.type === 'entity.parse.failed') {
-          const error = new ValidationError('Invalid JSON format', { 
-            body: err.body?.substring(0, 100) // Only include first 100 chars
+          const error = new ValidationError('Invalid JSON format', {
+            body: err.body?.substring(0, 100), // Only include first 100 chars
           });
           return next(error);
         }
@@ -91,7 +95,7 @@ export const createApp = (): express.Application => {
   // Request logging middleware
   app.use((req, _res, next) => {
     const start = Date.now();
-    
+
     _res.on('finish', () => {
       const duration = Date.now() - start;
       logger.info('HTTP Request', {
@@ -101,10 +105,10 @@ export const createApp = (): express.Application => {
         statusCode: _res.statusCode,
         duration,
         userAgent: req.get('User-Agent'),
-        ip: req.ip
+        ip: req.ip,
       });
     });
-    
+
     next();
   });
 

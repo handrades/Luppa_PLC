@@ -122,14 +122,14 @@ interface PLCFormProps {
   initialData?: Partial<PLCInput>;
 }
 
-export const PLCForm: React.FC<PLCFormProps> = ({ 
-  equipmentId, 
+export const PLCForm: React.FC<PLCFormProps> = ({
+  equipmentId,
   onSuccess,
-  initialData 
+  initialData
 }) => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<Partial<PLCInput>>({
     resolver: zodResolver(plcSchema),
     defaultValues: {
@@ -164,7 +164,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
       <Typography variant="h6" gutterBottom>
         Add New PLC
       </Typography>
-      
+
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -184,7 +184,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Controller
               name="ipAddress"
@@ -201,7 +201,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Controller
               name="description"
@@ -220,7 +220,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Controller
               name="make"
@@ -244,18 +244,18 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 onClick={() => onSuccess?.()}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 variant="contained"
                 disabled={isSubmitting}
               >
@@ -296,48 +296,48 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isLoading: false,
-      
-      login: async (credentials) => {
+
+      login: async credentials => {
         set({ isLoading: true });
         try {
           const response = await authService.login(credentials);
           set({
             user: response.user,
             token: response.token,
-            isLoading: false
+            isLoading: false,
           });
         } catch (error) {
           set({ isLoading: false });
           throw error;
         }
       },
-      
+
       logout: () => {
         authService.logout();
         set({
           user: null,
-          token: null
+          token: null,
         });
       },
-      
+
       refreshToken: async () => {
         const currentToken = get().token;
         if (!currentToken) return;
-        
+
         try {
           const newToken = await authService.refreshToken(currentToken);
           set({ token: newToken });
         } catch (error) {
           get().logout();
         }
-      }
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
+      partialize: state => ({
         token: state.token,
-        user: state.user 
-      })
+        user: state.user,
+      }),
     }
   )
 );
@@ -361,12 +361,12 @@ interface PLCState {
   setFilters: (filters: PLCFilters) => void;
 }
 
-export const usePLCStore = create<PLCState>((set) => ({
+export const usePLCStore = create<PLCState>(set => ({
   plcs: [],
   filters: {},
   isLoading: false,
-  
-  fetchPLCs: async (filters) => {
+
+  fetchPLCs: async filters => {
     set({ isLoading: true });
     try {
       const plcs = await plcService.getPLCs(filters);
@@ -376,11 +376,11 @@ export const usePLCStore = create<PLCState>((set) => ({
       throw error;
     }
   },
-  
-  setFilters: (filters) => {
-    set((state) => ({
-      filters: { ...state.filters, ...filters }
+
+  setFilters: filters => {
+    set(state => ({
+      filters: { ...state.filters, ...filters },
     }));
-  }
+  },
 }));
 ```

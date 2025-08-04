@@ -34,10 +34,9 @@ const createSeedDataSource = (): DataSource => {
     ssl: dbConfig.ssl,
 
     // Use same entities as main application
-    entities: process.env.NODE_ENV === 'production' 
-      ? ['dist/entities/**/*.js'] 
-      : ['src/entities/**/*.ts'],
-    
+    entities:
+      process.env.NODE_ENV === 'production' ? ['dist/entities/**/*.js'] : ['src/entities/**/*.ts'],
+
     // Synchronize should be false in seeding
     synchronize: false,
     logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
@@ -51,7 +50,9 @@ const createSeedDataSource = (): DataSource => {
 const runSeeds = async (): Promise<void> => {
   console.log('🌱 Starting database seeding...');
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Database: ${process.env.DB_NAME || 'luppa_plc'} on ${process.env.DB_HOST || 'localhost'}`);
+  console.log(
+    `Database: ${process.env.DB_NAME || 'luppa_plc'} on ${process.env.DB_HOST || 'localhost'}`
+  );
   console.log('========================================\n');
 
   const dataSource = createSeedDataSource();
@@ -81,7 +82,6 @@ const runSeeds = async (): Promise<void> => {
 
     console.log('\n🎉 All seeds completed successfully!');
     console.log('========================================');
-
   } catch (error) {
     console.error('\n❌ Seeding failed:', error);
     process.exit(1);
@@ -135,7 +135,7 @@ export const runUsersOnly = async (): Promise<void> => {
 
 // Run seeds if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runSeeds().catch((error) => {
+  runSeeds().catch(error => {
     console.error('Seed execution failed:', error);
     process.exit(1);
   });

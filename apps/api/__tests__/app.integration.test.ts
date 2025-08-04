@@ -6,7 +6,7 @@ import type { Express } from 'express';
 jest.mock('../src/config/database', () => ({
   isDatabaseHealthy: jest.fn().mockResolvedValue(true),
   initializeDatabase: jest.fn().mockResolvedValue(undefined),
-  closeDatabase: jest.fn().mockResolvedValue(undefined)
+  closeDatabase: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('Application Integration Tests', () => {
@@ -23,9 +23,7 @@ describe('Application Integration Tests', () => {
     });
 
     it('should have middleware configured correctly', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       // Verify multiple middleware are working together
       expect(response.headers).toHaveProperty('x-request-id'); // Request ID middleware
@@ -37,7 +35,7 @@ describe('Application Integration Tests', () => {
   describe('Request Flow', () => {
     it('should handle complete request lifecycle', async () => {
       const startTime = Date.now();
-      
+
       const response = await request(app)
         .get('/health')
         .set('User-Agent', 'test-agent')
@@ -45,7 +43,7 @@ describe('Application Integration Tests', () => {
         .expect(200);
 
       const endTime = Date.now();
-      
+
       // Verify response structure
       expect(response.body.status).toBe('healthy');
       expect(response.body.timestamp).toBeDefined();
@@ -53,11 +51,11 @@ describe('Application Integration Tests', () => {
       expect(response.body.environment).toBe('test');
       expect(typeof response.body.uptime).toBe('number');
       expect(response.body.database.status).toBe('connected');
-      
+
       // Verify headers
       expect(response.headers['x-request-id']).toBe('integration-test-123');
       expect(response.headers['content-type']).toContain('application/json');
-      
+
       // Verify response time is reasonable
       const responseTime = endTime - startTime;
       expect(responseTime).toBeLessThan(1000); // Should respond within 1 second
@@ -65,9 +63,7 @@ describe('Application Integration Tests', () => {
 
     it('should handle multiple concurrent requests', async () => {
       const requests = Array.from({ length: 10 }, (_, i) =>
-        request(app)
-          .get('/health')
-          .set('X-Request-ID', `concurrent-test-${i}`)
+        request(app).get('/health').set('X-Request-ID', `concurrent-test-${i}`)
       );
 
       const responses = await Promise.all(requests);
@@ -82,16 +78,14 @@ describe('Application Integration Tests', () => {
 
   describe('Security Headers', () => {
     it('should include all required security headers', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       const securityHeaders = [
         'x-content-type-options',
         'x-frame-options',
         'x-download-options',
         'strict-transport-security',
-        'x-permitted-cross-domain-policies'
+        'x-permitted-cross-domain-policies',
       ];
 
       securityHeaders.forEach(header => {
@@ -100,9 +94,7 @@ describe('Application Integration Tests', () => {
     });
 
     it('should set Content-Security-Policy header', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.headers).toHaveProperty('content-security-policy');
       expect(response.headers['content-security-policy']).toContain("default-src 'self'");
@@ -125,7 +117,7 @@ describe('Application Integration Tests', () => {
 
     it('should handle large request bodies', async () => {
       const largeData = 'x'.repeat(1024 * 1024); // 1MB of data
-      
+
       const response = await request(app)
         .post('/nonexistent')
         .send({ data: largeData })
@@ -136,10 +128,7 @@ describe('Application Integration Tests', () => {
     });
 
     it('should handle requests with no Content-Type', async () => {
-      const response = await request(app)
-        .post('/nonexistent')
-        .send('raw data')
-        .expect(404);
+      const response = await request(app).post('/nonexistent').send('raw data').expect(404);
 
       expect(response.body.error.code).toBe('NOT_FOUND');
     });
@@ -148,32 +137,26 @@ describe('Application Integration Tests', () => {
   describe('Performance', () => {
     it('should respond to health checks quickly', async () => {
       const startTime = process.hrtime.bigint();
-      
-      await request(app)
-        .get('/health')
-        .expect(200);
-      
+
+      await request(app).get('/health').expect(200);
+
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1_000_000;
-      
+
       expect(durationMs).toBeLessThan(100); // Should respond within 100ms
     });
 
     it('should handle rapid successive requests', async () => {
       const promises = [];
       const requestCount = 50;
-      
+
       for (let i = 0; i < requestCount; i++) {
-        promises.push(
-          request(app)
-            .get('/health')
-            .expect(200)
-        );
+        promises.push(request(app).get('/health').expect(200));
       }
-      
+
       const responses = await Promise.all(promises);
       expect(responses).toHaveLength(requestCount);
-      
+
       responses.forEach(response => {
         expect(response.body.status).toBe('healthy');
       });

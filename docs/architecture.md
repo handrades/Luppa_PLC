@@ -14,10 +14,10 @@ N/A - Greenfield project
 
 ## Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-01-24 | 1.0 | Initial architecture document creation | Winston (Architect) |
-| 2025-07-25 | 2.0 | Comprehensive technical architecture for Epic 0 implementation | Claude (Technical Architect) |
+| Date       | Version | Description                                                    | Author                       |
+| ---------- | ------- | -------------------------------------------------------------- | ---------------------------- |
+| 2025-01-24 | 1.0     | Initial architecture document creation                         | Winston (Architect)          |
+| 2025-07-25 | 2.0     | Comprehensive technical architecture for Epic 0 implementation | Claude (Technical Architect) |
 
 ## High Level Architecture
 
@@ -54,31 +54,31 @@ graph TB
         Browser[Web Browser]
         Tablet[Tablet Device]
     end
-    
+
     subgraph "Infrastructure Layer"
         Nginx[Nginx Reverse Proxy<br/>Load Balancer]
     end
-    
+
     subgraph "Application Layer"
         subgraph "Frontend"
             React[React SPA<br/>Vite + TypeScript]
         end
-        
+
         subgraph "Backend"
             API[Express API Server<br/>REST + JWT Auth]
         end
     end
-    
+
     subgraph "Data Layer"
         PostgreSQL[(PostgreSQL<br/>Primary Database)]
         Redis[(Redis<br/>Cache + Sessions)]
     end
-    
+
     subgraph "Monitoring Layer"
         Grafana[Grafana Dashboard]
         Prometheus[Prometheus Metrics]
     end
-    
+
     Browser --> Nginx
     Tablet --> Nginx
     Nginx --> React
@@ -91,14 +91,14 @@ graph TB
 
 ### Architectural Patterns
 
-- **Layered Architecture:** Clear separation between presentation, business logic, and data layers - *Rationale:* Simplifies development and maintenance for solo developer while enabling future team scaling
-- **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - *Rationale:* Accelerates development of future apps within the framework
-- **Repository Pattern:** Abstract data access through TypeORM repositories - *Rationale:* Enables testing and potential future database migrations
-- **API Gateway Pattern:** Nginx as single entry point for all requests - *Rationale:* Centralized SSL termination, load balancing, and request routing
-- **JWT Authentication:** Stateless auth with Redis session storage - *Rationale:* Scalable authentication that works in distributed environments
-- **Audit Trail Pattern:** Comprehensive logging of all data modifications - *Rationale:* ISO compliance requirement with PostgreSQL triggers for reliability
-- **Offline-First Design:** Local caching and sync mechanisms - *Rationale:* Critical for air-gapped industrial environments
-- **Schema-Per-App Pattern:** Shared core + app-specific schemas - *Rationale:* Enables multi-app framework while maintaining data isolation
+- **Layered Architecture:** Clear separation between presentation, business logic, and data layers - _Rationale:_ Simplifies development and maintenance for solo developer while enabling future team scaling
+- **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - _Rationale:_ Accelerates development of future apps within the framework
+- **Repository Pattern:** Abstract data access through TypeORM repositories - _Rationale:_ Enables testing and potential future database migrations
+- **API Gateway Pattern:** Nginx as single entry point for all requests - _Rationale:_ Centralized SSL termination, load balancing, and request routing
+- **JWT Authentication:** Stateless auth with Redis session storage - _Rationale:_ Scalable authentication that works in distributed environments
+- **Audit Trail Pattern:** Comprehensive logging of all data modifications - _Rationale:_ ISO compliance requirement with PostgreSQL triggers for reliability
+- **Offline-First Design:** Local caching and sync mechanisms - _Rationale:_ Critical for air-gapped industrial environments
+- **Schema-Per-App Pattern:** Shared core + app-specific schemas - _Rationale:_ Enables multi-app framework while maintaining data isolation
 
 ## Tech Stack
 
@@ -106,29 +106,29 @@ This is the DEFINITIVE technology selection for the entire project. All developm
 
 ### Technology Stack Table
 
-| Category | Technology | Version | Purpose | Rationale |
-|----------|------------|---------|---------|-----------|
-| Frontend Language | TypeScript | 5.8.3 | Type-safe frontend development | Latest stable, catches errors early, improves maintainability |
-| Frontend Framework | React | 19.1.0 | UI component framework | Latest with server components, improved performance |
-| UI Component Library | Material-UI (MUI) | 7.0.0 | Pre-built industrial UI components | CSS layers support, better Tailwind integration |
-| State Management | Zustand | 5.0.2 | Client state management | Latest stable, TypeScript-first, simple API |
-| Backend Language | TypeScript | 5.8.3 | Type-safe backend development | Code sharing with frontend, consistent DX |
-| Backend Framework | Express | 5.1.0 | HTTP server framework | Latest LTS, improved security, Node 18+ support |
-| API Style | REST | OpenAPI 3.1 | API communication protocol | Latest spec, better JSON Schema support |
-| Database | PostgreSQL | 17.5 | Primary data storage | Latest with major performance improvements |
-| Cache | Redis | 8.0 | Session store and caching | New data structures, 2x performance boost |
-| File Storage | Local Filesystem | N/A | Equipment documentation storage | Simplicity for air-gapped environments |
-| Authentication | JWT + bcrypt | jsonwebtoken 10.0 | User authentication | Latest stable, improved security |
-| Frontend Testing | Jest + RTL | 30.0 / 16.1 | Component and unit testing | Latest with ESM support |
-| Backend Testing | Jest + Supertest | 30.0 / 7.0 | API and unit testing | Consistent with frontend testing |
-| E2E Testing | Playwright | 1.50 | End-to-end testing | Latest with improved debugging |
-| Build Tool | Vite | 6.0 | Frontend bundling | Latest with Rolldown support |
-| Bundler | Rolldown (via Vite) | 0.15 | JavaScript bundling | Rust-based, faster than esbuild |
-| IaC Tool | Docker Compose | 2.32 | Infrastructure as code | Latest with improved performance |
-| CI/CD | GitHub Actions | N/A | Automation pipeline | Continuously updated by GitHub |
-| Monitoring | Prometheus | 3.0 | Metrics collection | Latest with native histograms |
-| Logging | Winston | 3.17 | Application logging | Latest stable version |
-| CSS Framework | Emotion (via MUI) | 12.0 | CSS-in-JS styling | Latest with MUI v7 support |
+| Category             | Technology          | Version           | Purpose                            | Rationale                                                     |
+| -------------------- | ------------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------- |
+| Frontend Language    | TypeScript          | 5.8.3             | Type-safe frontend development     | Latest stable, catches errors early, improves maintainability |
+| Frontend Framework   | React               | 19.1.0            | UI component framework             | Latest with server components, improved performance           |
+| UI Component Library | Material-UI (MUI)   | 7.0.0             | Pre-built industrial UI components | CSS layers support, better Tailwind integration               |
+| State Management     | Zustand             | 5.0.2             | Client state management            | Latest stable, TypeScript-first, simple API                   |
+| Backend Language     | TypeScript          | 5.8.3             | Type-safe backend development      | Code sharing with frontend, consistent DX                     |
+| Backend Framework    | Express             | 5.1.0             | HTTP server framework              | Latest LTS, improved security, Node 18+ support               |
+| API Style            | REST                | OpenAPI 3.1       | API communication protocol         | Latest spec, better JSON Schema support                       |
+| Database             | PostgreSQL          | 17.5              | Primary data storage               | Latest with major performance improvements                    |
+| Cache                | Redis               | 8.0               | Session store and caching          | New data structures, 2x performance boost                     |
+| File Storage         | Local Filesystem    | N/A               | Equipment documentation storage    | Simplicity for air-gapped environments                        |
+| Authentication       | JWT + bcrypt        | jsonwebtoken 10.0 | User authentication                | Latest stable, improved security                              |
+| Frontend Testing     | Jest + RTL          | 30.0 / 16.1       | Component and unit testing         | Latest with ESM support                                       |
+| Backend Testing      | Jest + Supertest    | 30.0 / 7.0        | API and unit testing               | Consistent with frontend testing                              |
+| E2E Testing          | Playwright          | 1.50              | End-to-end testing                 | Latest with improved debugging                                |
+| Build Tool           | Vite                | 6.0               | Frontend bundling                  | Latest with Rolldown support                                  |
+| Bundler              | Rolldown (via Vite) | 0.15              | JavaScript bundling                | Rust-based, faster than esbuild                               |
+| IaC Tool             | Docker Compose      | 2.32              | Infrastructure as code             | Latest with improved performance                              |
+| CI/CD                | GitHub Actions      | N/A               | Automation pipeline                | Continuously updated by GitHub                                |
+| Monitoring           | Prometheus          | 3.0               | Metrics collection                 | Latest with native histograms                                 |
+| Logging              | Winston             | 3.17              | Application logging                | Latest stable version                                         |
+| CSS Framework        | Emotion (via MUI)   | 12.0              | CSS-in-JS styling                  | Latest with MUI v7 support                                    |
 
 ## Data Models
 
@@ -273,7 +273,7 @@ enum EquipmentType {
   OVEN = 'OVEN',
   CONVEYOR = 'CONVEYOR',
   ASSEMBLY_TABLE = 'ASSEMBLY_TABLE',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 ```
 
@@ -367,7 +367,7 @@ enum TagDataType {
   REAL = 'REAL',
   STRING = 'STRING',
   TIMER = 'TIMER',
-  COUNTER = 'COUNTER'
+  COUNTER = 'COUNTER',
 }
 ```
 
@@ -412,7 +412,7 @@ interface AuditLog {
 enum AuditAction {
   INSERT = 'INSERT',
   UPDATE = 'UPDATE',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
 }
 ```
 
@@ -509,7 +509,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedSites'
-                
+
     post:
       tags: [Sites]
       summary: Create new site
@@ -522,7 +522,7 @@ paths:
       responses:
         201:
           description: Site created
-          
+
   /sites/{siteId}:
     parameters:
       - $ref: '#/components/parameters/SiteIdParam'
@@ -532,7 +532,7 @@ paths:
       responses:
         200:
           description: Site details with cell count
-          
+
   # Cell Management
   /sites/{siteId}/cells:
     parameters:
@@ -543,7 +543,7 @@ paths:
       responses:
         200:
           description: Cell list
-          
+
     post:
       tags: [Cells]
       summary: Create new cell in site
@@ -553,7 +553,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CellInput'
-              
+
   /cells/{cellId}:
     parameters:
       - $ref: '#/components/parameters/CellIdParam'
@@ -563,7 +563,7 @@ paths:
       responses:
         200:
           description: Cell details with equipment count
-          
+
   # Equipment Management
   /cells/{cellId}/equipment:
     parameters:
@@ -574,18 +574,18 @@ paths:
       responses:
         200:
           description: Equipment list
-          
+
     post:
       tags: [Equipment]
       summary: Create new equipment in cell
-      
+
   /equipment/{equipmentId}:
     parameters:
       - $ref: '#/components/parameters/EquipmentIdParam'
     get:
       tags: [Equipment]
       summary: Get equipment details
-      
+
   # PLC Management
   /equipment/{equipmentId}/plcs:
     parameters:
@@ -593,11 +593,11 @@ paths:
     get:
       tags: [PLCs]
       summary: List PLCs in equipment
-      
+
     post:
       tags: [PLCs]
       summary: Create new PLC
-      
+
   /plcs:
     get:
       tags: [PLCs]
@@ -642,14 +642,14 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/PLCWithHierarchy'
-                      
+
   /plcs/{plcId}:
     parameters:
       - $ref: '#/components/parameters/PLCIdParam'
     get:
       tags: [PLCs]
       summary: Get PLC details with full hierarchy
-      
+
   # Tag Management
   /plcs/{plcId}/tags:
     parameters:
@@ -657,11 +657,11 @@ paths:
     get:
       tags: [Tags]
       summary: List tags for a PLC
-      
+
     post:
       tags: [Tags]
       summary: Create new tag
-      
+
   # Bulk Operations
   /import/plcs:
     post:
@@ -681,7 +681,7 @@ paths:
                 createMissing:
                   type: boolean
                   description: Auto-create sites/cells/equipment if not found
-                  
+
   /export/plcs:
     post:
       tags: [Import/Export]
@@ -700,7 +700,7 @@ paths:
                 includeTags:
                   type: boolean
                   default: false
-                  
+
   # Hierarchy Operations
   /hierarchy/tree:
     get:
@@ -727,7 +727,7 @@ paths:
                       type: array
                       items:
                         type: object
-                        
+
   /hierarchy/move:
     post:
       tags: [Hierarchy]
@@ -745,7 +745,7 @@ paths:
                 targetCellId:
                   type: string
                   format: uuid
-                  
+
 components:
   schemas:
     PLCWithHierarchy:
@@ -923,7 +923,7 @@ graph TD
     subgraph "API Layer"
         REST[REST API Controllers]
     end
-    
+
     subgraph "Service Layer"
         Auth[Auth Service]
         Site[Site Service]
@@ -936,12 +936,12 @@ graph TD
         Audit[Audit Service]
         Notify[Notification Service]
     end
-    
+
     subgraph "Data Layer"
         PG[(PostgreSQL)]
         Redis[(Redis)]
     end
-    
+
     REST --> Auth
     REST --> Site
     REST --> Cell
@@ -950,23 +950,23 @@ graph TD
     REST --> Tag
     REST --> Hierarchy
     REST --> Import
-    
+
     Site --> Audit
     Cell --> Audit
     Equipment --> Audit
     PLC --> Audit
     Tag --> Audit
-    
+
     Import --> Site
     Import --> Cell
     Import --> Equipment
     Import --> PLC
-    
+
     Hierarchy --> Site
     Hierarchy --> Cell
     Hierarchy --> Equipment
     Hierarchy --> PLC
-    
+
     Auth --> PG
     Auth --> Redis
     Site --> PG
@@ -976,7 +976,7 @@ graph TD
     Tag --> PG
     Audit --> PG
     Notify --> PG
-    
+
     PLC --> Redis
     Hierarchy --> Redis
 ```
@@ -1000,7 +1000,7 @@ sequenceDiagram
     AuthService->>PostgreSQL: SELECT user with email
     PostgreSQL-->>AuthService: User data
     AuthService->>AuthService: Verify password (bcrypt)
-    
+
     alt Invalid credentials
         AuthService-->>API: Unauthorized error
         API-->>React: 401 Unauthorized
@@ -1036,16 +1036,16 @@ sequenceDiagram
     EquipmentService-->>API: Equipment details
     API-->>React: Equipment with hierarchy
     React-->>User: Show equipment page
-    
+
     User->>React: Click "Add PLC"
     React->>React: Show PLC form
     User->>React: Fill PLC details
     React->>API: POST /api/v1/equipment/{id}/plcs
-    
+
     API->>PLCService: createPLC(equipmentId, data)
     PLCService->>PLCService: Validate tag_id uniqueness
     PLCService->>PLCService: Validate IP uniqueness
-    
+
     alt Validation fails
         PLCService-->>API: Validation error
         API-->>React: 400 Bad Request
@@ -1054,10 +1054,10 @@ sequenceDiagram
         PLCService->>PostgreSQL: BEGIN TRANSACTION
         PLCService->>PostgreSQL: INSERT INTO plcs
         PostgreSQL-->>PLCService: New PLC record
-        
+
         PLCService->>AuditService: logChange(INSERT, plc)
         AuditService->>PostgreSQL: INSERT INTO audit_logs
-        
+
         PLCService->>PostgreSQL: COMMIT
         PLCService-->>API: Created PLC
         API-->>React: 201 Created
@@ -1083,35 +1083,35 @@ sequenceDiagram
     React->>React: Preview first 10 rows
     User->>React: Configure import options
     React->>API: POST /api/v1/import/plcs (multipart)
-    
+
     API->>ImportService: importPLCs(file, options)
     ImportService->>ImportService: Parse CSV
     ImportService->>ImportService: Validate headers
-    
+
     ImportService->>PostgreSQL: BEGIN TRANSACTION
-    
+
     loop For each row
         ImportService->>ImportService: Validate row data
-        
+
         alt Site doesn't exist AND createMissing=true
             ImportService->>SiteService: createSite(name)
             SiteService->>PostgreSQL: INSERT site
         end
-        
+
         alt Cell doesn't exist AND createMissing=true
             ImportService->>CellService: createCell(siteId, data)
             CellService->>PostgreSQL: INSERT cell
         end
-        
+
         alt Equipment doesn't exist AND createMissing=true
             ImportService->>EquipmentService: createEquipment(cellId, data)
             EquipmentService->>PostgreSQL: INSERT equipment
         end
-        
+
         ImportService->>PLCService: createPLC(equipmentId, plcData)
         PLCService->>PostgreSQL: INSERT plc
     end
-    
+
     alt Any error occurs
         ImportService->>PostgreSQL: ROLLBACK
         ImportService-->>API: Import failed
@@ -1140,12 +1140,12 @@ sequenceDiagram
     User->>React: Enter search term
     React->>React: Debounce 300ms
     React->>Zustand: Update search state
-    
+
     React->>API: GET /api/v1/plcs?search=term
     API->>PLCService: searchPLCs(filters)
-    
+
     PLCService->>Redis: Check cache key
-    
+
     alt Cache hit
         Redis-->>PLCService: Cached results
     else Cache miss
@@ -1154,7 +1154,7 @@ sequenceDiagram
         PostgreSQL-->>PLCService: Results with hierarchy
         PLCService->>Redis: Cache results (60s TTL)
     end
-    
+
     PLCService-->>API: PLC results
     API-->>React: 200 OK with data
     React->>Zustand: Update PLC list
@@ -1174,25 +1174,25 @@ sequenceDiagram
 
     User->>API: PUT /api/v1/plcs/{id}
     Note over API: Change IP address
-    
+
     API->>API: Set audit context
     API->>PostgreSQL: SET LOCAL app.current_user_id
     API->>PostgreSQL: SET LOCAL app.client_ip
-    
+
     API->>PLCService: updatePLC(id, {ip: newIP})
     PLCService->>PostgreSQL: UPDATE plcs SET ip = $1
-    
+
     Note over PostgreSQL: Trigger fires automatically
     PostgreSQL->>PostgreSQL: audit_trigger_function()
     PostgreSQL->>PostgreSQL: Assess risk level (MEDIUM)
     PostgreSQL->>PostgreSQL: INSERT INTO audit_logs
-    
+
     PLCService-->>API: Updated PLC
-    
+
     API->>NotificationService: notifyAdmins(ipChange)
     NotificationService->>PostgreSQL: INSERT notifications
     NotificationService->>NotificationService: Emit WebSocket event
-    
+
     API-->>User: 200 OK
 ```
 
@@ -1209,22 +1209,22 @@ sequenceDiagram
 
     User->>React: Click on PLC
     React->>API: GET /api/v1/plcs/{id}
-    
+
     API->>HierarchyService: getBreadcrumbs('plc', id)
-    
+
     HierarchyService->>Redis: Check breadcrumb cache
-    
+
     alt Cache miss
         HierarchyService->>PostgreSQL: Recursive CTE query
         Note over PostgreSQL: WITH RECURSIVE ancestors AS (<br/>  SELECT sites, cells, equipment<br/>  FROM hierarchy view<br/>)
         PostgreSQL-->>HierarchyService: Full hierarchy path
         HierarchyService->>Redis: Cache breadcrumbs
     end
-    
+
     HierarchyService-->>API: Breadcrumb array
     API-->>React: PLC with breadcrumbs
     React-->>User: Display: Site > Cell > Equipment > PLC
-    
+
     User->>React: Click breadcrumb (Cell)
     React->>React: Navigate to /cells/{cellId}
 ```
@@ -1243,21 +1243,21 @@ sequenceDiagram
     User->>React: Configure export filters
     React->>React: Show estimated count
     User->>React: Click "Export to CSV"
-    
+
     React->>API: POST /api/v1/export/plcs
     Note over API: Body: {filters, includeHierarchy: true}
-    
+
     API->>ExportService: exportPLCs(filters, format)
     ExportService->>PLCService: searchPLCs(filters)
     PLCService->>PostgreSQL: SELECT with filters
     PostgreSQL-->>PLCService: Filtered PLCs
-    
+
     ExportService->>ExportService: Transform to CSV
     Note over ExportService: Include hierarchy columns:<br/>site_name, cell_name,<br/>equipment_name, plc_tag_id...
-    
+
     ExportService->>ExportService: Stream to buffer
     ExportService-->>API: CSV buffer
-    
+
     API-->>React: 200 OK (text/csv)
     React->>React: Trigger download
     React-->>User: plc_export_2025-01-24.csv
@@ -1487,23 +1487,23 @@ BEGIN
     audit_ip := current_setting('app.client_ip', true)::INET;
     audit_user_agent := current_setting('app.user_agent', true);
     audit_session_id := current_setting('app.session_id', true);
-    
+
     -- Determine risk level
-    risk_level := CASE 
+    risk_level := CASE
         WHEN TG_TABLE_NAME IN ('users', 'roles') THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'plcs' AND TG_OP = 'DELETE' THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'plcs' AND OLD.ip_address IS DISTINCT FROM NEW.ip_address THEN 'MEDIUM'
         WHEN TG_OP = 'DELETE' THEN 'MEDIUM'
         ELSE 'LOW'
     END;
-    
+
     -- Calculate changed fields for UPDATE
     IF (TG_OP = 'UPDATE') THEN
         SELECT array_agg(key) INTO changed_fields
         FROM jsonb_each(to_jsonb(NEW))
         WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key;
     END IF;
-    
+
     -- Insert audit record
     IF (TG_OP = 'DELETE') THEN
         INSERT INTO audit_logs (
@@ -1556,7 +1556,7 @@ CREATE TRIGGER audit_roles AFTER INSERT OR UPDATE OR DELETE ON roles
 
 -- Enhanced hierarchy view for PLCs with all tags
 CREATE VIEW v_plc_hierarchy AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id,
     p.description as plc_description,
@@ -1583,7 +1583,7 @@ SELECT
                 'description', t.description,
                 'address', t.address
             ) ORDER BY t.name
-        ) FILTER (WHERE t.id IS NOT NULL), 
+        ) FILTER (WHERE t.id IS NOT NULL),
         '[]'::json
     ) as tags
 FROM plcs p
@@ -1591,7 +1591,7 @@ JOIN equipment e ON p.equipment_id = e.id
 JOIN cells c ON e.cell_id = c.id
 JOIN sites s ON c.site_id = s.id
 LEFT JOIN tags t ON p.id = t.plc_id
-GROUP BY 
+GROUP BY
     p.id, p.tag_id, p.description, p.make, p.model, p.ip_address, p.firmware_version,
     e.id, e.name, e.equipment_type,
     c.id, c.name, c.line_number,
@@ -1599,7 +1599,7 @@ GROUP BY
 
 -- Alternative view with tags as separate rows (for different use cases)
 CREATE VIEW v_plc_hierarchy_with_tag_rows AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id as plc_tag_id,
     p.description as plc_description,
@@ -1630,7 +1630,7 @@ ORDER BY s.name, c.line_number, e.name, p.tag_id, t.name;
 
 -- View for PLC summary with tag counts
 CREATE VIEW v_plc_summary AS
-SELECT 
+SELECT
     p.id as plc_id,
     p.tag_id,
     p.description,
@@ -1648,13 +1648,13 @@ JOIN equipment e ON p.equipment_id = e.id
 JOIN cells c ON e.cell_id = c.id
 JOIN sites s ON c.site_id = s.id
 LEFT JOIN tags t ON p.id = t.plc_id
-GROUP BY 
+GROUP BY
     p.id, p.tag_id, p.description, p.make, p.model, p.ip_address,
     e.name, e.equipment_type, c.name, s.name;
 
 -- PLC count by site
 CREATE VIEW v_site_plc_counts AS
-SELECT 
+SELECT
     s.id,
     s.name,
     COUNT(DISTINCT c.id) as cell_count,
@@ -1670,7 +1670,7 @@ GROUP BY s.id, s.name;
 
 -- Recent audit events view
 CREATE VIEW v_recent_audit_events AS
-SELECT 
+SELECT
     al.timestamp,
     al.table_name,
     al.action,
@@ -1693,14 +1693,14 @@ INSERT INTO roles (name, permissions, description, is_system) VALUES
 
 -- Initial Admin User Setup
 -- ========================
--- For security reasons, the initial admin user must be created through a secure 
+-- For security reasons, the initial admin user must be created through a secure
 -- provisioning process that is NOT committed to source control.
--- 
+--
 -- Options for admin user creation:
 -- 1. Use a secure setup script that prompts for credentials during installation
 -- 2. Create through environment-specific configuration management tools
 -- 3. Use a one-time initialization endpoint that is disabled after first use
--- 
+--
 -- The admin user creation script should:
 -- - Prompt for a strong password or generate one securely
 -- - Hash the password using bcrypt with appropriate cost factor
@@ -1828,14 +1828,14 @@ interface PLCFormProps {
   initialData?: Partial<PLCInput>;
 }
 
-export const PLCForm: React.FC<PLCFormProps> = ({ 
-  equipmentId, 
+export const PLCForm: React.FC<PLCFormProps> = ({
+  equipmentId,
   onSuccess,
-  initialData 
+  initialData
 }) => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<PLCInput>({
     resolver: zodResolver(plcSchema),
     defaultValues: {
@@ -1870,7 +1870,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
       <Typography variant="h6" gutterBottom>
         Add New PLC
       </Typography>
-      
+
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -1890,7 +1890,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Controller
               name="ipAddress"
@@ -1907,7 +1907,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Controller
               name="description"
@@ -1926,7 +1926,7 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Controller
               name="make"
@@ -1950,18 +1950,18 @@ export const PLCForm: React.FC<PLCFormProps> = ({
               )}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 onClick={() => onSuccess?.()}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 variant="contained"
                 disabled={isSubmitting}
               >
@@ -2004,8 +2004,8 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
-      
-      login: async (credentials) => {
+
+      login: async credentials => {
         set({ isLoading: true });
         try {
           const response = await authService.login(credentials);
@@ -2013,41 +2013,41 @@ export const useAuthStore = create<AuthState>()(
             user: response.user,
             token: response.token,
             isAuthenticated: true,
-            isLoading: false
+            isLoading: false,
           });
         } catch (error) {
           set({ isLoading: false });
           throw error;
         }
       },
-      
+
       logout: () => {
         authService.logout();
         set({
           user: null,
           token: null,
-          isAuthenticated: false
+          isAuthenticated: false,
         });
       },
-      
+
       refreshToken: async () => {
         const currentToken = get().token;
         if (!currentToken) return;
-        
+
         try {
           const newToken = await authService.refreshToken(currentToken);
           set({ token: newToken });
         } catch (error) {
           get().logout();
         }
-      }
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
+      partialize: state => ({
         token: state.token,
-        user: state.user 
-      })
+        user: state.user,
+      }),
     }
   )
 );
@@ -2068,12 +2068,12 @@ interface PLCState {
   setFilters: (filters: PLCFilters) => void;
 }
 
-export const usePLCStore = create<PLCState>((set) => ({
+export const usePLCStore = create<PLCState>(set => ({
   plcs: [],
   filters: {},
   isLoading: false,
-  
-  fetchPLCs: async (filters) => {
+
+  fetchPLCs: async filters => {
     set({ isLoading: true });
     try {
       const plcs = await plcService.getPLCs(filters);
@@ -2083,12 +2083,12 @@ export const usePLCStore = create<PLCState>((set) => ({
       throw error;
     }
   },
-  
-  setFilters: (filters) => {
-    set((state) => ({
-      filters: { ...state.filters, ...filters }
+
+  setFilters: filters => {
+    set(state => ({
+      filters: { ...state.filters, ...filters },
     }));
-  }
+  },
 }));
 ```
 
@@ -2104,23 +2104,23 @@ export const usePLCStore = create<PLCState>((set) => ({
 
 ```sql
 -- Composite indexes for common query patterns
-CREATE INDEX idx_plcs_search_composite ON plcs(equipment_id, make, model, ip_address) 
+CREATE INDEX idx_plcs_search_composite ON plcs(equipment_id, make, model, ip_address)
 WHERE ip_address IS NOT NULL;
 
 -- Partial indexes for filtered queries
-CREATE INDEX idx_plcs_active_equipment ON plcs(equipment_id) 
+CREATE INDEX idx_plcs_active_equipment ON plcs(equipment_id)
 WHERE equipment_id IS NOT NULL;
 
 -- Full-text search optimization
-CREATE INDEX idx_plcs_fulltext ON plcs USING gin(to_tsvector('english', 
+CREATE INDEX idx_plcs_fulltext ON plcs USING gin(to_tsvector('english',
   description || ' ' || make || ' ' || model || ' ' || COALESCE(tag_id, '')));
 
 -- Site hierarchy navigation optimization
-CREATE INDEX idx_hierarchy_path ON equipment(cell_id) 
+CREATE INDEX idx_hierarchy_path ON equipment(cell_id)
 INCLUDE (id, name, equipment_type, created_at);
 
 -- Audit performance optimization
-CREATE INDEX idx_audit_logs_performance ON audit_logs(table_name, timestamp DESC) 
+CREATE INDEX idx_audit_logs_performance ON audit_logs(table_name, timestamp DESC)
 WHERE risk_level IN ('HIGH', 'CRITICAL');
 ```
 
@@ -2135,23 +2135,23 @@ const dbConfig = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   type: 'postgres' as const,
-  
+
   // Performance optimization settings
   pool: {
-    min: 2,                    // Minimum connections
-    max: 10,                   // Maximum connections for industrial workload
-    acquireTimeoutMillis: 60000,  // Connection timeout
-    idleTimeoutMillis: 30000,     // Idle connection timeout
+    min: 2, // Minimum connections
+    max: 10, // Maximum connections for industrial workload
+    acquireTimeoutMillis: 60000, // Connection timeout
+    idleTimeoutMillis: 30000, // Idle connection timeout
   },
-  
+
   // Query optimization
   extra: {
     connectionLimit: 10,
-    statement_timeout: '30s',     // Prevent long-running queries
-    lock_timeout: '10s',          // Prevent lock contention
+    statement_timeout: '30s', // Prevent long-running queries
+    lock_timeout: '10s', // Prevent lock contention
     idle_in_transaction_session_timeout: '5min',
   },
-  
+
   // Enable query logging for performance monitoring
   logging: process.env.NODE_ENV === 'development' ? 'all' : ['error', 'warn'],
 };
@@ -2169,17 +2169,27 @@ export class PLCService {
       .leftJoinAndSelect('equipment.cell', 'cell')
       .leftJoinAndSelect('cell.site', 'site')
       .select([
-        'plc.id', 'plc.tagId', 'plc.description', 'plc.make', 'plc.model', 'plc.ipAddress',
-        'equipment.id', 'equipment.name', 'equipment.equipmentType',
-        'cell.id', 'cell.name', 'cell.lineNumber',
-        'site.id', 'site.name'
+        'plc.id',
+        'plc.tagId',
+        'plc.description',
+        'plc.make',
+        'plc.model',
+        'plc.ipAddress',
+        'equipment.id',
+        'equipment.name',
+        'equipment.equipmentType',
+        'cell.id',
+        'cell.name',
+        'cell.lineNumber',
+        'site.id',
+        'site.name',
       ]);
 
     // Apply filters with optimized WHERE conditions
     if (filters.siteId) {
       queryBuilder.andWhere('site.id = :siteId', { siteId: filters.siteId });
     }
-    
+
     if (filters.search) {
       queryBuilder.andWhere(
         `to_tsvector('english', plc.description || ' ' || plc.make || ' ' || plc.model) 
@@ -2209,12 +2219,12 @@ export class PLCService {
 // Cache configuration for optimal performance
 export class CacheService {
   private redis: RedisClientType;
-  
+
   constructor() {
     this.redis = createClient({
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT || '6379'),
-      
+
       // Performance settings
       connectTimeout: 5000,
       commandTimeout: 3000,
@@ -2252,11 +2262,11 @@ export class CacheService {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,      // 5 minutes stale time
-      cacheTime: 10 * 60 * 1000,     // 10 minutes cache time
+      staleTime: 5 * 60 * 1000, // 5 minutes stale time
+      cacheTime: 10 * 60 * 1000, // 10 minutes cache time
       retry: 3,
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      
+
       // Network mode for air-gapped environments
       networkMode: 'offlineFirst',
     },
@@ -2273,8 +2283,8 @@ export const usePLCSearch = (filters: PLCFilters) => {
     queryKey: ['plcs', 'search', filters],
     queryFn: () => plcService.searchPLCs(filters),
     enabled: Boolean(Object.keys(filters).length),
-    staleTime: 2 * 60 * 1000,  // 2 minutes for search results
-    select: useCallback((data) => {
+    staleTime: 2 * 60 * 1000, // 2 minutes for search results
+    select: useCallback(data => {
       // Transform data for UI optimization
       return data.map(plc => ({
         ...plc,
@@ -2292,14 +2302,14 @@ export const usePLCSearch = (filters: PLCFilters) => {
 
 ```typescript
 // High-performance data grid with virtual scrolling
-export const IndustrialDataGrid: React.FC<DataGridProps> = ({ 
-  data, 
-  columns, 
+export const IndustrialDataGrid: React.FC<DataGridProps> = ({
+  data,
+  columns,
   onRowClick,
-  height = 600 
+  height = 600
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   // Virtual scrolling with react-window
   const rowVirtualizer = useVirtualizer({
     count: data.length,
@@ -2364,10 +2374,10 @@ export const usePLCStore = create<PLCState>((set, get) => ({
   filteredPLCs: [],
   filters: {},
   isLoading: false,
-  
+
   // Optimized actions
-  setFilters: (newFilters) => {
-    set((state) => {
+  setFilters: newFilters => {
+    set(state => {
       const filters = { ...state.filters, ...newFilters };
       return {
         filters,
@@ -2375,10 +2385,10 @@ export const usePLCStore = create<PLCState>((set, get) => ({
       };
     });
   },
-  
+
   // Bulk operations for performance
-  updatePLCs: (plcs) => {
-    set((state) => ({
+  updatePLCs: plcs => {
+    set(state => ({
       plcs,
       filteredPLCs: applyFilters(plcs, state.filters),
     }));
@@ -2422,11 +2432,9 @@ export class AuthService {
       algorithm: 'HS256',
     });
 
-    const refreshToken = jwt.sign(
-      { userId: user.id, sessionId: payload.sessionId },
-      this.JWT_SECRET,
-      { expiresIn: this.REFRESH_TOKEN_EXPIRES_IN }
-    );
+    const refreshToken = jwt.sign({ userId: user.id, sessionId: payload.sessionId }, this.JWT_SECRET, {
+      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+    });
 
     // Store session in Redis for validation
     await this.cacheService.storeSession(payload.sessionId, {
@@ -2443,7 +2451,7 @@ export class AuthService {
   async validateToken(token: string): Promise<JWTPayload> {
     try {
       const payload = jwt.verify(token, this.JWT_SECRET) as JWTPayload;
-      
+
       // Validate session still exists
       const session = await this.cacheService.getSession(payload.sessionId);
       if (!session) {
@@ -2493,7 +2501,7 @@ export class RBACMiddleware {
             userAgent: req.get('User-Agent'),
           });
 
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'Insufficient permissions',
             required: `${resource}:${action}`,
           });
@@ -2506,24 +2514,17 @@ export class RBACMiddleware {
     };
   }
 
-  private static checkPermission(
-    permissions: RolePermissions, 
-    resource: string, 
-    action: string
-  ): boolean {
+  private static checkPermission(permissions: RolePermissions, resource: string, action: string): boolean {
     const resourcePermissions = permissions[resource];
     return resourcePermissions?.[action] === true;
   }
 }
 
 // Usage in routes
-router.get('/plcs', 
-  authMiddleware.authenticate,
-  RBACMiddleware.authorize('plcs', 'read'),
-  PLCController.list
-);
+router.get('/plcs', authMiddleware.authenticate, RBACMiddleware.authorize('plcs', 'read'), PLCController.list);
 
-router.post('/plcs',
+router.post(
+  '/plcs',
   authMiddleware.authenticate,
   RBACMiddleware.authorize('plcs', 'create'),
   validationMiddleware.validate(plcCreateSchema),
@@ -2553,29 +2554,29 @@ BEGIN
     audit_ip := current_setting('app.client_ip', true)::INET;
     audit_user_agent := current_setting('app.user_agent', true);
     audit_session_id := current_setting('app.session_id', true);
-    
+
     -- Enhanced risk assessment
-    risk_level := CASE 
+    risk_level := CASE
         -- Critical: System tables, user management
         WHEN TG_TABLE_NAME IN ('users', 'roles') AND TG_OP = 'DELETE' THEN 'CRITICAL'
         WHEN TG_TABLE_NAME = 'users' AND OLD.is_active = true AND NEW.is_active = false THEN 'CRITICAL'
-        
+
         -- High: Sensitive field changes, equipment deletion
         WHEN TG_TABLE_NAME = 'plcs' AND TG_OP = 'DELETE' THEN 'HIGH'
         WHEN TG_TABLE_NAME = 'users' AND OLD.role_id IS DISTINCT FROM NEW.role_id THEN 'HIGH'
         WHEN TG_OP = 'UPDATE' AND EXISTS(
-            SELECT 1 FROM unnest(sensitive_fields) AS sf 
+            SELECT 1 FROM unnest(sensitive_fields) AS sf
             WHERE to_jsonb(OLD) ? sf AND to_jsonb(OLD)->sf IS DISTINCT FROM to_jsonb(NEW)->sf
         ) THEN 'HIGH'
-        
+
         -- Medium: IP changes, equipment modifications
         WHEN TG_TABLE_NAME = 'plcs' AND OLD.ip_address IS DISTINCT FROM NEW.ip_address THEN 'MEDIUM'
         WHEN TG_OP = 'DELETE' THEN 'MEDIUM'
         WHEN TG_OP = 'UPDATE' AND array_length(changed_fields, 1) > 5 THEN 'MEDIUM'
-        
+
         ELSE 'LOW'
     END;
-    
+
     -- Calculate changed fields for UPDATE operations
     IF (TG_OP = 'UPDATE') THEN
         SELECT array_agg(key) INTO changed_fields
@@ -2583,11 +2584,11 @@ BEGIN
         WHERE to_jsonb(NEW)->key IS DISTINCT FROM to_jsonb(OLD)->key
         AND key NOT IN ('updated_at', 'updated_by'); -- Exclude automatic fields
     END IF;
-    
+
     -- Insert comprehensive audit record
     INSERT INTO audit_logs (
         table_name, record_id, action, old_values, new_values,
-        changed_fields, user_id, ip_address, user_agent, session_id, 
+        changed_fields, user_id, ip_address, user_agent, session_id,
         risk_level, compliance_notes, timestamp
     ) VALUES (
         TG_TABLE_NAME,
@@ -2601,17 +2602,17 @@ BEGIN
         audit_user_agent,
         audit_session_id,
         risk_level,
-        CASE 
+        CASE
             WHEN risk_level IN ('HIGH', 'CRITICAL') THEN 'Review required for compliance'
-            ELSE NULL 
+            ELSE NULL
         END,
         CURRENT_TIMESTAMP
     );
-    
+
     -- Return appropriate record
-    RETURN CASE TG_OP 
-        WHEN 'DELETE' THEN OLD 
-        ELSE NEW 
+    RETURN CASE TG_OP
+        WHEN 'DELETE' THEN OLD
+        ELSE NEW
     END;
 END;
 $$ LANGUAGE plpgsql;
@@ -2655,10 +2656,7 @@ export class AuditService {
   }
 
   // Compliance reporting
-  async generateComplianceReport(
-    startDate: Date, 
-    endDate: Date
-  ): Promise<ComplianceReport> {
+  async generateComplianceReport(startDate: Date, endDate: Date): Promise<ComplianceReport> {
     const auditLogs = await this.auditRepository
       .createQueryBuilder('audit')
       .leftJoinAndSelect('audit.user', 'user')
@@ -2674,12 +2672,8 @@ export class AuditService {
       totalChanges: auditLogs.length,
       riskBreakdown: this.calculateRiskBreakdown(auditLogs),
       userActivity: this.calculateUserActivity(auditLogs),
-      systemChanges: auditLogs.filter(log => 
-        ['users', 'roles', 'permissions'].includes(log.tableName)
-      ),
-      equipmentChanges: auditLogs.filter(log => 
-        ['plcs', 'equipment', 'sites', 'cells'].includes(log.tableName)
-      ),
+      systemChanges: auditLogs.filter(log => ['users', 'roles', 'permissions'].includes(log.tableName)),
+      equipmentChanges: auditLogs.filter(log => ['plcs', 'equipment', 'sites', 'cells'].includes(log.tableName)),
     };
   }
 
@@ -2688,12 +2682,11 @@ export class AuditService {
     if (changeData.tableName === 'users' && changeData.action === 'DELETE') {
       return 'CRITICAL';
     }
-    
-    if (changeData.tableName === 'plcs' && 
-        changeData.oldValues?.ip_address !== changeData.newValues?.ip_address) {
+
+    if (changeData.tableName === 'plcs' && changeData.oldValues?.ip_address !== changeData.newValues?.ip_address) {
       return 'MEDIUM';
     }
-    
+
     return 'LOW';
   }
 }
@@ -2713,8 +2706,8 @@ services:
   nginx:
     image: nginx:1.24-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
@@ -2931,14 +2924,14 @@ events {
 http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
-    
+
     # Performance optimizations
     sendfile on;
     tcp_nopush on;
     tcp_nodelay on;
     keepalive_timeout 65;
     keepalive_requests 1000;
-    
+
     # Gzip compression
     gzip on;
     gzip_vary on;
@@ -2952,34 +2945,34 @@ http {
         application/javascript
         application/json
         application/xml+rss;
-    
+
     # Rate limiting for security
     limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
     limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
-    
+
     # Upstream servers
     upstream api_backend {
         least_conn;
         server api:3000 max_fails=3 fail_timeout=30s;
         keepalive 32;
     }
-    
+
     upstream web_backend {
         least_conn;
         server web:80 max_fails=3 fail_timeout=30s;
     }
-    
+
     # API server configuration
     server {
         listen 80;
         server_name api.inventory.local;
-        
+
         # Security headers
         add_header X-Frame-Options DENY;
         add_header X-Content-Type-Options nosniff;
         add_header X-XSS-Protection "1; mode=block";
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
-        
+
         # API routes
         location /api/ {
             proxy_pass http://api_backend;
@@ -2987,63 +2980,63 @@ http {
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-            
+
             # Rate limiting
             limit_req zone=api burst=20 nodelay;
-            
+
             # Timeouts for industrial reliability
             proxy_connect_timeout 5s;
             proxy_send_timeout 30s;
             proxy_read_timeout 30s;
         }
-        
+
         # Authentication endpoint (stricter rate limiting)
         location /api/auth/ {
             proxy_pass http://api_backend;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            
+
             limit_req zone=login burst=5 nodelay;
         }
-        
+
         # Health checks (no rate limiting)
         location /api/health {
             proxy_pass http://api_backend;
             access_log off;
         }
     }
-    
+
     # Frontend server configuration
     server {
         listen 80;
         server_name inventory.local;
         root /usr/share/nginx/html;
         index index.html;
-        
+
         # Static assets with long caching
         location /assets/ {
             expires 1y;
             add_header Cache-Control "public, immutable";
         }
-        
+
         # SPA routing
         location / {
             try_files $uri $uri/ /index.html;
-            
+
             # Cache HTML files briefly
             location ~* \.html$ {
                 expires 5m;
                 add_header Cache-Control "public, must-revalidate";
             }
         }
-        
+
         # Monitoring access
         location /monitoring/ {
             proxy_pass http://grafana:3000/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            
+
             # Basic auth for monitoring
             auth_basic "Monitoring Access";
             auth_basic_user_file /etc/nginx/.htpasswd;
@@ -3066,7 +3059,7 @@ global:
     replica: 'prometheus-1'
 
 rule_files:
-  - "/etc/prometheus/rules/*.yml"
+  - '/etc/prometheus/rules/*.yml'
 
 scrape_configs:
   - job_name: 'inventory-api'
@@ -3096,8 +3089,7 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          - alertmanager:9093
-
+            - alertmanager:9093
 # Alert rules for industrial monitoring
 ```
 
@@ -3107,7 +3099,7 @@ alerting:
 // Metrics collection service
 export class MetricsService {
   private readonly register = new promClient.Registry();
-  
+
   // Custom metrics for business logic
   private readonly httpRequestDuration = new promClient.Histogram({
     name: 'http_request_duration_seconds',
@@ -3147,30 +3139,26 @@ export class MetricsService {
   httpMetricsMiddleware() {
     return (req: Request, res: Response, next: NextFunction) => {
       const start = Date.now();
-      
+
       res.on('finish', () => {
         const duration = (Date.now() - start) / 1000;
         this.httpRequestDuration
           .labels(req.method, req.route?.path || req.path, res.statusCode.toString())
           .observe(duration);
       });
-      
+
       next();
     };
   }
 
   // Track PLC search performance
   trackPLCSearch(filterType: string, resultCount: number, duration: number) {
-    this.plcSearchDuration
-      .labels(filterType, resultCount > 100 ? '100+' : resultCount.toString())
-      .observe(duration);
+    this.plcSearchDuration.labels(filterType, resultCount > 100 ? '100+' : resultCount.toString()).observe(duration);
   }
 
   // Track audit log risk levels
   trackAuditRiskLevel(riskLevel: string, tableName: string) {
-    this.auditLogRiskLevel
-      .labels(riskLevel, tableName)
-      .inc();
+    this.auditLogRiskLevel.labels(riskLevel, tableName).inc();
   }
 
   // Expose metrics endpoint
@@ -3337,17 +3325,17 @@ export class TestEnvironment {
 // Performance testing utilities
 export class PerformanceTestUtils {
   static async measureQueryTime<T>(
-    operation: () => Promise<T>, 
+    operation: () => Promise<T>,
     maxTime: number = 100
   ): Promise<{ result: T; duration: number }> {
     const start = Date.now();
     const result = await operation();
     const duration = Date.now() - start;
-    
+
     if (duration > maxTime) {
       throw new Error(`Operation took ${duration}ms, expected <${maxTime}ms`);
     }
-    
+
     return { result, duration };
   }
 
@@ -3358,22 +3346,24 @@ export class PerformanceTestUtils {
   ): Promise<{ avgDuration: number; maxDuration: number; successRate: number }> {
     const results: number[] = [];
     let successes = 0;
-    
-    const promises = Array(concurrency).fill(0).map(async () => {
-      for (let i = 0; i < iterations / concurrency; i++) {
-        try {
-          const start = Date.now();
-          await operation();
-          results.push(Date.now() - start);
-          successes++;
-        } catch (error) {
-          console.error('Load test operation failed:', error);
+
+    const promises = Array(concurrency)
+      .fill(0)
+      .map(async () => {
+        for (let i = 0; i < iterations / concurrency; i++) {
+          try {
+            const start = Date.now();
+            await operation();
+            results.push(Date.now() - start);
+            successes++;
+          } catch (error) {
+            console.error('Load test operation failed:', error);
+          }
         }
-      }
-    });
-    
+      });
+
     await Promise.all(promises);
-    
+
     return {
       avgDuration: results.reduce((a, b) => a + b, 0) / results.length,
       maxDuration: Math.max(...results),
@@ -3396,24 +3386,24 @@ describe('PLC Search Performance', () => {
 
   it('should search PLCs in under 100ms with 10K records', async () => {
     const plcService = new PLCService(TestEnvironment.getDataSource());
-    
+
     const { duration } = await PerformanceTestUtils.measureQueryTime(
       () => plcService.searchPLCs({ search: 'Allen-Bradley' }),
       100 // Max 100ms
     );
-    
+
     expect(duration).toBeLessThan(100);
   });
 
   it('should handle concurrent searches efficiently', async () => {
     const plcService = new PLCService(TestEnvironment.getDataSource());
-    
+
     const { avgDuration, successRate } = await PerformanceTestUtils.measureWithLoad(
       () => plcService.searchPLCs({ make: 'Siemens' }),
       20, // 20 concurrent users
       100 // 100 operations
     );
-    
+
     expect(avgDuration).toBeLessThan(150);
     expect(successRate).toBeGreaterThan(0.95); // 95% success rate
   });
@@ -3455,7 +3445,7 @@ export class PerformanceValidator {
     ];
 
     const results = await Promise.all(
-      tests.map(async (test) => {
+      tests.map(async test => {
         try {
           const result = await test.test();
           return {
@@ -3494,7 +3484,7 @@ export class PerformanceValidator {
       const start = Date.now();
       const plcs = await this.plcService.searchPLCs(scenario.filters);
       const duration = Date.now() - start;
-      
+
       results.push({
         scenario: JSON.stringify(scenario.filters),
         duration,
@@ -3515,9 +3505,7 @@ export class PerformanceValidator {
   private generatePerformanceRecommendations(results: any[]): string[] {
     const recommendations = [];
 
-    const slowQueries = results
-      .filter(r => r.metrics?.avgDuration > 100)
-      .map(r => r.name);
+    const slowQueries = results.filter(r => r.metrics?.avgDuration > 100).map(r => r.name);
 
     if (slowQueries.length > 0) {
       recommendations.push(
@@ -3527,9 +3515,7 @@ export class PerformanceValidator {
       );
     }
 
-    const failedConcurrency = results.find(r => 
-      r.name.includes('Concurrent') && !r.passed
-    );
+    const failedConcurrency = results.find(r => r.name.includes('Concurrent') && !r.passed);
 
     if (failedConcurrency) {
       recommendations.push(
@@ -3555,29 +3541,29 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 CREATE EXTENSION IF NOT EXISTS pg_trgm; -- For fuzzy text search
 
 -- Core performance indexes
-CREATE INDEX CONCURRENTLY idx_plcs_search_optimized 
+CREATE INDEX CONCURRENTLY idx_plcs_search_optimized
 ON plcs USING gin (to_tsvector('english', description || ' ' || make || ' ' || model || ' ' || tag_id));
 
 -- Composite indexes for common query patterns
-CREATE INDEX CONCURRENTLY idx_plcs_hierarchy_lookup 
-ON plcs (equipment_id) 
+CREATE INDEX CONCURRENTLY idx_plcs_hierarchy_lookup
+ON plcs (equipment_id)
 INCLUDE (id, tag_id, description, make, model, ip_address, created_at);
 
-CREATE INDEX CONCURRENTLY idx_equipment_hierarchy_lookup 
-ON equipment (cell_id) 
+CREATE INDEX CONCURRENTLY idx_equipment_hierarchy_lookup
+ON equipment (cell_id)
 INCLUDE (id, name, equipment_type, created_at);
 
-CREATE INDEX CONCURRENTLY idx_cells_site_lookup 
-ON cells (site_id) 
+CREATE INDEX CONCURRENTLY idx_cells_site_lookup
+ON cells (site_id)
 INCLUDE (id, name, line_number, created_at);
 
 -- Partial indexes for filtered queries
-CREATE INDEX CONCURRENTLY idx_plcs_with_ip 
-ON plcs (ip_address) 
+CREATE INDEX CONCURRENTLY idx_plcs_with_ip
+ON plcs (ip_address)
 WHERE ip_address IS NOT NULL;
 
-CREATE INDEX CONCURRENTLY idx_active_users 
-ON users (id, email, role_id) 
+CREATE INDEX CONCURRENTLY idx_active_users
+ON users (id, email, role_id)
 WHERE is_active = true;
 
 -- 2. Query optimization functions
@@ -3597,7 +3583,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     p.id,
     p.tag_id,
     p.description,
@@ -3628,7 +3614,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     pss.query,
     pss.calls,
     pss.total_exec_time,
@@ -3651,19 +3637,19 @@ BEGIN
   ANALYZE cells;
   ANALYZE sites;
   ANALYZE audit_logs;
-  
+
   -- Reindex if needed (during maintenance windows)
   -- REINDEX INDEX CONCURRENTLY idx_plcs_search_optimized;
-  
+
   -- Clean up old audit logs (keep 1 year)
-  DELETE FROM audit_logs 
+  DELETE FROM audit_logs
   WHERE timestamp < CURRENT_DATE - INTERVAL '1 year';
-  
+
   -- Log maintenance activity
   INSERT INTO audit_logs (
     table_name, action, user_id, timestamp, compliance_notes
   ) VALUES (
-    'maintenance_log', 'MAINTENANCE', 
+    'maintenance_log', 'MAINTENANCE',
     (SELECT id FROM users WHERE email = 'system@inventory.local' LIMIT 1),
     CURRENT_TIMESTAMP, 'Automated database maintenance completed'
   );

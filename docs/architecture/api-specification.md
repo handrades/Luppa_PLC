@@ -34,7 +34,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedSites'
-                
+
     post:
       tags: [Sites]
       summary: Create new site
@@ -47,7 +47,7 @@ paths:
       responses:
         201:
           description: Site created
-          
+
   /sites/{siteId}:
     parameters:
       - $ref: '#/components/parameters/SiteIdParam'
@@ -61,7 +61,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SiteWithCellCount'
-          
+
   # Cell Management
   /sites/{siteId}/cells:
     parameters:
@@ -78,7 +78,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Cell'
-          
+
     post:
       tags: [Cells]
       summary: Create new cell in site
@@ -88,7 +88,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CellInput'
-              
+
   /cells/{cellId}:
     parameters:
       - $ref: '#/components/parameters/CellIdParam'
@@ -102,7 +102,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CellWithEquipmentCount'
-          
+
   # Equipment Management
   /cells/{cellId}/equipment:
     parameters:
@@ -119,11 +119,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Equipment'
-          
+
     post:
       tags: [Equipment]
       summary: Create new equipment in cell
-      
+
   /equipment/{equipmentId}:
     parameters:
       - $ref: '#/components/parameters/EquipmentIdParam'
@@ -137,7 +137,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Equipment'
-      
+
   # PLC Management
   /equipment/{equipmentId}/plcs:
     parameters:
@@ -154,11 +154,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PLC'
-      
+
     post:
       tags: [PLCs]
       summary: Create new PLC
-      
+
   /plcs:
     get:
       tags: [PLCs]
@@ -203,14 +203,14 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/PLCWithHierarchy'
-                      
+
   /plcs/{plcId}:
     parameters:
       - $ref: '#/components/parameters/PLCIdParam'
     get:
       tags: [PLCs]
       summary: Get PLC details with full hierarchy
-      
+
   # Tag Management
   /plcs/{plcId}/tags:
     parameters:
@@ -218,11 +218,11 @@ paths:
     get:
       tags: [Tags]
       summary: List tags for a PLC
-      
+
     post:
       tags: [Tags]
       summary: Create new tag
-      
+
   # Bulk Operations
   /import/plcs:
     post:
@@ -242,7 +242,7 @@ paths:
                 createMissing:
                   type: boolean
                   description: Auto-create sites/cells/equipment if not found
-                  
+
   /export/plcs:
     post:
       tags: [Import/Export]
@@ -261,7 +261,7 @@ paths:
                 includeTags:
                   type: boolean
                   default: false
-                  
+
   # Hierarchy Operations
   /hierarchy/tree:
     get:
@@ -288,7 +288,7 @@ paths:
                       type: array
                       items:
                         type: object
-                        
+
   /hierarchy/move:
     post:
       tags: [Hierarchy]
@@ -306,7 +306,7 @@ paths:
                 targetCellId:
                   type: string
                   format: uuid
-                  
+
 components:
   parameters:
     PageParam:
@@ -381,7 +381,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          
+
     SiteInput:
       type: object
       required: [name]
@@ -391,7 +391,7 @@ components:
           maxLength: 255
         description:
           type: string
-          
+
     SiteWithCellCount:
       allOf:
         - $ref: '#/components/schemas/Site'
@@ -400,7 +400,7 @@ components:
             cellCount:
               type: integer
               minimum: 0
-              
+
     Cell:
       type: object
       required: [id, name, cellType, siteId, createdAt, updatedAt]
@@ -425,7 +425,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          
+
     CellInput:
       type: object
       required: [name, cellType]
@@ -438,7 +438,7 @@ components:
           maxLength: 100
         description:
           type: string
-          
+
     CellWithEquipmentCount:
       allOf:
         - $ref: '#/components/schemas/Cell'
@@ -447,7 +447,7 @@ components:
             equipmentCount:
               type: integer
               minimum: 0
-              
+
     Equipment:
       type: object
       required: [id, name, equipmentType, cellId, createdAt, updatedAt]
@@ -472,7 +472,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          
+
     PLC:
       type: object
       required: [id, tagId, equipmentId, createdAt, updatedAt]
@@ -507,7 +507,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          
+
     PLCWithHierarchy:
       allOf:
         - $ref: '#/components/schemas/PLC'
@@ -522,7 +522,7 @@ components:
                   $ref: '#/components/schemas/Cell'
                 equipment:
                   $ref: '#/components/schemas/Equipment'
-                  
+
     PaginatedSites:
       type: object
       required: [data, pagination]
@@ -547,7 +547,7 @@ components:
             totalPages:
               type: integer
               minimum: 0
-              
+
     PLCFilters:
       type: object
       properties:

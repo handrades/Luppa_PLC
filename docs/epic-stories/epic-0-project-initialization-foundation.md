@@ -12,7 +12,7 @@ so that I can organize code modules and share dependencies efficiently.
 
 ### Acceptance Criteria
 
-1: Initialize pnpm workspace with pnpm-workspace.yaml defining apps/*, packages/* locations
+1: Initialize pnpm workspace with pnpm-workspace.yaml defining apps/_, packages/_ locations
 2: Create folder structure: /apps (web, api), /packages (shared-types, ui-components, config), /infrastructure (docker, scripts)
 3: Configure root package.json with workspace scripts: dev, build, test, lint
 4: Set up TypeScript with base tsconfig.json and package-specific configurations

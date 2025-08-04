@@ -33,31 +33,31 @@ graph TB
         Browser[Web Browser]
         Tablet[Tablet Device]
     end
-    
+
     subgraph "Infrastructure Layer"
         Nginx[Nginx Reverse Proxy<br/>Load Balancer]
     end
-    
+
     subgraph "Application Layer"
         subgraph "Frontend"
             React[React SPA<br/>Vite + TypeScript]
         end
-        
+
         subgraph "Backend"
             API[Express API Server<br/>REST + JWT Auth]
         end
     end
-    
+
     subgraph "Data Layer"
         PostgreSQL[(PostgreSQL<br/>Primary Database)]
         Redis[(Redis<br/>Cache + Sessions)]
     end
-    
+
     subgraph "Monitoring Layer"
         Grafana[Grafana Dashboard]
         Prometheus[Prometheus Metrics]
     end
-    
+
     Browser --> Nginx
     Tablet --> Nginx
     Nginx --> React
@@ -70,11 +70,11 @@ graph TB
 
 ## Architectural Patterns
 
-- **Layered Architecture:** Clear separation between presentation, business logic, and data layers - *Rationale:* Simplifies development and maintenance for solo developer while enabling future team scaling
-- **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - *Rationale:* Accelerates development of future apps within the framework
-- **Repository Pattern:** Abstract data access through TypeORM repositories - *Rationale:* Enables testing and potential future database migrations
-- **API Gateway Pattern:** Nginx as single entry point for all requests - *Rationale:* Centralized SSL termination, load balancing, and request routing
-- **JWT Authentication:** Stateless auth with Redis session storage - *Rationale:* Scalable authentication that works in distributed environments
-- **Audit Trail Pattern:** Comprehensive logging of all data modifications - *Rationale:* ISO compliance requirement with PostgreSQL triggers for reliability
-- **Offline-First Design:** Local caching and sync mechanisms - *Rationale:* Critical for air-gapped industrial environments
-- **Schema-Per-App Pattern:** Shared core + app-specific schemas - *Rationale:* Enables multi-app framework while maintaining data isolation
+- **Layered Architecture:** Clear separation between presentation, business logic, and data layers - _Rationale:_ Simplifies development and maintenance for solo developer while enabling future team scaling
+- **Component-Based UI:** Reusable React components with TypeScript and Storybook documentation - _Rationale:_ Accelerates development of future apps within the framework
+- **Repository Pattern:** Abstract data access through TypeORM repositories - _Rationale:_ Enables testing and potential future database migrations
+- **API Gateway Pattern:** Nginx as single entry point for all requests - _Rationale:_ Centralized SSL termination, load balancing, and request routing
+- **JWT Authentication:** Stateless auth with Redis session storage - _Rationale:_ Scalable authentication that works in distributed environments
+- **Audit Trail Pattern:** Comprehensive logging of all data modifications - _Rationale:_ ISO compliance requirement with PostgreSQL triggers for reliability
+- **Offline-First Design:** Local caching and sync mechanisms - _Rationale:_ Critical for air-gapped industrial environments
+- **Schema-Per-App Pattern:** Shared core + app-specific schemas - _Rationale:_ Enables multi-app framework while maintaining data isolation

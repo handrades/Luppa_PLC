@@ -1,6 +1,6 @@
 /**
  * TypeORM CLI Configuration
- * 
+ *
  * This configuration is used by TypeORM CLI commands for generating
  * and running migrations. It must be separate from the main DataSource
  * to avoid circular dependencies and to work with the CLI tools.

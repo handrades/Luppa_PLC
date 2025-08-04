@@ -66,7 +66,7 @@ Invoke-psake
 
 # Run specific linters
 Invoke-psake Markdown
-Invoke-psake Json  
+Invoke-psake Json
 Invoke-psake Yaml
 Invoke-psake TypeScript
 Invoke-psake Test

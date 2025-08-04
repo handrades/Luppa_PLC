@@ -9,16 +9,16 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    
+
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-    
+
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    
+
     "baseUrl": "..",
     "paths": {
       "@shared-types/*": ["packages/shared-types/src/*"],
@@ -26,7 +26,6 @@
       "@config/*": ["packages/config/src/*"]
     }
   },
-  "files": [],
-  "include": [],
+  "include": ["../apps/*/src/**/*", "../packages/*/src/**/*", "../__tests__/**/*"],
   "exclude": ["node_modules", "dist"]
 }

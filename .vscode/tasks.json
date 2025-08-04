@@ -1,605 +1,605 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "psake: Default",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake"],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run all linting checks and tests"
-        },
-        {
-            "label": "psake: Help",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake ?"],
-            "group": "build",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Show available psake tasks"
-        },
-        {
-            "label": "Docker: Start All Services",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake up"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Start all development services with Docker Compose"
-        },
-        {
-            "label": "Docker: Stop All Services",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake down"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Stop and remove all containers"
-        },
-        {
-            "label": "Docker: Restart All Services",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake restart"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Restart all Docker services"
-        },
-        {
-            "label": "Docker: View All Logs",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "View logs from all services (Ctrl+C to exit)"
-        },
-        {
-            "label": "Docker: View API Logs",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs-api"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "View API service logs only"
-        },
-        {
-            "label": "Docker: View Web Logs",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs-web"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "View web service logs only"
-        },
-        {
-            "label": "Docker: Service Status",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake status"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Show status of all services"
-        },
-        {
-            "label": "Docker: Health Check",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake health"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Check health of all services"
-        },
-        {
-            "label": "Docker: Build Services",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake build"],
-            "group": "build",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Build or rebuild all services"
-        },
-        {
-            "label": "Docker: Shell - API",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake shell-api"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Access backend container shell"
-        },
-        {
-            "label": "Docker: Shell - Web",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake shell-web"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Access frontend container shell"
-        },
-        {
-            "label": "Docker: PostgreSQL CLI",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake psql"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Connect to PostgreSQL database"
-        },
-        {
-            "label": "Docker: Redis CLI",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake redis-cli"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Connect to Redis CLI"
-        },
-        {
-            "label": "Docker: Reset Database",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake reset-db"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Reset database to initial state (WARNING: deletes all data)"
-        },
-        {
-            "label": "Docker: Environment Check",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake env-check"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Check environment configuration"
-        },
-        {
-            "label": "Docker: Show Help",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake docker-help"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Show available Docker commands"
-        },
-        {
-            "label": "Lint: Markdown Only",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Markdown"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run only markdown linting"
-        },
-        {
-            "label": "Lint: JSON Only",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Json"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run only JSON linting"
-        },
-        {
-            "label": "Lint: YAML Only",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Yaml"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run only YAML linting"
-        },
-        {
-            "label": "Lint: TypeScript Only",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake TypeScript"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run only TypeScript/JavaScript linting"
-        },
-        {
-            "label": "Lint: Fix Markdown",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake FixMarkdown"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run markdown linting with auto-fix"
-        },
-        {
-            "label": "Test: Run All Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Test"],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run workspace configuration tests"
-        },
-        {
-            "label": "Security: Run Security Checks",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Security"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run only security checks"
-        },
-        {
-            "label": "Dependencies: Check Dependencies",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake CheckDependencies"],
-            "group": "test",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "detail": "Check if all linting tools are installed"
-        },
-        {
-            "label": "CI: Run All CI Checks",
-            "type": "shell",
-            "command": "pwsh",
-            "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake CI"],
-            "group": "build",
-            "options": {
-                "env": {
-                    "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "detail": "Run all CI checks (dependencies + lint + test)"
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "psake: Default",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
         }
-    ]
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run all linting checks and tests"
+    },
+    {
+      "label": "psake: Help",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake ?"],
+      "group": "build",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Show available psake tasks"
+    },
+    {
+      "label": "Docker: Start All Services",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake up"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Start all development services with Docker Compose"
+    },
+    {
+      "label": "Docker: Stop All Services",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake down"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Stop and remove all containers"
+    },
+    {
+      "label": "Docker: Restart All Services",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake restart"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Restart all Docker services"
+    },
+    {
+      "label": "Docker: View All Logs",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "View logs from all services (Ctrl+C to exit)"
+    },
+    {
+      "label": "Docker: View API Logs",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs-api"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "View API service logs only"
+    },
+    {
+      "label": "Docker: View Web Logs",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake logs-web"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "View web service logs only"
+    },
+    {
+      "label": "Docker: Service Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake status"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Show status of all services"
+    },
+    {
+      "label": "Docker: Health Check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake health"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Check health of all services"
+    },
+    {
+      "label": "Docker: Build Services",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake build"],
+      "group": "build",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Build or rebuild all services"
+    },
+    {
+      "label": "Docker: Shell - API",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake shell-api"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Access backend container shell"
+    },
+    {
+      "label": "Docker: Shell - Web",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake shell-web"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Access frontend container shell"
+    },
+    {
+      "label": "Docker: PostgreSQL CLI",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake psql"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Connect to PostgreSQL database"
+    },
+    {
+      "label": "Docker: Redis CLI",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake redis-cli"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Connect to Redis CLI"
+    },
+    {
+      "label": "Docker: Reset Database",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake reset-db"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Reset database to initial state (WARNING: deletes all data)"
+    },
+    {
+      "label": "Docker: Environment Check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake env-check"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Check environment configuration"
+    },
+    {
+      "label": "Docker: Show Help",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake docker-help"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Show available Docker commands"
+    },
+    {
+      "label": "Lint: Markdown Only",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Markdown"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run only markdown linting"
+    },
+    {
+      "label": "Lint: JSON Only",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Json"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run only JSON linting"
+    },
+    {
+      "label": "Lint: YAML Only",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Yaml"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run only YAML linting"
+    },
+    {
+      "label": "Lint: TypeScript Only",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake TypeScript"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run only TypeScript/JavaScript linting"
+    },
+    {
+      "label": "Lint: Fix Markdown",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake FixMarkdown"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run markdown linting with auto-fix"
+    },
+    {
+      "label": "Test: Run All Tests",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run workspace configuration tests"
+    },
+    {
+      "label": "Security: Run Security Checks",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake Security"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run only security checks"
+    },
+    {
+      "label": "Dependencies: Check Dependencies",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake CheckDependencies"],
+      "group": "test",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Check if all linting tools are installed"
+    },
+    {
+      "label": "CI: Run All CI Checks",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-ExecutionPolicy", "Bypass", "-Command", "Invoke-psake CI"],
+      "group": "build",
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:${env:HOME}/.nvm/versions/node/v22.17.1/bin"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Run all CI checks (dependencies + lint + test)"
+    }
+  ]
 }

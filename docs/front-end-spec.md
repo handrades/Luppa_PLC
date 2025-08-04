@@ -37,9 +37,9 @@ on equipment distribution, status monitoring, and operational insights.
 
 ### Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-07-24 | 1.0 | Initial UI/UX specification creation | Sally (UX Expert) |
+| Date       | Version | Description                          | Author            |
+| ---------- | ------- | ------------------------------------ | ----------------- |
+| 2025-07-24 | 1.0     | Initial UI/UX specification creation | Sally (UX Expert) |
 
 ## Information Architecture (IA)
 
@@ -52,25 +52,25 @@ graph TD
     B --> D[Reports & Analytics]
     B --> E[Administration]
     B --> F[User Profile]
-    
+
     C --> C1[Equipment List]
     C --> C2[Add Equipment]
     C --> C3[Bulk Import/Export]
     C --> C4[Advanced Search]
-    
+
     C1 --> C1a[Equipment Details]
     C1a --> C1b[Edit Equipment]
-    
+
     D --> D1[Analytics Dashboard]
     D --> D2[Compliance Reports]
     D --> D3[Audit Trail]
     D --> D4[Site Hierarchy View]
-    
+
     E --> E1[User Management]
     E --> E2[Role Management]
     E --> E3[System Settings]
     E --> E4[App Configuration]
-    
+
     F --> F1[Profile Settings]
     F --> F2[Logout]
 ```
@@ -112,18 +112,18 @@ graph TD
     B -->|Text search| C[Full-text search results]
     B -->|Filter-based| D[Apply filters]
     B -->|Site navigation| E[Browse site hierarchy]
-    
+
     C --> F[Results list with highlighting]
     D --> G[Filtered equipment list]
     E --> H[Equipment by location]
-    
+
     F --> I{Found target?}
     G --> I
     H --> I
-    
+
     I -->|Yes| J[Click equipment row]
     I -->|No| K[Refine search/filters]
-    
+
     K --> B
     J --> L[Equipment detail view]
     L --> M[Edit equipment if needed]
@@ -213,7 +213,7 @@ graph TD
 **React Component Library with Material-UI Industrial Theme**
 
 - Base: Material-UI components customized for industrial contexts
-- Enhancement: GSAP animations for professional micro-interactions  
+- Enhancement: GSAP animations for professional micro-interactions
 - Framework: Storybook for component development and documentation
 - Distribution: NPM package for easy sharing across framework apps
 
@@ -321,53 +321,53 @@ graph TD
 
 #### Light Mode (Primary)
 
-| Color Type | Hex Code | Usage |
-|------------|----------|-------|
-| Primary | `#1976d2` | Primary actions, links, active states |
-| Primary Dark | `#115293` | Primary hover states, emphasis |
-| Secondary | `#424242` | Secondary actions, neutral elements |
-| Accent | `#ff9800` | Warnings, important notices, highlights |
-| Success | `#4caf50` | Confirmations, success states, online indicators |
-| Warning | `#ff9800` | Cautions, important notices, pending states |
-| Error | `#f44336` | Errors, destructive actions, offline indicators |
-| Background | `#fafafa` | Main background |
-| Surface | `#ffffff` | Cards, modals, elevated elements |
-| Text Primary | `#212121` | Main text content |
-| Text Secondary | `#757575` | Supporting text, labels |
+| Color Type     | Hex Code  | Usage                                            |
+| -------------- | --------- | ------------------------------------------------ |
+| Primary        | `#1976d2` | Primary actions, links, active states            |
+| Primary Dark   | `#115293` | Primary hover states, emphasis                   |
+| Secondary      | `#424242` | Secondary actions, neutral elements              |
+| Accent         | `#ff9800` | Warnings, important notices, highlights          |
+| Success        | `#4caf50` | Confirmations, success states, online indicators |
+| Warning        | `#ff9800` | Cautions, important notices, pending states      |
+| Error          | `#f44336` | Errors, destructive actions, offline indicators  |
+| Background     | `#fafafa` | Main background                                  |
+| Surface        | `#ffffff` | Cards, modals, elevated elements                 |
+| Text Primary   | `#212121` | Main text content                                |
+| Text Secondary | `#757575` | Supporting text, labels                          |
 
 #### Dark Mode (Industrial Night Mode)
 
-| Color Type | Hex Code | Usage |
-|------------|----------|-------|
-| Primary | `#90caf9` | Primary actions, links, active states (lighter for contrast) |
-| Primary Dark | `#42a5f5` | Primary hover states, emphasis |
-| Secondary | `#bdbdbd` | Secondary actions, neutral elements |
-| Accent | `#ffb74d` | Warnings, important notices, highlights |
-| Success | `#81c784` | Confirmations, success states, online indicators |
-| Warning | `#ffb74d` | Cautions, important notices, pending states |
-| Error | `#e57373` | Errors, destructive actions, offline indicators |
-| Background | `#121212` | Main background (Material Design dark) |
-| Surface | `#1e1e1e` | Cards, modals, elevated elements |
-| Text Primary | `#ffffff` | Main text content |
-| Text Secondary | `#b3b3b3` | Supporting text, labels |
+| Color Type     | Hex Code  | Usage                                                        |
+| -------------- | --------- | ------------------------------------------------------------ |
+| Primary        | `#90caf9` | Primary actions, links, active states (lighter for contrast) |
+| Primary Dark   | `#42a5f5` | Primary hover states, emphasis                               |
+| Secondary      | `#bdbdbd` | Secondary actions, neutral elements                          |
+| Accent         | `#ffb74d` | Warnings, important notices, highlights                      |
+| Success        | `#81c784` | Confirmations, success states, online indicators             |
+| Warning        | `#ffb74d` | Cautions, important notices, pending states                  |
+| Error          | `#e57373` | Errors, destructive actions, offline indicators              |
+| Background     | `#121212` | Main background (Material Design dark)                       |
+| Surface        | `#1e1e1e` | Cards, modals, elevated elements                             |
+| Text Primary   | `#ffffff` | Main text content                                            |
+| Text Secondary | `#b3b3b3` | Supporting text, labels                                      |
 
 ### Typography
 
 #### Font Families
 
 - **Primary:** 'Roboto', sans-serif (Material-UI default, excellent readability)
-- **Secondary:** 'Roboto Condensed', sans-serif (for data-dense areas, space efficiency)  
+- **Secondary:** 'Roboto Condensed', sans-serif (for data-dense areas, space efficiency)
 - **Monospace:** 'Roboto Mono', monospace (for IP addresses, technical codes, data values)
 
 #### Type Scale
 
-| Element | Size | Weight | Line Height |
-|---------|------|--------|-------------|
-| H1 | 2.125rem (34px) | 300 (Light) | 1.235 |
-| H2 | 1.5rem (24px) | 400 (Regular) | 1.334 |
-| H3 | 1.25rem (20px) | 400 (Regular) | 1.6 |
-| Body | 1rem (16px) | 400 (Regular) | 1.5 |
-| Small | 0.875rem (14px) | 400 (Regular) | 1.43 |
+| Element | Size            | Weight        | Line Height |
+| ------- | --------------- | ------------- | ----------- |
+| H1      | 2.125rem (34px) | 300 (Light)   | 1.235       |
+| H2      | 1.5rem (24px)   | 400 (Regular) | 1.334       |
+| H3      | 1.25rem (20px)  | 400 (Regular) | 1.6         |
+| Body    | 1rem (16px)     | 400 (Regular) | 1.5         |
+| Small   | 0.875rem (14px) | 400 (Regular) | 1.43        |
 
 ### Iconography
 
@@ -442,12 +442,12 @@ graph TD
 
 ### Breakpoints
 
-| Breakpoint | Min Width | Max Width | Target Devices |
-|------------|-----------|-----------|----------------|
-| Mobile | 320px | 599px | Phones (emergency access only) |
-| Tablet | 600px | 959px | Industrial tablets, rugged tablets, field devices |
-| Desktop | 960px | 1279px | Control room workstations, office desktops |
-| Wide | 1280px | - | Large monitors, multi-monitor setups, control centers |
+| Breakpoint | Min Width | Max Width | Target Devices                                        |
+| ---------- | --------- | --------- | ----------------------------------------------------- |
+| Mobile     | 320px     | 599px     | Phones (emergency access only)                        |
+| Tablet     | 600px     | 959px     | Industrial tablets, rugged tablets, field devices     |
+| Desktop    | 960px     | 1279px    | Control room workstations, office desktops            |
+| Wide       | 1280px    | -         | Large monitors, multi-monitor setups, control centers |
 
 ### Adaptation Patterns
 

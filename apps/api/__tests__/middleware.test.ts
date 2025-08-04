@@ -6,7 +6,7 @@ import type { Express } from 'express';
 jest.mock('../src/config/database', () => ({
   isDatabaseHealthy: jest.fn().mockResolvedValue(true),
   initializeDatabase: jest.fn().mockResolvedValue(undefined),
-  closeDatabase: jest.fn().mockResolvedValue(undefined)
+  closeDatabase: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('Middleware Integration', () => {
@@ -18,17 +18,15 @@ describe('Middleware Integration', () => {
 
   describe('Security Middleware', () => {
     it('should include security headers from helmet', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       // Check for common helmet headers
       expect(response.headers).toHaveProperty('x-content-type-options');
       expect(response.headers['x-content-type-options']).toBe('nosniff');
-      
+
       expect(response.headers).toHaveProperty('x-frame-options');
       expect(response.headers['x-frame-options']).toBe('DENY');
-      
+
       expect(response.headers).toHaveProperty('x-download-options');
       expect(response.headers['x-download-options']).toBe('noopen');
     });
@@ -57,9 +55,7 @@ describe('Middleware Integration', () => {
 
   describe('Request ID Middleware', () => {
     it('should generate request ID if not provided', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.headers).toHaveProperty('x-request-id');
       expect(response.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/i);
@@ -67,11 +63,8 @@ describe('Middleware Integration', () => {
 
     it('should use provided request ID', async () => {
       const customId = 'custom-test-id-123';
-      
-      const response = await request(app)
-        .get('/health')
-        .set('X-Request-ID', customId)
-        .expect(200);
+
+      const response = await request(app).get('/health').set('X-Request-ID', customId).expect(200);
 
       expect(response.headers['x-request-id']).toBe(customId);
     });
@@ -103,10 +96,7 @@ describe('Middleware Integration', () => {
 
   describe('Compression Middleware', () => {
     it('should compress responses when appropriate', async () => {
-      const response = await request(app)
-        .get('/health')
-        .set('Accept-Encoding', 'gzip')
-        .expect(200);
+      const response = await request(app).get('/health').set('Accept-Encoding', 'gzip').expect(200);
 
       // For small responses, compression might not be applied
       // This tests that the middleware is configured, not necessarily active

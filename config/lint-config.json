@@ -31,15 +31,8 @@
     }
   },
   "installCommands": {
-    "npm": [
-      "npm install -g markdownlint-cli@latest",
-      "npm install -g jsonlint@latest"
-    ],
-    "pip": [
-      "pip install yamllint"
-    ],
-    "pnpm": [
-      "pnpm install"
-    ]
+    "npm": ["npm install -g markdownlint-cli@latest", "npm install -g jsonlint@latest"],
+    "pip": ["pip install yamllint"],
+    "pnpm": ["pnpm install"]
   }
 }

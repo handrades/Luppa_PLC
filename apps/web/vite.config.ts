@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -37,16 +37,16 @@ export default defineConfig({
         },
         chunkFileNames: 'js/[name]-[hash].js',
         entryFileNames: 'js/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.')
-          const extType = info[info.length - 1]
+        assetFileNames: assetInfo => {
+          const info = assetInfo.name.split('.');
+          const extType = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
-            return `images/[name]-[hash][extname]`
+            return `images/[name]-[hash][extname]`;
           }
           if (/css/i.test(extType)) {
-            return `css/[name]-[hash][extname]`
+            return `css/[name]-[hash][extname]`;
           }
-          return `assets/[name]-[hash][extname]`
+          return `assets/[name]-[hash][extname]`;
         },
       },
       treeshake: {
@@ -59,6 +59,13 @@ export default defineConfig({
     assetsInlineLimit: 4096,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@emotion/react', '@emotion/styled'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@mui/material',
+      '@emotion/react',
+      '@emotion/styled',
+    ],
   },
-})
+});

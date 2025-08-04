@@ -48,7 +48,7 @@ export class User extends BaseEntity {
   })
   lastLogin!: Date | null;
 
-  @ManyToOne(() => Role, (role) => role.users, {
+  @ManyToOne(() => Role, role => role.users, {
     eager: false,
     onDelete: 'RESTRICT',
   })

@@ -11,7 +11,7 @@
 **Success Metrics:**
 
 - Developer can set up local environment in under 5 minutes
-- All health checks pass in local Docker environment  
+- All health checks pass in local Docker environment
 - CI/CD pipeline runs successfully on main branch
 - Another developer successfully onboards using only documentation
 
