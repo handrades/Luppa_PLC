@@ -1,41 +1,45 @@
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import App from './App';
 import { theme } from './styles/theme';
+
+// Mock the entire auth service module
+jest.mock('./services/auth.service', () => ({
+  authService: {
+    isAuthenticated: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
+    refreshToken: jest.fn(),
+    getCurrentUser: jest.fn(),
+    getToken: jest.fn(),
+    hasRole: jest.fn(),
+  },
+}));
+
+// Import the mocked module
 import { authService } from './services/auth.service';
 
-const AppWrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter
+const AppWrapper = ({ children, initialEntries = ['/'] }: { children: React.ReactNode; initialEntries?: string[] }) => (
+  <MemoryRouter
+    initialEntries={initialEntries}
     future={{
       v7_startTransition: true,
       v7_relativeSplatPath: true,
     }}
   >
     <ThemeProvider theme={theme}>{children}</ThemeProvider>
-  </BrowserRouter>
+  </MemoryRouter>
 );
-
-// Mock the auth service
-jest.mock('./services/auth.service', () => ({
-  authService: {
-    isAuthenticated: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    getToken: jest.fn(),
-  },
-}));
-
-const mockAuthService = authService as jest.Mocked<typeof authService>;
 
 describe('App', () => {
   beforeEach(() => {
-    // Reset mocks before each test
+    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 
   test('renders without crashing', () => {
-    mockAuthService.isAuthenticated.mockReturnValue(false);
+    (authService.isAuthenticated as jest.Mock).mockReturnValue(false);
 
     render(
       <AppWrapper>
@@ -45,7 +49,7 @@ describe('App', () => {
   });
 
   test('renders login page when not authenticated', () => {
-    mockAuthService.isAuthenticated.mockReturnValue(false);
+    (authService.isAuthenticated as jest.Mock).mockReturnValue(false);
 
     render(
       <AppWrapper>
@@ -58,10 +62,10 @@ describe('App', () => {
   });
 
   test('renders dashboard when authenticated', () => {
-    mockAuthService.isAuthenticated.mockReturnValue(true);
+    (authService.isAuthenticated as jest.Mock).mockReturnValue(true);
 
     render(
-      <AppWrapper>
+      <AppWrapper initialEntries={['/']}>
         <App />
       </AppWrapper>
     );
