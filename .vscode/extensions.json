@@ -1,72 +1,40 @@
 {
   "recommendations": [
-    // Essential TypeScript/JavaScript Development
     "ms-vscode.vscode-typescript-next",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
     "bradlc.vscode-tailwindcss",
-    
-    // React Development
     "ms-vscode.vscode-react-refactor",
     "dsznajder.es7-react-js-snippets",
     "formulahendry.auto-rename-tag",
-    
-    // Testing
     "orta.vscode-jest",
     "ms-vscode.test-adapter-converter",
-    
-    // Git & Version Control
     "eamodio.gitlens",
     "mhutchie.git-graph",
     "github.vscode-pull-request-github",
-    
-    // Docker & DevOps
     "ms-azuretools.vscode-docker",
     "ms-vscode-remote.remote-containers",
-    
-    // Database
     "ms-mssql.mssql",
     "mtxr.sqltools",
     "mtxr.sqltools-driver-pg",
-    
-    // PowerShell
     "ms-vscode.powershell",
-    
-    // Markdown
     "davidanson.vscode-markdownlint",
     "yzhang.markdown-all-in-one",
     "shd101wyy.markdown-preview-enhanced",
-    
-    // YAML & JSON
     "redhat.vscode-yaml",
-    "ms-vscode.vscode-json",
-    
-    // Productivity
-    "ms-vscode.vscode-npm-script",
+    "eg2.vscode-npm-script",
     "christian-kohler.path-intellisense",
     "visualstudioexptteam.vscodeintellicode",
     "ms-vscode.vscode-thunder-client",
-    
-    // Code Quality
     "streetsidesoftware.code-spell-checker",
     "usernamehw.errorlens",
     "oderwat.indent-rainbow",
     "PKief.material-icon-theme",
-    
-    // Live Development
-    "ritwickdey.liveserver",
     "ms-vscode.live-server",
-    
-    // Utilities
     "aaron-bond.better-comments",
     "alefragnani.bookmarks",
     "ms-vscode.hexeditor",
     "gruntfuggly.todo-tree"
   ],
-  "unwantedRecommendations": [
-    // Extensions that might conflict with our setup
-    "ms-vscode.vscode-typescript",
-    "hookyqr.beautify",
-    "esbenp.prettier-vscode-legacy"
-  ]
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript", "hookyqr.beautify", "esbenp.prettier-vscode-legacy"]
 }

@@ -84,7 +84,7 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    ```powershell
    # Check what's using port 3001
    netstat -ano | findstr :3001
-   
+
    # Kill the process (replace PID)
    taskkill /PID <process_id> /F
    ```
@@ -94,10 +94,10 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    ```powershell
    # Ensure Docker is running
    docker info
-   
+
    # Start database services
    docker-compose -f docker-compose.dev.yml up -d
-   
+
    # Check database container status
    docker-compose -f docker-compose.dev.yml ps
    ```
@@ -192,7 +192,7 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    ```powershell
    # Navigate to API directory
    cd apps/api
-   
+
    # Drop and recreate schema
    npx typeorm schema:drop -d src/config/typeorm.config.ts
    npx typeorm migration:run -d src/config/typeorm.config.ts
@@ -306,7 +306,7 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    ```powershell
    # Remove unused containers and images
    docker system prune -f
-   
+
    # Remove project containers specifically
    docker-compose -f docker-compose.dev.yml down --volumes --remove-orphans
    ```
@@ -450,7 +450,7 @@ git commit -m "docs: update troubleshooting guide"
    ```powershell
    # Analyze bundle size
    pnpm -C apps/web build --report
-   
+
    # Remove unused dependencies
    pnpm dlx depcheck
    ```
@@ -499,7 +499,7 @@ If none of these solutions work:
    ```powershell
    # System information
    systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
-   
+
    # PowerShell version
    $PSVersionTable.PSVersion
    ```
