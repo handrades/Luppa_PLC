@@ -194,7 +194,7 @@ jobs:
           pnpm test:coverage --passWithNoTests
 
       - name: Run workspace tests
-        run: pnpm test --passWithNoTests
+        run: pnpm test
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4

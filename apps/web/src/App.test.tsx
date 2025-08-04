@@ -20,7 +20,13 @@ jest.mock('./services/auth.service', () => ({
 // Import the mocked module
 import { authService } from './services/auth.service';
 
-const AppWrapper = ({ children, initialEntries = ['/'] }: { children: React.ReactNode; initialEntries?: string[] }) => (
+const AppWrapper = ({
+  children,
+  initialEntries = ['/'],
+}: {
+  children: React.ReactNode;
+  initialEntries?: string[];
+}) => (
   <MemoryRouter
     initialEntries={initialEntries}
     future={{
