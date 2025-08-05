@@ -81,13 +81,15 @@ export default function (plop) {
         });
       }
       
-      // Storybook story
+      // Storybook story (template not yet created)
       if (data.withStorybook) {
-        actions.push({
-          type: 'add',
-          path: `${componentPath}/{{pascalCase name}}.stories.tsx`,
-          templateFile: 'templates/component/stories.hbs'
-        });
+        console.log('Note: Storybook template not yet available. Please create templates/component/stories.hbs');
+        // TODO: Uncomment when template is created
+        // actions.push({
+        //   type: 'add',
+        //   path: `${componentPath}/{{pascalCase name}}.stories.tsx`,
+        //   templateFile: 'templates/component/stories.hbs'
+        // });
       }
       
       return actions;

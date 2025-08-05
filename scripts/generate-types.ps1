@@ -71,7 +71,14 @@ function Generate-DatabaseTypes {
         }
         else {
             # Manual type extraction using TypeScript compiler
-            npx tsc --declaration --emitDeclarationOnly --outDir ../../packages/shared-types/src/database src/entities/*.ts
+            # Ensure target directory exists
+            $targetDir = "../../packages/shared-types/src/database"
+            if (-not (Test-Path $targetDir)) {
+                New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                Write-Info "Created target directory: $targetDir"
+            }
+            
+            npx tsc --declaration --emitDeclarationOnly --outDir $targetDir src/entities/*.ts
         }
         
         Write-Success "Database types generated"
@@ -163,6 +170,14 @@ export interface HealthResponse {
 function Generate-SharedTypes {
     Write-Info "Building shared type definitions..."
     
+    # Read TypeScript version from root package.json
+    $rootPackageJson = Get-Content "package.json" | ConvertFrom-Json
+    $typescriptVersion = $rootPackageJson.devDependencies.typescript
+    if (-not $typescriptVersion) {
+        $typescriptVersion = "~5.5.4"  # fallback version
+        Write-Warning "Could not read TypeScript version from root package.json, using fallback: $typescriptVersion"
+    }
+    
     if (-not (Test-PackageExists "packages/shared-types")) {
         Write-Warning "Shared types package not found, creating basic structure..."
         
@@ -186,7 +201,7 @@ function Generate-SharedTypes {
                 watch = "tsc --watch"
             }
             devDependencies = @{
-                typescript = "~5.5.4"
+                typescript = $typescriptVersion
             }
         }
         
