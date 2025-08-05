@@ -21,34 +21,34 @@ inventory management and extensible to additional industrial applications.
 
 ### Core Technologies
 
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| **Frontend** | React | 18.0+ | UI framework |
-| **Frontend Language** | TypeScript | 5.8+ | Type-safe development |
-| **UI Library** | Material-UI | 5.15+ | Industrial UI components |
-| **State Management** | Zustand | 5.0+ | Client state management |
-| **Build Tool** | Vite | 6.0+ | Frontend bundling |
-| **Backend Framework** | Express | 4.19+ | HTTP server |
-| **Backend Language** | TypeScript | 5.8+ | Type-safe backend |
-| **Database** | PostgreSQL | 16+ | Primary data storage |
-| **Cache** | Redis | 7.2+ | Session store and caching |
-| **ORM** | TypeORM | 0.3+ | Database abstraction |
-| **Infrastructure** | Docker Compose | 2.32+ | Container orchestration |
-| **Reverse Proxy** | Nginx | 1.24+ | Load balancing and routing |
-| **Package Manager** | pnpm | 9.0+ | Workspace management |
+| Layer                 | Technology     | Version | Purpose                    |
+| --------------------- | -------------- | ------- | -------------------------- |
+| **Frontend**          | React          | 18.0+   | UI framework               |
+| **Frontend Language** | TypeScript     | 5.8+    | Type-safe development      |
+| **UI Library**        | Material-UI    | 5.15+   | Industrial UI components   |
+| **State Management**  | Zustand        | 5.0+    | Client state management    |
+| **Build Tool**        | Vite           | 6.0+    | Frontend bundling          |
+| **Backend Framework** | Express        | 4.19+   | HTTP server                |
+| **Backend Language**  | TypeScript     | 5.8+    | Type-safe backend          |
+| **Database**          | PostgreSQL     | 16+     | Primary data storage       |
+| **Cache**             | Redis          | 7.2+    | Session store and caching  |
+| **ORM**               | TypeORM        | 0.3+    | Database abstraction       |
+| **Infrastructure**    | Docker Compose | 2.32+   | Container orchestration    |
+| **Reverse Proxy**     | Nginx          | 1.24+   | Load balancing and routing |
+| **Package Manager**   | pnpm           | 9.0+    | Workspace management       |
 
 ### Development & Quality Tools
 
-| Category | Technology | Purpose |
-|----------|------------|---------|
-| **Testing** | Jest + React Testing Library | Unit and integration testing |
-| **E2E Testing** | Playwright | End-to-end testing |
-| **Code Quality** | ESLint + Prettier | Code formatting and linting |
-| **Type Checking** | TypeScript | Static type analysis |
-| **Git Hooks** | Husky + lint-staged | Pre-commit quality checks |
-| **Commit Standards** | Commitizen + Commitlint | Conventional commits |
-| **Documentation** | Markdown + JSDoc | Code and system documentation |
-| **CI/CD** | GitHub Actions | Automated testing and deployment |
+| Category             | Technology                   | Purpose                          |
+| -------------------- | ---------------------------- | -------------------------------- |
+| **Testing**          | Jest + React Testing Library | Unit and integration testing     |
+| **E2E Testing**      | Playwright                   | End-to-end testing               |
+| **Code Quality**     | ESLint + Prettier            | Code formatting and linting      |
+| **Type Checking**    | TypeScript                   | Static type analysis             |
+| **Git Hooks**        | Husky + lint-staged          | Pre-commit quality checks        |
+| **Commit Standards** | Commitizen + Commitlint      | Conventional commits             |
+| **Documentation**    | Markdown + JSDoc             | Code and system documentation    |
+| **CI/CD**            | GitHub Actions               | Automated testing and deployment |
 
 ## High-Level Architecture
 
@@ -364,13 +364,13 @@ CREATE INDEX idx_audit_logs_record ON audit_logs(table_name, record_id);
 
 ### Performance Targets
 
-| Metric | Target | Implementation |
-|--------|--------|----------------|
-| Query Response | <100ms | Database indexes, query optimization |
-| Page Load (Initial) | <2 seconds | Code splitting, lazy loading |
-| Page Navigation | <500ms | Client-side routing, caching |
-| Build Time | <5 minutes | Incremental builds, caching |
-| Memory Usage | <2GB total | Efficient algorithms, memory profiling |
+| Metric              | Target     | Implementation                         |
+| ------------------- | ---------- | -------------------------------------- |
+| Query Response      | <100ms     | Database indexes, query optimization   |
+| Page Load (Initial) | <2 seconds | Code splitting, lazy loading           |
+| Page Navigation     | <500ms     | Client-side routing, caching           |
+| Build Time          | <5 minutes | Incremental builds, caching            |
+| Memory Usage        | <2GB total | Efficient algorithms, memory profiling |
 
 ### Optimization Strategies
 

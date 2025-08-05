@@ -3,13 +3,13 @@ import { LoadingSpinner } from '../components/common/Feedback/LoadingSpinner';
 
 /**
  * LoadingSpinner is a versatile loading indicator component for the Industrial Inventory framework.
- * 
+ *
  * ## Features
  * - Customizable size and message
  * - Full-screen overlay mode for blocking interactions
  * - Consistent with Material-UI design system
  * - Optimized for industrial environments (touch-friendly)
- * 
+ *
  * ## Usage Guidelines
  * - Use standard size (40px) for inline loading states
  * - Use larger sizes (60px+) for full-screen loading
@@ -122,7 +122,8 @@ export const FullScreen: Story = {
     layout: 'fullscreen',
     docs: {
       description: {
-        story: 'Blocks all user interaction while critical operations are in progress. Use sparingly.',
+        story:
+          'Blocks all user interaction while critical operations are in progress. Use sparingly.',
       },
     },
   },

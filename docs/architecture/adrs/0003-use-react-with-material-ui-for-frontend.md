@@ -5,7 +5,7 @@
 **Status:** Accepted  
 **Date:** 2025-01-24  
 **Supersedes:** N/A  
-**Superseded by:** N/A  
+**Superseded by:** N/A
 
 ## Context
 
@@ -79,18 +79,18 @@ We will use **React 18+** with **Material-UI (MUI) v5+** as the primary frontend
 
 ### Technology Stack Comparison
 
-| Aspect | React + MUI | Vue + Vuetify | Angular + Angular Material | Svelte + Carbon |
-|--------|-------------|---------------|---------------------------|-----------------|
-| **Learning Curve** | ⚠️ Medium | ✅ Easy | ❌ High | ⚠️ Medium |
-| **TypeScript Support** | ✅ Excellent | ⚠️ Good | ✅ Native | ⚠️ Good |
-| **Component Quality** | ✅ Excellent | ✅ Good | ✅ Excellent | ⚠️ Limited |
-| **Industrial UI** | ✅ Excellent | ⚠️ Good | ✅ Good | ⚠️ Limited |
-| **Performance** | ✅ Good | ✅ Excellent | ⚠️ Good | ✅ Excellent |
-| **Ecosystem** | ✅ Massive | ⚠️ Good | ✅ Large | ⚠️ Growing |
-| **Enterprise Use** | ✅ Proven | ⚠️ Growing | ✅ Proven | ❌ Limited |
-| **Bundle Size** | ⚠️ Medium | ✅ Small | ❌ Large | ✅ Small |
-| **Documentation** | ✅ Excellent | ✅ Good | ✅ Excellent | ⚠️ Good |
-| **Solo Developer** | ✅ Good | ✅ Excellent | ❌ Complex | ⚠️ Good |
+| Aspect                 | React + MUI  | Vue + Vuetify | Angular + Angular Material | Svelte + Carbon |
+| ---------------------- | ------------ | ------------- | -------------------------- | --------------- |
+| **Learning Curve**     | ⚠️ Medium    | ✅ Easy       | ❌ High                    | ⚠️ Medium       |
+| **TypeScript Support** | ✅ Excellent | ⚠️ Good       | ✅ Native                  | ⚠️ Good         |
+| **Component Quality**  | ✅ Excellent | ✅ Good       | ✅ Excellent               | ⚠️ Limited      |
+| **Industrial UI**      | ✅ Excellent | ⚠️ Good       | ✅ Good                    | ⚠️ Limited      |
+| **Performance**        | ✅ Good      | ✅ Excellent  | ⚠️ Good                    | ✅ Excellent    |
+| **Ecosystem**          | ✅ Massive   | ⚠️ Good       | ✅ Large                   | ⚠️ Growing      |
+| **Enterprise Use**     | ✅ Proven    | ⚠️ Growing    | ✅ Proven                  | ❌ Limited      |
+| **Bundle Size**        | ⚠️ Medium    | ✅ Small      | ❌ Large                   | ✅ Small        |
+| **Documentation**      | ✅ Excellent | ✅ Good       | ✅ Excellent               | ⚠️ Good         |
+| **Solo Developer**     | ✅ Good      | ✅ Excellent  | ❌ Complex                 | ⚠️ Good         |
 
 ## Implementation Plan
 
@@ -103,14 +103,14 @@ import { createTheme } from '@mui/material/styles';
 const industrialTheme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',      // Blue for reliability
+      main: '#1976d2', // Blue for reliability
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#dc004e',      // Red for alerts/warnings
+      main: '#dc004e', // Red for alerts/warnings
     },
     background: {
-      default: '#f5f5f5',   // Light gray for reduced eye strain
+      default: '#f5f5f5', // Light gray for reduced eye strain
       paper: '#ffffff',
     },
   },
@@ -119,7 +119,7 @@ const industrialTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          minHeight: 44,      // Touch-friendly minimum
+          minHeight: 44, // Touch-friendly minimum
           fontSize: '1rem',
         },
       },
@@ -127,14 +127,14 @@ const industrialTheme = createTheme({
     MuiTextField: {
       styleOverrides: {
         root: {
-          minHeight: 56,      // Larger input fields
+          minHeight: 56, // Larger input fields
         },
       },
     },
   },
   typography: {
     // Optimized for industrial displays
-    fontSize: 16,           // Larger base font
+    fontSize: 16, // Larger base font
     h1: { fontSize: '2.5rem' },
     h2: { fontSize: '2rem' },
     body1: { fontSize: '1rem', lineHeight: 1.6 },
@@ -158,9 +158,9 @@ interface PlcStatusChipProps {
   size?: 'small' | 'medium';
 }
 
-export const PlcStatusChip: React.FC<PlcStatusChipProps> = ({ 
-  status, 
-  size = 'medium' 
+export const PlcStatusChip: React.FC<PlcStatusChipProps> = ({
+  status,
+  size = 'medium'
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -201,21 +201,21 @@ const AppLoader = () => (
 // Route-based code splitting
 export const AppRouter = () => (
   <Routes>
-    <Route 
-      path="/inventory/*" 
+    <Route
+      path="/inventory/*"
       element={
         <Suspense fallback={<AppLoader />}>
           <PlcInventoryApp />
         </Suspense>
-      } 
+      }
     />
-    <Route 
-      path="/maintenance/*" 
+    <Route
+      path="/maintenance/*"
       element={
         <Suspense fallback={<AppLoader />}>
           <MaintenanceApp />
         </Suspense>
-      } 
+      }
     />
   </Routes>
 );
@@ -233,11 +233,11 @@ interface AppStore {
   // User preferences
   theme: 'light' | 'dark';
   sidebarCollapsed: boolean;
-  
+
   // Application state
   selectedPlcs: string[];
   filters: PlcFilters;
-  
+
   // Actions
   setTheme: (theme: 'light' | 'dark') => void;
   toggleSidebar: () => void;
@@ -247,26 +247,28 @@ interface AppStore {
 
 const useAppStore = create<AppStore>()(
   persist(
-    (set) => ({
+    set => ({
       theme: 'light',
       sidebarCollapsed: false,
       selectedPlcs: [],
       filters: {},
-      
-      setTheme: (theme) => set({ theme }),
-      toggleSidebar: () => set((state) => ({ 
-        sidebarCollapsed: !state.sidebarCollapsed 
-      })),
-      setSelectedPlcs: (selectedPlcs) => set({ selectedPlcs }),
-      updateFilters: (newFilters) => set((state) => ({
-        filters: { ...state.filters, ...newFilters }
-      })),
+
+      setTheme: theme => set({ theme }),
+      toggleSidebar: () =>
+        set(state => ({
+          sidebarCollapsed: !state.sidebarCollapsed,
+        })),
+      setSelectedPlcs: selectedPlcs => set({ selectedPlcs }),
+      updateFilters: newFilters =>
+        set(state => ({
+          filters: { ...state.filters, ...newFilters },
+        })),
     }),
     {
       name: 'app-storage',
-      partialize: (state) => ({ 
-        theme: state.theme, 
-        sidebarCollapsed: state.sidebarCollapsed 
+      partialize: state => ({
+        theme: state.theme,
+        sidebarCollapsed: state.sidebarCollapsed,
       }),
     }
   )
@@ -283,14 +285,14 @@ export const usePlcs = (filters?: PlcFilters) => {
   return useQuery({
     queryKey: ['plcs', filters],
     queryFn: () => plcApi.getPlcs(filters),
-    staleTime: 30000,           // 30 seconds
+    staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: true, // Refresh when user returns
   });
 };
 
 export const useCreatePlc = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: plcApi.createPlc,
     onSuccess: () => {
@@ -314,16 +316,16 @@ const PlcDataGrid: React.FC<PlcDataGridProps> = ({ plcs, loading }) => {
     { field: 'description', headerName: 'Description', flex: 1 },
     { field: 'make', headerName: 'Make', width: 120 },
     { field: 'model', headerName: 'Model', width: 120 },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
+    {
+      field: 'status',
+      headerName: 'Status',
       width: 120,
       renderCell: (params) => <PlcStatusChip status={params.value} />
     },
     { field: 'ipAddress', headerName: 'IP Address', width: 140 },
-    { 
-      field: 'lastSeen', 
-      headerName: 'Last Seen', 
+    {
+      field: 'lastSeen',
+      headerName: 'Last Seen',
       width: 180,
       type: 'dateTime',
     },
@@ -423,9 +425,11 @@ import TextField from '@mui/material/TextField';
 // Instead of: import { Button, TextField } from '@mui/material';
 
 // Dynamic imports for large components
-const DataGrid = lazy(() => import('@mui/x-data-grid').then(module => ({
-  default: module.DataGrid
-})));
+const DataGrid = lazy(() =>
+  import('@mui/x-data-grid').then(module => ({
+    default: module.DataGrid,
+  }))
+);
 ```
 
 ### Rendering Optimization

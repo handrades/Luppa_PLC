@@ -5,7 +5,7 @@
 **Status:** Accepted  
 **Date:** 2025-01-24  
 **Supersedes:** N/A  
-**Superseded by:** N/A  
+**Superseded by:** N/A
 
 ## Context
 
@@ -52,17 +52,17 @@ We will use **TypeORM 0.3+** as the primary database access layer and ORM for th
 
 ### Comparison with Alternatives
 
-| Feature | TypeORM | Prisma | Sequelize | Knex.js | Raw SQL |
-|---------|---------|---------|-----------|---------|---------|
-| **TypeScript Support** | ✅ Native | ✅ Excellent | ⚠️ Good | ⚠️ Basic | ❌ Manual |
-| **PostgreSQL Features** | ✅ Excellent | ✅ Good | ⚠️ Limited | ✅ Full | ✅ Full |
-| **Migration System** | ✅ Robust | ✅ Good | ✅ Good | ✅ Excellent | ❌ Manual |
-| **Performance** | ✅ Good | ✅ Excellent | ⚠️ Medium | ✅ Excellent | ✅ Maximum |
-| **Learning Curve** | ⚠️ Medium | ✅ Easy | ⚠️ Medium | ⚠️ Steep | ⚠️ High |
-| **Ecosystem** | ✅ Mature | ⚠️ Growing | ✅ Mature | ✅ Mature | ✅ Native |
-| **Raw Query Support** | ✅ Yes | ⚠️ Limited | ✅ Yes | ✅ Yes | ✅ Native |
-| **Decorators** | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
-| **Multi-DB Support** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+| Feature                 | TypeORM      | Prisma       | Sequelize  | Knex.js      | Raw SQL    |
+| ----------------------- | ------------ | ------------ | ---------- | ------------ | ---------- |
+| **TypeScript Support**  | ✅ Native    | ✅ Excellent | ⚠️ Good    | ⚠️ Basic     | ❌ Manual  |
+| **PostgreSQL Features** | ✅ Excellent | ✅ Good      | ⚠️ Limited | ✅ Full      | ✅ Full    |
+| **Migration System**    | ✅ Robust    | ✅ Good      | ✅ Good    | ✅ Excellent | ❌ Manual  |
+| **Performance**         | ✅ Good      | ✅ Excellent | ⚠️ Medium  | ✅ Excellent | ✅ Maximum |
+| **Learning Curve**      | ⚠️ Medium    | ✅ Easy      | ⚠️ Medium  | ⚠️ Steep     | ⚠️ High    |
+| **Ecosystem**           | ✅ Mature    | ⚠️ Growing   | ✅ Mature  | ✅ Mature    | ✅ Native  |
+| **Raw Query Support**   | ✅ Yes       | ⚠️ Limited   | ✅ Yes     | ✅ Yes       | ✅ Native  |
+| **Decorators**          | ✅ Yes       | ❌ No        | ❌ No      | ❌ No        | ❌ No      |
+| **Multi-DB Support**    | ✅ Yes       | ✅ Yes       | ✅ Yes     | ✅ Yes       | ❌ No      |
 
 ### Industrial Requirements Alignment
 
@@ -112,9 +112,7 @@ export class PlcEntity extends BaseEntity {
 @Injectable()
 export class PlcRepository extends Repository<PlcEntity> {
   async findByTags(tags: string[]): Promise<PlcEntity[]> {
-    return this.createQueryBuilder('plc')
-      .where('plc.tags && :tags', { tags })
-      .getMany();
+    return this.createQueryBuilder('plc').where('plc.tags && :tags', { tags }).getMany();
   }
 
   async getInventoryStats(): Promise<InventoryStats> {
@@ -135,13 +133,13 @@ const dataSource = new DataSource({
   type: 'postgres',
   // ... connection details
   extra: {
-    max: 20,               // Maximum connections
-    min: 5,                // Minimum connections
+    max: 20, // Maximum connections
+    min: 5, // Minimum connections
     connectionTimeoutMillis: 30000,
     idleTimeoutMillis: 600000,
   },
   cache: {
-    type: 'redis',         // Optional Redis caching
+    type: 'redis', // Optional Redis caching
     options: {
       host: 'localhost',
       port: 6379,
@@ -228,7 +226,7 @@ export class AddPlcTags1642680000000 implements MigrationInterface {
       ALTER TABLE plcs 
       ADD COLUMN tags text[] DEFAULT '{}'
     `);
-    
+
     // Create GIN index for array operations
     await queryRunner.query(`
       CREATE INDEX CONCURRENTLY idx_plcs_tags 
@@ -306,7 +304,7 @@ await this.dataSource.transaction(async manager => {
   await manager.save(AuditLogEntity, {
     action: 'CREATE',
     entityId: plc.id,
-    changes: plcData
+    changes: plcData,
   });
 });
 ```

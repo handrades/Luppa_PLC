@@ -38,7 +38,7 @@ const preview: Preview = {
     },
   },
   decorators: [
-    (Story) => (
+    Story => (
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <div style={{ minHeight: '100vh' }}>

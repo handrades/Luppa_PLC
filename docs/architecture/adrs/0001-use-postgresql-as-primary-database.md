@@ -5,7 +5,7 @@
 **Status:** Accepted  
 **Date:** 2025-01-24  
 **Supersedes:** N/A  
-**Superseded by:** N/A  
+**Superseded by:** N/A
 
 ## Context
 
@@ -55,18 +55,18 @@ We will use **PostgreSQL 16+** as the primary database for the Industrial Invent
 
 ### Comparison with Alternatives
 
-| Feature | PostgreSQL | MySQL | SQLite | MongoDB |
-|---------|------------|-------|---------|---------|
-| **ACID Compliance** | ✅ Full | ✅ Full (with InnoDB) | ✅ Full | ⚠️ Limited |
-| **Complex Queries** | ✅ Excellent | ✅ Good | ✅ Good | ❌ Limited |
-| **JSON Support** | ✅ Native JSONB | ⚠️ Basic JSON | ⚠️ JSON functions | ✅ Native |
-| **Array Types** | ✅ Native arrays | ❌ No | ❌ No | ✅ Native |
-| **Full-text Search** | ✅ Built-in | ✅ Built-in | ✅ FTS5 | ✅ Text indexes |
-| **Network Types** | ✅ INET, CIDR | ❌ No | ❌ No | ❌ No |
-| **Concurrent Writes** | ✅ MVCC | ⚠️ Row-level | ⚠️ Limited | ✅ Good |
-| **Industrial Use** | ✅ Proven | ✅ Common | ❌ Limited | ⚠️ Growing |
-| **Air-gap Friendly** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Operational Complexity** | ⚠️ Medium | ⚠️ Medium | ✅ Low | ⚠️ Medium |
+| Feature                    | PostgreSQL       | MySQL                 | SQLite            | MongoDB         |
+| -------------------------- | ---------------- | --------------------- | ----------------- | --------------- |
+| **ACID Compliance**        | ✅ Full          | ✅ Full (with InnoDB) | ✅ Full           | ⚠️ Limited      |
+| **Complex Queries**        | ✅ Excellent     | ✅ Good               | ✅ Good           | ❌ Limited      |
+| **JSON Support**           | ✅ Native JSONB  | ⚠️ Basic JSON         | ⚠️ JSON functions | ✅ Native       |
+| **Array Types**            | ✅ Native arrays | ❌ No                 | ❌ No             | ✅ Native       |
+| **Full-text Search**       | ✅ Built-in      | ✅ Built-in           | ✅ FTS5           | ✅ Text indexes |
+| **Network Types**          | ✅ INET, CIDR    | ❌ No                 | ❌ No             | ❌ No           |
+| **Concurrent Writes**      | ✅ MVCC          | ⚠️ Row-level          | ⚠️ Limited        | ✅ Good         |
+| **Industrial Use**         | ✅ Proven        | ✅ Common             | ❌ Limited        | ⚠️ Growing      |
+| **Air-gap Friendly**       | ✅ Yes           | ✅ Yes                | ✅ Yes            | ✅ Yes          |
+| **Operational Complexity** | ⚠️ Medium        | ⚠️ Medium             | ✅ Low            | ⚠️ Medium       |
 
 ### Specific Industrial Requirements
 

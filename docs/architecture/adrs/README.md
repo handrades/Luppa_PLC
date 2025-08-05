@@ -67,43 +67,56 @@ The following ADRs are planned for future documentation:
 # ADR-XXXX: [Decision Title]
 
 ## Status
+
 **Status:** [Proposed/Accepted/Deprecated/Superseded]
 **Date:** YYYY-MM-DD
 **Supersedes:** [ADR reference if applicable]
 **Superseded by:** [ADR reference if applicable]
 
 ## Context
+
 [Describe the situation and problem that needs to be solved]
 
 ## Decision
+
 [State the chosen solution clearly]
 
 ## Rationale
+
 [Explain why this solution was chosen over alternatives]
 
 ## Implementation Plan
+
 [How will this decision be implemented]
 
 ## Consequences
+
 ### Positive Consequences
+
 - [List benefits]
 
 ### Negative Consequences
+
 - [List drawbacks and risks]
 
 ### Risk Mitigation
+
 - [How risks will be addressed]
 
 ## Monitoring and Success Metrics
+
 [How success will be measured]
 
 ## Review and Evolution
+
 [When and why this decision should be reviewed]
 
 ## References
+
 [Links to relevant documentation]
 
 ## Related ADRs
+
 [Links to related decisions]
 ```
 

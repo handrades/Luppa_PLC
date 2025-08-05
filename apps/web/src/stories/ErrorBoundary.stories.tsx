@@ -11,7 +11,7 @@ const ErrorThrowingComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
     throw new Error('This is a simulated error for Storybook demonstration');
   }
   return (
-    <Typography variant="body1" color="success.main">
+    <Typography variant='body1' color='success.main'>
       ✅ Component is working normally. Click the button below to trigger an error.
     </Typography>
   );
@@ -26,13 +26,13 @@ const ErrorBoundaryDemo = () => {
   return (
     <ErrorBoundary>
       <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant='h6' gutterBottom>
           Error Boundary Test Component
         </Typography>
         <ErrorThrowingComponent shouldThrow={shouldThrow} />
         <Button
-          variant="contained"
-          color="error"
+          variant='contained'
+          color='error'
           onClick={() => setShouldThrow(true)}
           disabled={shouldThrow}
           style={{ marginTop: '1rem' }}
@@ -46,14 +46,14 @@ const ErrorBoundaryDemo = () => {
 
 /**
  * ErrorBoundary provides graceful error handling for the Industrial Inventory application.
- * 
+ *
  * ## Features
  * - Catches JavaScript errors anywhere in the child component tree
  * - Displays user-friendly error message instead of blank screen
  * - Shows technical details in development mode for debugging
  * - Provides recovery actions (refresh page, return to dashboard)
  * - Designed for industrial environments with clear, actionable messaging
- * 
+ *
  * ## Usage Guidelines
  * - Wrap entire application or major sections
  * - Don't overuse - one boundary per major feature area is sufficient
@@ -89,10 +89,10 @@ export const Default: Story = {
   render: () => (
     <ErrorBoundary>
       <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <Typography variant="h5" gutterBottom color="success.main">
+        <Typography variant='h5' gutterBottom color='success.main'>
           ✅ Application Running Normally
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant='body1' color='text.secondary'>
           When no errors occur, the ErrorBoundary is invisible and children render normally.
         </Typography>
       </div>
@@ -146,17 +146,17 @@ export const IndustrialContext: Story = {
   render: () => (
     <ErrorBoundary>
       <div style={{ padding: '2rem' }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant='h4' gutterBottom>
           PLC Inventory Dashboard
         </Typography>
-        <Typography variant="body1" paragraph>
-          This represents a complex industrial application with multiple components.
-          The ErrorBoundary ensures that if any component fails, users get helpful
-          recovery options instead of a blank screen.
+        <Typography variant='body1' paragraph>
+          This represents a complex industrial application with multiple components. The
+          ErrorBoundary ensures that if any component fails, users get helpful recovery options
+          instead of a blank screen.
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          In a real application, this would contain tables, forms, charts, and other
-          interactive elements that could potentially throw errors.
+        <Typography variant='body2' color='text.secondary'>
+          In a real application, this would contain tables, forms, charts, and other interactive
+          elements that could potentially throw errors.
         </Typography>
       </div>
     </ErrorBoundary>
@@ -174,26 +174,16 @@ export const IndustrialContext: Story = {
  * Development mode showing error details
  */
 export const DevelopmentMode: Story = {
-  render: () => {
-    // Temporarily set NODE_ENV for this story
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-    
-    const component = (
-      <ErrorBoundary>
-        <ErrorThrowingComponent shouldThrow={true} />
-      </ErrorBoundary>
-    );
-    
-    // Restore original environment
-    process.env.NODE_ENV = originalEnv;
-    
-    return component;
-  },
+  render: () => (
+    <ErrorBoundary showDetails={true}>
+      <ErrorThrowingComponent shouldThrow={true} />
+    </ErrorBoundary>
+  ),
   parameters: {
     docs: {
       description: {
-        story: 'In development mode, technical error details are shown to help with debugging.',
+        story:
+          'When showDetails is true, technical error details are shown to help with debugging.',
       },
     },
   },

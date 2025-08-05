@@ -16,7 +16,7 @@ export interface ErrorResponse {
 
 /**
  * Base application error class for handling operational errors
- * 
+ *
  * This class extends the native Error class to provide additional context
  * for HTTP errors including status codes, error codes, and optional details.
  * It's designed to distinguish between operational errors (expected errors
@@ -30,7 +30,7 @@ export class AppError extends Error {
 
   /**
    * Creates a new AppError instance
-   * 
+   *
    * @param message - Human-readable error message
    * @param statusCode - HTTP status code (defaults to 500)
    * @param code - Machine-readable error code (defaults to 'INTERNAL_ERROR')
@@ -55,14 +55,14 @@ export class AppError extends Error {
 
 /**
  * Validation error for request data that doesn't meet requirements
- * 
+ *
  * Used when request data fails validation (e.g., missing required fields,
  * invalid format, out of range values). Automatically sets status code to 400.
  */
 export class ValidationError extends AppError {
   /**
    * Creates a new ValidationError
-   * 
+   *
    * @param message - Description of the validation failure
    * @param details - Optional validation details (e.g., which fields failed)
    */
@@ -73,14 +73,14 @@ export class ValidationError extends AppError {
 
 /**
  * Error for when a requested resource cannot be found
- * 
+ *
  * Used when a specific resource (by ID, name, etc.) doesn't exist.
  * Automatically sets status code to 404.
  */
 export class NotFoundError extends AppError {
   /**
    * Creates a new NotFoundError
-   * 
+   *
    * @param message - Description of what resource was not found (defaults to generic message)
    */
   constructor(message: string = 'Resource not found') {
@@ -90,7 +90,7 @@ export class NotFoundError extends AppError {
 
 /**
  * Error for authentication and authorization failures
- * 
+ *
  * Used when a request lacks proper authentication or the authenticated
  * user doesn't have permission to access the resource.
  * Automatically sets status code to 401.
@@ -98,7 +98,7 @@ export class NotFoundError extends AppError {
 export class UnauthorizedError extends AppError {
   /**
    * Creates a new UnauthorizedError
-   * 
+   *
    * @param message - Description of the authorization failure (defaults to generic message)
    */
   constructor(message: string = 'Unauthorized') {
@@ -108,17 +108,17 @@ export class UnauthorizedError extends AppError {
 
 /**
  * Global Express error handler middleware
- * 
+ *
  * This middleware catches all errors thrown in the application and converts them
  * into standardized HTTP responses. It handles both operational errors (AppError instances)
  * and unexpected errors, logging appropriately and returning consistent error responses.
- * 
+ *
  * Features:
  * - Standardized error response format
  * - Request ID tracking for debugging
  * - Appropriate logging levels (error vs warn)
  * - Security-conscious error messages (no sensitive info leakage)
- * 
+ *
  * @param error - The error that was thrown
  * @param req - Express request object
  * @param res - Express response object
@@ -188,13 +188,13 @@ export const errorHandler = (
 
 /**
  * 404 Not Found handler middleware
- * 
+ *
  * This middleware handles requests to routes that don't exist in the application.
  * It creates a NotFoundError with details about the attempted route and passes it
  * to the error handler middleware.
- * 
+ *
  * Should be registered after all route handlers but before the error handler.
- * 
+ *
  * @param req - Express request object
  * @param _res - Express response object (unused)
  * @param next - Express next function to pass error to error handler

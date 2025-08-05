@@ -107,10 +107,7 @@ async function getPlcById(id: string): Promise<PlcInventoryItem | null> {
 }
 
 // Component naming: PascalCase
-export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({
-  items,
-  onSelectItem
-}) => {
+export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({ items, onSelectItem }) => {
   // Implementation
 };
 ```
@@ -125,7 +122,7 @@ export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({
 enum PlcStatus {
   ONLINE = 'online',
   OFFLINE = 'offline',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 // Use utility types when appropriate
@@ -149,9 +146,9 @@ interface PlcListProps {
   filters?: PlcFilters;
 }
 
-export const PlcList: React.FC<PlcListProps> = ({ 
-  onItemSelect, 
-  filters 
+export const PlcList: React.FC<PlcListProps> = ({
+  onItemSelect,
+  filters
 }) => {
   // Hooks first
   const { items, loading, error } = usePlcInventory(filters);
@@ -192,7 +189,7 @@ export const usePlcInventory = (filters?: PlcFilters) => {
   const [error, setError] = useState<string | null>(null);
 
   // Implementation with proper error handling
-  
+
   return { items, loading, error, refetch };
 };
 
@@ -230,7 +227,7 @@ const createPlcSchema = Joi.object({
   make: Joi.string().required().max(100),
   model: Joi.string().required().max(100),
   ipAddress: Joi.string().ip().optional(),
-  tags: Joi.array().items(Joi.string()).default([])
+  tags: Joi.array().items(Joi.string()).default([]),
 });
 ```
 
@@ -292,7 +289,7 @@ describe('PlcService', () => {
       // Assert
       expect(result).toEqual(expectedPlc);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: plcId }
+        where: { id: plcId },
       });
     });
 
@@ -325,12 +322,10 @@ describe('PLC API', () => {
       // Seed test data
       await testDb.seed('plcs', [
         { description: 'Test PLC 1', make: 'Siemens' },
-        { description: 'Test PLC 2', make: 'Allen Bradley' }
+        { description: 'Test PLC 2', make: 'Allen Bradley' },
       ]);
 
-      const response = await request(app)
-        .get('/api/v1/plcs')
-        .expect(200);
+      const response = await request(app).get('/api/v1/plcs').expect(200);
 
       expect(response.body.data).toHaveLength(2);
       expect(response.body.meta.total).toBe(2);
@@ -366,10 +361,7 @@ export class PlcService {
    * @param userId - ID of user creating the item (for audit trail)
    * @returns Promise resolving to created PLC with generated ID
    */
-  async create(
-    data: Omit<PlcInventoryItem, 'id'>, 
-    userId: string
-  ): Promise<PlcInventoryItem> {
+  async create(data: Omit<PlcInventoryItem, 'id'>, userId: string): Promise<PlcInventoryItem> {
     // Implementation
   }
 }
@@ -377,16 +369,16 @@ export class PlcService {
 
 #### Component Documentation
 
-```typescript
+````typescript
 /**
  * Displays a filterable list of PLC inventory items
- * 
+ *
  * Features:
  * - Real-time search and filtering
  * - Pagination for large datasets
  * - Touch-friendly interface for industrial environments
  * - Keyboard navigation support
- * 
+ *
  * @example
  * ```tsx
  * <PlcInventoryList
@@ -396,10 +388,10 @@ export class PlcService {
  * />
  * ```
  */
-export const PlcInventoryList: React.FC<PlcInventoryListProps> = (props) => {
+export const PlcInventoryList: React.FC<PlcInventoryListProps> = props => {
   // Implementation
 };
-```
+````
 
 ## Quality Assurance
 
@@ -640,7 +632,7 @@ pnpm db:reset          # Reset database to initial state
 
 # Docker development
 Invoke-psake DockerUp     # Start all services
-Invoke-psake DockerDown   # Stop all services  
+Invoke-psake DockerDown   # Stop all services
 Invoke-psake DockerHealth # Check service health
 ```
 
@@ -663,15 +655,15 @@ logger.error('Failed to load PLCs', { error: error.message });
 // Use Winston logger
 import { logger } from '../config/logger';
 
-logger.info('PLC search initiated', { 
-  userId: req.user.id, 
-  filters: req.query 
+logger.info('PLC search initiated', {
+  userId: req.user.id,
+  filters: req.query,
 });
 
 logger.error('Database query failed', {
   error: error.message,
   stack: error.stack,
-  query: query
+  query: query,
 });
 ```
 
@@ -696,7 +688,7 @@ pnpm -C apps/web build:analyze
 // Always validate inputs
 const createPlcSchema = Joi.object({
   description: Joi.string().trim().min(1).max(255).required(),
-  ipAddress: Joi.string().ip().optional()
+  ipAddress: Joi.string().ip().optional(),
 });
 
 // Sanitize inputs
@@ -722,7 +714,7 @@ const userCan = await rbac.can(user.role, 'read', 'plc');
 const plcs = await repository.find({
   where: { make: Like(`%${searchTerm}%`) },
   take: limit,
-  skip: offset
+  skip: offset,
 });
 
 // Never concatenate user input into SQL

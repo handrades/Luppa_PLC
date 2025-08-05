@@ -3,7 +3,7 @@ import { config as appConfig } from './env';
 
 /**
  * OpenAPI specification configuration for the Industrial Inventory API
- * 
+ *
  * This configuration defines the base structure for API documentation
  * using OpenAPI 3.0 specification with JSDoc annotations.
  */
@@ -118,7 +118,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
           },
           required: ['status', 'timestamp', 'version', 'environment', 'uptime', 'database'],
         },
-        
+
         // Error response schemas
         ErrorResponse: {
           type: 'object',
@@ -147,7 +147,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
           },
           required: ['error'],
         },
-        
+
         ValidationErrorResponse: {
           type: 'object',
           properties: {
@@ -294,7 +294,16 @@ const swaggerOptions: swaggerJsdoc.Options = {
               description: 'Record last update timestamp',
             },
           },
-          required: ['id', 'description', 'make', 'model', 'tags', 'status', 'createdAt', 'updatedAt'],
+          required: [
+            'id',
+            'description',
+            'make',
+            'model',
+            'tags',
+            'status',
+            'createdAt',
+            'updatedAt',
+          ],
         },
 
         // Pagination schemas
@@ -335,7 +344,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
           required: ['total', 'page', 'pageSize', 'totalPages', 'hasNext', 'hasPrev'],
         },
       },
-      
+
       parameters: {
         // Common query parameters
         PageParam: {
@@ -382,7 +391,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
           },
         },
       },
-      
+
       responses: {
         // Common responses
         UnauthorizedError: {
@@ -471,14 +480,14 @@ const swaggerOptions: swaggerJsdoc.Options = {
         },
       },
     },
-    
+
     // Default security for all endpoints (can be overridden per endpoint)
     security: [
       {
         bearerAuth: [],
       },
     ],
-    
+
     tags: [
       {
         name: 'Health',

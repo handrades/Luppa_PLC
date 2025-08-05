@@ -38,12 +38,12 @@ const getVersion = (): string => {
  *     description: |
  *       Returns the current health status of the API server and its dependencies.
  *       This endpoint is used for monitoring and load balancer health checks.
- *       
+ *
  *       The endpoint checks:
  *       - Database connectivity
  *       - Server uptime
  *       - System resources
- *       
+ *
  *       Returns HTTP 200 for healthy status, HTTP 503 for unhealthy status.
  *     tags: [Health]
  *     security: []

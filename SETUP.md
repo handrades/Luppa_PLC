@@ -213,16 +213,16 @@ Luppa_PLC/
 
 #### Available Scripts
 
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `pnpm dev` | Start development servers | Development work |
-| `pnpm build` | Build all apps | Before deployment |
-| `pnpm test` | Run all tests | Quality assurance |
-| `pnpm lint` | Run code linting | Code quality |
-| `pnpm type-check` | TypeScript checking | Type safety |
-| `pnpm docker:dev` | Start Docker environment | Full system testing |
-| `pnpm clean` | Clean build artifacts | Troubleshooting |
-| `pnpm reset` | Full clean and reinstall | Reset everything |
+| Script            | Description               | Usage               |
+| ----------------- | ------------------------- | ------------------- |
+| `pnpm dev`        | Start development servers | Development work    |
+| `pnpm build`      | Build all apps            | Before deployment   |
+| `pnpm test`       | Run all tests             | Quality assurance   |
+| `pnpm lint`       | Run code linting          | Code quality        |
+| `pnpm type-check` | TypeScript checking       | Type safety         |
+| `pnpm docker:dev` | Start Docker environment  | Full system testing |
+| `pnpm clean`      | Clean build artifacts     | Troubleshooting     |
+| `pnpm reset`      | Full clean and reinstall  | Reset everything    |
 
 #### PowerShell Development Commands
 
