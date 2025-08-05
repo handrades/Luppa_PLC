@@ -1,0 +1,183 @@
+import { Request, Response, NextFunction } from 'express';
+import { {{pascalCase resource}}Service } from '../services/{{camelCase resource}}.service';
+{{#if withValidation}}
+import { validate{{pascalCase resource}}Create, validate{{pascalCase resource}}Update } from '../validators/{{camelCase resource}}.validator';
+{{/if}}
+
+export class {{pascalCase resource}}Controller {
+  private {{camelCase resource}}Service: {{pascalCase resource}}Service;
+
+  constructor() {
+    this.{{camelCase resource}}Service = new {{pascalCase resource}}Service();
+  }
+
+  {{#if (includes methods 'list')}}
+  /**
+   * GET /{{resource}}s
+   * List all {{resource}}s with optional filtering and pagination
+   */
+  public list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { page = 1, limit = 10, ...filters } = req.query;
+      
+      // Validate pagination parameters
+      let validatedPage = Number(page);
+      let validatedLimit = Number(limit);
+      
+      // Ensure page is a positive integer
+      if (!Number.isInteger(validatedPage) || validatedPage < 1) {
+        validatedPage = 1;
+      }
+      
+      // Ensure limit is a positive integer and doesn't exceed maximum
+      const MAX_LIMIT = 100;
+      if (!Number.isInteger(validatedLimit) || validatedLimit < 1) {
+        validatedLimit = 10;
+      } else if (validatedLimit > MAX_LIMIT) {
+        validatedLimit = MAX_LIMIT;
+      }
+      
+      const result = await this.{{camelCase resource}}Service.findAll({
+        page: validatedPage,
+        limit: validatedLimit,
+        filters
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  {{/if}}
+
+  {{#if (includes methods 'get')}}
+  /**
+   * GET /{{resource}}s/:id
+   * Get a single {{resource}} by ID
+   */
+  public get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      
+      const {{camelCase resource}} = await this.{{camelCase resource}}Service.findById(id);
+      
+      if (!{{camelCase resource}}) {
+        res.status(404).json({
+          success: false,
+          error: '{{pascalCase resource}} not found'
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {{camelCase resource}}
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  {{/if}}
+
+  {{#if (includes methods 'create')}}
+  /**
+   * POST /{{resource}}s
+   * Create a new {{resource}}
+   */
+  public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      {{#if withValidation}}
+      const validationResult = validate{{pascalCase resource}}Create(req.body);
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: validationResult.errors
+        });
+        return;
+      }
+      {{/if}}
+
+      const {{camelCase resource}} = await this.{{camelCase resource}}Service.create(req.body);
+
+      res.status(201).json({
+        success: true,
+        data: {{camelCase resource}}
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  {{/if}}
+
+  {{#if (includes methods 'update')}}
+  /**
+   * PUT /{{resource}}s/:id
+   * Update an existing {{resource}}
+   */
+  public update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      
+      {{#if withValidation}}
+      const validationResult = validate{{pascalCase resource}}Update(req.body);
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: validationResult.errors
+        });
+        return;
+      }
+      {{/if}}
+
+      const {{camelCase resource}} = await this.{{camelCase resource}}Service.update(id, req.body);
+      
+      if (!{{camelCase resource}}) {
+        res.status(404).json({
+          success: false,
+          error: '{{pascalCase resource}} not found'
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {{camelCase resource}}
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  {{/if}}
+
+  {{#if (includes methods 'delete')}}
+  /**
+   * DELETE /{{resource}}s/:id
+   * Delete a {{resource}}
+   */
+  public delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      
+      const success = await this.{{camelCase resource}}Service.delete(id);
+      
+      if (!success) {
+        res.status(404).json({
+          success: false,
+          error: '{{pascalCase resource}} not found'
+        });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+  {{/if}}
+}

@@ -22,21 +22,37 @@
     "format:check": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --check",
     "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json",
     "lint:json": "jsonlint **/*.json",
-    "lint:yaml": "npx yaml-lint --config-file config/.yaml-lint.json $(find . -name '*.yml' -o -name '*.yaml' -not -path './node_modules/*' -not -path './.bmad-core/*')"
+    "lint:yaml": "npx yaml-lint --config-file config/.yaml-lint.json $(find . -name '*.yml' -o -name '*.yaml' -not -path './node_modules/*' -not -path './.bmad-core/*')",
+    "prepare": "husky",
+    "setup:dev": "pwsh -File scripts/setup.ps1",
+    "db:reset": "pwsh -File scripts/reset-db.ps1",
+    "generate:types": "pwsh -File scripts/generate-types.ps1",
+    "generate:component": "plop component",
+    "generate:api": "plop api-endpoint",
+    "generate:entity": "plop entity",
+    "generate": "plop",
+    "commit": "git-cz"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@prantlf/jsonlint": "^16.0.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
+    "commitizen": "^4.3.1",
     "concurrently": "^8.2.2",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.57.0",
+    "husky": "^9.1.7",
     "jest": "^30.0.0",
+    "lint-staged": "^16.1.4",
     "markdownlint-cli": "^0.39.0",
+    "plop": "^4.0.1",
     "prettier": "^3.2.5",
     "ts-jest": "^29.4.1",
-    "typescript": "~5.9.2",
+    "typescript": "~5.5.4",
     "yaml": "^2.4.1",
     "yaml-lint": "^1.7.0"
   },
@@ -48,5 +64,26 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --config config/.eslintrc.cjs --fix",
+      "prettier --config config/.prettierrc --write"
+    ],
+    "*.{json}": [
+      "jsonlint",
+      "prettier --config config/.prettierrc --write"
+    ],
+    "*.{yml,yaml}": [
+      "npx yaml-lint --config-file config/.yaml-lint.json"
+    ],
+    "*.md": [
+      "markdownlint --config config/.markdownlint.json --fix"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
 }
