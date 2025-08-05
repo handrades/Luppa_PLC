@@ -81,3 +81,5 @@ auto-generated/
 # AI and debug logs
 .ai/
 debug.log
+*storybook.log
+storybook-static

@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
 import { config } from 'dotenv';
 
 // Import middleware and configuration
@@ -9,6 +10,7 @@ import { requestIdMiddleware } from './middleware/requestId';
 import { ValidationError, errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
 import { config as appConfig } from './config/env';
+import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 
 // Import routes
 import healthRouter from './routes/health';
@@ -29,8 +31,9 @@ export const createApp = (): express.Application => {
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for Swagger UI
           imgSrc: ["'self'", 'data:', 'https:'],
+          fontSrc: ["'self'", 'data:'],
         },
       },
       crossOriginEmbedderPolicy: false, // Allow embedding for industrial UIs
@@ -111,6 +114,24 @@ export const createApp = (): express.Application => {
 
     next();
   });
+
+  // API Documentation (Swagger UI) - only in development
+  if (appConfig.env === 'development') {
+    // Serve OpenAPI spec as JSON
+    app.get('/api-docs.json', (_req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
+
+    // Serve Swagger UI
+    app.use('/api-docs', swaggerUi.serve);
+    app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+
+    logger.info('Swagger UI available at /api-docs', {
+      environment: appConfig.env,
+      port: appConfig.port,
+    });
+  }
 
   // API routes
   app.use('/', healthRouter);

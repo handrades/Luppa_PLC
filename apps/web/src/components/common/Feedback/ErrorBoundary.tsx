@@ -4,6 +4,7 @@ import { Home as HomeIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
 interface Props {
   children: ReactNode;
+  showDetails?: boolean;
 }
 
 interface State {
@@ -47,29 +48,30 @@ export class ErrorBoundary extends Component<Props, State> {
               An unexpected error occurred. Please refresh the page or return to the dashboard.
             </Typography>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <Box
-                sx={{
-                  textAlign: 'left',
-                  bgcolor: '#f5f5f5',
-                  p: 2,
-                  borderRadius: 1,
-                  mb: 3,
-                  fontFamily: 'monospace',
-                  fontSize: '0.8rem',
-                }}
-              >
-                <Typography variant='subtitle2' mb={1}>
-                  Error Details:
-                </Typography>
-                <Typography variant='body2'>{this.state.error.message}</Typography>
-                {this.state.errorInfo && (
-                  <Typography variant='body2' sx={{ mt: 1 }}>
-                    {this.state.errorInfo.componentStack}
+            {(this.props.showDetails || process.env.NODE_ENV === 'development') &&
+              this.state.error && (
+                <Box
+                  sx={{
+                    textAlign: 'left',
+                    bgcolor: '#f5f5f5',
+                    p: 2,
+                    borderRadius: 1,
+                    mb: 3,
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  <Typography variant='subtitle2' mb={1}>
+                    Error Details:
                   </Typography>
-                )}
-              </Box>
-            )}
+                  <Typography variant='body2'>{this.state.error.message}</Typography>
+                  {this.state.errorInfo && (
+                    <Typography variant='body2' sx={{ mt: 1 }}>
+                      {this.state.errorInfo.componentStack}
+                    </Typography>
+                  )}
+                </Box>
+              )}
 
             <Box display='flex' gap={2} justifyContent='center'>
               <Button
