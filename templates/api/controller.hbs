@@ -20,9 +20,26 @@ export class {{pascalCase resource}}Controller {
     try {
       const { page = 1, limit = 10, ...filters } = req.query;
       
+      // Validate pagination parameters
+      let validatedPage = Number(page);
+      let validatedLimit = Number(limit);
+      
+      // Ensure page is a positive integer
+      if (!Number.isInteger(validatedPage) || validatedPage < 1) {
+        validatedPage = 1;
+      }
+      
+      // Ensure limit is a positive integer and doesn't exceed maximum
+      const MAX_LIMIT = 100;
+      if (!Number.isInteger(validatedLimit) || validatedLimit < 1) {
+        validatedLimit = 10;
+      } else if (validatedLimit > MAX_LIMIT) {
+        validatedLimit = MAX_LIMIT;
+      }
+      
       const result = await this.{{camelCase resource}}Service.findAll({
-        page: Number(page),
-        limit: Number(limit),
+        page: validatedPage,
+        limit: validatedLimit,
         filters
       });
 

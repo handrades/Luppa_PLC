@@ -106,16 +106,38 @@ export const {{pascalCase name}}: React.FC<{{pascalCase name}}Props> = ({
   // Form state management
   const [formData, setFormData] = useState(initialValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Form validation function
+  const validateForm = (data: any): Record<string, string> => {
+    const validationErrors: Record<string, string> = {};
+    
+    // Add validation rules as needed
+    if (!data.example || data.example.trim() === '') {
+      validationErrors.example = 'This field is required';
+    }
+    
+    return validationErrors;
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
-    if (onSubmit && !isSubmitting) {
+    // Validate form before submission
+    const validationErrors = validateForm(formData);
+    setErrors(validationErrors);
+    
+    // Only submit if no validation errors
+    if (Object.keys(validationErrors).length === 0 && onSubmit && !isSubmitting) {
       setIsSubmitting(true);
       try {
         await onSubmit(formData);
+        // Clear form on successful submission
+        setFormData(initialValues);
+        setErrors({});
       } catch (error) {
         console.error('Form submission error:', error);
+        // You might want to set a general error message here
       } finally {
         setIsSubmitting(false);
       }
@@ -127,6 +149,14 @@ export const {{pascalCase name}}: React.FC<{{pascalCase name}}Props> = ({
       ...prev,
       [field]: value
     }));
+    
+    // Clear field error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
   };
   {{/if}}
 
@@ -150,27 +180,62 @@ export const {{pascalCase name}}: React.FC<{{pascalCase name}}Props> = ({
       {...props}
     >
       {{#if (eq type 'form')}}
-      <form onSubmit={handleSubmit} className="{{dashCase name}}__form">
+      <form 
+        onSubmit={handleSubmit} 
+        className="{{dashCase name}}__form"
+        noValidate
+        role="form"
+        aria-label="{{titleCase name}} form"
+      >
         {/* Add your form fields here */}
         <div className="{{dashCase name}}__field">
-          <label htmlFor="example-field">Example Field:</label>
+          <label 
+            htmlFor="example-field"
+            className={`{{dashCase name}}__label ${errors.example ? 'error' : ''}`.trim()}
+          >
+            Example Field: <span aria-hidden="true">*</span>
+          </label>
           <input
             id="example-field"
             type="text"
             value={formData.example || ''}
             onChange={(e) => handleInputChange('example', e.target.value)}
             disabled={isSubmitting}
+            className={`{{dashCase name}}__input ${errors.example ? 'error' : ''}`.trim()}
+            aria-required="true"
+            aria-invalid={errors.example ? 'true' : 'false'}
+            aria-describedby={errors.example ? 'example-field-error' : undefined}
           />
+          {errors.example && (
+            <div 
+              id="example-field-error"
+              className="{{dashCase name}}__error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.example}
+            </div>
+          )}
         </div>
         
         <div className="{{dashCase name}}__actions">
           <button 
             type="submit" 
-            disabled={isSubmitting}
+            disabled={isSubmitting || Object.keys(errors).length > 0}
             className="{{dashCase name}}__submit-button"
+            aria-describedby={isSubmitting ? 'submit-status' : undefined}
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
+          {isSubmitting && (
+            <div 
+              id="submit-status"
+              className="{{dashCase name}}__status"
+              aria-live="polite"
+            >
+              Please wait while your form is being submitted...
+            </div>
+          )}
         </div>
         
         {children}

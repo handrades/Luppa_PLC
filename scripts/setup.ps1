@@ -131,15 +131,27 @@ if (-not $SkipDocker) {
         do {
             $attempt++
             try {
-                # Test database connection (adjust based on your setup)
+                # Test database connection with actual PostgreSQL query
                 Write-Info "Checking database connection (attempt $attempt/$maxAttempts)..."
-                Start-Sleep -Seconds 2
+                
+                # Use docker exec to run psql command against the database
+                $result = docker exec luppa-postgres pg_isready -h localhost -p 5432 -U postgres 2>&1
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Success "Database connection successful"
+                    break
+                }
+                else {
+                    throw "Database not ready: $result"
+                }
             }
             catch {
+                Write-Warning "Database connection failed: $_"
                 if ($attempt -eq $maxAttempts) {
                     Write-Error "Database did not become ready within timeout"
                     exit 1
                 }
+                Start-Sleep -Seconds 2
             }
         } while ($attempt -lt $maxAttempts)
         
