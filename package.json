@@ -31,7 +31,13 @@
     "generate:api": "plop api-endpoint",
     "generate:entity": "plop entity",
     "generate": "plop",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "docs:build": "pnpm docs:build:storybook && pnpm docs:build:api && pnpm docs:build:copy",
+    "docs:build:storybook": "mkdir -p dist/docs && cp -r apps/web/storybook-static dist/docs/storybook 2>/dev/null || echo 'Using existing Storybook build'",
+    "docs:build:api": "node scripts/generate-api-docs.cjs",
+    "docs:build:copy": "node scripts/copy-docs.cjs",
+    "docs:serve": "pnpm docs:build && npx http-server dist/docs -p 8080 -o",
+    "docs:clean": "rimraf dist/docs"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
@@ -53,6 +59,8 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.4.1",
     "typescript": "~5.5.4",
+    "http-server": "^14.1.1",
+    "rimraf": "^6.0.1",
     "yaml": "^2.4.1",
     "yaml-lint": "^1.7.0"
   },
