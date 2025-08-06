@@ -952,7 +952,7 @@ Task DockerHealth -Alias health -Description "Check health of all services" {
     Write-Host "API:" -ForegroundColor Yellow
     try {
         if (Test-Command "curl") {
-            $null = & curl -s -f http://localhost:3001/health 2>$null
+            $null = & curl -s -f http://localhost:3010/health 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ API: HEALTHY" -ForegroundColor Green
             } else {
@@ -961,7 +961,7 @@ Task DockerHealth -Alias health -Description "Check health of all services" {
         } else {
             # Fallback using PowerShell
             try {
-                $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -TimeoutSec 5 -ErrorAction Stop
+                $response = Invoke-WebRequest -Uri "http://localhost:3010/health" -TimeoutSec 5 -ErrorAction Stop
                 if ($response.StatusCode -eq 200) {
                     Write-Host "✓ API: HEALTHY" -ForegroundColor Green
                 } else {

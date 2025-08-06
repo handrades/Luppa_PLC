@@ -29,7 +29,7 @@ async function generateApiDocs() {
         description: 'RESTful API for the Industrial Inventory Multi-App Framework. View the live documentation at /api-docs when the server is running.'
       },
       servers: [
-        { url: 'http://localhost:3001', description: 'Development server' },
+        { url: 'http://localhost:3010', description: 'Development server' },
         { url: 'http://localhost:3000/api', description: 'Development server via Nginx proxy' }
       ],
       paths: {
@@ -137,7 +137,7 @@ This directory contains the generated API documentation for the Industrial Inven
 
 For the most up-to-date and interactive documentation, start the development server and visit:
 
-- \`http://localhost:3001/api-docs\` (Direct API server)
+- \`http://localhost:3010/api-docs\` (Direct API server)
 - \`http://localhost:3000/api-docs\` (Via Nginx proxy)
 
 ### Static Documentation

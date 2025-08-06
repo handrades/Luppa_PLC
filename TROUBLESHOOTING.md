@@ -73,7 +73,7 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
 
 **Symptoms**:
 
-- Error: `listen EADDRINUSE :::3001`
+- Error: `listen EADDRINUSE :::3010`
 - Database connection timeout
 - Module not found errors
 
@@ -82,8 +82,8 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
 1. **Port conflicts**:
 
    ```powershell
-   # Check what's using port 3001
-   netstat -ano | findstr :3001
+   # Check what's using port 3010
+   netstat -ano | findstr :3010
 
    # Kill the process (replace PID)
    taskkill /PID <process_id> /F
@@ -613,7 +613,7 @@ If none of these solutions work:
 
 ```powershell
 # Health checks
-curl http://localhost:3001/health
+curl http://localhost:3010/health
 curl http://localhost:3000
 
 # Process monitoring
@@ -621,7 +621,7 @@ Get-Process | Where-Object {$_.ProcessName -like "*node*"}
 
 # Port usage
 netstat -ano | findstr :3000
-netstat -ano | findstr :3001
+netstat -ano | findstr :3010
 
 # Docker debugging
 docker-compose -f docker-compose.dev.yml logs --tail=50
@@ -633,5 +633,5 @@ chmod -R 755 .
 
 # Network connectivity
 Test-NetConnection localhost -Port 3000
-Test-NetConnection localhost -Port 3001
+Test-NetConnection localhost -Port 3010
 ```

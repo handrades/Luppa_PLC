@@ -134,7 +134,8 @@ export const runUsersOnly = async (): Promise<void> => {
 };
 
 // Run seeds if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// In CommonJS, we can check if the module is the main module
+if (require.main === module) {
   runSeeds().catch(error => {
     console.error('Seed execution failed:', error);
     process.exit(1);

@@ -196,7 +196,7 @@ try {
         do {
             $attempt++
             try {
-                $response = Invoke-RestMethod -Uri "http://localhost:3001/health" -Method GET -TimeoutSec 5
+                $response = Invoke-RestMethod -Uri "http://localhost:3010/health" -Method GET -TimeoutSec 5
                 Write-Success "API health check passed"
                 break
             }
@@ -225,5 +225,5 @@ Write-Info ""
 Write-Info "Next steps:"
 Write-Info "  • Run 'pnpm dev' to start development servers"
 Write-Info "  • Visit http://localhost:3000 for the web application"
-Write-Info "  • Visit http://localhost:3001/health for API health check"
+Write-Info "  • Visit http://localhost:3010/health for API health check"
 Write-Info "  • Check TROUBLESHOOTING.md if you encounter issues"

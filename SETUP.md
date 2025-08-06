@@ -98,8 +98,8 @@ pnpm dev
 
 # Access the application
 # Web UI: http://localhost:3000
-# API: http://localhost:3001
-# Health Check: http://localhost:3001/health
+# API: http://localhost:3010
+# Health Check: http://localhost:3010/health
 ```
 
 #### Option B: Full Docker Environment (Production-like)
@@ -153,7 +153,7 @@ JWT_EXPIRES_IN=7d
 
 # Application Configuration
 NODE_ENV=development
-API_PORT=3001
+API_PORT=3010
 WEB_PORT=3000
 ```
 
@@ -258,9 +258,9 @@ Invoke-psake ?
 #### Port Conflicts
 
 ```bash
-# Check what's using ports 3000, 3001, 5432, 6379
+# Check what's using ports 3000, 3010, 5432, 6379
 netstat -tulpn | grep :3000
-netstat -tulpn | grep :3001
+netstat -tulpn | grep :3010
 
 # Kill processes if needed
 kill -9 $(lsof -t -i:3000)

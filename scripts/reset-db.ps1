@@ -151,7 +151,7 @@ try {
     do {
         $attempt++
         try {
-            $response = Invoke-RestMethod -Uri "http://localhost:3001/health" -Method GET -TimeoutSec 5
+            $response = Invoke-RestMethod -Uri "http://localhost:3010/health" -Method GET -TimeoutSec 5
             if ($response.status -eq "ok" -and $response.database -eq "connected") {
                 Write-Success "Database health check passed"
                 break
@@ -187,4 +187,4 @@ Write-Info ""
 Write-Info "You can now:"
 Write-Info "  • Start development with 'pnpm dev'"
 Write-Info "  • Run tests with 'pnpm test'"
-Write-Info "  • Check API health at http://localhost:3001/health"
+Write-Info "  • Check API health at http://localhost:3010/health"
