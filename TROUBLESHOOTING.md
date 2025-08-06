@@ -378,7 +378,7 @@ pnpm docker:dev
 **Individual Services** (for debugging):
 
 - **<http://localhost:3010>** - API server direct access
-- **<http://localhost:5174>** - Frontend (Vite) direct access  
+- **<http://localhost:5174>** - Frontend (Vite) direct access
 - **<http://localhost:3010/health>** - API health check
 
 **Database connections** (for tools like pgAdmin):
@@ -411,16 +411,16 @@ docker compose -f docker-compose.dev.yml logs -f
 ```yaml
 # New volume strategy (fixed):
 volumes:
-  - ./apps/web/src:/workspace/apps/web/src          # Source code hot-reload
-  - web-node-modules:/workspace/node_modules        # Named volume for deps
-  - web-app-node-modules:/workspace/apps/web/node_modules  # App-specific deps
+  - ./apps/web/src:/workspace/apps/web/src # Source code hot-reload
+  - web-node-modules:/workspace/node_modules # Named volume for deps
+  - web-app-node-modules:/workspace/apps/web/node_modules # App-specific deps
 ```
 
 **Benefits**:
 
 - Hot-reload works for source code changes
 - Dependencies preserved in containers
-- Faster startup times  
+- Faster startup times
 - No more "Cannot find module 'vite'" errors
 
 ### Container logs show permission errors

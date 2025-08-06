@@ -94,13 +94,23 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared types
-        run: pnpm --filter ./packages/shared-types run build || echo "No shared-types package found"
+        run: |
+          if [ -d "packages/shared-types" ]; then
+            pnpm --filter ./packages/shared-types run build
+          else
+            echo "No shared-types package found - skipping"
+          fi
 
       - name: Type check API
         run: pnpm --filter ./apps/api run type-check
 
       - name: Type check Web
-        run: pnpm --filter ./apps/web run type-check
+        run: |
+          if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            pnpm --filter ./apps/web run type-check
+          else
+            echo "No web package found - skipping type check"
+          fi
 
   test:
     name: Run Tests
@@ -190,8 +200,12 @@ jobs:
 
       - name: Run Web tests with coverage
         run: |
-          cd apps/web
-          pnpm test:coverage --passWithNoTests
+          if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            cd apps/web
+            pnpm test:coverage --passWithNoTests
+          else
+            echo "No web package found - skipping web tests"
+          fi
 
       - name: Run workspace tests
         run: pnpm test
@@ -231,13 +245,23 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared types
-        run: pnpm --filter ./packages/shared-types run build
+        run: |
+          if [ -d "packages/shared-types" ]; then
+            pnpm --filter ./packages/shared-types run build
+          else
+            echo "No shared-types package found - skipping"
+          fi
 
       - name: Build API
         run: pnpm --filter ./apps/api run build
 
       - name: Build Web
-        run: pnpm --filter ./apps/web run build
+        run: |
+          if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            pnpm --filter ./apps/web run build
+          else
+            echo "No web package found - skipping web build"
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
