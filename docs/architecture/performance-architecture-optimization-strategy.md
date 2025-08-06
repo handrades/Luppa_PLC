@@ -127,16 +127,16 @@ export class CacheService {
   private redis: RedisClientType;
 
   constructor() {
-    // Updated for node-redis v4 - uses url string or socket object
     this.redis = createClient({
-      url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT || '6379'),
 
-      // Performance settings (v4 compatible)
-      socket: {
-        connectTimeout: 5000,
-        commandTimeout: 3000,
-        reconnectStrategy: retries => Math.min(retries * 50, 500),
-      },
+      // Performance settings
+      connectTimeout: 5000,
+      commandTimeout: 3000,
+      retryDelayOnFailover: 100,
+      enableAutoPipelining: true,
+      maxRetriesPerRequest: 3,
     });
   }
 
@@ -216,8 +216,7 @@ export const IndustrialDataGrid: React.FC<DataGridProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Virtual scrolling with @tanstack/react-virtual (not react-window)
-  // Using single container for both row and column virtualization
+  // Virtual scrolling with react-window
   const rowVirtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => parentRef.current,

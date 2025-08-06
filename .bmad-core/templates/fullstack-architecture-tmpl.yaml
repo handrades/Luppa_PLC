@@ -672,10 +672,10 @@ sections:
         language: text
         template: |
                   E2E Tests
-                 /        \
-            Integration Tests
-               /            \
-          Frontend Unit  Backend Unit
+                  /        \
+              Integration Tests
+                 /            \
+            Frontend Unit  Backend Unit
       - id: test-organization
         title: Test Organization
         sections:
