@@ -186,8 +186,13 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have volume mounts for development', () => {
-      expect(apiService.volumes).toContain('./apps/api:/workspace/apps/api');
-      expect(apiService.volumes).toContain('/workspace/node_modules');
+      // Check for selective source code mounting
+      expect(apiService.volumes).toContain('./apps/api/src:/workspace/apps/api/src');
+      // Check for named volumes for dependencies
+      const hasNodeModulesVolume = apiService.volumes.some(vol =>
+        vol.includes('api-node-modules:/workspace/node_modules')
+      );
+      expect(hasNodeModulesVolume).toBe(true);
     });
 
     test('should have health check configured', () => {
@@ -219,8 +224,13 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have volume mounts for development', () => {
-      expect(webService.volumes).toContain('./apps/web:/workspace/apps/web');
-      expect(webService.volumes).toContain('/workspace/node_modules');
+      // Check for selective source code mounting
+      expect(webService.volumes).toContain('./apps/web/src:/workspace/apps/web/src');
+      // Check for named volumes for dependencies
+      const hasNodeModulesVolume = webService.volumes.some(vol =>
+        vol.includes('web-node-modules:/workspace/node_modules')
+      );
+      expect(hasNodeModulesVolume).toBe(true);
     });
   });
 

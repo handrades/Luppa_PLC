@@ -9,14 +9,12 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { Role, User } from '../entities/index.js';
 
 // Load environment variables from root directory
 // Use absolute path resolution to avoid dependency on current working directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __filename and __dirname are available in CommonJS
 const envPath = process.env.ENV_FILE_PATH || resolve(__dirname, '../../../../.env');
 config({ path: envPath });
 

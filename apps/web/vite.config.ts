@@ -13,6 +13,10 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.PORT || '5173', 10),
     host: process.env.HOST || '0.0.0.0',
+    fs: {
+      strict: false,
+      allow: ['..', '../..'],
+    },
     proxy: {
       '/api': {
         target: `http://localhost:${process.env.API_PORT || '3010'}`,

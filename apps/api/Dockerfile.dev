@@ -20,8 +20,18 @@ COPY apps/web/package.json ./apps/web/
 # Install all dependencies using workspace
 RUN pnpm install --frozen-lockfile
 
-# Copy source code for API
-COPY apps/api ./apps/api
+# Copy shared config directory
+COPY config ./config/
+
+# Copy configuration files for API
+COPY apps/api/tsconfig.json ./apps/api/
+COPY apps/api/tsconfig.test.json ./apps/api/
+COPY apps/api/jest.config.cjs ./apps/api/
+COPY apps/api/nodemon.json ./apps/api/
+COPY apps/api/jest.setup.js ./apps/api/
+
+# Copy source code for API (will be overridden by volume in dev)
+COPY apps/api/src ./apps/api/src
 
 # Set working directory to API
 WORKDIR /workspace/apps/api
@@ -30,7 +40,7 @@ WORKDIR /workspace/apps/api
 RUN mkdir -p logs
 
 # Expose port
-EXPOSE 3001
+EXPOSE 3010
 
 # Start development server with hot reload
 CMD ["pnpm", "dev"]
