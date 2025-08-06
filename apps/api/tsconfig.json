@@ -25,6 +25,8 @@
   "typeRoots": ["node_modules/@types", "types"],
   "exclude": ["node_modules", "dist", "__tests__", "**/*.test.ts"],
   "ts-node": {
-    "esm": true
+    "esm": false,
+    "transpileOnly": true,
+    "ignoreDiagnostics": [2339]
   }
 }
