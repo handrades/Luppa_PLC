@@ -44,7 +44,7 @@ The project is designed for solo development with a focus on open-source technol
 
 1. **Clone and install dependencies:**
 
-   ```bash
+   ```powershell
    git clone <repository-url>
    cd Luppa_PLC
    pnpm install
@@ -52,26 +52,28 @@ The project is designed for solo development with a focus on open-source technol
 
 2. **Set up environment:**
 
-   ```bash
-   cp .env.example .env
+   ```powershell
+   Copy-Item .env.example .env
    # Edit .env with your configuration
    ```
 
 3. **Run initial setup:**
 
-   ```bash
+   ```powershell
    pnpm setup
    ```
 
 4. **Start development environment:**
 
-   ```bash
-   # Option 1: Local development
+   ```powershell
+   # Option 1: Local development (recommended for development)
    pnpm dev
 
-   # Option 2: Full Docker environment
+   # Option 2: Full Docker environment (requires steps 1-3 first!)
    pnpm docker:dev
    ```
+
+   > **Important**: For Docker development, you MUST complete steps 1-3 first. The containers depend on local dependencies being installed.
 
 ## Available Scripts
 

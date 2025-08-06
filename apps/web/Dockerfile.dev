@@ -20,8 +20,18 @@ COPY apps/web/package.json ./apps/web/
 # Install all dependencies using workspace
 RUN pnpm install --frozen-lockfile
 
-# Copy source code for Web
-COPY apps/web ./apps/web
+# Copy configuration files for Web
+COPY apps/web/vite.config.ts ./apps/web/
+COPY apps/web/tsconfig.json ./apps/web/
+COPY apps/web/tsconfig.node.json ./apps/web/
+COPY apps/web/eslint.config.js ./apps/web/
+COPY apps/web/index.html ./apps/web/
+
+# Copy static files for Web
+COPY apps/web/public ./apps/web/public
+
+# Copy source code for Web (will be overridden by volume in dev)
+COPY apps/web/src ./apps/web/src
 
 # Set working directory to Web
 WORKDIR /workspace/apps/web

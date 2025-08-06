@@ -102,7 +102,7 @@ export const createApp = (): express.Application => {
     _res.on('finish', () => {
       const duration = Date.now() - start;
       logger.info('HTTP Request', {
-        // requestId: (req as { id?: string }).id,
+        requestId: req.id,
         method: req.method,
         url: req.originalUrl,
         statusCode: _res.statusCode,

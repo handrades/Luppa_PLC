@@ -288,6 +288,53 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
 
 ## Docker Issues
 
+### `pnpm docker:dev` fails with "docker-compose: not found"
+
+**Problem**: Modern Docker installations use `docker compose` (plugin) instead of `docker-compose` (standalone).
+
+**Solution**: This has been fixed in the project. If you still see this error, ensure you have Docker Compose v2+ installed:
+
+```powershell
+# Check Docker Compose version
+docker compose version
+
+# If not available, install Docker Desktop or Docker Compose plugin
+# The project now uses: docker compose -f docker-compose.dev.yml up
+```
+
+### Docker containers start but web app fails with "Cannot find module 'vite'"
+
+**Problem**: Dependencies are not installed before Docker containers start.
+
+**Solution**: Always run the complete setup sequence:
+
+```powershell
+# 1. Install dependencies first
+pnpm install
+
+# 2. Copy environment file
+Copy-Item .env.example .env
+
+# 3. Run initial setup (builds types, sets up database)
+pnpm setup
+
+# 4. THEN start Docker containers
+pnpm docker:dev
+```
+
+**Quick fix if already running**:
+
+```powershell
+# Stop containers
+pnpm docker:down
+
+# Install dependencies
+pnpm install
+
+# Restart containers
+pnpm docker:dev
+```
+
 ### Docker containers won't start
 
 **Problem**: Docker daemon issues, port conflicts, or resource constraints.
@@ -308,15 +355,73 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    docker system prune -f
 
    # Remove project containers specifically
-   docker-compose -f docker-compose.dev.yml down --volumes --remove-orphans
+   docker compose -f docker-compose.dev.yml down --volumes --remove-orphans
    ```
 
 3. **Rebuild containers**:
 
    ```powershell
-   docker-compose -f docker-compose.dev.yml build --no-cache
-   docker-compose -f docker-compose.dev.yml up -d
+   docker compose -f docker-compose.dev.yml build --no-cache
+   docker compose -f docker-compose.dev.yml up -d
    ```
+
+### "Docker is running but I don't know which URLs to access"
+
+**Problem**: After starting `pnpm docker:dev`, unclear which URLs to use.
+
+**Solution**: Use these URLs to access your application:
+
+**Main Application** (Recommended):
+
+- **<http://localhost:3011>** - Full application via Nginx reverse proxy
+
+**Individual Services** (for debugging):
+
+- **<http://localhost:3010>** - API server direct access
+- **<http://localhost:5174>** - Frontend (Vite) direct access  
+- **<http://localhost:3010/health>** - API health check
+
+**Database connections** (for tools like pgAdmin):
+
+- **PostgreSQL**: `localhost:5433` (user: `postgres`, password: `dev_password`)
+- **Redis**: `localhost:6380` (password: `dev_redis_password`)
+
+**Check service status**:
+
+```powershell
+# Check running containers
+docker compose -f docker-compose.dev.yml ps
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+```
+
+### Docker development fixed - Volume mounting issues resolved
+
+**Fixed Issues** (August 2025):
+
+- ✅ **Docker Compose v2 commands** updated in package.json
+- ✅ **Volume mounting** restructured to preserve built dependencies
+- ✅ **Web container** now starts successfully with Vite
+- ✅ **Database services** working perfectly
+- ✅ **React application** loads correctly at <http://localhost:3011>
+
+**Architecture** (Updated):
+
+```yaml
+# New volume strategy (fixed):
+volumes:
+  - ./apps/web/src:/workspace/apps/web/src          # Source code hot-reload
+  - web-node-modules:/workspace/node_modules        # Named volume for deps
+  - web-app-node-modules:/workspace/apps/web/node_modules  # App-specific deps
+```
+
+**Benefits**:
+
+- Hot-reload works for source code changes
+- Dependencies preserved in containers
+- Faster startup times  
+- No more "Cannot find module 'vite'" errors
 
 ### Container logs show permission errors
 

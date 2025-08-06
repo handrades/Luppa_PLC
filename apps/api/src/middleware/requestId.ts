@@ -27,7 +27,7 @@ export const requestIdMiddleware = (req: Request, res: Response, next: NextFunct
   // Use existing request ID from header or generate new one
   const requestId = (req.get('X-Request-ID') || uuidv4()) as string;
 
-  // (req as { id?: string }).id = requestId;
+  req.id = requestId;
   res.set('X-Request-ID', requestId);
 
   next();

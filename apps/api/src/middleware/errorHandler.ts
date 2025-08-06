@@ -131,8 +131,7 @@ export const errorHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void => {
-  // const requestId = (req as { id?: string }).id || 'unknown';
-  const requestId = 'temp-id'; // Temporary fix
+  const requestId = req.id || 'unknown';
   const timestamp = new Date().toISOString();
 
   // Default error response

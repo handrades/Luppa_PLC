@@ -8,6 +8,16 @@ volumes:
     name: luppa-postgres-data
   redis-data:
     name: luppa-redis-data
+  api-node-modules:
+    name: luppa-api-node-modules
+  api-app-node-modules:
+    name: luppa-api-app-node-modules
+  web-node-modules:
+    name: luppa-web-node-modules
+  web-app-node-modules:
+    name: luppa-web-app-node-modules
+  web-dist:
+    name: luppa-web-dist
 
 services:
   postgres:
@@ -98,9 +108,15 @@ services:
     ports:
       - "${API_PORT:-3010}:${API_PORT:-3010}"
     volumes:
-      - ./apps/api:/workspace/apps/api
-      - /workspace/node_modules
+      - ./apps/api/src:/workspace/apps/api/src
+      - ./apps/api/types:/workspace/apps/api/types
+      - ./apps/api/tsconfig.json:/workspace/apps/api/tsconfig.json
+      - ./apps/api/tsconfig.test.json:/workspace/apps/api/tsconfig.test.json
+      - ./apps/api/jest.config.cjs:/workspace/apps/api/jest.config.cjs
+      - ./apps/api/nodemon.json:/workspace/apps/api/nodemon.json
       - ./apps/api/logs:/workspace/apps/api/logs
+      - api-node-modules:/workspace/node_modules
+      - api-app-node-modules:/workspace/apps/api/node_modules
     depends_on:
       postgres:
         condition: service_healthy
@@ -140,10 +156,17 @@ services:
     ports:
       - "${WEB_PORT:-5174}:5173"
     volumes:
-      - ./apps/web:/workspace/apps/web
+      - ./apps/web/src:/workspace/apps/web/src
+      - ./apps/web/public:/workspace/apps/web/public
+      - ./apps/web/index.html:/workspace/apps/web/index.html
+      - ./apps/web/vite.config.ts:/workspace/apps/web/vite.config.ts
+      - ./apps/web/tsconfig.json:/workspace/apps/web/tsconfig.json
+      - ./apps/web/tsconfig.node.json:/workspace/apps/web/tsconfig.node.json
+      - ./apps/web/eslint.config.js:/workspace/apps/web/eslint.config.js
       - ./config:/workspace/config
-      - /workspace/node_modules
-      - /workspace/apps/web/dist
+      - web-node-modules:/workspace/node_modules
+      - web-app-node-modules:/workspace/apps/web/node_modules
+      - web-dist:/workspace/apps/web/dist
     depends_on:
       - api
     healthcheck:
