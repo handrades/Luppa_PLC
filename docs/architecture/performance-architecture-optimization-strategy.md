@@ -128,8 +128,10 @@ export class CacheService {
 
   constructor() {
     this.redis = createClient({
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT || '6379'),
+      socket: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
 
       // Performance settings
       connectTimeout: 5000,

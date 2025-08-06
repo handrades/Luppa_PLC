@@ -26,10 +26,10 @@
       "@shared-types/*": ["packages/shared-types/src/*"],
       "@ui-components/*": ["packages/ui-components/src/*"],
       "@config/*": ["packages/config/src/*"]
-    }
+    },
+    "types": ["node", "jest"],
+    "typeRoots": ["../node_modules/@types", "../apps/api/types"]
   },
   "include": ["../apps/*/src/**/*", "../packages/*/src/**/*", "../__tests__/**/*", "../apps/api/types/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "types": ["node", "jest"],
-  "typeRoots": ["../node_modules/@types", "../apps/api/types"]
+  "exclude": ["node_modules", "dist"]
 }
