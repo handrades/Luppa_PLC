@@ -32,15 +32,14 @@ datasources:
       # Incremental queries
       incrementalQuery: false
       disableRecordingRules: false
-      
+
       # Custom headers
       httpHeaderName1: ""
       httpHeaderValue1: ""
     # Secure JSON data (for sensitive configuration)
     secureJsonData: {}
-    
+
     # Version
     version: 1
-    
     # UID for referencing in dashboards
     uid: prometheus-main
