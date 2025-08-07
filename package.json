@@ -14,8 +14,8 @@
     "setup": "pnpm install && pnpm build:types && pnpm db:setup",
     "build:types": "pnpm -C packages/shared-types build",
     "db:setup": "pnpm -C apps/api db:migrate && pnpm -C apps/api db:seed",
-    "docker:dev": "docker compose -f docker-compose.dev.yml up",
-    "docker:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:dev": "docker compose -f config/docker-compose.dev.yml up",
+    "docker:down": "docker compose -f config/docker-compose.dev.yml down",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "reset": "pnpm clean && pnpm install",
     "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write",
@@ -27,10 +27,10 @@
     "setup:dev": "pwsh -File scripts/setup.ps1",
     "db:reset": "pwsh -File scripts/reset-db.ps1",
     "generate:types": "pwsh -File scripts/generate-types.ps1",
-    "generate:component": "plop component",
-    "generate:api": "plop api-endpoint",
-    "generate:entity": "plop entity",
-    "generate": "plop",
+    "generate:component": "plop --plopfile config/plopfile.mjs component",
+    "generate:api": "plop --plopfile config/plopfile.mjs api-endpoint",
+    "generate:entity": "plop --plopfile config/plopfile.mjs entity",
+    "generate": "plop --plopfile config/plopfile.mjs",
     "commit": "git-cz",
     "docs:build": "pnpm docs:build:storybook && pnpm docs:build:api && pnpm docs:build:copy",
     "docs:build:storybook": "mkdir -p dist/docs && cp -r apps/web/storybook-static dist/docs/storybook 2>/dev/null || echo 'Using existing Storybook build'",
@@ -57,6 +57,7 @@
     "@openapitools/openapi-generator-cli": "^2.21.4",
     "@prantlf/jsonlint": "^16.0.0",
     "@types/jest": "^29.5.12",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
@@ -70,6 +71,7 @@
     "i18next-fs-backend": "^2.6.0",
     "i18next-http-middleware": "^3.8.0",
     "jest": "^30.0.0",
+    "js-yaml": "^4.1.0",
     "lint-staged": "^16.1.4",
     "markdownlint-cli": "^0.45.0",
     "plop": "^4.0.1",
@@ -108,6 +110,11 @@
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "tmp": ">=0.2.4"
     }
   }
 }

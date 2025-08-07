@@ -154,7 +154,7 @@ function Test-Prerequisites {
 function Get-DatabaseConfig {
     Write-Log "Loading database configuration..." -Level INFO
     
-    # Default values based on docker-compose.dev.yml
+    # Default values based on config/docker-compose.dev.yml
     $config = @{
         Host = $env:POSTGRES_HOST ?? $env:DB_HOST ?? 'localhost'
         Port = $env:POSTGRES_PORT ?? $env:DB_PORT ?? '5433'

@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 interface DockerComposeService {
   image?: string;
@@ -16,7 +16,7 @@ interface DockerComposeService {
   environment?: Record<string, string>;
   ports?: string[];
   volumes?: string[];
-  depends_on?: Record<string, { condition: string }> | string[];
+  depends_on?: Record<string, { condition: string }> | string[] | Record<string, unknown>;
   healthcheck?: {
     test: string[];
     interval: string;
@@ -51,7 +51,7 @@ interface DockerComposeConfig {
 
 describe('Docker Compose Configuration', () => {
   let dockerCompose: DockerComposeConfig;
-  const dockerComposePath = path.resolve(__dirname, '../../docker-compose.dev.yml');
+  const dockerComposePath = path.resolve(__dirname, '../../config/docker-compose.dev.yml');
 
   beforeAll(() => {
     // Load and parse docker-compose.dev.yml
@@ -100,15 +100,15 @@ describe('Docker Compose Configuration', () => {
 
     test('should have proper environment variables', () => {
       expect(postgresService.environment).toBeDefined();
-      expect(postgresService.environment.POSTGRES_DB).toBeDefined();
-      expect(postgresService.environment.POSTGRES_USER).toBeDefined();
-      expect(postgresService.environment.POSTGRES_PASSWORD).toBeDefined();
+      expect(postgresService.environment?.POSTGRES_DB).toBeDefined();
+      expect(postgresService.environment?.POSTGRES_USER).toBeDefined();
+      expect(postgresService.environment?.POSTGRES_PASSWORD).toBeDefined();
     });
 
     test('should have health check configured', () => {
       expect(postgresService.healthcheck).toBeDefined();
-      expect(postgresService.healthcheck.test).toBeDefined();
-      expect(postgresService.healthcheck.interval).toBe('30s');
+      expect(postgresService.healthcheck?.test).toBeDefined();
+      expect(postgresService.healthcheck?.interval).toBe('30s');
     });
 
     test('should have persistent volume mounted', () => {
@@ -116,15 +116,15 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have initialization scripts mounted', () => {
-      const initScriptMount = postgresService.volumes.find(vol =>
+      const initScriptMount = postgresService.volumes?.find(vol =>
         vol.includes(':/docker-entrypoint-initdb.d')
       );
       expect(initScriptMount).toBeDefined();
     });
 
     test('should have resource limits', () => {
-      expect(postgresService.deploy.resources.limits).toBeDefined();
-      expect(postgresService.deploy.resources.limits.memory).toBe('512M');
+      expect(postgresService.deploy?.resources.limits).toBeDefined();
+      expect(postgresService.deploy?.resources.limits.memory).toBe('512M');
     });
   });
 
@@ -155,8 +155,8 @@ describe('Docker Compose Configuration', () => {
 
     test('should have health check configured', () => {
       expect(redisService.healthcheck).toBeDefined();
-      expect(redisService.healthcheck.test[0]).toBe('CMD');
-      expect(redisService.healthcheck.test[1]).toBe('redis-cli');
+      expect(redisService.healthcheck?.test[0]).toBe('CMD');
+      expect(redisService.healthcheck?.test[1]).toBe('redis-cli');
     });
   });
 
@@ -169,27 +169,31 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(apiService.build).toBeDefined();
-      expect(apiService.build.context).toBe('.');
-      expect(apiService.build.dockerfile).toBe('apps/api/Dockerfile.dev');
+      expect(apiService.build?.context).toBe('.');
+      expect(apiService.build?.dockerfile).toBe('apps/api/Dockerfile.dev');
     });
 
     test('should depend on database services', () => {
       expect(apiService.depends_on).toBeDefined();
-      expect(apiService.depends_on.postgres.condition).toBe('service_healthy');
-      expect(apiService.depends_on.redis.condition).toBe('service_healthy');
+      expect(
+        (apiService.depends_on as Record<string, { condition: string }>)?.postgres?.condition
+      ).toBe('service_healthy');
+      expect(
+        (apiService.depends_on as Record<string, { condition: string }>)?.redis?.condition
+      ).toBe('service_healthy');
     });
 
     test('should have proper environment variables', () => {
-      expect(apiService.environment.NODE_ENV).toBe('development');
-      expect(apiService.environment.POSTGRES_HOST).toBe('postgres');
-      expect(apiService.environment.REDIS_HOST).toBe('redis');
+      expect(apiService.environment?.NODE_ENV).toBe('development');
+      expect(apiService.environment?.POSTGRES_HOST).toBe('postgres');
+      expect(apiService.environment?.REDIS_HOST).toBe('redis');
     });
 
     test('should have volume mounts for development', () => {
       // Check for selective source code mounting
       expect(apiService.volumes).toContain('./apps/api/src:/workspace/apps/api/src');
       // Check for named volumes for dependencies
-      const hasNodeModulesVolume = apiService.volumes.some(vol =>
+      const hasNodeModulesVolume = apiService.volumes?.some(vol =>
         vol.includes('api-node-modules:/workspace/node_modules')
       );
       expect(hasNodeModulesVolume).toBe(true);
@@ -197,7 +201,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have health check configured', () => {
       expect(apiService.healthcheck).toBeDefined();
-      expect(apiService.healthcheck.test).toContain('curl');
+      expect(apiService.healthcheck?.test).toContain('curl');
     });
   });
 
@@ -210,8 +214,8 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(webService.build).toBeDefined();
-      expect(webService.build.context).toBe('.');
-      expect(webService.build.dockerfile).toBe('apps/web/Dockerfile.dev');
+      expect(webService.build?.context).toBe('.');
+      expect(webService.build?.dockerfile).toBe('apps/web/Dockerfile.dev');
     });
 
     test('should depend on API service', () => {
@@ -219,15 +223,15 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have development environment variables', () => {
-      expect(webService.environment.NODE_ENV).toBe('development');
-      expect(webService.environment.VITE_API_BASE_URL).toBeDefined();
+      expect(webService.environment?.NODE_ENV).toBe('development');
+      expect(webService.environment?.VITE_API_BASE_URL).toBeDefined();
     });
 
     test('should have volume mounts for development', () => {
       // Check for selective source code mounting
       expect(webService.volumes).toContain('./apps/web/src:/workspace/apps/web/src');
       // Check for named volumes for dependencies
-      const hasNodeModulesVolume = webService.volumes.some(vol =>
+      const hasNodeModulesVolume = webService.volumes?.some(vol =>
         vol.includes('web-node-modules:/workspace/node_modules')
       );
       expect(hasNodeModulesVolume).toBe(true);
@@ -251,7 +255,7 @@ describe('Docker Compose Configuration', () => {
     });
 
     test('should have configuration files mounted', () => {
-      const configMount = nginxService.volumes.find(vol =>
+      const configMount = nginxService.volumes?.find(vol =>
         vol.includes('nginx.conf:/etc/nginx/nginx.conf')
       );
       expect(configMount).toBeDefined();
@@ -259,7 +263,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have health check configured', () => {
       expect(nginxService.healthcheck).toBeDefined();
-      expect(nginxService.healthcheck.test).toContain('wget');
+      expect(nginxService.healthcheck?.test).toContain('wget');
     });
   });
 
@@ -279,8 +283,8 @@ describe('Docker Compose Configuration', () => {
 
       services.forEach(service => {
         expect(service.deploy?.resources?.limits).toBeDefined();
-        expect(service.deploy.resources.limits.memory).toBeDefined();
-        expect(service.deploy.resources.limits.cpus).toBeDefined();
+        expect(service.deploy?.resources?.limits?.memory).toBeDefined();
+        expect(service.deploy?.resources?.limits?.cpus).toBeDefined();
       });
     });
   });

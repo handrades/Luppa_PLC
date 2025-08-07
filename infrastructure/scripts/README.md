@@ -22,7 +22,7 @@ handling, logging, and support for both containerized and local PostgreSQL insta
 The scripts use the following environment variables for database connection. These should match your Docker Compose configuration:
 
 ```bash
-# Primary environment variables (matches docker-compose.dev.yml)
+# Primary environment variables (matches config/docker-compose.dev.yml)
 POSTGRES_HOST=localhost          # Database host
 POSTGRES_PORT=5433              # Database port (5433 for dev, 5432 for container-internal)
 POSTGRES_DB=luppa_dev           # Database name
@@ -207,12 +207,12 @@ cp ./backups/luppa_backup_*.sql /secure/backup/location/
 
 ## Docker Integration
 
-The scripts work seamlessly with the Docker development environment defined in `docker-compose.dev.yml`:
+The scripts work seamlessly with the Docker development environment defined in `config/docker-compose.dev.yml`:
 
 ### Default Docker Configuration
 
 ```yaml
-# From docker-compose.dev.yml
+# From config/docker-compose.dev.yml
 postgres:
   ports:
     - '5433:5432' # Maps container port 5432 to host port 5433

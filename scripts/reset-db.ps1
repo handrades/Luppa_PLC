@@ -52,7 +52,7 @@ function Test-DockerRunning {
 
 function Test-DatabaseContainer {
     try {
-        $containers = docker-compose -f docker-compose.dev.yml ps --services --filter "status=running"
+        $containers = docker compose -f config/docker-compose.dev.yml ps --services --filter "status=running"
         return ($containers | Select-String "postgres|database" | Measure-Object).Count -gt 0
     }
     catch {
@@ -93,7 +93,7 @@ if (-not (Test-DockerRunning)) {
 if (-not (Test-DatabaseContainer)) {
     Write-Info "Database container is not running. Starting Docker services..."
     try {
-        docker-compose -f docker-compose.dev.yml up -d
+        docker compose -f config/docker-compose.dev.yml up -d
         Write-Success "Docker services started"
         
         # Wait for database to be ready
