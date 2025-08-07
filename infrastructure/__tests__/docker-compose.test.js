@@ -13,8 +13,19 @@ describe('Docker Compose Configuration Tests', () => {
     const prodComposePath = path.join(__dirname, '../../docker-compose.prod.yml');
     const swarmComposePath = path.join(__dirname, '../swarm/docker-compose.swarm.yml');
 
-    prodCompose = yaml.load(fs.readFileSync(prodComposePath, 'utf8'));
-    swarmCompose = yaml.load(fs.readFileSync(swarmComposePath, 'utf8'));
+    try {
+      const prodContent = fs.readFileSync(prodComposePath, 'utf8');
+      prodCompose = yaml.load(prodContent);
+    } catch (error) {
+      throw new Error(`Failed to load production compose file: ${error.message}`);
+    }
+
+    try {
+      const swarmContent = fs.readFileSync(swarmComposePath, 'utf8');
+      swarmCompose = yaml.load(swarmContent);
+    } catch (error) {
+      throw new Error(`Failed to load swarm compose file: ${error.message}`);
+    }
   });
 
   describe('Production Docker Compose', () => {
@@ -221,8 +232,11 @@ describe('Infrastructure Files Validation', () => {
     const scriptPath = path.join(__dirname, '../ssl/generate-self-signed-cert.sh');
     expect(fs.existsSync(scriptPath)).toBe(true);
 
-    const stats = fs.statSync(scriptPath);
-    expect(stats.mode & parseInt('111', 8)).toBeTruthy(); // Check if executable
+    try {
+      fs.accessSync(scriptPath, fs.constants.X_OK);
+    } catch (error) {
+      fail(`Script is not executable: ${error.message}`);
+    }
   });
 
   test('Nginx production configuration should exist', () => {

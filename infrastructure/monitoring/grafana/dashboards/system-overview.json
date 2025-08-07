@@ -133,7 +133,7 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "container_memory_usage_bytes / container_spec_memory_limit_bytes",
+            "expr": "container_memory_usage_bytes / on (container_label_com_docker_compose_service) group_left() (container_spec_memory_limit_bytes > 0)",
             "legendFormat": "{{name}}",
             "refId": "A"
           }
