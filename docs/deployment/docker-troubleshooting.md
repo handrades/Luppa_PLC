@@ -79,7 +79,7 @@ docker service inspect luppa_api --pretty
    # Check available resources
    docker system df
    docker stats
-   
+
    # Reduce resource requirements
    docker service update --limit-memory 512m luppa_api
    ```
@@ -89,7 +89,7 @@ docker service inspect luppa_api --pretty
    ```bash
    # Check node labels
    docker node inspect <NODE-ID> | grep -A 10 Labels
-   
+
    # Add required labels
    docker node update --label-add postgres=true <NODE-ID>
    ```
@@ -99,7 +99,7 @@ docker service inspect luppa_api --pretty
    ```bash
    # Pull image manually on all nodes
    docker pull luppa-api:latest
-   
+
    # Or use local registry
    docker service update --image localhost:5000/luppa-api:latest luppa_api
    ```
@@ -124,7 +124,7 @@ docker inspect <CONTAINER-ID>
    ```bash
    # Check application logs
    docker service logs luppa_api --tail 100 --follow
-   
+
    # Increase startup timeout
    docker service update --health-start-period 120s luppa_api
    ```
@@ -134,7 +134,7 @@ docker inspect <CONTAINER-ID>
    ```bash
    # Increase memory limit
    docker service update --limit-memory 1g luppa_api
-   
+
    # Check memory usage
    docker stats --no-stream
    ```
@@ -145,7 +145,7 @@ docker inspect <CONTAINER-ID>
    # Verify dependencies are healthy
    docker service ps luppa_postgres
    docker service ps luppa_redis
-   
+
    # Restart dependent services
    docker service update --force luppa_api
    ```
@@ -573,7 +573,7 @@ Establish performance baselines:
 # CPU usage baseline
 docker stats --no-stream | grep luppa
 
-# Memory usage baseline  
+# Memory usage baseline
 docker service inspect luppa_api | jq '.[] | .Spec.TaskTemplate.Resources'
 
 # Response time baseline
