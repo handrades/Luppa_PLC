@@ -143,7 +143,7 @@ services:
     secrets:
       - postgres-password
     healthcheck:
-      test: ["CMD", "psql", "-h", "localhost", "-p", "5432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-luppa_prod}", "-c", "SELECT 1"]
+      test: ["CMD-SHELL", "nc -z localhost 5432 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

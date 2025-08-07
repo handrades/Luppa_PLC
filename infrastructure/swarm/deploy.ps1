@@ -131,7 +131,18 @@ function Initialize-Secrets {
         if ([string]::IsNullOrWhiteSpace($certPath)) {
             # Generate self-signed certificate
             Write-Host "Generating self-signed SSL certificate..." -ForegroundColor Yellow
-            & "infrastructure/ssl/generate-self-signed-cert.sh"
+            
+            # Check if bash is available for the SSL script
+            if (Get-Command "bash" -ErrorAction SilentlyContinue) {
+                bash "infrastructure/ssl/generate-self-signed-cert.sh"
+            } elseif (Get-Command "wsl" -ErrorAction SilentlyContinue) {
+                wsl bash "infrastructure/ssl/generate-self-signed-cert.sh"
+            } else {
+                Write-Error "Cannot generate SSL certificate: bash not found. Please install Git Bash, WSL, or provide certificate manually."
+                Write-Host "Alternative: Use OpenSSL directly or provide existing certificates." -ForegroundColor Yellow
+                return
+            }
+            
             $certPath = "infrastructure/ssl/server.crt"
             $keyPath = "infrastructure/ssl/server.key"
         }
@@ -217,7 +228,16 @@ function Show-StackStatus {
 try {
     # Ensure we're in the correct directory
     if (!(Test-Path $StackFile)) {
-        Set-Location "infrastructure/swarm"
+        try {
+            Set-Location "infrastructure/swarm"
+            if (!(Test-Path $StackFile)) {
+                Write-Error "Stack file not found even after changing directory. Current location: $(Get-Location)"
+                return
+            }
+        } catch {
+            Write-Error "Failed to change directory to infrastructure/swarm: $($_.Exception.Message)"
+            return
+        }
     }
     
     # Initialize Swarm if requested
