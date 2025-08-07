@@ -1,0 +1,55 @@
+# Grafana Datasource Configuration for Prometheus
+# Auto-provisioning configuration for Prometheus data source
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    
+    # Basic settings
+    basicAuth: false
+    withCredentials: false
+    
+    # JSON data for Prometheus-specific settings
+    jsonData:
+      # Query timeout
+      timeInterval: 15s
+      queryTimeout: 60s
+      
+      # HTTP method for queries
+      httpMethod: POST
+      
+      # Custom query parameters
+      customQueryParameters: ""
+      
+      # Prometheus version and features
+      prometheusType: Prometheus
+      prometheusVersion: 3.0.0
+      
+      # Caching
+      cacheLevel: High
+      
+      # Exemplars (for distributed tracing integration)
+      exemplarTraceIdDestinations: []
+      
+      # Incremental queries
+      incrementalQuery: false
+      disableRecordingRules: false
+      
+      # Custom headers
+      httpHeaderName1: ""
+      httpHeaderValue1: ""
+    
+    # Secure JSON data (for sensitive configuration)
+    secureJsonData: {}
+    
+    # Version
+    version: 1
+    
+    # UID for referencing in dashboards
+    uid: prometheus-main
