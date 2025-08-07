@@ -52,17 +52,20 @@ ALTER SYSTEM SET log_statement = 'mod';
 ALTER SYSTEM SET log_temp_files = '10MB';
 
 -- Security settings
-ALTER SYSTEM SET ssl = 'off'; -- Will be enabled via Docker configuration
+-- SSL should be enabled for production security
+-- ALTER SYSTEM SET ssl = 'off'; -- Commented out to maintain SSL encryption
 ALTER SYSTEM SET password_encryption = 'scram-sha-256';
 
--- Reload configuration
-SELECT pg_reload_conf();
+-- Note: Some settings require container restart to take effect
+-- Container must be restarted after initialization for these settings to take effect
 
 -- Create monitoring user for health checks (if not exists)
+-- Password should be provided via environment variable or Docker secret
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'monitoring') THEN
-        CREATE ROLE monitoring WITH LOGIN PASSWORD 'monitoring_password';
+        -- Use environment variable MONITORING_PASSWORD or Docker secret
+        CREATE ROLE monitoring WITH LOGIN PASSWORD :'MONITORING_PASSWORD';
         GRANT CONNECT ON DATABASE luppa_prod TO monitoring;
         GRANT SELECT ON pg_stat_database TO monitoring;
     END IF;

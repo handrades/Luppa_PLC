@@ -2,7 +2,7 @@
 # Generate self-signed SSL certificates for development and testing
 # For production, replace with certificates from a trusted CA
 
-set -e
+set -euo pipefail
 
 # Default values (can be overridden by environment variables)
 SSL_COUNTRY="${SSL_COUNTRY:-US}"
@@ -22,9 +22,9 @@ CSR_FILE="${CERT_DIR}/server.csr"
 echo "Generating self-signed SSL certificate for ${SSL_COMMON_NAME}"
 echo "Certificate will be valid for ${SSL_DAYS} days"
 
-# Generate private key
+# Generate private key using modern openssl genpkey
 echo "Generating private key..."
-openssl genrsa -out "${KEY_FILE}" 2048
+openssl genpkey -algorithm RSA -out "${KEY_FILE}" -pkcs8 -pkeyopt rsa_keygen_bits:4096
 
 # Generate certificate signing request
 echo "Generating certificate signing request..."

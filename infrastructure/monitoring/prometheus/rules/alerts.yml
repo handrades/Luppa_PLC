@@ -45,7 +45,7 @@ groups:
     rules:
       # High response time alerts
       - alert: HighResponseTime
-        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 1.0
+        expr: histogram_quantile(0.95, sum by (le, job, instance) (rate(http_request_duration_seconds_bucket[5m]))) > 1.0
         for: 5m
         labels:
           severity: warning
@@ -64,7 +64,7 @@ groups:
 
       # Memory usage alerts
       - alert: HighMemoryUsage
-        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+        expr: (sum by (name) (container_memory_usage_bytes) / on (name) group_left() sum by (name) (container_spec_memory_limit_bytes > 0)) > 0.8
         for: 10m
         labels:
           severity: warning
@@ -73,7 +73,7 @@ groups:
           description: "Memory usage is {{ $value | humanizePercentage }} for more than 10 minutes."
 
       - alert: CriticalMemoryUsage
-        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.95
+        expr: (sum by (name) (container_memory_usage_bytes) / on (name) group_left() sum by (name) (container_spec_memory_limit_bytes > 0)) > 0.95
         for: 2m
         labels:
           severity: critical

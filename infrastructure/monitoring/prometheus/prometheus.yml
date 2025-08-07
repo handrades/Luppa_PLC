@@ -4,13 +4,13 @@
 global:
   # How frequently to scrape targets by default
   scrape_interval: 15s
-  
+
   # How long until a scrape request times out
   scrape_timeout: 10s
-  
+
   # How frequently to evaluate rules
   evaluation_interval: 15s
-  
+
   # External labels to add to any time series or alerts
   external_labels:
     monitor: 'luppa-monitor'
@@ -57,14 +57,13 @@ scrape_configs:
         target_label: __tmp_drop_bucket
         replacement: 'true'
 
-  # PostgreSQL metrics (via postgres_exporter)
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres:5432']
-    scrape_interval: 30s
-    scrape_timeout: 10s
-    # Note: postgres_exporter would need to be added as a separate service
-    # For now, we'll monitor via the API health checks
+  # PostgreSQL metrics - commented out until postgres_exporter is available
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres_exporter:9187']
+  #   scrape_interval: 30s
+  #   scrape_timeout: 10s
+  #   # Note: postgres_exporter service needs to be added to docker-compose
 
   # Redis metrics (via redis_exporter)
   - job_name: 'redis'
@@ -101,7 +100,7 @@ scrape_configs:
   # Custom health check endpoints
   - job_name: 'health-checks'
     static_configs:
-      - targets: 
+      - targets:
           - 'api:3000'
           - 'nginx:80'
     scrape_interval: 30s
@@ -124,18 +123,14 @@ scrape_configs:
     scrape_timeout: 10s
     metrics_path: /api/health
 
-# Storage configuration
-storage:
-  tsdb:
-    # Retention policies
-    retention.time: 30d
-    retention.size: 10GB
-    
-    # Block configuration
-    block.duration: 2h
-    
-    # Compaction configuration
-    compaction.block_range.max: 744h  # 31 days
+# Storage configuration - moved to CLI flags in docker-compose
+# Use --storage.tsdb.retention.time=30d and --storage.tsdb.retention.size=10GB
+# storage:
+#   tsdb:
+#     retention_time: 30d
+#     retention_size: 10GB
+#     block_duration: 2h
+#     max_block_duration: 744h
 
 # Remote write configuration (for external systems if needed)
 # remote_write:
