@@ -118,7 +118,7 @@ if (-not $SkipDocker) {
     
     try {
         # Start Docker services
-        docker-compose -f docker-compose.dev.yml up -d
+        docker-compose -f config/docker-compose.dev.yml up -d
         Write-Success "Docker services started"
         
         # Wait for services to be ready

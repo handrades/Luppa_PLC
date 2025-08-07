@@ -574,7 +574,7 @@ Task CI -Depends CheckDependencies, Lint -Description "Run all CI checks" {
 # ==================================================================
 
 # Variables for Docker configuration
-$script:ComposeFile = "docker-compose.dev.yml"
+$script:ComposeFile = "config/docker-compose.dev.yml"
 $script:ProjectName = "luppa-dev"
 $script:Services = @("postgres", "redis", "api", "web", "nginx")
 
