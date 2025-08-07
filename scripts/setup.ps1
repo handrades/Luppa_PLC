@@ -35,6 +35,9 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
+# Docker configuration
+$script:ComposeFile = "config/docker-compose.dev.yml"
+
 # Color functions for output
 function Write-Success { param($Message) Write-Host "✅ $Message" -ForegroundColor Green }
 function Write-Info { param($Message) Write-Host "ℹ️  $Message" -ForegroundColor Blue }
@@ -50,6 +53,47 @@ function Test-Command {
     catch {
         return $false
     }
+}
+
+function Invoke-DockerCompose {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string[]]$Arguments,
+        
+        [string]$ErrorMessage = "Docker Compose command failed"
+    )
+    
+    # Try modern Docker Compose plugin first
+    try {
+        $output = & docker compose version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $output -match "Docker Compose version") {
+            $fullArgs = @("compose", "-f", $script:ComposeFile) + $Arguments
+            & docker $fullArgs
+            if ($LASTEXITCODE -ne 0) { throw $ErrorMessage }
+            return
+        }
+    }
+    catch {
+        # Docker Compose plugin not available, continue to standalone check
+    }
+    
+    # Fallback to standalone docker-compose if available
+    try {
+        if (Test-Command "docker-compose") {
+            $output = & docker-compose version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $fullArgs = @("-f", $script:ComposeFile) + $Arguments
+                & docker-compose $fullArgs
+                if ($LASTEXITCODE -ne 0) { throw $ErrorMessage }
+                return
+            }
+        }
+    }
+    catch {
+        # Standalone docker-compose also failed
+    }
+    
+    throw "Neither 'docker compose' plugin nor standalone 'docker-compose' is available. Please install Docker Compose."
 }
 
 function Test-DockerRunning {
@@ -118,7 +162,7 @@ if (-not $SkipDocker) {
     
     try {
         # Start Docker services
-        docker-compose -f config/docker-compose.dev.yml up -d
+        Invoke-DockerCompose -Arguments @("up", "-d") -ErrorMessage "Failed to start Docker services"
         Write-Success "Docker services started"
         
         # Wait for services to be ready

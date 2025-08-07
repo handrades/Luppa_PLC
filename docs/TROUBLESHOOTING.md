@@ -96,10 +96,10 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
    docker info
 
    # Start database services
-   docker-compose -f config/config/docker-compose.dev.yml up -d
+   docker-compose -f config/docker-compose.dev.yml up -d
 
    # Check database container status
-   docker-compose -f config/config/docker-compose.dev.yml ps
+   docker-compose -f config/docker-compose.dev.yml ps
    ```
 
 3. **Missing dependencies**:
@@ -160,15 +160,15 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
 1. **Check Docker containers**:
 
    ```powershell
-   docker-compose -f config/config/docker-compose.dev.yml ps
-   docker-compose -f config/config/docker-compose.dev.yml logs postgres
+   docker-compose -f config/docker-compose.dev.yml ps
+   docker-compose -f config/docker-compose.dev.yml logs postgres
    ```
 
 2. **Reset database container**:
 
    ```powershell
-   docker-compose -f config/config/docker-compose.dev.yml down
-   docker-compose -f config/config/docker-compose.dev.yml up -d
+   docker-compose -f config/docker-compose.dev.yml down
+   docker-compose -f config/docker-compose.dev.yml up -d
    ```
 
 3. **Check environment variables**:
@@ -299,7 +299,7 @@ Remove-Item -Recurse -Force apps/*/tsconfig.tsbuildinfo -ErrorAction SilentlyCon
 docker compose version
 
 # If not available, install Docker Desktop or Docker Compose plugin
-# The project now uses: docker compose -f config/config/docker-compose.dev.yml up
+# The project now uses: docker compose -f config/docker-compose.dev.yml up
 ```
 
 ### Docker containers start but web app fails with "Cannot find module 'vite'"
@@ -355,14 +355,14 @@ pnpm docker:dev
    docker system prune -f
 
    # Remove project containers specifically
-   docker compose -f config/config/docker-compose.dev.yml down --volumes --remove-orphans
+   docker compose -f config/docker-compose.dev.yml down --volumes --remove-orphans
    ```
 
 3. **Rebuild containers**:
 
    ```powershell
-   docker compose -f config/config/docker-compose.dev.yml build --no-cache
-   docker compose -f config/config/docker-compose.dev.yml up -d
+   docker compose -f config/docker-compose.dev.yml build --no-cache
+   docker compose -f config/docker-compose.dev.yml up -d
    ```
 
 ### "Docker is running but I don't know which URLs to access"
@@ -390,10 +390,10 @@ pnpm docker:dev
 
 ```powershell
 # Check running containers
-docker compose -f config/config/docker-compose.dev.yml ps
+docker compose -f config/docker-compose.dev.yml ps
 
 # View logs
-docker compose -f config/config/docker-compose.dev.yml logs -f
+docker compose -f config/docker-compose.dev.yml logs -f
 ```
 
 ### Docker development fixed - Volume mounting issues resolved
@@ -585,7 +585,7 @@ If none of these solutions work:
 
 1. **Check logs**:
    - Application logs in `logs/` directory
-   - Container logs: `docker-compose -f config/config/docker-compose.dev.yml logs`
+   - Container logs: `docker-compose -f config/docker-compose.dev.yml logs`
    - VS Code Developer Tools: Help → Toggle Developer Tools
 
 2. **Create an issue**:
@@ -624,7 +624,7 @@ netstat -ano | findstr :3000
 netstat -ano | findstr :3010
 
 # Docker debugging
-docker-compose -f config/config/docker-compose.dev.yml logs --tail=50
+docker-compose -f config/docker-compose.dev.yml logs --tail=50
 docker stats
 
 # File permissions (Linux/WSL)
