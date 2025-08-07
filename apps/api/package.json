@@ -2,6 +2,7 @@
   "name": "@luppa/api",
   "version": "1.0.0",
   "description": "Backend API server for PLC Inventory Management System",
+  "type": "commonjs",
   "private": true,
   "main": "dist/server.js",
   "scripts": {

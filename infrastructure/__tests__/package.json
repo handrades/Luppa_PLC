@@ -1,0 +1,16 @@
+{
+  "name": "__tests__",
+  "version": "1.0.0",
+  "main": "docker-compose.test.js",
+  "scripts": {
+    "test": "jest docker-compose.test.js --verbose"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "js-yaml": "^4.1.0"
+  }
+}

@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany } from 'typeorm';
-import { BaseEntity } from './BaseEntity.js';
-import { User } from './User.js';
+import { BaseEntity } from './BaseEntity';
+import { User } from './User';
 
 export interface RolePermissions {
   [key: string]: boolean | string[] | { [action: string]: boolean } | ActionPermissions;

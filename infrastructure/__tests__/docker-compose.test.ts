@@ -169,7 +169,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(apiService.build).toBeDefined();
-      expect(apiService.build?.context).toBe('.');
+      expect(apiService.build?.context).toBe('..');
       expect(apiService.build?.dockerfile).toBe('apps/api/Dockerfile.dev');
     });
 
@@ -191,7 +191,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have volume mounts for development', () => {
       // Check for selective source code mounting
-      expect(apiService.volumes).toContain('./apps/api/src:/workspace/apps/api/src');
+      expect(apiService.volumes).toContain('../apps/api/src:/workspace/apps/api/src');
       // Check for named volumes for dependencies
       const hasNodeModulesVolume = apiService.volumes?.some(vol =>
         vol.includes('api-node-modules:/workspace/node_modules')
@@ -214,7 +214,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have build configuration', () => {
       expect(webService.build).toBeDefined();
-      expect(webService.build?.context).toBe('.');
+      expect(webService.build?.context).toBe('..');
       expect(webService.build?.dockerfile).toBe('apps/web/Dockerfile.dev');
     });
 
@@ -229,7 +229,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have volume mounts for development', () => {
       // Check for selective source code mounting
-      expect(webService.volumes).toContain('./apps/web/src:/workspace/apps/web/src');
+      expect(webService.volumes).toContain('../apps/web/src:/workspace/apps/web/src');
       // Check for named volumes for dependencies
       const hasNodeModulesVolume = webService.volumes?.some(vol =>
         vol.includes('web-node-modules:/workspace/node_modules')

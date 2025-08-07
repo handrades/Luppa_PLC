@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { BaseEntity } from './BaseEntity.js';
-import { Role } from './Role.js';
+import { BaseEntity } from './BaseEntity';
+import { Role } from './Role';
 
 @Entity('users')
 @Index(['email'], { unique: true })

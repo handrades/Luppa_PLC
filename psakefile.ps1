@@ -51,9 +51,9 @@ Task LintMarkdown {
     Push-Location $PSScriptRoot
     try {
         if ($script:MarkdownFixMode -or $MarkdownFix) {
-            exec { markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+            exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
         } else {
-            exec { markdownlint "**/*.md" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json } "Markdown linting failed"
+            exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
         }
         Write-Host "✓ Markdown linting passed" -ForegroundColor Green
     }
@@ -70,7 +70,7 @@ Task LintJson {
         throw "jsonlint not found. Install with: npm install -g jsonlint"
     }
     
-    $jsonFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.json" -Recurse | 
+    $jsonFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.json" -Recurse -File | 
                  Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
     
     if ($jsonFiles.Count -eq 0) {
