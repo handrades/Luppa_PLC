@@ -8,7 +8,17 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from './env';
-import { Role, User } from '../entities/index';
+import {
+  AuditLog,
+  Cell,
+  Equipment,
+  Notification,
+  PLC,
+  Role,
+  Site,
+  Tag,
+  User,
+} from '../entities/index';
 
 /**
  * Database environment variables with validation and defaults
@@ -89,7 +99,7 @@ const createDataSource = () => {
     },
 
     // Entity and migration locations
-    entities: [User, Role],
+    entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],
     migrations: [
       process.env.NODE_ENV === 'production'
         ? 'dist/database/migrations/**/*.js'
@@ -184,6 +194,94 @@ export const isDatabaseHealthy = async (): Promise<boolean> => {
     // eslint-disable-next-line no-console
     console.error('Database health check failed:', error);
     return false;
+  }
+};
+
+/**
+ * Get detailed connection pool status and metrics
+ *
+ * @returns Connection pool statistics and health information
+ */
+export const getConnectionPoolStats = async (): Promise<{
+  isConnected: boolean;
+  totalConnections?: number;
+  idleConnections?: number;
+  runningConnections?: number;
+  poolConfig: {
+    min: number;
+    max: number;
+    connectionTimeoutMillis: number;
+    idleTimeoutMillis: number;
+  };
+}> => {
+  const dbConfig = createDatabaseConfig();
+
+  try {
+    if (!AppDataSource.isInitialized) {
+      return {
+        isConnected: false,
+        poolConfig: dbConfig.pool,
+      };
+    }
+
+    // Get connection pool statistics from the driver
+    // Note: Pool stats may not be available in all environments (like tests)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const driver = AppDataSource.driver as unknown as { master?: any; pool?: any };
+    const pool = driver.master || driver.pool || driver;
+
+    return {
+      isConnected: true,
+      totalConnections: pool?.totalCount || 0,
+      idleConnections: pool?.idleCount || 0,
+      runningConnections: pool?.waitingCount || 0,
+      poolConfig: dbConfig.pool,
+    };
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error getting connection pool stats:', error);
+    return {
+      isConnected: false,
+      poolConfig: dbConfig.pool,
+    };
+  }
+};
+
+/**
+ * Enhanced database health check with connection pool validation
+ *
+ * @returns Detailed health information including pool status
+ */
+export const getDatabaseHealth = async (): Promise<{
+  isHealthy: boolean;
+  responseTime: number;
+  poolStats: Awaited<ReturnType<typeof getConnectionPoolStats>>;
+  lastError?: string;
+}> => {
+  const startTime = Date.now();
+  let lastError: string | undefined;
+
+  try {
+    const isHealthy = await isDatabaseHealthy();
+    const responseTime = Date.now() - startTime;
+    const poolStats = await getConnectionPoolStats();
+
+    return {
+      isHealthy,
+      responseTime,
+      poolStats,
+    };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    lastError = error instanceof Error ? error.message : 'Unknown error';
+    const poolStats = await getConnectionPoolStats();
+
+    return {
+      isHealthy: false,
+      responseTime,
+      poolStats,
+      lastError,
+    };
   }
 };
 
