@@ -388,7 +388,19 @@ describe('Database Migration Tests', () => {
       const pendingMigrations = await testDataSource.showMigrations();
 
       // Should be no pending migrations after successful run
-      const hasPending = pendingMigrations.some(migration => !migration.isRun);
+      const hasPending = Array.isArray(pendingMigrations)
+        ? pendingMigrations.some(migration => {
+            // Handle both string[] and object[] types
+            if (typeof migration === 'string') {
+              // If it's a string array, presence indicates pending migration
+              return true;
+            }
+            // If it's an object, check the isRun property
+            return typeof migration === 'object' && migration !== null && 'isRun' in migration
+              ? !(migration as { isRun: boolean }).isRun
+              : false;
+          })
+        : false;
       expect(hasPending).toBe(false);
     });
   });

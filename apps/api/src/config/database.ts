@@ -8,6 +8,7 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from './env';
+import { raceWithTimeout } from '../utils/timeout';
 import { AuditLog } from '../entities/AuditLog';
 import { Cell } from '../entities/Cell';
 import { Equipment } from '../entities/Equipment';
@@ -269,6 +270,7 @@ export const getConnectionPoolStats = async (): Promise<{
 
 /**
  * Enhanced database health check with connection pool validation
+ * Includes 100ms timeout to guarantee fast health checks
  *
  * @returns Detailed health information including pool status
  */
@@ -282,9 +284,17 @@ export const getDatabaseHealth = async (): Promise<{
   let lastError: string | undefined;
 
   try {
-    const isHealthy = await isDatabaseHealthy();
+    // Run health check and pool stats concurrently, then race against 100ms timeout
+    const healthCheckPromise = isDatabaseHealthy();
+    const poolStatsPromise = getConnectionPoolStats();
+
+    const combinedPromise = Promise.all([healthCheckPromise, poolStatsPromise]).then(
+      ([isHealthy, poolStats]) => ({ isHealthy, poolStats })
+    );
+
+    const { isHealthy, poolStats } = await raceWithTimeout(combinedPromise, 100);
+
     const responseTime = Date.now() - startTime;
-    const poolStats = await getConnectionPoolStats();
 
     return {
       isHealthy,
@@ -294,7 +304,23 @@ export const getDatabaseHealth = async (): Promise<{
   } catch (error) {
     const responseTime = Date.now() - startTime;
     lastError = error instanceof Error ? error.message : 'Unknown error';
-    const poolStats = await getConnectionPoolStats();
+
+    // Try to get pool stats even on failure, but with a shorter timeout
+    let poolStats;
+    try {
+      poolStats = await raceWithTimeout(getConnectionPoolStats(), 50);
+    } catch (poolError) {
+      // Provide fallback pool stats if we can't get real ones
+      poolStats = {
+        isConnected: false,
+        poolConfig: {
+          min: 0,
+          max: 0,
+          connectionTimeoutMillis: 0,
+          idleTimeoutMillis: 0,
+        },
+      };
+    }
 
     return {
       isHealthy: false,

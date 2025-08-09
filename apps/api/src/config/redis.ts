@@ -4,6 +4,7 @@
 
 import { RedisClientType, createClient } from 'redis';
 import { config } from './env';
+import { raceWithTimeout } from '../utils/timeout';
 
 /**
  * Create Redis client configuration
@@ -153,5 +154,159 @@ export const updateSessionActivity = async (sessionId: string): Promise<void> =>
   if (session) {
     session.lastActivity = Date.now();
     await storeSession(sessionId, session);
+  }
+};
+
+/**
+ * Get Redis memory usage and performance metrics
+ */
+export const getRedisMetrics = async (): Promise<{
+  isConnected: boolean;
+  memoryUsage?: {
+    used: number;
+    peak: number;
+    rss: number;
+    overhead: number;
+  };
+  performance?: {
+    connectedClients: number;
+    commandsProcessed: number;
+    keyspaceHits: number;
+    keyspaceMisses: number;
+    hitRatio: number;
+  };
+  config?: {
+    maxmemory: number;
+    maxmemoryPolicy: string;
+  };
+  lastError?: string;
+}> => {
+  try {
+    if (!redisClient.isOpen) {
+      return { isConnected: false };
+    }
+
+    // Get memory, stats and client information
+    const serverInfo = await redisClient.info('memory');
+    const statsInfo = await redisClient.info('stats');
+    const clientsInfo = await redisClient.info('clients');
+    const configInfo = await redisClient.configGet(['maxmemory', 'maxmemory-policy']);
+
+    // Parse memory info (handle both CRLF and LF line endings)
+    const memoryLines = serverInfo.split(/\r?\n/);
+    const memoryData: { [key: string]: string } = {};
+    memoryLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        memoryData[key] = value;
+      }
+    });
+
+    // Parse stats info (handle both CRLF and LF line endings)
+    const statsLines = statsInfo.split(/\r?\n/);
+    const statsData: { [key: string]: string } = {};
+    statsLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        statsData[key] = value;
+      }
+    });
+
+    // Parse clients info (handle both CRLF and LF line endings)
+    const clientsLines = clientsInfo.split(/\r?\n/);
+    const clientsData: { [key: string]: string } = {};
+    clientsLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        clientsData[key] = value;
+      }
+    });
+
+    // Calculate hit ratio
+    const hits = parseInt(statsData.keyspace_hits || '0', 10);
+    const misses = parseInt(statsData.keyspace_misses || '0', 10);
+    const hitRatio = hits + misses > 0 ? (hits / (hits + misses)) * 100 : 0;
+
+    return {
+      isConnected: true,
+      memoryUsage: {
+        used: parseInt(memoryData.used_memory || '0', 10),
+        peak: parseInt(memoryData.used_memory_peak || '0', 10),
+        rss: parseInt(memoryData.used_memory_rss || '0', 10),
+        overhead: parseInt(memoryData.used_memory_overhead || '0', 10),
+      },
+      performance: {
+        connectedClients: parseInt(clientsData.connected_clients || '0', 10),
+        commandsProcessed: parseInt(statsData.total_commands_processed || '0', 10),
+        keyspaceHits: hits,
+        keyspaceMisses: misses,
+        hitRatio: Math.round(hitRatio * 100) / 100,
+      },
+      config: {
+        maxmemory: parseInt((configInfo as Record<string, string>).maxmemory || '0', 10),
+        maxmemoryPolicy: (configInfo as Record<string, string>)['maxmemory-policy'] || 'noeviction',
+      },
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      isConnected: false,
+      lastError: errorMessage,
+    };
+  }
+};
+
+/**
+ * Enhanced Redis health check with metrics and performance data
+ * Includes 100ms timeout to guarantee fast health checks
+ */
+export const getRedisHealth = async (): Promise<{
+  isHealthy: boolean;
+  responseTime: number;
+  metrics: Awaited<ReturnType<typeof getRedisMetrics>>;
+  lastError?: string;
+}> => {
+  const startTime = Date.now();
+
+  try {
+    // Run health check and metrics concurrently, then race against 100ms timeout
+    const healthCheckPromise = isRedisHealthy();
+    const metricsPromise = getRedisMetrics();
+
+    const combinedPromise = Promise.all([healthCheckPromise, metricsPromise]).then(
+      ([isHealthy, metrics]) => ({ isHealthy, metrics })
+    );
+
+    const { isHealthy, metrics } = await raceWithTimeout(combinedPromise, 100);
+
+    const responseTime = Date.now() - startTime;
+
+    return {
+      isHealthy,
+      responseTime,
+      metrics,
+    };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const lastError = error instanceof Error ? error.message : 'Unknown error';
+
+    // Try to get metrics even on failure, but with a shorter timeout
+    let metrics;
+    try {
+      metrics = await raceWithTimeout(getRedisMetrics(), 50);
+    } catch (metricsError) {
+      // Provide fallback metrics if we can't get real ones
+      metrics = {
+        isConnected: false,
+        lastError: lastError,
+      };
+    }
+
+    return {
+      isHealthy: false,
+      responseTime,
+      metrics,
+      lastError,
+    };
   }
 };

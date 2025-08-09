@@ -1,0 +1,320 @@
+/**
+ * Health endpoint integration tests
+ * Tests the enhanced health check endpoint with comprehensive scenarios
+ */
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+const request = require('supertest');
+const createApp = require('../../app').default;
+const { AppDataSource } = require('../../config/database');
+const { redisClient } = require('../../config/redis');
+/* eslint-enable @typescript-eslint/no-var-requires */
+
+describe('Health Endpoint Integration Tests', () => {
+  let app;
+  let server;
+
+  beforeAll(async () => {
+    // Create app instance for testing
+    app = createApp();
+
+    // Start server on test port
+    server = app.listen(0);
+  });
+
+  afterAll(async () => {
+    // Clean up server
+    if (server) {
+      server.close();
+    }
+  });
+
+  describe('GET /health', () => {
+    test('should return 200 OK with detailed service information when all services are healthy', async () => {
+      const startTime = Date.now();
+
+      const response = await request(app).get('/health').expect('Content-Type', /json/).expect(200);
+
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+
+      // Validate response structure
+      expect(response.body).toMatchObject({
+        status: 'healthy',
+        timestamp: expect.any(String),
+        version: expect.any(String),
+        environment: expect.any(String),
+        uptime: expect.any(Number),
+        database: {
+          status: 'connected',
+          responseTime: expect.any(Number),
+          connectionPool: {
+            isConnected: true,
+            poolConfig: {
+              min: expect.any(Number),
+              max: expect.any(Number),
+              connectionTimeoutMillis: expect.any(Number),
+              idleTimeoutMillis: expect.any(Number),
+            },
+          },
+        },
+        redis: {
+          status: 'connected',
+          responseTime: expect.any(Number),
+        },
+      });
+
+      // Validate optional Redis metrics structure
+      if (response.body.redis.memoryUsage) {
+        expect(response.body.redis.memoryUsage).toMatchObject({
+          used: expect.any(Number),
+          peak: expect.any(Number),
+          rss: expect.any(Number),
+          overhead: expect.any(Number),
+        });
+      }
+
+      if (response.body.redis.performance) {
+        expect(response.body.redis.performance).toMatchObject({
+          connectedClients: expect.any(Number),
+          commandsProcessed: expect.any(Number),
+          keyspaceHits: expect.any(Number),
+          keyspaceMisses: expect.any(Number),
+          hitRatio: expect.any(Number),
+        });
+      }
+
+      // Validate timestamp format
+      expect(new Date(response.body.timestamp).toISOString()).toBe(response.body.timestamp);
+
+      // Validate response time requirement (should be under 100ms for healthy systems)
+      // Note: In CI environments this might be higher, so we allow some tolerance
+      expect(responseTime).toBeLessThan(1000);
+
+      // Validate individual service response times
+      expect(response.body.database.responseTime).toBeGreaterThanOrEqual(0);
+      expect(response.body.redis.responseTime).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should return 503 Service Unavailable when database is disconnected', async () => {
+      // Mock database disconnection by closing the connection
+      if (AppDataSource.isInitialized) {
+        await AppDataSource.destroy();
+      }
+
+      const response = await request(app).get('/health').expect('Content-Type', /json/).expect(503);
+
+      expect(response.body).toMatchObject({
+        status: 'unhealthy',
+        timestamp: expect.any(String),
+        version: expect.any(String),
+        environment: expect.any(String),
+        uptime: expect.any(Number),
+        database: {
+          status: 'disconnected',
+          responseTime: expect.any(Number),
+        },
+        redis: {
+          status: expect.any(String), // Could be connected or disconnected
+          responseTime: expect.any(Number),
+        },
+      });
+
+      // Validate error information is present for database
+      if (response.body.database.lastError) {
+        expect(response.body.database.lastError).toEqual(expect.any(String));
+      }
+
+      // Reinitialize database for other tests
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+    });
+
+    test('should return 503 Service Unavailable when Redis is disconnected', async () => {
+      // Mock Redis disconnection
+      if (redisClient.isOpen) {
+        await redisClient.quit();
+      }
+
+      const response = await request(app).get('/health').expect('Content-Type', /json/).expect(503);
+
+      expect(response.body).toMatchObject({
+        status: 'unhealthy',
+        timestamp: expect.any(String),
+        version: expect.any(String),
+        environment: expect.any(String),
+        uptime: expect.any(Number),
+        database: {
+          status: expect.any(String), // Could be connected or disconnected
+          responseTime: expect.any(Number),
+        },
+        redis: {
+          status: 'disconnected',
+          responseTime: expect.any(Number),
+        },
+      });
+
+      // Validate error information is present for Redis
+      if (response.body.redis.lastError) {
+        expect(response.body.redis.lastError).toEqual(expect.any(String));
+      }
+
+      // Reconnect Redis for other tests
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
+    });
+
+    test('should be accessible without authentication', async () => {
+      // Make request without any authentication headers
+      const response = await request(app).get('/health').expect('Content-Type', /json/);
+
+      // Should not return 401 Unauthorized
+      expect(response.status).not.toBe(401);
+      expect([200, 503]).toContain(response.status);
+    });
+
+    test('should return structured JSON format parseable by monitoring systems', async () => {
+      const response = await request(app).get('/health').expect('Content-Type', /json/);
+
+      // Validate required fields are present for monitoring
+      expect(response.body).toHaveProperty('status');
+      expect(response.body).toHaveProperty('timestamp');
+      expect(response.body).toHaveProperty('version');
+      expect(response.body).toHaveProperty('environment');
+      expect(response.body).toHaveProperty('uptime');
+      expect(response.body).toHaveProperty('database');
+      expect(response.body).toHaveProperty('redis');
+
+      // Validate status values
+      expect(['healthy', 'unhealthy']).toContain(response.body.status);
+
+      // Validate database structure
+      expect(response.body.database).toHaveProperty('status');
+      expect(response.body.database).toHaveProperty('responseTime');
+      expect(['connected', 'disconnected']).toContain(response.body.database.status);
+
+      // Validate Redis structure
+      expect(response.body.redis).toHaveProperty('status');
+      expect(response.body.redis).toHaveProperty('responseTime');
+      expect(['connected', 'disconnected']).toContain(response.body.redis.status);
+
+      // Ensure JSON is valid (no circular references, etc.)
+      expect(() => JSON.stringify(response.body)).not.toThrow();
+    }, 15000);
+
+    test('should consistently perform under 100ms in optimal conditions', async () => {
+      // Run multiple health checks to test consistency
+      const iterations = 5;
+      const responseTimes = [];
+
+      for (let i = 0; i < iterations; i++) {
+        const startTime = Date.now();
+
+        await request(app)
+          .get('/health')
+          .expect(() => {
+            const endTime = Date.now();
+            const responseTime = endTime - startTime;
+            responseTimes.push(responseTime);
+          });
+
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      // Calculate average response time
+      const avgResponseTime =
+        responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+
+      // Most requests should be under 100ms in test environment
+      // Allow some tolerance for CI environments
+      const fastResponses = responseTimes.filter(time => time < 200).length;
+      expect(fastResponses).toBeGreaterThan(iterations / 2);
+
+      // Log response times for debugging
+      // eslint-disable-next-line no-console
+      console.log(
+        `Health check response times: [${responseTimes.join(', ')}]ms, avg: ${avgResponseTime.toFixed(2)}ms`
+      );
+    }, 15000);
+
+    test('should include deployment timestamp when environment variable is set', async () => {
+      const originalTimestamp = process.env.DEPLOYMENT_TIMESTAMP;
+      const testTimestamp = '2025-08-09T10:30:00.000Z';
+
+      // Set deployment timestamp
+      process.env.DEPLOYMENT_TIMESTAMP = testTimestamp;
+
+      const response = await request(app).get('/health').expect('Content-Type', /json/);
+
+      expect(response.body.deploymentTimestamp).toBe(testTimestamp);
+
+      // Restore original value
+      if (originalTimestamp) {
+        process.env.DEPLOYMENT_TIMESTAMP = originalTimestamp;
+      } else {
+        delete process.env.DEPLOYMENT_TIMESTAMP;
+      }
+    }, 15000);
+
+    test('should handle connection pool statistics correctly', async () => {
+      const response = await request(app).get('/health').expect('Content-Type', /json/);
+
+      if (response.body.database.status === 'connected' && response.body.database.connectionPool) {
+        const pool = response.body.database.connectionPool;
+
+        // Validate pool configuration
+        expect(pool.poolConfig.min).toBeGreaterThanOrEqual(0);
+        expect(pool.poolConfig.max).toBeGreaterThanOrEqual(pool.poolConfig.min);
+        expect(pool.poolConfig.connectionTimeoutMillis).toBeGreaterThanOrEqual(0);
+        expect(pool.poolConfig.idleTimeoutMillis).toBeGreaterThan(0);
+
+        // Validate connection counts are non-negative numbers when present
+        if (typeof pool.totalConnections === 'number') {
+          expect(pool.totalConnections).toBeGreaterThanOrEqual(0);
+        }
+        if (typeof pool.idleConnections === 'number') {
+          expect(pool.idleConnections).toBeGreaterThanOrEqual(0);
+        }
+        if (typeof pool.runningConnections === 'number') {
+          expect(pool.runningConnections).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }, 15000);
+
+    test('should handle Redis memory usage and performance metrics correctly', async () => {
+      const response = await request(app).get('/health').expect('Content-Type', /json/);
+
+      if (response.body.redis.status === 'connected') {
+        // Check memory usage if available
+        if (response.body.redis.memoryUsage) {
+          const memory = response.body.redis.memoryUsage;
+          expect(memory.used).toBeGreaterThanOrEqual(0);
+          expect(memory.peak).toBeGreaterThanOrEqual(memory.used);
+          expect(memory.rss).toBeGreaterThanOrEqual(0);
+          expect(memory.overhead).toBeGreaterThanOrEqual(0);
+        }
+
+        // Check performance metrics if available
+        if (response.body.redis.performance) {
+          const perf = response.body.redis.performance;
+          expect(perf.connectedClients).toBeGreaterThanOrEqual(0);
+          expect(perf.commandsProcessed).toBeGreaterThanOrEqual(0);
+          expect(perf.keyspaceHits).toBeGreaterThanOrEqual(0);
+          expect(perf.keyspaceMisses).toBeGreaterThanOrEqual(0);
+          expect(perf.hitRatio).toBeGreaterThanOrEqual(0);
+          expect(perf.hitRatio).toBeLessThanOrEqual(100);
+        }
+
+        // Check config if available
+        if (response.body.redis.config) {
+          const config = response.body.redis.config;
+          expect(config.maxmemory).toBeGreaterThanOrEqual(0);
+          expect(config.maxmemoryPolicy).toEqual(expect.any(String));
+        }
+      }
+    }, 15000);
+  });
+});

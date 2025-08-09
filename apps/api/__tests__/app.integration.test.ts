@@ -6,10 +6,82 @@ jest.mock('../src/config/database', () => ({
   isDatabaseHealthy: jest.fn().mockResolvedValue(true),
   initializeDatabase: jest.fn().mockResolvedValue(undefined),
   closeDatabase: jest.fn().mockResolvedValue(undefined),
+  getDatabaseHealth: jest.fn().mockResolvedValue({
+    isHealthy: true,
+    responseTime: 25,
+    poolStats: {
+      isConnected: true,
+      totalConnections: 5,
+      idleConnections: 3,
+      runningConnections: 2,
+      poolConfig: {
+        min: 2,
+        max: 10,
+        connectionTimeoutMillis: 30000,
+        idleTimeoutMillis: 600000,
+      },
+    },
+  }),
+  getConnectionPoolStats: jest.fn().mockResolvedValue({
+    isConnected: true,
+    totalConnections: 5,
+    idleConnections: 3,
+    runningConnections: 2,
+    poolConfig: {
+      min: 2,
+      max: 10,
+      connectionTimeoutMillis: 30000,
+      idleTimeoutMillis: 600000,
+    },
+  }),
 }));
 
 jest.mock('../src/config/redis', () => ({
   isRedisHealthy: jest.fn().mockResolvedValue(true),
+  getRedisHealth: jest.fn().mockResolvedValue({
+    isHealthy: true,
+    responseTime: 15,
+    metrics: {
+      isConnected: true,
+      memoryUsage: {
+        used: 1048576,
+        peak: 2097152,
+        rss: 1572864,
+        overhead: 524288,
+      },
+      performance: {
+        connectedClients: 2,
+        commandsProcessed: 1000,
+        keyspaceHits: 800,
+        keyspaceMisses: 200,
+        hitRatio: 80,
+      },
+      config: {
+        maxmemory: 67108864,
+        maxmemoryPolicy: 'allkeys-lru',
+      },
+    },
+  }),
+  getRedisMetrics: jest.fn().mockResolvedValue({
+    isConnected: true,
+    memoryUsage: {
+      used: 1048576,
+      peak: 2097152,
+      rss: 1572864,
+      overhead: 524288,
+    },
+    performance: {
+      connectedClients: 2,
+      commandsProcessed: 1000,
+      keyspaceHits: 800,
+      keyspaceMisses: 200,
+      hitRatio: 80,
+    },
+    config: {
+      maxmemory: 67108864,
+      maxmemoryPolicy: 'allkeys-lru',
+    },
+  }),
 }));
 
 describe('Application Integration Tests', () => {
@@ -50,7 +122,9 @@ describe('Application Integration Tests', () => {
       // Verify response structure
       expect(response.body.status).toBe('healthy');
       expect(response.body.timestamp).toBeDefined();
-      expect(response.body.version).toBe('1.0.0');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { version } = require('../package.json');
+      expect(response.body.version).toBe(version);
       expect(response.body.environment).toBe('test');
       expect(typeof response.body.uptime).toBe('number');
       expect(response.body.database.status).toBe('connected');
@@ -145,8 +219,8 @@ describe('Application Integration Tests', () => {
 
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1_000_000;
-
-      expect(durationMs).toBeLessThan(100); // Should respond within 100ms
+      const threshold = process.env.CI ? 250 : 100;
+      expect(durationMs).toBeLessThan(threshold);
     });
 
     it('should handle rapid successive requests', async () => {
