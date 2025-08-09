@@ -69,8 +69,8 @@ jobs:
                       -not -path "./node_modules/*" \
                       -not -path "./.bmad-core/*" \
                       -not -path "./.git/*" \
-                      -not -path "./dist/*" \
-                      -not -path "./build/*" \
+                      -not -path "*/dist/*" \
+                      -not -path "*/build/*" \
                       \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
                          -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
                          -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
