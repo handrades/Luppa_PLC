@@ -30,7 +30,7 @@ jest.mock('jsonwebtoken', () => {
   };
 });
 
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../../services/AuthService';
@@ -87,17 +87,14 @@ describe('AuthService', () => {
       findOne: jest.fn(),
     } as jest.Mocked<Repository<Role>>;
 
-    // Setup AppDataSource mock
-    const mockDataSource = {
-      getRepository: jest.fn(entity => {
-        if (entity === User) return mockUserRepository;
-        if (entity === Role) return mockRoleRepository;
-        return null;
-      }),
-    } as unknown as jest.Mocked<DataSource>;
-
+    // Configure the existing mocked AppDataSource
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('../../config/database').AppDataSource = mockDataSource;
+    const { AppDataSource } = require('../../config/database');
+    AppDataSource.getRepository.mockImplementation((entity: unknown) => {
+      if (entity === User) return mockUserRepository;
+      if (entity === Role) return mockRoleRepository;
+      return null;
+    });
 
     // Setup bcrypt mock
     mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
@@ -429,7 +426,9 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockRedis.removeSession).toHaveBeenCalledWith('user-123:token-id');
-      expect(mockRedis.blacklistToken).toHaveBeenCalledWith(tokenId, 24 * 60 * 60);
+      // Should blacklist both access and refresh tokens
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('token-id_access', 24 * 60 * 60);
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('token-id_refresh', 7 * 24 * 60 * 60);
     });
 
     it('should logout without token ID', async () => {

@@ -6,6 +6,7 @@
  */
 
 import bcrypt from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
@@ -113,35 +114,37 @@ export class AuthService {
    * Generate access and refresh tokens
    */
   async generateTokens(user: User, ipAddress: string, userAgent: string): Promise<AuthTokens> {
-    const tokenId = `${user.id}_${Date.now()}`;
+    const tokenId = `${user.id}_${randomUUID()}`;
 
-    // Create JWT payload
-    const payload: Omit<JwtPayload, 'type' | 'iat' | 'exp'> = {
+    // Create JWT payload (without registered claims)
+    const payload: Omit<JwtPayload, 'type' | 'iat' | 'exp' | 'iss' | 'aud'> = {
       sub: user.id,
       email: user.email,
       roleId: user.roleId,
       permissions: user.role?.permissions || {},
-      iss: jwtConfig.issuer,
-      aud: jwtConfig.audience,
     };
 
-    // Generate access token
+    // Generate access token with registered claims in options
     const accessToken = jwt.sign(
       { ...payload, type: TokenType.ACCESS, jti: `${tokenId}_access` },
       jwtConfig.secret,
       {
         expiresIn: jwtConfig.expiresIn,
         algorithm: jwtConfig.algorithm,
+        issuer: jwtConfig.issuer,
+        audience: jwtConfig.audience,
       }
     );
 
-    // Generate refresh token
+    // Generate refresh token with registered claims in options
     const refreshToken = jwt.sign(
       { ...payload, type: TokenType.REFRESH, jti: `${tokenId}_refresh` },
       jwtConfig.secret,
       {
         expiresIn: jwtConfig.refreshExpiresIn,
         algorithm: jwtConfig.algorithm,
+        issuer: jwtConfig.issuer,
+        audience: jwtConfig.audience,
       }
     );
 
@@ -155,7 +158,9 @@ export class AuthService {
       lastActivity: Date.now(),
     };
 
-    await storeSession(sessionKey, sessionData, 7 * 24 * 60 * 60); // 7 days
+    // Convert refresh token expiry to seconds for session TTL
+    const sessionTtlSeconds = this.parseTimeToSeconds(jwtConfig.refreshExpiresIn);
+    await storeSession(sessionKey, sessionData, sessionTtlSeconds);
 
     return {
       accessToken,
@@ -252,18 +257,62 @@ export class AuthService {
    * Logout user and invalidate tokens
    */
   async logout(userId: string, tokenId?: string): Promise<void> {
-    // Remove session from Redis using composite key if tokenId provided
     if (tokenId) {
-      // Extract base tokenId from jti (remove '_access' suffix if present)
-      const baseTokenId = tokenId.replace('_access', '');
+      // Extract base tokenId from jti (remove '_access' or '_refresh' suffix)
+      const baseTokenId = tokenId.replace(/_(access|refresh)$/, '');
       const sessionKey = `${userId}:${baseTokenId}`;
       await removeSession(sessionKey);
 
-      // Blacklist token
-      await blacklistToken(tokenId, 24 * 60 * 60); // 24 hours
+      // Blacklist both access and refresh tokens
+      const accessTokenId = tokenId.includes('_access') ? tokenId : `${baseTokenId}_access`;
+      const refreshTokenId = tokenId.includes('_refresh') ? tokenId : `${baseTokenId}_refresh`;
+
+      // Use configuration-based TTLs
+      const accessTtl = this.parseTimeToSeconds(jwtConfig.expiresIn);
+      const refreshTtl = this.parseTimeToSeconds(jwtConfig.refreshExpiresIn);
+
+      await Promise.all([
+        blacklistToken(accessTokenId, accessTtl),
+        blacklistToken(refreshTokenId, refreshTtl),
+      ]);
     } else {
-      // If no tokenId provided, remove all user sessions (legacy support)
-      await removeSession(userId);
+      // Remove all user sessions by scanning for the pattern
+      await this.removeAllUserSessions(userId);
+    }
+  }
+
+  /**
+   * Remove all sessions for a user
+   */
+  private async removeAllUserSessions(userId: string): Promise<void> {
+    // This would ideally use a Redis utility function to scan and delete
+    // For now, fall back to the legacy single session removal
+    await removeSession(userId);
+  }
+
+  /**
+   * Parse time string to seconds
+   */
+  private parseTimeToSeconds(timeStr: string): number {
+    const match = timeStr.match(/^(\d+)([dhms])$/);
+    if (!match) {
+      throw new Error(`Invalid time format: ${timeStr}`);
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    switch (unit) {
+      case 'd':
+        return value * 24 * 60 * 60; // days to seconds
+      case 'h':
+        return value * 60 * 60; // hours to seconds
+      case 'm':
+        return value * 60; // minutes to seconds
+      case 's':
+        return value; // seconds
+      default:
+        throw new Error(`Unsupported time unit: ${unit}`);
     }
   }
 
