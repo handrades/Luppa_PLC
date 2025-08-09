@@ -1,6 +1,6 @@
 /**
  * Authentication Routes
- * 
+ *
  * Provides login and token refresh endpoints with validation and rate limiting
  */
 
@@ -11,7 +11,9 @@ import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
-const authService = new AuthService();
+
+// Lazy instantiation to avoid issues with tests that don't mock AppDataSource
+const getAuthService = () => new AuthService();
 
 /**
  * Validation schemas
@@ -48,11 +50,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Attempt login
-    const result = await authService.login(
-      { email, password },
-      ipAddress,
-      userAgent
-    );
+    const result = await getAuthService().login({ email, password }, ipAddress, userAgent);
 
     // Log successful login
     console.log(`Successful login for user: ${email}`, {
@@ -112,11 +110,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Refresh tokens
-    const newTokens = await authService.refreshToken(
-      refreshToken,
-      ipAddress,
-      userAgent
-    );
+    const newTokens = await getAuthService().refreshToken(refreshToken, ipAddress, userAgent);
 
     console.log(`Token refreshed successfully`, {
       ipAddress,
@@ -164,7 +158,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
     const tokenId = req.user.jti;
 
     // Logout user
-    await authService.logout(req.user.sub, tokenId);
+    await getAuthService().logout(req.user.sub, tokenId);
 
     console.log(`User logged out successfully`, {
       userId: req.user.sub,
@@ -207,8 +201,8 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     }
 
     // Get user information from database
-    const user = await authService.getUserById(req.user.sub);
-    
+    const user = await getAuthService().getUserById(req.user.sub);
+
     if (!user || !user.isActive) {
       res.status(401).json({
         error: 'Account inactive',
