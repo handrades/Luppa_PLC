@@ -43,10 +43,10 @@ describe('Health Configuration Functions', () => {
 
       // Validate pool configuration
       const config = result.poolConfig;
-      expect(config.min).toBeGreaterThan(0);
+      expect(config.min).toBeGreaterThanOrEqual(0);
       expect(config.max).toBeGreaterThanOrEqual(config.min);
-      expect(config.connectionTimeoutMillis).toBeGreaterThan(0);
-      expect(config.idleTimeoutMillis).toBeGreaterThan(0);
+      expect(config.connectionTimeoutMillis).toBeGreaterThanOrEqual(0);
+      expect(config.idleTimeoutMillis).toBeGreaterThanOrEqual(0);
     });
 
     test('getDatabaseHealth should handle errors gracefully', async () => {

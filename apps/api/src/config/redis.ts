@@ -190,8 +190,8 @@ export const getRedisMetrics = async (): Promise<{
     const statsInfo = await redisClient.info('stats');
     const configInfo = await redisClient.configGet(['maxmemory', 'maxmemory-policy']);
 
-    // Parse memory info
-    const memoryLines = serverInfo.split('\r\n');
+    // Parse memory info (handle both CRLF and LF line endings)
+    const memoryLines = serverInfo.split(/\r?\n/);
     const memoryData: { [key: string]: string } = {};
     memoryLines.forEach(line => {
       const [key, value] = line.split(':');
@@ -200,8 +200,8 @@ export const getRedisMetrics = async (): Promise<{
       }
     });
 
-    // Parse stats info
-    const statsLines = statsInfo.split('\r\n');
+    // Parse stats info (handle both CRLF and LF line endings)
+    const statsLines = statsInfo.split(/\r?\n/);
     const statsData: { [key: string]: string } = {};
     statsLines.forEach(line => {
       const [key, value] = line.split(':');

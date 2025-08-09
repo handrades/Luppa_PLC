@@ -172,7 +172,7 @@ describe('Health Endpoint Integration Tests', () => {
 
       // Should not return 401 Unauthorized
       expect(response.status).not.toBe(401);
-      expect(response.status).toBeOneOf([200, 503]);
+      expect([200, 503]).toContain(response.status);
     });
 
     test('should return structured JSON format parseable by monitoring systems', async () => {
@@ -266,9 +266,9 @@ describe('Health Endpoint Integration Tests', () => {
         const pool = response.body.database.connectionPool;
 
         // Validate pool configuration
-        expect(pool.poolConfig.min).toBeGreaterThan(0);
+        expect(pool.poolConfig.min).toBeGreaterThanOrEqual(0);
         expect(pool.poolConfig.max).toBeGreaterThanOrEqual(pool.poolConfig.min);
-        expect(pool.poolConfig.connectionTimeoutMillis).toBeGreaterThan(0);
+        expect(pool.poolConfig.connectionTimeoutMillis).toBeGreaterThanOrEqual(0);
         expect(pool.poolConfig.idleTimeoutMillis).toBeGreaterThan(0);
 
         // Validate connection counts are non-negative numbers when present

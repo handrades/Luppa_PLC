@@ -86,7 +86,9 @@ describe('Health Endpoint Basic Tests', () => {
 
       process.env.DEPLOYMENT_TIMESTAMP = testTimestamp;
 
-      const response = await request(app).get('/health');
+      // Create fresh app instance to pick up the new environment variable
+      const freshApp = createApp();
+      const response = await request(freshApp).get('/health');
 
       expect(response.body.deploymentTimestamp).toBe(testTimestamp);
 

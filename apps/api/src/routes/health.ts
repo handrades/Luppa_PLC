@@ -186,6 +186,9 @@ router.get('/health', async (_req: Request, res: Response) => {
     }
 
     const statusCode = overallHealthy ? 200 : 503;
+
+    // Prevent caching by intermediaries
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.status(statusCode).json(healthResponse);
   } catch (error) {
     const versionInfo = getVersionInfo();

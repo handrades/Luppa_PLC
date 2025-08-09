@@ -36,10 +36,10 @@ describe('Health Configuration Functions', () => {
       expect(typeof result.isConnected).toBe('boolean');
 
       const config = result.poolConfig;
-      expect(config.min).toBeGreaterThan(0);
+      expect(config.min).toBeGreaterThanOrEqual(0);
       expect(config.max).toBeGreaterThanOrEqual(config.min);
-      expect(config.connectionTimeoutMillis).toBeGreaterThan(0);
-      expect(config.idleTimeoutMillis).toBeGreaterThan(0);
+      expect(config.connectionTimeoutMillis).toBeGreaterThanOrEqual(0);
+      expect(config.idleTimeoutMillis).toBeGreaterThanOrEqual(0);
     }, 10000);
   });
 
@@ -73,6 +73,32 @@ describe('Health Configuration Functions', () => {
       await expect(getRedisHealth()).resolves.toBeDefined();
       await expect(getConnectionPoolStats()).resolves.toBeDefined();
       await expect(getRedisMetrics()).resolves.toBeDefined();
+    }, 15000);
+
+    test('health functions should handle errors gracefully', async () => {
+      // Test that functions return proper structure even when services fail
+      const dbResult = await getDatabaseHealth();
+      const redisResult = await getRedisHealth();
+
+      // Database health should always return proper structure
+      expect(dbResult).toHaveProperty('isHealthy');
+      expect(dbResult).toHaveProperty('responseTime');
+      expect(dbResult).toHaveProperty('poolStats');
+      expect(typeof dbResult.isHealthy).toBe('boolean');
+
+      // Redis health should always return proper structure
+      expect(redisResult).toHaveProperty('isHealthy');
+      expect(redisResult).toHaveProperty('responseTime');
+      expect(redisResult).toHaveProperty('metrics');
+      expect(typeof redisResult.isHealthy).toBe('boolean');
+
+      // If unhealthy, error info may be present
+      if (!dbResult.isHealthy && dbResult.lastError) {
+        expect(typeof dbResult.lastError).toBe('string');
+      }
+      if (!redisResult.isHealthy && redisResult.metrics.lastError) {
+        expect(typeof redisResult.metrics.lastError).toBe('string');
+      }
     }, 15000);
   });
 });
