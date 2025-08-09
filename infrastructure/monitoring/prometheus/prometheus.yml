@@ -13,8 +13,8 @@ global:
 
   # External labels to add to any time series or alerts
   external_labels:
-    monitor: 'luppa-monitor'
-    environment: 'production'
+    monitor: "luppa-monitor"
+    environment: "production"
 
 # Alertmanager configuration (can be added when alertmanager is deployed)
 # alerting:
@@ -30,22 +30,22 @@ rule_files:
 # Scrape configuration
 scrape_configs:
   # Prometheus itself
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
     scrape_interval: 15s
     metrics_path: /metrics
 
   # API application metrics
-  - job_name: 'api'
+  - job_name: "api"
     static_configs:
-      - targets: ['api:9090']
+      - targets: ["api:9090"]
     scrape_interval: 15s
     metrics_path: /metrics
     scrape_timeout: 10s
     honor_labels: false
     params:
-      format: ['prometheus']
+      format: ["prometheus"]
     metric_relabel_configs:
       # Add service label
       - source_labels: [__name__]
@@ -53,9 +53,9 @@ scrape_configs:
         replacement: api
       # Drop high cardinality metrics if needed
       - source_labels: [__name__]
-        regex: 'http_request_duration_seconds_bucket'
+        regex: "http_request_duration_seconds_bucket"
         target_label: __tmp_drop_bucket
-        replacement: 'true'
+        replacement: "true"
 
   # PostgreSQL metrics - commented out until postgres_exporter is available
   # - job_name: 'postgres'
@@ -64,65 +64,63 @@ scrape_configs:
   #   scrape_interval: 30s
   #   scrape_timeout: 10s
   #   # Note: postgres_exporter service needs to be added to docker-compose
-
   # Redis metrics (via redis_exporter)
-  - job_name: 'redis'
+  - job_name: "redis"
     static_configs:
-      - targets: ['redis:6379']
+      - targets: ["redis:6379"]
     scrape_interval: 30s
     scrape_timeout: 10s
     # Note: redis_exporter would need to be added as a separate service
     # For now, we'll monitor via the API health checks
 
   # Nginx metrics (via nginx-prometheus-exporter)
-  - job_name: 'nginx'
+  - job_name: "nginx"
     static_configs:
-      - targets: ['nginx:80']
+      - targets: ["nginx:80"]
     scrape_interval: 30s
     scrape_timeout: 10s
     metrics_path: /nginx_status
     # Note: nginx stub_status module would need to be enabled
 
   # Node/System metrics (via node_exporter if deployed)
-  - job_name: 'node'
+  - job_name: "node"
     static_configs:
-      - targets: []  # Add node_exporter targets when available
+      - targets: [] # Add node_exporter targets when available
     scrape_interval: 15s
     scrape_timeout: 10s
 
   # Docker/Container metrics (via cAdvisor if deployed)
-  - job_name: 'cadvisor'
+  - job_name: "cadvisor"
     static_configs:
-      - targets: []  # Add cAdvisor targets when available
+      - targets: [] # Add cAdvisor targets when available
     scrape_interval: 30s
     scrape_timeout: 10s
 
   # Custom health check endpoints
-  - job_name: 'health-checks'
+  - job_name: "health-checks"
     static_configs:
       - targets:
-          - 'api:3000'
-          - 'nginx:80'
+          - "api:3000"
+          - "nginx:80"
     scrape_interval: 30s
     scrape_timeout: 5s
     metrics_path: /health
     params:
-      format: ['json']
+      format: ["json"]
     metric_relabel_configs:
       # Convert health check responses to metrics
       - source_labels: [__name__]
         target_label: __name__
-        regex: 'up'
-        replacement: 'service_up'
+        regex: "up"
+        replacement: "service_up"
 
   # Grafana metrics
-  - job_name: 'grafana'
+  - job_name: "grafana"
     static_configs:
-      - targets: ['grafana:3000']
+      - targets: ["grafana:3000"]
     scrape_interval: 30s
     scrape_timeout: 10s
     metrics_path: /api/health
-
 # Storage configuration - moved to CLI flags in docker-compose
 # Use --storage.tsdb.retention.time=30d and --storage.tsdb.retention.size=10GB
 # storage:

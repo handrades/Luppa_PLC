@@ -185,6 +185,9 @@ export class InitialSchema20250729082147 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX idx_plcs_equipment_id ON plcs(equipment_id)`);
     await queryRunner.query(`CREATE INDEX idx_plcs_make_model ON plcs(make, model)`);
     await queryRunner.query(`CREATE INDEX idx_plcs_tag_id ON plcs(tag_id)`);
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX idx_plcs_ip_address_unique ON plcs(ip_address) WHERE ip_address IS NOT NULL`
+    );
     await queryRunner.query(`CREATE INDEX idx_tags_plc_id ON tags(plc_id)`);
     await queryRunner.query(`CREATE INDEX idx_tags_name ON tags(name)`);
     await queryRunner.query(`CREATE INDEX idx_tags_data_type ON tags(data_type)`);

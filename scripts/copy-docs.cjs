@@ -2,42 +2,54 @@
 
 /**
  * Copy documentation files to the unified documentation output directory
- * 
+ *
  * This script:
  * 1. Copies markdown documentation files to the output directory
  * 2. Creates an index page for all documentation
  * 3. Organizes documentation by type (guides, architecture, etc.)
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 async function copyDocs() {
   try {
-    console.log('🔧 Copying documentation files...');
+    console.log("🔧 Copying documentation files...");
 
-    const baseDir = path.join(__dirname, '..');
-    const outputDir = path.join(baseDir, 'dist', 'docs');
-    
+    const baseDir = path.join(__dirname, "..");
+    const outputDir = path.join(baseDir, "dist", "docs");
+
     // Ensure output directory exists
     fs.mkdirSync(outputDir, { recursive: true });
 
     // Copy main documentation files
     const mainDocs = [
-      { src: 'README.md', dest: 'readme.md', title: 'Project Overview' },
-      { src: 'SETUP.md', dest: 'setup.md', title: 'Setup Guide' },
-      { src: 'CONTRIBUTING.md', dest: 'contributing.md', title: 'Contributing Guidelines' },
-      { src: 'ARCHITECTURE.md', dest: 'architecture.md', title: 'Architecture Overview' },
-      { src: 'TROUBLESHOOTING.md', dest: 'troubleshooting.md', title: 'Troubleshooting Guide' }
+      { src: "README.md", dest: "readme.md", title: "Project Overview" },
+      { src: "SETUP.md", dest: "setup.md", title: "Setup Guide" },
+      {
+        src: "CONTRIBUTING.md",
+        dest: "contributing.md",
+        title: "Contributing Guidelines",
+      },
+      {
+        src: "ARCHITECTURE.md",
+        dest: "architecture.md",
+        title: "Architecture Overview",
+      },
+      {
+        src: "TROUBLESHOOTING.md",
+        dest: "troubleshooting.md",
+        title: "Troubleshooting Guide",
+      },
     ];
 
-    const guidesDir = path.join(outputDir, 'guides');
+    const guidesDir = path.join(outputDir, "guides");
     fs.mkdirSync(guidesDir, { recursive: true });
 
     for (const doc of mainDocs) {
       const srcPath = path.join(baseDir, doc.src);
       const destPath = path.join(guidesDir, doc.dest);
-      
+
       if (fs.existsSync(srcPath)) {
         fs.copyFileSync(srcPath, destPath);
         console.log(`✅ Copied ${doc.src} to guides/${doc.dest}`);
@@ -45,12 +57,12 @@ async function copyDocs() {
     }
 
     // Copy architecture documentation
-    const archDir = path.join(outputDir, 'architecture');
-    const srcArchDir = path.join(baseDir, 'docs', 'architecture');
-    
+    const archDir = path.join(outputDir, "architecture");
+    const srcArchDir = path.join(baseDir, "docs", "architecture");
+
     if (fs.existsSync(srcArchDir)) {
       copyDirectoryRecursive(srcArchDir, archDir);
-      console.log('✅ Copied architecture documentation');
+      console.log("✅ Copied architecture documentation");
     }
 
     // Create main documentation index
@@ -184,14 +196,13 @@ async function copyDocs() {
 </body>
 </html>`;
 
-    const indexPath = path.join(outputDir, 'index.html');
+    const indexPath = path.join(outputDir, "index.html");
     fs.writeFileSync(indexPath, indexContent);
-    console.log('✅ Generated documentation index page');
+    console.log("✅ Generated documentation index page");
 
-    console.log('🎉 Documentation copying complete!');
-
+    console.log("🎉 Documentation copying complete!");
   } catch (error) {
-    console.error('❌ Error copying documentation:', error.message);
+    console.error("❌ Error copying documentation:", error.message);
     process.exit(1);
   }
 }
@@ -208,7 +219,7 @@ function copyDirectoryRecursive(source, target) {
   for (const file of files) {
     const sourcePath = path.join(source, file);
     const targetPath = path.join(target, file);
-    
+
     if (fs.statSync(sourcePath).isDirectory()) {
       copyDirectoryRecursive(sourcePath, targetPath);
     } else {

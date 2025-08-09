@@ -28,8 +28,12 @@ export const seedUsers = async (dataSource: DataSource): Promise<void> => {
 
   // Get roles for user assignment
   const adminRole = await roleRepository.findOne({ where: { name: 'Admin' } });
-  const engineerRole = await roleRepository.findOne({ where: { name: 'Engineer' } });
-  const viewerRole = await roleRepository.findOne({ where: { name: 'Viewer' } });
+  const engineerRole = await roleRepository.findOne({
+    where: { name: 'Engineer' },
+  });
+  const viewerRole = await roleRepository.findOne({
+    where: { name: 'Viewer' },
+  });
 
   if (!adminRole || !engineerRole || !viewerRole) {
     throw new Error('Required roles not found. Please run role seeding first.');

@@ -25,9 +25,78 @@ function Test-Command {
 # Default task
 Task Default -Depends Lint
 
-# Main linting task that runs all linters and tests
-Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckNewlines, CheckSecurity, CheckApiHealth, Test {
+# Main linting task that runs all linters and tests (matches GitHub Actions lint job)
+Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckFormatting, CheckNewlines, CheckSecurity, CheckApiHealth, Test {
     Write-Host "`nAll linting checks and tests completed! ✓" -ForegroundColor Green
+}
+
+# Type checking task (matches GitHub Actions type-check job)
+Task TypeCheck {
+    Write-Host "`nRunning TypeScript type checking..." -ForegroundColor Cyan
+    
+    if (-not (Test-Command "pnpm")) {
+        throw "pnpm not found. Please install pnpm first."
+    }
+    
+    Push-Location $PSScriptRoot
+    try {
+        # Type check API (matches GitHub Actions)
+        Write-Host "Type checking API..." -ForegroundColor Cyan
+        exec { pnpm --filter ./apps/api run type-check } "API type check failed"
+        Write-Host "✓ API type check passed" -ForegroundColor Green
+        
+        # Type check Web (matches GitHub Actions)
+        if (Test-Path "apps/web/package.json") {
+            Write-Host "Type checking Web..." -ForegroundColor Cyan
+            exec { pnpm --filter ./apps/web run type-check } "Web type check failed"
+            Write-Host "✓ Web type check passed" -ForegroundColor Green
+        } else {
+            Write-Host "No web package found - skipping web type check" -ForegroundColor Yellow
+        }
+        
+        Write-Host "✓ All type checks passed" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+# Build task (matches GitHub Actions build job)
+Task Build -Alias apps-build -Depends Lint, TypeCheck {
+    Write-Host "`nBuilding applications..." -ForegroundColor Cyan
+    
+    if (-not (Test-Command "pnpm")) {
+        throw "pnpm not found. Please install pnpm first."
+    }
+    
+    Push-Location $PSScriptRoot
+    try {
+        # Build shared types first if they exist
+        if (Test-Path "packages/shared-types/package.json") {
+            Write-Host "Building shared types..." -ForegroundColor Cyan
+            exec { pnpm --filter ./packages/shared-types run build } "Shared types build failed"
+            Write-Host "✓ Shared types build passed" -ForegroundColor Green
+        }
+        
+        # Build API (matches GitHub Actions)
+        Write-Host "Building API..." -ForegroundColor Cyan
+        exec { pnpm --filter ./apps/api run build } "API build failed"
+        Write-Host "✓ API build passed" -ForegroundColor Green
+        
+        # Build Web (matches GitHub Actions)
+        if (Test-Path "apps/web/package.json") {
+            Write-Host "Building Web..." -ForegroundColor Cyan
+            exec { pnpm --filter ./apps/web run build } "Web build failed"
+            Write-Host "✓ Web build passed" -ForegroundColor Green
+        } else {
+            Write-Host "No web package found - skipping web build" -ForegroundColor Yellow
+        }
+        
+        Write-Host "✓ All builds completed successfully" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 # Markdown linting task
@@ -166,6 +235,38 @@ Task LintTypeScript {
         }
     } else {
         Write-Host "No package.json found - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+    }
+}
+
+# Prettier formatting check task (matches GitHub Actions exactly)
+Task CheckFormatting {
+    Write-Host "`nChecking code formatting with Prettier..." -ForegroundColor Cyan
+    
+    # Check if we have a package.json and pnpm workspace
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        
+        # Check if format:check script exists in package.json
+        if ($packageJson.scripts -and $packageJson.scripts."format:check") {
+            Write-Host "Running Prettier format check..." -ForegroundColor Cyan
+            
+            if (-not (Test-Command "pnpm")) {
+                throw "pnpm not found. Please install pnpm first."
+            }
+            
+            Push-Location $PSScriptRoot
+            try {
+                exec { pnpm format:check } "Prettier format check failed"
+                Write-Host "✓ Code formatting check passed" -ForegroundColor Green
+            }
+            finally {
+                Pop-Location
+            }
+        } else {
+            Write-Host "No format:check script found in package.json - skipping formatting check" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "No package.json found - skipping formatting check" -ForegroundColor Yellow
     }
 }
 
@@ -440,6 +541,7 @@ Task Markdown -Alias md -Description "Run only markdown linting" -Depends LintMa
 Task Json -Description "Run only JSON linting" -Depends LintJson
 Task Yaml -Alias yml -Description "Run only YAML linting" -Depends LintYaml
 Task TypeScript -Alias ts -Description "Run only TypeScript/JavaScript linting" -Depends LintTypeScript
+Task Formatting -Alias format -Description "Run only Prettier formatting check" -Depends CheckFormatting
 Task Newlines -Description "Check that all files end with newlines" -Depends CheckNewlines
 Task Security -Description "Run only security checks" -Depends CheckSecurity
 Task ApiHealth -Description "Run only API health checks" -Depends CheckApiHealth
@@ -564,9 +666,10 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
     }
 }
 
-# CI task for continuous integration
-Task CI -Depends CheckDependencies, Lint -Description "Run all CI checks" {
-    Write-Host "`nCI checks passed! ✓" -ForegroundColor Green
+# CI task for continuous integration (matches GitHub Actions workflow exactly)
+Task CI -Depends CheckDependencies, Lint, TypeCheck, Build -Description "Run all CI checks exactly like GitHub Actions" {
+    Write-Host "`nCI checks completed successfully! ✓" -ForegroundColor Green
+    Write-Host "All GitHub Actions workflow steps passed locally." -ForegroundColor Green
 }
 
 # ==================================================================
@@ -737,7 +840,7 @@ Task DockerRestart -Alias restart -Description "Restart all services" {
 }
 
 # Build or rebuild all services
-Task DockerBuild -Alias build -Description "Build or rebuild all services" {
+Task DockerBuild -Alias docker-build -Description "Build or rebuild all services" {
     Write-Host "`nBuilding all services..." -ForegroundColor Cyan
     
     Invoke-DockerCompose -Arguments @("build", "--no-cache")
@@ -1220,7 +1323,7 @@ Task DockerHelp -Alias docker-help -Description "Show available Docker commands"
         @{Name="DockerUp (up)"; Description="Start all development services"},
         @{Name="DockerDown (down)"; Description="Stop and remove all containers"},
         @{Name="DockerRestart (restart)"; Description="Restart all services"},
-        @{Name="DockerBuild (build)"; Description="Build or rebuild all services"},
+        @{Name="DockerBuild (docker-build)"; Description="Build or rebuild all services"},
         @{Name="DockerLogs (logs)"; Description="View logs from all services"},
         @{Name="DockerLogsApi (logs-api)"; Description="View API service logs only"},
         @{Name="DockerLogsWeb (logs-web)"; Description="View web service logs only"},

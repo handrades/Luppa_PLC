@@ -53,7 +53,10 @@ const startServer = async (): Promise<void> => {
       } else if (error.code === 'EACCES') {
         logger.error(`Permission denied to bind to port ${config.port}`);
       } else {
-        logger.error('Server error', { error: error.message, code: error.code });
+        logger.error('Server error', {
+          error: error.message,
+          code: error.code,
+        });
       }
       process.exit(1);
     });
@@ -86,7 +89,9 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
           process.exit(0);
         })
         .catch(error => {
-          logger.error('Error closing database connections', { error: error.message });
+          logger.error('Error closing database connections', {
+            error: error.message,
+          });
           process.exit(1);
         });
     });

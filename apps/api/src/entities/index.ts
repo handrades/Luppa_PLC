@@ -1,3 +1,10 @@
 export { BaseEntity } from './BaseEntity';
 export { User } from './User';
 export { Role, type RolePermissions } from './Role';
+export { Site } from './Site';
+export { Cell } from './Cell';
+export { Equipment, EquipmentType } from './Equipment';
+export { PLC } from './PLC';
+export { Tag, TagDataType } from './Tag';
+export { AuditLog, AuditAction, RiskLevel } from './AuditLog';
+export { Notification } from './Notification';

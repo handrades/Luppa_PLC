@@ -10,7 +10,16 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { resolve } from 'path';
-import { Role, User } from '../entities/index.js';
+// Use file paths instead of barrel imports for ESM compatibility
+import { User } from '../entities/User';
+import { Role } from '../entities/Role';
+import { Site } from '../entities/Site';
+import { Cell } from '../entities/Cell';
+import { Equipment } from '../entities/Equipment';
+import { PLC } from '../entities/PLC';
+import { Tag } from '../entities/Tag';
+import { AuditLog } from '../entities/AuditLog';
+import { Notification } from '../entities/Notification';
 
 // Load environment variables from root directory
 // Use absolute path resolution to avoid dependency on current working directory
@@ -41,7 +50,7 @@ const createCliDataSource = () => {
     ssl: dbConfig.ssl,
 
     // Entity and migration locations
-    entities: [User, Role],
+    entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],
     migrations: ['src/database/migrations/**/*.ts'],
     subscribers: ['src/database/subscribers/**/*.ts'],
 

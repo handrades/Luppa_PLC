@@ -1,7 +1,7 @@
 # pnpm workspace configuration for Industrial Inventory Multi-App Framework
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 
 # Performance optimizations for air-gapped environments
 prefer-workspace-packages: true
@@ -9,11 +9,11 @@ save-workspace-protocol: rolling
 
 # Hoisting configuration for better dependency management
 hoist-pattern:
-  - "*"
+  - '*'
 
 # Registry configuration for air-gapped environments
 registries:
-  default: "https://registry.npmjs.org/"
+  default: 'https://registry.npmjs.org/'
 
 # Package resolution preferences
-resolution-mode: "highest"
+resolution-mode: 'highest'

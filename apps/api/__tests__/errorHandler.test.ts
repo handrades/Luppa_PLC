@@ -28,7 +28,9 @@ describe('Error Handling', () => {
 
   describe('Custom Error Classes', () => {
     it('should create AppError with correct properties', () => {
-      const error = new AppError('Test message', 400, 'TEST_ERROR', { detail: 'test' });
+      const error = new AppError('Test message', 400, 'TEST_ERROR', {
+        detail: 'test',
+      });
 
       expect(error.message).toBe('Test message');
       expect(error.statusCode).toBe(400);
@@ -38,7 +40,9 @@ describe('Error Handling', () => {
     });
 
     it('should create ValidationError with correct defaults', () => {
-      const error = new ValidationError('Validation failed', { field: 'email' });
+      const error = new ValidationError('Validation failed', {
+        field: 'email',
+      });
 
       expect(error.message).toBe('Validation failed');
       expect(error.statusCode).toBe(400);
@@ -119,7 +123,11 @@ describe('Error Handling', () => {
 
       // Test route that throws different types of errors
       testApp.get('/test-app-error', (req, res, next) => {
-        next(new AppError('Custom app error', 422, 'CUSTOM_ERROR', { field: 'test' }));
+        next(
+          new AppError('Custom app error', 422, 'CUSTOM_ERROR', {
+            field: 'test',
+          })
+        );
       });
 
       testApp.get('/test-validation-error', (req, res, next) => {

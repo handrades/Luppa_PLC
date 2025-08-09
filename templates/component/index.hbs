@@ -1,4 +1,8 @@
-export { {{pascalCase name}}, type {{pascalCase name}}Props } from './{{pascalCase name}}';
-{{#if (eq type 'context')}}
-export { {{pascalCase name}}Provider, use{{pascalCase name}} } from './{{pascalCase name}}';
+export {
+{{pascalCase name}}, type
+{{pascalCase name}}Props } from './{{pascalCase name}}';
+{{#if (eq type "context")}}
+  export {
+  {{pascalCase name}}Provider, use{{pascalCase name}}
+  } from './{{pascalCase name}}';
 {{/if}}

@@ -1,7 +1,7 @@
 # Docker Swarm Deployment Configuration for Luppa PLC Inventory System
 # Production-ready orchestration with high availability and rolling updates
 
-version: '3.8'
+version: "3.8"
 
 networks:
   luppa-prod:
@@ -90,7 +90,11 @@ services:
     secrets:
       - postgres-password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-luppa_prod}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-luppa_prod}",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -104,10 +108,10 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '2.0'
+          cpus: "2.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -155,10 +159,10 @@ services:
       resources:
         limits:
           memory: 256M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 128M
-          cpus: '0.1'
+          cpus: "0.1"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -197,7 +201,15 @@ services:
     secrets:
       - redis-password
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "$(cat /run/secrets/redis-password)", "ping"]
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "--no-auth-warning",
+          "-a",
+          "$(cat /run/secrets/redis-password)",
+          "ping",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -210,10 +222,10 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.25'
+          cpus: "0.25"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -250,7 +262,15 @@ services:
     secrets:
       - jwt-secret
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${API_PORT:-3000}/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${API_PORT:-3000}/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -264,10 +284,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -299,7 +319,15 @@ services:
       VITE_APP_VERSION: ${VITE_APP_VERSION:-latest}
       VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-warn}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:80",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -313,10 +341,10 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 256M
-          cpus: '0.25'
+          cpus: "0.25"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -354,7 +382,15 @@ services:
         target: /etc/ssl/private/server.key
         mode: 0400
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -367,10 +403,10 @@ services:
       resources:
         limits:
           memory: 256M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 128M
-          cpus: '0.25'
+          cpus: "0.25"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -391,17 +427,17 @@ services:
     networks:
       - luppa-monitoring
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--storage.tsdb.retention.size=10GB'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-      - '--log.level=info'
-      - '--web.external-url=http://localhost/prometheus'
-      - '--web.route-prefix=/'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--storage.tsdb.retention.size=10GB"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+      - "--log.level=info"
+      - "--web.external-url=http://localhost/prometheus"
+      - "--web.route-prefix=/"
     volumes:
       - prometheus-data:/prometheus
       - type: bind
@@ -413,7 +449,15 @@ services:
         target: /etc/prometheus/prometheus.yml
         mode: 0444
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -427,10 +471,10 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
       restart_policy:
         condition: on-failure
         delay: 10s
@@ -476,7 +520,15 @@ services:
         target: /etc/grafana/grafana.ini
         mode: 0444
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -490,10 +542,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 512M
-          cpus: '0.25'
+          cpus: "0.25"
       restart_policy:
         condition: on-failure
         delay: 10s
