@@ -4,28 +4,11 @@
  * Provides brute force protection for authentication endpoints
  */
 
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { Request, Response } from 'express';
+/* eslint-disable no-console */
 
-/**
- * Extract client IP address from request headers (proxy-aware) and ensure IPv6 compatibility
- */
-const getClientIP = (req: Request): string => {
-  const forwarded = req.headers['x-forwarded-for'] as string;
-  if (forwarded) {
-    const ip = forwarded.split(',')[0].trim();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ipKeyGenerator({ ip } as any);
-  }
-  const realIp = req.headers['x-real-ip'] as string;
-  if (realIp) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ipKeyGenerator({ ip: realIp } as any);
-  }
-  // Use the built-in ipKeyGenerator for proper IPv6 handling
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ipKeyGenerator(req as any);
-};
+import rateLimit from 'express-rate-limit';
+import { Request, Response } from 'express';
+import { getClientIP } from '../utils/ip';
 
 /**
  * Rate limiter for authentication endpoints
@@ -44,7 +27,7 @@ export const authRateLimit = rateLimit({
   keyGenerator: getClientIP,
   // Custom handler for when rate limit is exceeded
   handler: (req: Request, res: Response) => {
-    const ip = req.ip || 'unknown';
+    const ip = getClientIP(req);
     // eslint-disable-next-line no-console
     console.warn(`Rate limit exceeded for IP: ${ip}`, {
       ip,
@@ -59,12 +42,8 @@ export const authRateLimit = rateLimit({
       retryAfter: 60,
     });
   },
-  // Skip rate limiting for successful requests (optional)
-  skip: (_req: Request, res: Response) => {
-    // Skip rate limiting if the request was successful (2xx status)
-    // This only applies after the request has been processed
-    return res.statusCode < 400;
-  },
+  // Skip successful requests to only rate limit failed authentication attempts
+  skipSuccessfulRequests: true,
 });
 
 /**
@@ -83,7 +62,7 @@ export const strictAuthRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: getClientIP,
   handler: (req: Request, res: Response) => {
-    const ip = req.ip || 'unknown';
+    const ip = getClientIP(req);
     // eslint-disable-next-line no-console
     console.error(`Strict rate limit exceeded for IP: ${ip}`, {
       ip,
@@ -99,10 +78,8 @@ export const strictAuthRateLimit = rateLimit({
       retryAfter: 900, // 15 minutes
     });
   },
-  // Only apply to failed requests
-  skip: (_req: Request, res: Response) => {
-    return res.statusCode < 400;
-  },
+  // Skip successful requests to only rate limit failed authentication attempts
+  skipSuccessfulRequests: true,
 });
 
 /**

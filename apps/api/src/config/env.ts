@@ -39,6 +39,17 @@ const createValidatedConfig = () => {
     throw new Error(`Invalid PORT value: ${rawEnv.PORT}. Must be a number between 1 and 65535.`);
   }
 
+  // Validate and parse REDIS_PORT if provided
+  let redisPort: number | undefined;
+  if (rawEnv.REDIS_PORT) {
+    redisPort = parseInt(rawEnv.REDIS_PORT, 10);
+    if (isNaN(redisPort) || redisPort < 1 || redisPort > 65535) {
+      throw new Error(
+        `Invalid REDIS_PORT value: ${rawEnv.REDIS_PORT}. Must be a number between 1 and 65535.`
+      );
+    }
+  }
+
   // Validate NODE_ENV
   const validEnvironments = ['development', 'production', 'test'] as const;
   type ValidEnvironment = (typeof validEnvironments)[number];
@@ -85,7 +96,7 @@ const createValidatedConfig = () => {
     redis: {
       url: rawEnv.REDIS_URL,
       host: rawEnv.REDIS_HOST,
-      port: rawEnv.REDIS_PORT,
+      port: redisPort,
       password: rawEnv.REDIS_PASSWORD,
     },
   } as const;

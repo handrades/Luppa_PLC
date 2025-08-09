@@ -1,16 +1,19 @@
 import request from 'supertest';
 import { createApp } from '../src/app';
-import type { Express } from 'express';
 
-// Mock database health check for integration tests
+// Mock database and Redis health checks for integration tests
 jest.mock('../src/config/database', () => ({
   isDatabaseHealthy: jest.fn().mockResolvedValue(true),
   initializeDatabase: jest.fn().mockResolvedValue(undefined),
   closeDatabase: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../src/config/redis', () => ({
+  isRedisHealthy: jest.fn().mockResolvedValue(true),
+}));
+
 describe('Application Integration Tests', () => {
-  let app: Express;
+  let app;
 
   beforeAll(() => {
     app = createApp();

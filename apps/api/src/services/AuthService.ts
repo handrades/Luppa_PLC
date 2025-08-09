@@ -145,7 +145,8 @@ export class AuthService {
       }
     );
 
-    // Store session data in Redis
+    // Store session data in Redis with composite key for multi-device support
+    const sessionKey = `${user.id}:${tokenId}`;
     const sessionData: SessionData = {
       userId: user.id,
       loginTime: Date.now(),
@@ -154,7 +155,7 @@ export class AuthService {
       lastActivity: Date.now(),
     };
 
-    await storeSession(user.id, sessionData, 7 * 24 * 60 * 60); // 7 days
+    await storeSession(sessionKey, sessionData, 7 * 24 * 60 * 60); // 7 days
 
     return {
       accessToken,
@@ -180,14 +181,18 @@ export class AuthService {
       }
 
       // Validate session exists and update activity for access tokens only
-      if (decoded.type === TokenType.ACCESS) {
-        const session = await getSession(decoded.sub);
+      if (decoded.type === TokenType.ACCESS && decoded.jti) {
+        // Extract base tokenId from jti (remove '_access' suffix)
+        const baseTokenId = decoded.jti.replace('_access', '');
+        const sessionKey = `${decoded.sub}:${baseTokenId}`;
+
+        const session = await getSession(sessionKey);
         if (!session) {
           throw new Error('Session not found');
         }
 
         // Update session activity
-        await updateSessionActivity(decoded.sub);
+        await updateSessionActivity(sessionKey);
       }
 
       return decoded;
@@ -246,12 +251,18 @@ export class AuthService {
    * Logout user and invalidate tokens
    */
   async logout(userId: string, tokenId?: string): Promise<void> {
-    // Remove session from Redis
-    await removeSession(userId);
-
-    // Blacklist token if provided
+    // Remove session from Redis using composite key if tokenId provided
     if (tokenId) {
+      // Extract base tokenId from jti (remove '_access' suffix if present)
+      const baseTokenId = tokenId.replace('_access', '');
+      const sessionKey = `${userId}:${baseTokenId}`;
+      await removeSession(sessionKey);
+
+      // Blacklist token
       await blacklistToken(tokenId, 24 * 60 * 60); // 24 hours
+    } else {
+      // If no tokenId provided, remove all user sessions (legacy support)
+      await removeSession(userId);
     }
   }
 

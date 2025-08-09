@@ -4,18 +4,24 @@
  * Provides login and token refresh endpoints with validation and rate limiting
  */
 
-/* eslint-disable no-console */
-
 import { Request, Response, Router } from 'express';
 import Joi from 'joi';
 import { AuthService, LoginCredentials } from '../services/AuthService';
 import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
+import { logger } from '../config/logger';
+import { getClientIP } from '../utils/ip';
 
 const router: Router = Router();
 
-// Lazy instantiation to avoid issues with tests that don't mock AppDataSource
-const getAuthService = () => new AuthService();
+// Memoized AuthService instance to avoid repeated database connection overhead
+let authServiceInstance: AuthService | null = null;
+const getAuthService = (): AuthService => {
+  if (!authServiceInstance) {
+    authServiceInstance = new AuthService();
+  }
+  return authServiceInstance;
+};
 
 /**
  * Validation schemas
@@ -23,11 +29,11 @@ const getAuthService = () => new AuthService();
 const loginSchema = Joi.object({
   email: Joi.string().email().required().trim().lowercase(),
   password: Joi.string().min(8).max(128).required(),
-});
+}).unknown(false);
 
 const refreshTokenSchema = Joi.object({
   refreshToken: Joi.string().required(),
-});
+}).unknown(false);
 
 /**
  * POST /auth/login
@@ -36,11 +42,11 @@ const refreshTokenSchema = Joi.object({
 router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = loginSchema.validate(req.body);
+    const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
     if (error) {
       res.status(400).json({
         error: 'Validation error',
-        message: error.details[0].message,
+        message: error.details.map(detail => detail.message).join('; '),
       });
       return;
     }
@@ -48,14 +54,14 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
     const { email, password } = value as LoginCredentials;
 
     // Get client information for session tracking
-    const ipAddress = req.ip || 'unknown';
+    const ipAddress = getClientIP(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Attempt login
     const result = await getAuthService().login({ email, password }, ipAddress, userAgent);
 
     // Log successful login
-    console.log(`Successful login for user: ${email}`, {
+    logger.info('Successful login', {
       userId: result.user.id,
       email,
       ipAddress,
@@ -73,10 +79,10 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
     const message = error instanceof Error ? error.message : 'Authentication failed';
 
     // Log failed login attempt
-    console.warn(`Failed login attempt`, {
+    logger.warn('Failed login attempt', {
       email: req.body?.email,
       error: message,
-      ipAddress: req.ip,
+      ipAddress: getClientIP(req),
       userAgent: req.headers['user-agent'],
       timestamp: new Date().toISOString(),
     });
@@ -96,11 +102,11 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
 router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = refreshTokenSchema.validate(req.body);
+    const { error, value } = refreshTokenSchema.validate(req.body, { abortEarly: false });
     if (error) {
       res.status(400).json({
         error: 'Validation error',
-        message: error.details[0].message,
+        message: error.details.map(detail => detail.message).join('; '),
       });
       return;
     }
@@ -108,13 +114,13 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     const { refreshToken } = value;
 
     // Get client information
-    const ipAddress = req.ip || 'unknown';
+    const ipAddress = getClientIP(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Refresh tokens
     const newTokens = await getAuthService().refreshToken(refreshToken, ipAddress, userAgent);
 
-    console.log(`Token refreshed successfully`, {
+    logger.info('Token refreshed successfully', {
       ipAddress,
       userAgent,
       timestamp: new Date().toISOString(),
@@ -128,9 +134,9 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Token refresh failed';
 
-    console.warn(`Token refresh failed`, {
+    logger.warn('Token refresh failed', {
       error: message,
-      ipAddress: req.ip,
+      ipAddress: getClientIP(req),
       userAgent: req.headers['user-agent'],
       timestamp: new Date().toISOString(),
     });
@@ -162,10 +168,10 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
     // Logout user
     await getAuthService().logout(req.user.sub, tokenId);
 
-    console.log(`User logged out successfully`, {
+    logger.info('User logged out successfully', {
       userId: req.user.sub,
       email: req.user.email,
-      ipAddress: req.ip,
+      ipAddress: getClientIP(req),
       timestamp: new Date().toISOString(),
     });
 
@@ -175,7 +181,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Logout failed';
 
-    console.error(`Logout failed`, {
+    logger.error('Logout failed', {
       userId: req.user?.sub,
       error: message,
       timestamp: new Date().toISOString(),
@@ -232,7 +238,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to get user profile';
 
-    console.error(`Get user profile failed`, {
+    logger.error('Get user profile failed', {
       userId: req.user?.sub,
       error: message,
       timestamp: new Date().toISOString(),

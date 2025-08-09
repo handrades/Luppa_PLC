@@ -1,7 +1,7 @@
 # pnpm workspace configuration for Industrial Inventory Multi-App Framework
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - "apps/*"
+  - "packages/*"
 
 # Performance optimizations for air-gapped environments
 prefer-workspace-packages: true

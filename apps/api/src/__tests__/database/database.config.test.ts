@@ -16,7 +16,7 @@ jest.mock('../../config/database', () => {
     const database = process.env.DB_NAME || 'luppa_plc';
     const username = process.env.DB_USER || 'postgres';
     // nosemgrep: generic.secrets.security.detected-generic-secret - Test default, not a real secret
-    const password = process.env.DB_PASSWORD || 'password';
+    const password = process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'test-db-pass';
 
     // Validation logic
     if (isNaN(port) || port < 1 || port > 65535) {
@@ -129,7 +129,7 @@ describe('Database Configuration', () => {
       expect(config.port).toBe(5432);
       expect(config.database).toBe('luppa_plc');
       expect(config.username).toBe('postgres');
-      expect(config.password).toBe('password');
+      expect(config.password).toBe('test-db-pass');
       expect(config.pool.min).toBe(2);
       expect(config.pool.max).toBe(10);
       expect(config.pool.connectionTimeoutMillis).toBe(30000);

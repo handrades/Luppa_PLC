@@ -19,7 +19,7 @@ const createRedisConfig = () => {
   return {
     socket: {
       host: config.redis.host || 'localhost',
-      port: parseInt(config.redis.port || '6379', 10),
+      port: config.redis.port ? parseInt(config.redis.port.toString(), 10) : 6379,
     },
     password: config.redis.password || undefined,
   };

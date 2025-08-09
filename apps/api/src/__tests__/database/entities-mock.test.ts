@@ -34,6 +34,7 @@ describe('Database Entities Validation (Mock)', () => {
       host: 'localhost',
       port: 5432,
       username: 'mock',
+      // nosemgrep: generic.secrets.security.detected-generic-secret - Mock config for testing, not a real secret
       password: 'mock',
       database: 'mock',
       entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],

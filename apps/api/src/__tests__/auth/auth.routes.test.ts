@@ -4,10 +4,15 @@
  * Integration tests for authentication endpoints
  */
 
+// Set JWT_SECRET before any imports to prevent config errors
+import { TEST_JWT } from '../helpers/test-constants';
+process.env.JWT_SECRET = TEST_JWT.secret;
+
 import request from 'supertest';
 import express from 'express';
 import authRouter from '../../routes/auth';
 import { TokenType } from '../../config/jwt';
+import { TEST_CREDENTIALS, TEST_USER } from '../helpers/test-constants';
 
 // Mock dependencies first
 jest.mock('../../services/AuthService');
@@ -29,8 +34,12 @@ jest.mock('../../middleware/rateLimiter', () => ({
   strictAuthRateLimit: jest.fn((_req, _res, next) => next()),
 }));
 
+jest.mock('../../utils/ip', () => ({
+  getClientIP: jest.fn(() => '127.0.0.1'),
+}));
+
 jest.mock('../../middleware/auth', () => ({
-  authenticate: jest.fn((_req, _res, next) => next()),
+  authenticate: jest.fn(),
   optionalAuthenticate: jest.fn((_req, _res, next) => next()),
   authorize: jest.fn(() => (_req, _res, next) => next()),
   requireAdmin: jest.fn((_req, _res, next) => next()),
@@ -39,6 +48,8 @@ jest.mock('../../middleware/auth', () => ({
 
 describe('Auth Routes', () => {
   let app: express.Application;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { authenticate } = require('../../middleware/auth');
 
   beforeEach(() => {
     // Setup Express app with auth routes
@@ -53,12 +64,20 @@ describe('Auth Routes', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const AuthService = require('../../services/AuthService').AuthService;
     AuthService.mockImplementation(() => mockAuthService);
+
+    // Reset authenticate mock to default behavior (no authentication)
+    authenticate.mockImplementation((_req, res) => {
+      res.status(401).json({
+        error: 'Authentication required',
+        message: 'User not authenticated',
+      });
+    });
   });
 
   describe('POST /auth/login', () => {
     const validLoginData = {
-      email: 'test@example.com',
-      password: 'password123',
+      email: TEST_CREDENTIALS.email,
+      password: TEST_CREDENTIALS.password,
     };
 
     const mockLoginResult = {
@@ -67,14 +86,7 @@ describe('Auth Routes', () => {
         refreshToken: 'refresh-token-123',
       },
       user: {
-        id: 'user-123',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        roleId: 'role-123',
-        roleName: 'Admin',
-        permissions: { plc: { read: true } },
-        isActive: true,
+        ...TEST_USER,
         lastLogin: new Date(),
       },
     };
@@ -92,11 +104,22 @@ describe('Auth Routes', () => {
         message: 'Login successful',
         accessToken: 'access-token-123',
         refreshToken: 'refresh-token-123',
-        user: mockLoginResult.user,
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          roleId: 'role-123',
+          roleName: 'Admin',
+          permissions: { plc: { read: true } },
+          isActive: true,
+          // lastLogin is converted to string during JSON serialization
+          lastLogin: expect.any(String),
+        },
       });
 
       expect(mockAuthService.login).toHaveBeenCalledWith(
-        { email: 'test@example.com', password: 'password123' },
+        { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password },
         expect.any(String), // IP address
         expect.any(String) // User agent
       );
@@ -137,8 +160,8 @@ describe('Auth Routes', () => {
     it('should validate password length', async () => {
       // Arrange
       const shortPasswordData = {
-        email: 'test@example.com',
-        password: '123', // Too short
+        email: TEST_CREDENTIALS.email,
+        password: TEST_CREDENTIALS.shortPassword,
       };
 
       // Act
@@ -170,7 +193,7 @@ describe('Auth Routes', () => {
     it('should require password field', async () => {
       // Arrange
       const missingPasswordData = {
-        email: 'test@example.com',
+        email: TEST_CREDENTIALS.email,
       };
 
       // Act
@@ -187,7 +210,7 @@ describe('Auth Routes', () => {
       // Arrange
       const unnormalizedEmailData = {
         email: '  TEST@EXAMPLE.COM  ',
-        password: 'password123',
+        password: TEST_CREDENTIALS.password,
       };
 
       mockAuthService.login.mockResolvedValue(mockLoginResult);
@@ -197,7 +220,7 @@ describe('Auth Routes', () => {
 
       // Assert
       expect(mockAuthService.login).toHaveBeenCalledWith(
-        { email: 'test@example.com', password: 'password123' },
+        { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password },
         expect.any(String),
         expect.any(String)
       );
@@ -276,19 +299,16 @@ describe('Auth Routes', () => {
 
   describe('POST /auth/logout', () => {
     it('should successfully logout authenticated user', async () => {
-      // Arrange
-      const mockUser = {
-        sub: 'user-123',
-        email: 'test@example.com',
-        roleId: 'role-123',
-        permissions: { plc: { read: true } },
-        type: TokenType.ACCESS,
-        jti: 'token-123',
-      };
-
-      // Mock authentication middleware
-      app.use('/auth/logout', (req, _res, next) => {
-        req.user = mockUser;
+      // Arrange - Mock successful authentication
+      authenticate.mockImplementation((req, _res, next) => {
+        req.user = {
+          sub: TEST_USER.id,
+          email: TEST_USER.email,
+          roleId: TEST_USER.roleId,
+          permissions: TEST_USER.permissions,
+          type: 'ACCESS',
+          jti: TEST_JWT.tokenId,
+        };
         next();
       });
 
@@ -305,7 +325,7 @@ describe('Auth Routes', () => {
         message: 'Logout successful',
       });
 
-      expect(mockAuthService.logout).toHaveBeenCalledWith('user-123', 'token-123');
+      expect(mockAuthService.logout).toHaveBeenCalledWith(TEST_USER.id, TEST_JWT.tokenId);
     });
 
     it('should return 401 for unauthenticated request', async () => {
@@ -322,28 +342,24 @@ describe('Auth Routes', () => {
 
   describe('GET /auth/me', () => {
     const mockUser = {
-      id: 'user-123',
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
-      roleId: 'role-123',
+      ...TEST_USER,
       role: {
-        name: 'Admin',
-        permissions: { plc: { read: true } },
+        name: TEST_USER.roleName,
+        permissions: TEST_USER.permissions,
       },
-      isActive: true,
       lastLogin: new Date(),
     };
 
     it('should return user profile for authenticated user', async () => {
-      // Arrange
-      app.use('/auth/me', (req, _res, next) => {
+      // Arrange - Mock successful authentication
+      authenticate.mockImplementation((req, _res, next) => {
         req.user = {
-          sub: 'user-123',
-          email: 'test@example.com',
-          roleId: 'role-123',
-          permissions: { plc: { read: true } },
-          type: TokenType.ACCESS,
+          sub: TEST_USER.id,
+          email: TEST_USER.email,
+          roleId: TEST_USER.roleId,
+          permissions: TEST_USER.permissions,
+          type: 'ACCESS',
+          jti: TEST_JWT.tokenId,
         };
         next();
       });
@@ -372,14 +388,15 @@ describe('Auth Routes', () => {
     });
 
     it('should return 401 for inactive user', async () => {
-      // Arrange
-      app.use('/auth/me', (req, _res, next) => {
+      // Arrange - Mock successful authentication
+      authenticate.mockImplementation((req, _res, next) => {
         req.user = {
-          sub: 'user-123',
-          email: 'test@example.com',
-          roleId: 'role-123',
-          permissions: { plc: { read: true } },
-          type: TokenType.ACCESS,
+          sub: TEST_USER.id,
+          email: TEST_USER.email,
+          roleId: TEST_USER.roleId,
+          permissions: TEST_USER.permissions,
+          type: 'ACCESS',
+          jti: TEST_JWT.tokenId,
         };
         next();
       });
@@ -414,17 +431,16 @@ describe('Auth Routes', () => {
 
   describe('GET /auth/verify', () => {
     it('should verify valid token', async () => {
-      // Arrange
-      const mockUser = {
-        sub: 'user-123',
-        email: 'test@example.com',
-        roleId: 'role-123',
-        permissions: { plc: { read: true } },
-        type: TokenType.ACCESS,
-      };
-
-      app.use('/auth/verify', (req, _res, next) => {
-        req.user = mockUser;
+      // Arrange - Mock successful authentication
+      authenticate.mockImplementation((req, _res, next) => {
+        req.user = {
+          sub: 'user-123',
+          email: 'test@example.com',
+          roleId: 'role-123',
+          permissions: { plc: { read: true } },
+          type: TokenType.ACCESS,
+          jti: 'token-123',
+        };
         next();
       });
 

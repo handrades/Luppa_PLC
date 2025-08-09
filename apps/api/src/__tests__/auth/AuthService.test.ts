@@ -12,6 +12,7 @@ import { User } from '../../entities/User';
 import { Role } from '../../entities/Role';
 import { TokenType, jwtConfig } from '../../config/jwt';
 import * as redisConfig from '../../config/redis';
+import { TEST_CREDENTIALS, TEST_USER } from '../helpers/test-constants';
 
 // Mock dependencies
 jest.mock('../../config/database', () => ({
@@ -46,11 +47,11 @@ describe('AuthService', () => {
   } as Role;
 
   const mockUser = {
-    id: 'user-123',
-    email: 'test@example.com',
-    firstName: 'Test',
-    lastName: 'User',
-    passwordHash: 'hashed-password',
+    id: TEST_USER.id,
+    email: TEST_USER.email,
+    firstName: TEST_USER.firstName,
+    lastName: TEST_USER.lastName,
+    passwordHash: TEST_CREDENTIALS.hashedPassword,
     roleId: 'role-123',
     isActive: true,
     lastLogin: null,
@@ -108,7 +109,7 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should successfully authenticate valid credentials', async () => {
       // Arrange
-      const credentials = { email: 'test@example.com', password: 'password123' };
+      const credentials = { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -126,7 +127,10 @@ describe('AuthService', () => {
         where: { email: 'test@example.com' },
         relations: ['role'],
       });
-      expect(mockBcrypt.compare).toHaveBeenCalledWith('password123', 'hashed-password');
+      expect(mockBcrypt.compare).toHaveBeenCalledWith(
+        TEST_CREDENTIALS.password,
+        TEST_CREDENTIALS.hashedPassword
+      );
       expect(mockJwt.sign).toHaveBeenCalledTimes(2);
       expect(mockRedis.storeSession).toHaveBeenCalled();
       expect(mockUserRepository.save).toHaveBeenCalled();
@@ -150,7 +154,7 @@ describe('AuthService', () => {
 
     it('should throw error for non-existent user', async () => {
       // Arrange
-      const credentials = { email: 'nonexistent@example.com', password: 'password123' };
+      const credentials = { email: 'nonexistent@example.com', password: TEST_CREDENTIALS.password };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -164,7 +168,7 @@ describe('AuthService', () => {
 
     it('should throw error for inactive user', async () => {
       // Arrange
-      const credentials = { email: 'test@example.com', password: 'password123' };
+      const credentials = { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
       const inactiveUser = { ...mockUser, isActive: false };
@@ -179,7 +183,10 @@ describe('AuthService', () => {
 
     it('should throw error for invalid password', async () => {
       // Arrange
-      const credentials = { email: 'test@example.com', password: 'wrongpassword' };
+      const credentials = {
+        email: TEST_CREDENTIALS.email,
+        password: TEST_CREDENTIALS.wrongPassword,
+      };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -249,8 +256,8 @@ describe('AuthService', () => {
         audience: jwtConfig.audience,
       });
       expect(mockRedis.isTokenBlacklisted).toHaveBeenCalledWith('token-id');
-      expect(mockRedis.getSession).toHaveBeenCalledWith('user-123');
-      expect(mockRedis.updateSessionActivity).toHaveBeenCalledWith('user-123');
+      expect(mockRedis.getSession).toHaveBeenCalledWith('user-123:token-id');
+      expect(mockRedis.updateSessionActivity).toHaveBeenCalledWith('user-123:token-id');
       expect(result).toEqual(mockPayload);
     });
 
@@ -406,7 +413,7 @@ describe('AuthService', () => {
       await authService.logout(userId, tokenId);
 
       // Assert
-      expect(mockRedis.removeSession).toHaveBeenCalledWith(userId);
+      expect(mockRedis.removeSession).toHaveBeenCalledWith('user-123:token-id');
       expect(mockRedis.blacklistToken).toHaveBeenCalledWith(tokenId, 24 * 60 * 60);
     });
 
