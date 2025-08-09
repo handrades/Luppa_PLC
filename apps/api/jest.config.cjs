@@ -7,11 +7,7 @@ module.exports = {
     "^.+\\.ts$": [
       "ts-jest",
       {
-        tsconfig: {
-          module: "commonjs",
-          experimentalDecorators: true,
-          emitDecoratorMetadata: true,
-        },
+        tsconfig: "tsconfig.test.json",
       },
     ],
   },

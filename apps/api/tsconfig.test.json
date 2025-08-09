@@ -2,6 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": ["jest", "@types/supertest", "@types/node"]
   },
   "include": ["__tests__/**/*", "**/*.test.ts", "src/**/*"],
