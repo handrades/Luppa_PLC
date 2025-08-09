@@ -1,6 +1,6 @@
 /**
  * Authentication Service
- * 
+ *
  * Handles user authentication, JWT token generation/validation,
  * and session management with Redis.
  */
@@ -10,14 +10,14 @@ import jwt from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { JwtPayload, TokenType, jwtConfig, validateJwtConfig } from '../config/jwt';
-import { 
-  SessionData, 
-  blacklistToken, 
-  getSession, 
-  isTokenBlacklisted, 
+import {
+  SessionData,
+  blacklistToken,
+  getSession,
+  isTokenBlacklisted,
   removeSession,
   storeSession,
-  updateSessionActivity 
+  updateSessionActivity,
 } from '../config/redis';
 import { User } from '../entities/User';
 
@@ -59,7 +59,11 @@ export class AuthService {
   /**
    * Authenticate user with email and password
    */
-  async login(credentials: LoginCredentials, ipAddress: string, userAgent: string): Promise<LoginResult> {
+  async login(
+    credentials: LoginCredentials,
+    ipAddress: string,
+    userAgent: string
+  ): Promise<LoginResult> {
     const { email, password } = credentials;
 
     // Find user with role information
@@ -110,7 +114,7 @@ export class AuthService {
    */
   async generateTokens(user: User, ipAddress: string, userAgent: string): Promise<AuthTokens> {
     const tokenId = `${user.id}_${Date.now()}`;
-    
+
     // Create JWT payload
     const payload: Omit<JwtPayload, 'type' | 'iat' | 'exp'> = {
       sub: user.id,
@@ -171,7 +175,7 @@ export class AuthService {
       }) as JwtPayload;
 
       // Check if token is blacklisted
-      if (decoded.jti && await isTokenBlacklisted(decoded.jti)) {
+      if (decoded.jti && (await isTokenBlacklisted(decoded.jti))) {
         throw new Error('Token has been revoked');
       }
 
@@ -201,10 +205,14 @@ export class AuthService {
   /**
    * Refresh access token using refresh token
    */
-  async refreshToken(refreshToken: string, ipAddress: string, userAgent: string): Promise<AuthTokens> {
+  async refreshToken(
+    refreshToken: string,
+    ipAddress: string,
+    userAgent: string
+  ): Promise<AuthTokens> {
     // Validate refresh token
     const decoded = await this.validateToken(refreshToken);
-    
+
     if (decoded.type !== TokenType.REFRESH) {
       throw new Error('Invalid token type');
     }

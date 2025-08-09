@@ -83,10 +83,7 @@ const getVersion = (): string => {
  */
 router.get('/health', async (_req: Request, res: Response) => {
   try {
-    const [dbHealthy, redisHealthy] = await Promise.all([
-      isDatabaseHealthy(),
-      isRedisHealthy(),
-    ]);
+    const [dbHealthy, redisHealthy] = await Promise.all([isDatabaseHealthy(), isRedisHealthy()]);
     const overallHealthy = dbHealthy && redisHealthy;
 
     const healthResponse: HealthResponse = {

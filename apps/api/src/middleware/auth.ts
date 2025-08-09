@@ -1,6 +1,6 @@
 /**
  * Authentication Middleware
- * 
+ *
  * Validates JWT tokens and populates req.user with authenticated user information
  */
 
@@ -23,11 +23,15 @@ declare global {
 /**
  * Authentication middleware that validates JWT tokens
  */
-export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     // Extract token from Authorization header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         error: 'Authentication required',
@@ -56,7 +60,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     next();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Authentication failed';
-    
+
     // Map specific error messages to appropriate status codes
     let statusCode = 401;
     if (message.includes('expired')) {
@@ -77,10 +81,14 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 /**
  * Optional authentication middleware that doesn't fail if no token is provided
  */
-export const optionalAuthenticate = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuthenticate = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // No token provided, continue without authentication
       next();
@@ -88,7 +96,7 @@ export const optionalAuthenticate = async (req: Request, _res: Response, next: N
     }
 
     const token = authHeader.substring(7);
-    
+
     if (!token) {
       next();
       return;
@@ -107,6 +115,7 @@ export const optionalAuthenticate = async (req: Request, _res: Response, next: N
     next();
   } catch (error) {
     // Log error but continue without authentication
+    // eslint-disable-next-line no-console
     console.error('Optional authentication error:', error);
     req.user = undefined;
     next();
@@ -117,8 +126,10 @@ export const optionalAuthenticate = async (req: Request, _res: Response, next: N
  * Role-based authorization middleware
  */
 export const authorize = (requiredPermissions: string[] | string) => {
-  const permissions = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
-  
+  const permissions = Array.isArray(requiredPermissions)
+    ? requiredPermissions
+    : [requiredPermissions];
+
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
@@ -130,12 +141,12 @@ export const authorize = (requiredPermissions: string[] | string) => {
 
     // Check if user has required permissions
     const userPermissions = req.user.permissions;
-    
+
     const hasPermission = permissions.some(permission => {
       // Handle dot notation for nested permissions (e.g., 'plc.read')
       const keys = permission.split('.');
       let current: unknown = userPermissions;
-      
+
       for (const key of keys) {
         if (current && typeof current === 'object' && key in current) {
           current = (current as Record<string, unknown>)[key];
@@ -143,7 +154,7 @@ export const authorize = (requiredPermissions: string[] | string) => {
           return false;
         }
       }
-      
+
       return current === true;
     });
 
@@ -167,7 +178,11 @@ export const requireAdmin = authorize(['admin']);
 /**
  * Active user check middleware
  */
-export const requireActiveUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const requireActiveUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   if (!req.user) {
     res.status(401).json({
       error: 'Authentication required',
@@ -180,7 +195,7 @@ export const requireActiveUser = async (req: Request, res: Response, next: NextF
     // Verify user is still active in database
     const authService = new AuthService();
     const user = await authService.getUserById(req.user.sub);
-    
+
     if (!user || !user.isActive) {
       res.status(401).json({
         error: 'Account inactive',

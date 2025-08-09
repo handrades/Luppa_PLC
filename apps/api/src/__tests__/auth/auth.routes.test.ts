@@ -1,6 +1,6 @@
 /**
  * Authentication Routes Tests
- * 
+ *
  * Integration tests for authentication endpoints
  */
 
@@ -48,8 +48,9 @@ describe('Auth Routes', () => {
 
     // Reset mocks
     jest.clearAllMocks();
-    
+
     // Setup AuthService mock implementation
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const AuthService = require('../../services/AuthService').AuthService;
     AuthService.mockImplementation(() => mockAuthService);
   });
@@ -83,9 +84,7 @@ describe('Auth Routes', () => {
       mockAuthService.login.mockResolvedValue(mockLoginResult);
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(validLoginData);
+      const response = await request(app).post('/auth/login').send(validLoginData);
 
       // Assert
       expect(response.status).toBe(200);
@@ -99,7 +98,7 @@ describe('Auth Routes', () => {
       expect(mockAuthService.login).toHaveBeenCalledWith(
         { email: 'test@example.com', password: 'password123' },
         expect.any(String), // IP address
-        expect.any(String)  // User agent
+        expect.any(String) // User agent
       );
     });
 
@@ -108,9 +107,7 @@ describe('Auth Routes', () => {
       mockAuthService.login.mockRejectedValue(new Error('Invalid credentials'));
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(validLoginData);
+      const response = await request(app).post('/auth/login').send(validLoginData);
 
       // Assert
       expect(response.status).toBe(401);
@@ -128,9 +125,7 @@ describe('Auth Routes', () => {
       };
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(invalidEmailData);
+      const response = await request(app).post('/auth/login').send(invalidEmailData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -147,9 +142,7 @@ describe('Auth Routes', () => {
       };
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(shortPasswordData);
+      const response = await request(app).post('/auth/login').send(shortPasswordData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -165,9 +158,7 @@ describe('Auth Routes', () => {
       };
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(missingEmailData);
+      const response = await request(app).post('/auth/login').send(missingEmailData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -183,9 +174,7 @@ describe('Auth Routes', () => {
       };
 
       // Act
-      const response = await request(app)
-        .post('/auth/login')
-        .send(missingPasswordData);
+      const response = await request(app).post('/auth/login').send(missingPasswordData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -204,9 +193,7 @@ describe('Auth Routes', () => {
       mockAuthService.login.mockResolvedValue(mockLoginResult);
 
       // Act
-      await request(app)
-        .post('/auth/login')
-        .send(unnormalizedEmailData);
+      await request(app).post('/auth/login').send(unnormalizedEmailData);
 
       // Assert
       expect(mockAuthService.login).toHaveBeenCalledWith(
@@ -232,9 +219,7 @@ describe('Auth Routes', () => {
       mockAuthService.refreshToken.mockResolvedValue(mockRefreshResult);
 
       // Act
-      const response = await request(app)
-        .post('/auth/refresh')
-        .send(validRefreshData);
+      const response = await request(app).post('/auth/refresh').send(validRefreshData);
 
       // Assert
       expect(response.status).toBe(200);
@@ -247,7 +232,7 @@ describe('Auth Routes', () => {
       expect(mockAuthService.refreshToken).toHaveBeenCalledWith(
         'valid-refresh-token',
         expect.any(String), // IP address
-        expect.any(String)  // User agent
+        expect.any(String) // User agent
       );
     });
 
@@ -256,9 +241,7 @@ describe('Auth Routes', () => {
       mockAuthService.refreshToken.mockRejectedValue(new Error('Invalid token'));
 
       // Act
-      const response = await request(app)
-        .post('/auth/refresh')
-        .send(validRefreshData);
+      const response = await request(app).post('/auth/refresh').send(validRefreshData);
 
       // Assert
       expect(response.status).toBe(401);
@@ -270,9 +253,7 @@ describe('Auth Routes', () => {
 
     it('should require refreshToken field', async () => {
       // Act
-      const response = await request(app)
-        .post('/auth/refresh')
-        .send({});
+      const response = await request(app).post('/auth/refresh').send({});
 
       // Assert
       expect(response.status).toBe(400);
@@ -283,9 +264,7 @@ describe('Auth Routes', () => {
 
     it('should validate refreshToken as string', async () => {
       // Act
-      const response = await request(app)
-        .post('/auth/refresh')
-        .send({ refreshToken: 123 }); // Should be string
+      const response = await request(app).post('/auth/refresh').send({ refreshToken: 123 }); // Should be string
 
       // Assert
       expect(response.status).toBe(400);
@@ -331,8 +310,7 @@ describe('Auth Routes', () => {
 
     it('should return 401 for unauthenticated request', async () => {
       // Act
-      const response = await request(app)
-        .post('/auth/logout');
+      const response = await request(app).post('/auth/logout');
 
       // Assert
       expect(response.status).toBe(401);
@@ -424,8 +402,7 @@ describe('Auth Routes', () => {
 
     it('should return 401 for unauthenticated request', async () => {
       // Act
-      const response = await request(app)
-        .get('/auth/me');
+      const response = await request(app).get('/auth/me');
 
       // Assert
       expect(response.status).toBe(401);
@@ -471,8 +448,7 @@ describe('Auth Routes', () => {
 
     it('should return 401 for invalid token', async () => {
       // Act
-      const response = await request(app)
-        .get('/auth/verify');
+      const response = await request(app).get('/auth/verify');
 
       // Assert
       expect(response.status).toBe(401);
@@ -485,6 +461,7 @@ describe('Auth Routes', () => {
   describe('Rate limiting', () => {
     it('should apply rate limiting to login endpoint', async () => {
       // Assert that rate limiting middleware is mocked
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { authRateLimit, strictAuthRateLimit } = require('../../middleware/rateLimiter');
       expect(authRateLimit).toBeDefined();
       expect(strictAuthRateLimit).toBeDefined();
@@ -492,6 +469,7 @@ describe('Auth Routes', () => {
 
     it('should apply rate limiting to refresh endpoint', async () => {
       // Assert that rate limiting middleware is mocked
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { authRateLimit } = require('../../middleware/rateLimiter');
       expect(authRateLimit).toBeDefined();
     });

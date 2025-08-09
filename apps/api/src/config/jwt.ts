@@ -5,12 +5,12 @@
 // Get JWT secret with validation
 const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET;
-  
+
   // In test environment, provide a fallback
   if (process.env.NODE_ENV === 'test' && !secret) {
     return 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing';
   }
-  
+
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required');
   }

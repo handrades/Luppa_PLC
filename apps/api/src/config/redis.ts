@@ -2,7 +2,7 @@
  * Redis Configuration for Session Management and Caching
  */
 
-import { createClient } from 'redis';
+import { RedisClientType, createClient } from 'redis';
 import { config } from './env';
 
 /**
@@ -28,7 +28,7 @@ const createRedisConfig = () => {
 /**
  * Redis client instance
  */
-export const redisClient = createClient(createRedisConfig());
+export const redisClient: RedisClientType = createClient(createRedisConfig());
 
 /**
  * Initialize Redis connection
@@ -109,11 +109,7 @@ export const storeSession = async (
   sessionData: SessionData,
   ttlSeconds: number = 86400 // 24 hours
 ): Promise<void> => {
-  await redisClient.setEx(
-    sessionKeys.user(sessionId),
-    ttlSeconds,
-    JSON.stringify(sessionData)
-  );
+  await redisClient.setEx(sessionKeys.user(sessionId), ttlSeconds, JSON.stringify(sessionData));
 };
 
 /**

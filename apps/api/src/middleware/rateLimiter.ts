@@ -1,27 +1,30 @@
 /**
  * Rate Limiting Middleware
- * 
+ *
  * Provides brute force protection for authentication endpoints
  */
 
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 
 /**
- * Extract client IP address from request headers (proxy-aware)
+ * Extract client IP address from request headers (proxy-aware) and ensure IPv6 compatibility
  */
 const getClientIP = (req: Request): string => {
   const forwarded = req.headers['x-forwarded-for'] as string;
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const ip = forwarded.split(',')[0].trim();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ipKeyGenerator({ ip } as any);
   }
   const realIp = req.headers['x-real-ip'] as string;
   if (realIp) {
-    return realIp;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ipKeyGenerator({ ip: realIp } as any);
   }
-  // Handle both IPv4 and IPv6 addresses properly
-  const clientIp = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
-  return clientIp.replace(/^::ffff:/, ''); // Remove IPv6 prefix for IPv4-mapped addresses
+  // Use the built-in ipKeyGenerator for proper IPv6 handling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ipKeyGenerator(req as any);
 };
 
 /**
@@ -42,13 +45,14 @@ export const authRateLimit = rateLimit({
   // Custom handler for when rate limit is exceeded
   handler: (req: Request, res: Response) => {
     const ip = req.ip || 'unknown';
+    // eslint-disable-next-line no-console
     console.warn(`Rate limit exceeded for IP: ${ip}`, {
       ip,
       userAgent: req.headers['user-agent'],
       path: req.path,
       timestamp: new Date().toISOString(),
     });
-    
+
     res.status(429).json({
       error: 'Too many authentication attempts',
       message: 'Too many login attempts from this IP. Please try again in 1 minute.',
@@ -72,23 +76,26 @@ export const strictAuthRateLimit = rateLimit({
   max: 10, // Limit each IP to 10 requests per 15 minutes
   message: {
     error: 'Account temporarily locked',
-    message: 'Too many failed authentication attempts. Account is temporarily locked for 15 minutes.',
+    message:
+      'Too many failed authentication attempts. Account is temporarily locked for 15 minutes.',
   },
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: getClientIP,
   handler: (req: Request, res: Response) => {
     const ip = req.ip || 'unknown';
+    // eslint-disable-next-line no-console
     console.error(`Strict rate limit exceeded for IP: ${ip}`, {
       ip,
       userAgent: req.headers['user-agent'],
       path: req.path,
       timestamp: new Date().toISOString(),
     });
-    
+
     res.status(429).json({
       error: 'Account temporarily locked',
-      message: 'Too many failed authentication attempts. Account is temporarily locked for 15 minutes.',
+      message:
+        'Too many failed authentication attempts. Account is temporarily locked for 15 minutes.',
       retryAfter: 900, // 15 minutes
     });
   },

@@ -1,11 +1,19 @@
 /**
  * Authentication Middleware Tests
- * 
+ *
  * Unit tests for authentication and authorization middleware
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextFunction, Request, Response } from 'express';
-import { authenticate, authorize, optionalAuthenticate, requireActiveUser, requireAdmin } from '../../middleware/auth';
+import {
+  authenticate,
+  authorize,
+  optionalAuthenticate,
+  requireActiveUser,
+  requireAdmin,
+} from '../../middleware/auth';
 import { AuthService } from '../../services/AuthService';
 import { TokenType } from '../../config/jwt';
 

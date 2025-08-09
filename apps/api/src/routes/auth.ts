@@ -4,13 +4,15 @@
  * Provides login and token refresh endpoints with validation and rate limiting
  */
 
+/* eslint-disable no-console */
+
 import { Request, Response, Router } from 'express';
 import Joi from 'joi';
 import { AuthService, LoginCredentials } from '../services/AuthService';
 import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
 
-const router = Router();
+const router: Router = Router();
 
 // Lazy instantiation to avoid issues with tests that don't mock AppDataSource
 const getAuthService = () => new AuthService();

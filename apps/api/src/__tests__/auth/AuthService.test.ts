@@ -1,6 +1,6 @@
 /**
  * AuthService Tests
- * 
+ *
  * Comprehensive tests for authentication service functionality
  */
 
@@ -73,7 +73,7 @@ describe('AuthService', () => {
 
     // Setup AppDataSource mock
     const mockDataSource = {
-      getRepository: jest.fn((entity) => {
+      getRepository: jest.fn(entity => {
         if (entity === User) return mockUserRepository;
         if (entity === Role) return mockRoleRepository;
         return null;
@@ -114,9 +114,7 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true);
-      mockJwt.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+      mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       mockRedis.storeSession.mockResolvedValue();
       mockUserRepository.save.mockResolvedValue({ ...mockUser, lastLogin: new Date() });
 
@@ -159,8 +157,9 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent))
-        .rejects.toThrow('Invalid credentials');
+      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
+        'Invalid credentials'
+      );
     });
 
     it('should throw error for inactive user', async () => {
@@ -173,8 +172,9 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(inactiveUser);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent))
-        .rejects.toThrow('Invalid credentials');
+      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
+        'Invalid credentials'
+      );
     });
 
     it('should throw error for invalid password', async () => {
@@ -187,8 +187,9 @@ describe('AuthService', () => {
       mockBcrypt.compare.mockResolvedValue(false);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent))
-        .rejects.toThrow('Invalid credentials');
+      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
+        'Invalid credentials'
+      );
     });
 
     it('should trim and lowercase email', async () => {
@@ -199,9 +200,7 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true);
-      mockJwt.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+      mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       mockRedis.storeSession.mockResolvedValue();
       mockUserRepository.save.mockResolvedValue({ ...mockUser, lastLogin: new Date() });
 
@@ -268,8 +267,7 @@ describe('AuthService', () => {
       mockRedis.isTokenBlacklisted.mockResolvedValue(true);
 
       // Act & Assert
-      await expect(authService.validateToken(token))
-        .rejects.toThrow('Token has been revoked');
+      await expect(authService.validateToken(token)).rejects.toThrow('Token has been revoked');
     });
 
     it('should throw error for expired token', async () => {
@@ -282,8 +280,7 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(authService.validateToken(token))
-        .rejects.toThrow('Token expired');
+      await expect(authService.validateToken(token)).rejects.toThrow('Token expired');
     });
 
     it('should throw error for invalid token', async () => {
@@ -296,8 +293,7 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(authService.validateToken(token))
-        .rejects.toThrow('Invalid token');
+      await expect(authService.validateToken(token)).rejects.toThrow('Invalid token');
     });
 
     it('should throw error when session not found for access token', async () => {
@@ -314,8 +310,7 @@ describe('AuthService', () => {
       mockRedis.getSession.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.validateToken(token))
-        .rejects.toThrow('Session not found');
+      await expect(authService.validateToken(token)).rejects.toThrow('Session not found');
     });
   });
 
@@ -335,9 +330,7 @@ describe('AuthService', () => {
       mockJwt.verify.mockReturnValue(mockPayload);
       mockRedis.isTokenBlacklisted.mockResolvedValue(false);
       mockUserRepository.findOne.mockResolvedValue(mockUser);
-      mockJwt.sign
-        .mockReturnValueOnce('new-access-token')
-        .mockReturnValueOnce('new-refresh-token');
+      mockJwt.sign.mockReturnValueOnce('new-access-token').mockReturnValueOnce('new-refresh-token');
       mockRedis.storeSession.mockResolvedValue();
       mockRedis.blacklistToken.mockResolvedValue();
 
@@ -349,10 +342,7 @@ describe('AuthService', () => {
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
       });
-      expect(mockRedis.blacklistToken).toHaveBeenCalledWith(
-        'refresh-token-id',
-        expect.any(Number)
-      );
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('refresh-token-id', expect.any(Number));
     });
 
     it('should throw error for non-refresh token', async () => {
@@ -377,8 +367,9 @@ describe('AuthService', () => {
       mockRedis.updateSessionActivity.mockResolvedValue();
 
       // Act & Assert
-      await expect(authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent'))
-        .rejects.toThrow('Invalid token type');
+      await expect(
+        authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent')
+      ).rejects.toThrow('Invalid token type');
     });
 
     it('should throw error for inactive user', async () => {
@@ -396,8 +387,9 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(inactiveUser);
 
       // Act & Assert
-      await expect(authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent'))
-        .rejects.toThrow('User not found or inactive');
+      await expect(
+        authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent')
+      ).rejects.toThrow('User not found or inactive');
     });
   });
 

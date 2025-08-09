@@ -53,29 +53,34 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-// File transports with rotation (production and development)
-transports.push(
-  // Error logs
-  new DailyRotateFile({
-    filename: join(logsDir, 'error-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    level: 'error',
-    format: logFormat,
-    maxSize: '10m',
-    maxFiles: '30d',
-    zippedArchive: true,
-  }),
+// File transports with rotation (only when logs directory is accessible)
+try {
+  transports.push(
+    // Error logs
+    new DailyRotateFile({
+      filename: join(logsDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      level: 'error',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    }),
 
-  // Combined logs
-  new DailyRotateFile({
-    filename: join(logsDir, 'combined-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    format: logFormat,
-    maxSize: '10m',
-    maxFiles: '30d',
-    zippedArchive: true,
-  })
-);
+    // Combined logs
+    new DailyRotateFile({
+      filename: join(logsDir, 'combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.warn(`Warning: Could not create file log transports: ${error}`);
+}
 
 // Create the logger
 export const logger = winston.createLogger({
@@ -87,24 +92,7 @@ export const logger = winston.createLogger({
   },
   transports,
   // Handle uncaught exceptions and rejections
-  exceptionHandlers: [
-    new DailyRotateFile({
-      filename: join(logsDir, 'exceptions-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      format: logFormat,
-      maxSize: '10m',
-      maxFiles: '30d',
-    }),
-  ],
-  rejectionHandlers: [
-    new DailyRotateFile({
-      filename: join(logsDir, 'rejections-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      format: logFormat,
-      maxSize: '10m',
-      maxFiles: '30d',
-    }),
-  ],
+  exitOnError: false,
 });
 
 // Create a stream for morgan HTTP logging middleware
