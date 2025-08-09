@@ -4,6 +4,7 @@
 
 import { RedisClientType, createClient } from 'redis';
 import { config } from './env';
+import { createTimeout } from '../utils/timeout';
 
 /**
  * Create Redis client configuration
@@ -246,6 +247,7 @@ export const getRedisMetrics = async (): Promise<{
 
 /**
  * Enhanced Redis health check with metrics and performance data
+ * Includes 100ms timeout to guarantee fast health checks
  */
 export const getRedisHealth = async (): Promise<{
   isHealthy: boolean;
@@ -256,9 +258,16 @@ export const getRedisHealth = async (): Promise<{
   const startTime = Date.now();
 
   try {
-    const isHealthy = await isRedisHealthy();
+    // Race between the actual health check and a 100ms timeout
+    const healthCheckPromise = (async () => {
+      const isHealthy = await isRedisHealthy();
+      const metrics = await getRedisMetrics();
+      return { isHealthy, metrics };
+    })();
+
+    const { isHealthy, metrics } = await Promise.race([healthCheckPromise, createTimeout(100)]);
+
     const responseTime = Date.now() - startTime;
-    const metrics = await getRedisMetrics();
 
     return {
       isHealthy,
@@ -268,7 +277,21 @@ export const getRedisHealth = async (): Promise<{
   } catch (error) {
     const responseTime = Date.now() - startTime;
     const lastError = error instanceof Error ? error.message : 'Unknown error';
-    const metrics = await getRedisMetrics();
+
+    // Try to get metrics even on failure, but with a shorter timeout
+    let metrics;
+    try {
+      metrics = await Promise.race([
+        getRedisMetrics(),
+        createTimeout(50), // Shorter timeout for fallback
+      ]);
+    } catch (metricsError) {
+      // Provide fallback metrics if we can't get real ones
+      metrics = {
+        isConnected: false,
+        lastError: lastError,
+      };
+    }
 
     return {
       isHealthy: false,

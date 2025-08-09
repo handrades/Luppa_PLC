@@ -140,7 +140,7 @@ describe('Health Configuration Functions', () => {
 
       if (!result.isHealthy) {
         // Should have error information when unhealthy
-        const hasError = result.lastError || result.metrics.lastError;
+        const hasError = result.lastError || result.metrics?.lastError;
         if (hasError) {
           expect(typeof hasError).toBe('string');
           expect(hasError.length).toBeGreaterThan(0);

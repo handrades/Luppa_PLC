@@ -58,25 +58,45 @@ interface HealthResponse {
 }
 
 /**
- * Get version information from package.json
+ * Cached version string to avoid repeated filesystem reads
+ */
+let cachedVersion: string | null = null;
+
+/**
+ * Get version information from package.json (version is memoized, timestamp is dynamic)
  */
 const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => {
   try {
-    // Try to read version from package.json
-    let version = process.env.npm_package_version;
+    let version = cachedVersion;
 
-    if (!version) {
-      try {
-        // Fallback: read package.json directly
-        const packageJsonPath = join(__dirname, '../../../package.json');
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-        version = packageJson.version;
-      } catch (readError) {
-        version = '1.0.0';
+    // Only read version if not cached
+    if (version === null) {
+      // Try to read version from environment first
+      version = process.env.npm_package_version;
+
+      if (!version) {
+        try {
+          // Try reading from current working directory first (better for monorepos)
+          const cwdPackageJsonPath = join(process.cwd(), 'package.json');
+          const cwdPackageJson = JSON.parse(readFileSync(cwdPackageJsonPath, 'utf8'));
+          version = cwdPackageJson.version;
+        } catch (cwdError) {
+          try {
+            // Fallback: read package.json relative to this file
+            const packageJsonPath = join(__dirname, '../../../package.json');
+            const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+            version = packageJson.version;
+          } catch (readError) {
+            version = '1.0.0';
+          }
+        }
       }
+
+      // Cache the version (but not timestamp which can change)
+      cachedVersion = version || '1.0.0';
     }
 
-    // Get deployment timestamp from environment or build info
+    // Always read deployment timestamp fresh (for test environment compatibility)
     let deploymentTimestamp: string | undefined;
 
     if (process.env.DEPLOYMENT_TIMESTAMP) {
@@ -86,7 +106,7 @@ const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => 
     }
 
     return {
-      version: version || '1.0.0',
+      version: cachedVersion,
       deploymentTimestamp,
     };
   } catch (error) {
@@ -169,10 +189,10 @@ router.get('/health', async (_req: Request, res: Response) => {
       redis: {
         status: redisHealth.isHealthy ? 'connected' : 'disconnected',
         responseTime: redisHealth.responseTime,
-        memoryUsage: redisHealth.metrics.memoryUsage,
-        performance: redisHealth.metrics.performance,
-        config: redisHealth.metrics.config,
-        lastError: redisHealth.lastError || redisHealth.metrics.lastError,
+        memoryUsage: redisHealth.metrics?.memoryUsage,
+        performance: redisHealth.metrics?.performance,
+        config: redisHealth.metrics?.config,
+        lastError: redisHealth.lastError || redisHealth.metrics?.lastError,
       },
     };
 
