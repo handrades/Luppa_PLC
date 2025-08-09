@@ -82,8 +82,8 @@ jobs:
                       -not -path "./node_modules/*" \
                       -not -path "./.bmad-core/*" \
                       -not -path "./.git/*" \
-                      -not -path "./dist/*" \
-                      -not -path "./build/*" \
+                      -not -path "*/dist/*" \
+                      -not -path "*/build/*" \
                       \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
                          -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
                          -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
@@ -114,7 +114,7 @@ jobs:
 
           echo "Scanning for security anti-patterns..."
           # Basic security scan for common patterns using portable grep
-          if find . \( -path "./node_modules" -o -path "./.bmad-core" -o -path "./dist" -o -path "./build" \) -prune -o \( -name "*.js" -o -name "*.ts" -o -name "*.json" \) -print0 | xargs -0 -r grep -E -l "password[[:space:]]*[:=][[:space:]]*[\"'].*[\"']" 2>/dev/null; then
+          if find . \( -path "./node_modules" -o -path "./.bmad-core" -o -path "*/dist" -o -path "*/build" \) -prune -o \( -name "*.js" -o -name "*.ts" -o -name "*.json" \) -print0 | xargs -0 -r grep -E -l "password[[:space:]]*[:=][[:space:]]*[\"'].*[\"']" 2>/dev/null; then
             echo "⚠️ Potential hardcoded passwords found - please review"
           fi
           echo "✓ Security checks completed"
