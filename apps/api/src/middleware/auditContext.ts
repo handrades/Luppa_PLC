@@ -34,22 +34,12 @@ export const auditContextMiddleware = async (
         // Connect the query runner to ensure it has an active connection
         await queryRunner.connect();
 
-        // Set session variables that audit triggers will read using parameterized queries
-        if (userId) {
-          await queryRunner.query('SET app.current_user_id = $1', [userId]);
-        }
-
-        if (ipAddress) {
-          await queryRunner.query('SET app.client_ip = $1', [ipAddress]);
-        }
-
-        if (userAgent) {
-          await queryRunner.query('SET app.user_agent = $1', [userAgent]);
-        }
-
-        if (sessionId) {
-          await queryRunner.query('SET app.session_id = $1', [sessionId]);
-        }
+        // Always set session variables to prevent stale context from pooled connections
+        // Use empty string instead of NULL to avoid PostgreSQL GUC warnings
+        await queryRunner.query('SET app.current_user_id = $1', [userId || '']);
+        await queryRunner.query('SET app.client_ip = $1', [ipAddress || '']);
+        await queryRunner.query('SET app.user_agent = $1', [userAgent || '']);
+        await queryRunner.query('SET app.session_id = $1', [sessionId || '']);
 
         // Store query runner and manager on request for use in downstream operations
         req.auditQueryRunner = queryRunner;

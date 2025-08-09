@@ -171,13 +171,20 @@ describe('Audit Context Middleware', () => {
   });
 
   describe('Performance Requirements', () => {
-    it('should complete within 10ms performance threshold', async () => {
-      const startTime = Date.now();
-
+    it('should not log performance warning for normal execution', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      const duration = Date.now() - startTime;
-      expect(duration).toBeLessThan(10);
+      // Get and call the finish callback to trigger performance check
+      const finishCallback = (mockResponse.once as jest.Mock).mock.calls.find(
+        call => call[0] === 'finish'
+      )[1];
+      await finishCallback();
+
+      // Verify no performance warning was logged
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        'Audit middleware exceeded 10ms threshold',
+        expect.any(Object)
+      );
     });
 
     it('should log warning if execution exceeds 10ms threshold', async () => {
@@ -293,8 +300,8 @@ describe('Audit Context Middleware', () => {
   });
 
   describe('Integration with AppDataSource', () => {
-    it('should handle missing AppDataSource manager gracefully', async () => {
-      (AppDataSource as { manager?: unknown }).manager = undefined;
+    it('should handle uninitialized AppDataSource gracefully', async () => {
+      (AppDataSource as { isInitialized?: boolean }).isInitialized = false;
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 

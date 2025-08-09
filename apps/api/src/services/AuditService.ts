@@ -1,11 +1,13 @@
 import {
   AuditQueryOptions,
+  AuditQueryResult,
   AuditRepository,
   UserActivitySummary,
 } from '../repositories/AuditRepository';
 import { AuditAction, AuditLog, RiskLevel } from '../entities/AuditLog';
 import { logger } from '../config/logger';
 import { AuditError, AuditRepositoryError } from '../utils/auditErrors';
+import { EntityManager } from 'typeorm';
 
 /**
  * Service for audit log management and compliance reporting
@@ -14,14 +16,14 @@ import { AuditError, AuditRepositoryError } from '../utils/auditErrors';
 export class AuditService {
   private auditRepository: AuditRepository;
 
-  constructor(auditRepository?: AuditRepository) {
-    this.auditRepository = auditRepository || new AuditRepository();
+  constructor(entityManager?: EntityManager, auditRepository?: AuditRepository) {
+    this.auditRepository = auditRepository || new AuditRepository(entityManager);
   }
 
   /**
    * Get paginated audit logs with filtering
    */
-  async getAuditLogs(options: AuditQueryOptions) {
+  async getAuditLogs(options: AuditQueryOptions): Promise<AuditQueryResult> {
     try {
       return await this.auditRepository.findAuditLogs(options);
     } catch (error) {
@@ -225,8 +227,11 @@ export class AuditService {
       );
     }
 
-    // Check deletion patterns
-    if (statistics.actionBreakdown[AuditAction.DELETE] > statistics.totalChanges * 0.1) {
+    // Check deletion patterns (avoid division by zero)
+    if (
+      statistics.totalChanges > 0 &&
+      statistics.actionBreakdown[AuditAction.DELETE] > statistics.totalChanges * 0.1
+    ) {
       const deletePercent = Math.round(
         (statistics.actionBreakdown[AuditAction.DELETE] / statistics.totalChanges) * 100
       );

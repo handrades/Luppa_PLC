@@ -1,4 +1,4 @@
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { AuditAction, AuditLog, RiskLevel } from '../entities/AuditLog';
 import { AppDataSource } from '../config/database';
 import { AuditImmutabilityError } from '../utils/auditErrors';
@@ -9,9 +9,11 @@ import { AuditImmutabilityError } from '../utils/auditErrors';
  */
 export class AuditRepository {
   private repository: Repository<AuditLog>;
+  private manager: EntityManager;
 
-  constructor() {
-    this.repository = AppDataSource.getRepository(AuditLog);
+  constructor(entityManager?: EntityManager) {
+    this.manager = entityManager || AppDataSource.manager;
+    this.repository = this.manager.getRepository(AuditLog);
   }
 
   /**
@@ -233,7 +235,7 @@ export class AuditRepository {
           ? `${result.firstName} ${result.lastName}`
           : result.userEmail || 'Unknown User',
       actionCount: parseInt(result.actionCount),
-      lastAction: result.lastAction,
+      lastAction: new Date(result.lastAction),
     }));
   }
 

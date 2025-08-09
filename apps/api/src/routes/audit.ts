@@ -14,19 +14,12 @@ import { getClientIP } from '../utils/ip';
 
 const router: Router = Router();
 
-// Memoized AuditService instance with proper singleton pattern
-class AuditServiceSingleton {
-  private static instance: AuditService;
-
-  public static getInstance(): AuditService {
-    if (!AuditServiceSingleton.instance) {
-      AuditServiceSingleton.instance = new AuditService();
-    }
-    return AuditServiceSingleton.instance;
-  }
-}
-
-const getAuditService = (): AuditService => AuditServiceSingleton.getInstance();
+/**
+ * Get AuditService with request-scoped EntityManager for session context
+ */
+const getAuditService = (req: Request): AuditService => {
+  return new AuditService(req.auditEntityManager);
+};
 
 /**
  * Helper function to log access and check performance
@@ -125,7 +118,7 @@ router.get(
       }
 
       // Get audit logs
-      const result = await getAuditService().getAuditLogs(queryOptions);
+      const result = await getAuditService(req).getAuditLogs(queryOptions);
 
       // Log access with performance monitoring
       logAuditAccess(
@@ -184,7 +177,7 @@ router.get(
       }
 
       // Get high-risk events
-      const highRiskEvents = await getAuditService().getHighRiskEvents(limit);
+      const highRiskEvents = await getAuditService(req).getHighRiskEvents(limit);
 
       // Log access for security monitoring
       logger.info('High-risk audit events accessed', {
@@ -268,7 +261,7 @@ router.get(
       const defaultStartDate =
         startDate || new Date(defaultEndDate.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
 
-      const complianceReport = await getAuditService().generateComplianceReport(
+      const complianceReport = await getAuditService(req).generateComplianceReport(
         defaultStartDate,
         defaultEndDate,
         userId
@@ -342,7 +335,7 @@ router.get(
       const { id } = value;
 
       // Get audit log
-      const auditLog = await getAuditService().getAuditLogById(id);
+      const auditLog = await getAuditService(req).getAuditLogById(id);
 
       if (!auditLog) {
         res.status(404).json({
@@ -426,7 +419,7 @@ router.post(
       }
 
       // Generate compliance report
-      const complianceReport = await getAuditService().generateComplianceReport(
+      const complianceReport = await getAuditService(req).generateComplianceReport(
         reportStartDate,
         reportEndDate,
         userId
