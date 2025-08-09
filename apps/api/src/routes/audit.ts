@@ -95,7 +95,7 @@ const auditIdSchema = Joi.object({
 router.get(
   '/audit-logs',
   authenticate,
-  authorize('audit.read'),
+  authorize('audit:read'),
   async (req: Request, res: Response) => {
     const startTime = Date.now();
 
@@ -170,12 +170,18 @@ router.get(
 router.get(
   '/audit-logs/high-risk',
   authenticate,
-  authorize('audit.read'),
+  authorize('audit:read'),
   async (req: Request, res: Response) => {
     try {
-      // Optional limit parameter
+      // Optional limit parameter with safe parsing
       const limitStr = req.query.limit as string;
-      const limit = limitStr ? Math.min(Math.max(parseInt(limitStr, 10), 1), 100) : 50;
+      let limit = 50; // default value
+      if (limitStr) {
+        const parsedLimit = parseInt(limitStr, 10);
+        if (!isNaN(parsedLimit)) {
+          limit = Math.min(Math.max(parsedLimit, 1), 100);
+        }
+      }
 
       // Get high-risk events
       const highRiskEvents = await getAuditService().getHighRiskEvents(limit);
@@ -220,41 +226,42 @@ router.get(
  * Requires 'audit.read' permission
  * NOTE: Must be defined before /audit-logs/:id to avoid route conflicts
  */
+// Joi schema for statistics endpoint validation
+const statsQuerySchema = Joi.object({
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().optional(),
+  userId: Joi.string().uuid().optional(),
+})
+  .custom((value, helpers) => {
+    // Custom validation to ensure endDate is not before startDate
+    if (value.startDate && value.endDate && value.endDate < value.startDate) {
+      return helpers.error('date.endBeforeStart');
+    }
+    return value;
+  })
+  .messages({
+    'date.endBeforeStart': 'End date must not be before start date',
+  });
+
 router.get(
   '/audit-logs/stats',
   authenticate,
-  authorize('audit.read'),
+  authorize('audit:read'),
   async (req: Request, res: Response) => {
     try {
-      // Optional date range parameters
-      const startDateStr = req.query.startDate as string;
-      const endDateStr = req.query.endDate as string;
-      const userIdStr = req.query.userId as string;
+      // Validate query parameters using Joi schema
+      const { error, value } = statsQuerySchema.validate(req.query);
 
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
-
-      if (startDateStr) {
-        startDate = new Date(startDateStr);
-        if (isNaN(startDate.getTime())) {
-          res.status(400).json({
-            error: 'Invalid start date',
-            message: 'Start date must be a valid ISO date string',
-          });
-          return;
-        }
+      if (error) {
+        res.status(400).json({
+          error: 'Invalid query parameters',
+          message: error.details[0].message,
+          details: error.details,
+        });
+        return;
       }
 
-      if (endDateStr) {
-        endDate = new Date(endDateStr);
-        if (isNaN(endDate.getTime())) {
-          res.status(400).json({
-            error: 'Invalid end date',
-            message: 'End date must be a valid ISO date string',
-          });
-          return;
-        }
-      }
+      const { startDate, endDate, userId } = value;
 
       // Generate basic statistics (could reuse compliance report logic)
       const defaultEndDate = endDate || new Date();
@@ -264,7 +271,7 @@ router.get(
       const complianceReport = await getAuditService().generateComplianceReport(
         defaultStartDate,
         defaultEndDate,
-        userIdStr
+        userId
       );
 
       // Extract statistics from report
@@ -318,7 +325,7 @@ router.get(
 router.get(
   '/audit-logs/:id',
   authenticate,
-  authorize('audit.read'),
+  authorize('audit:read'),
   async (req: Request, res: Response) => {
     try {
       // Validate audit log ID parameter

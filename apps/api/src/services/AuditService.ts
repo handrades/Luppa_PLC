@@ -1,6 +1,11 @@
-import { AuditQueryOptions, AuditRepository } from '../repositories/AuditRepository';
+import {
+  AuditQueryOptions,
+  AuditRepository,
+  UserActivitySummary,
+} from '../repositories/AuditRepository';
 import { AuditAction, AuditLog, RiskLevel } from '../entities/AuditLog';
 import { logger } from '../config/logger';
+import { AuditError, AuditRepositoryError } from '../utils/auditErrors';
 
 /**
  * Service for audit log management and compliance reporting
@@ -21,7 +26,10 @@ export class AuditService {
       return await this.auditRepository.findAuditLogs(options);
     } catch (error) {
       logger.error('Error fetching audit logs:', error);
-      throw new Error('Failed to retrieve audit logs');
+      if (error instanceof AuditError) {
+        throw error;
+      }
+      throw new AuditRepositoryError('Failed to retrieve audit logs', { cause: error });
     }
   }
 
@@ -33,7 +41,10 @@ export class AuditService {
       return await this.auditRepository.findById(id);
     } catch (error) {
       logger.error(`Error fetching audit log ${id}:`, error);
-      throw new Error('Failed to retrieve audit log');
+      if (error instanceof AuditError) {
+        throw error;
+      }
+      throw new AuditRepositoryError('Failed to retrieve audit log', { cause: error });
     }
   }
 
@@ -53,20 +64,15 @@ export class AuditService {
         userId,
       });
 
-      // Get high-risk events in the period
-      const highRiskEvents = await this.auditRepository.getHighRiskEvents(100);
-      const periodHighRiskEvents = highRiskEvents.filter(
-        event => event.timestamp >= startDate && event.timestamp <= endDate
-      );
-
-      // Get user activity summary
-      const userActivityQuery = await this.auditRepository.findAuditLogs({
+      // Get high-risk events in the period using database-level date filtering
+      const periodHighRiskEvents = await this.auditRepository.getHighRiskEventsByPeriod(
         startDate,
         endDate,
-        pageSize: 1000, // Large enough to capture all users in period
-      });
+        100
+      );
 
-      const userActivity = this.calculateUserActivity(userActivityQuery.data);
+      // Get user activity summary using optimized aggregated query
+      const userActivity = await this.auditRepository.getUserActivitySummary(startDate, endDate);
 
       // Generate compliance notes
       const complianceNotes = this.generateComplianceNotes(statistics, periodHighRiskEvents);
@@ -85,7 +91,10 @@ export class AuditService {
       };
     } catch (error) {
       logger.error('Error generating compliance report:', error);
-      throw new Error('Failed to generate compliance report');
+      if (error instanceof AuditError) {
+        throw error;
+      }
+      throw new AuditRepositoryError('Failed to generate compliance report', { cause: error });
     }
   }
 
@@ -149,7 +158,10 @@ export class AuditService {
       return await this.auditRepository.getHighRiskEvents(limit);
     } catch (error) {
       logger.error('Error fetching high-risk events:', error);
-      throw new Error('Failed to retrieve high-risk events');
+      if (error instanceof AuditError) {
+        throw error;
+      }
+      throw new AuditRepositoryError('Failed to retrieve high-risk events', { cause: error });
     }
   }
 
@@ -185,41 +197,6 @@ export class AuditService {
       logger.error('Error notifying security team:', error);
       // Don't throw - notification failure shouldn't break audit logging
     }
-  }
-
-  /**
-   * Calculate user activity metrics
-   */
-  private calculateUserActivity(auditLogs: AuditLog[]): UserActivitySummary[] {
-    const userActivity = new Map<string, UserActivitySummary>();
-
-    auditLogs.forEach(log => {
-      const userId = log.userId;
-      const userEmail = log.user?.email || 'Unknown';
-      const userName = log.user ? `${log.user.firstName} ${log.user.lastName}` : 'Unknown';
-
-      if (!userActivity.has(userId)) {
-        userActivity.set(userId, {
-          userId,
-          userEmail,
-          userName,
-          totalChanges: 0,
-          actionBreakdown: {},
-          tableBreakdown: {},
-          riskBreakdown: {},
-        });
-      }
-
-      const summary = userActivity.get(userId)!;
-      summary.totalChanges++;
-
-      // Update breakdowns
-      summary.actionBreakdown[log.action] = (summary.actionBreakdown[log.action] || 0) + 1;
-      summary.tableBreakdown[log.tableName] = (summary.tableBreakdown[log.tableName] || 0) + 1;
-      summary.riskBreakdown[log.riskLevel] = (summary.riskBreakdown[log.riskLevel] || 0) + 1;
-    });
-
-    return Array.from(userActivity.values()).sort((a, b) => b.totalChanges - a.totalChanges);
   }
 
   /**
@@ -326,7 +303,7 @@ export interface ComplianceReport {
   archivalStrategy: ArchivalStrategy;
 }
 
-export interface UserActivitySummary {
+export interface ServiceUserActivitySummary {
   userId: string;
   userEmail: string;
   userName: string;

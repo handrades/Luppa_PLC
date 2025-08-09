@@ -27,10 +27,13 @@ export const auditContextMiddleware = async (
     const sessionId = generateSessionId(req);
 
     // Set PostgreSQL session variables for audit triggers
-    if (AppDataSource?.manager) {
+    if (AppDataSource?.isInitialized) {
       const queryRunner = AppDataSource.createQueryRunner();
 
       try {
+        // Connect the query runner to ensure it has an active connection
+        await queryRunner.connect();
+
         // Set session variables that audit triggers will read using parameterized queries
         if (userId) {
           await queryRunner.query('SET app.current_user_id = $1', [userId]);
@@ -48,8 +51,9 @@ export const auditContextMiddleware = async (
           await queryRunner.query('SET app.session_id = $1', [sessionId]);
         }
 
-        // Store query runner on request for cleanup
+        // Store query runner and manager on request for use in downstream operations
         req.auditQueryRunner = queryRunner;
+        req.auditEntityManager = queryRunner.manager;
       } catch (error) {
         // Release query runner on error
         await queryRunner.release();
@@ -57,11 +61,13 @@ export const auditContextMiddleware = async (
       }
     }
 
-    // Add cleanup middleware to response finish event
-    res.on('finish', async () => {
+    // Add cleanup middleware to response finish and close events
+    const cleanup = async () => {
       try {
         if (req.auditQueryRunner) {
           await req.auditQueryRunner.release();
+          req.auditQueryRunner = undefined;
+          req.auditEntityManager = undefined;
         }
 
         // Log performance metrics
@@ -76,7 +82,11 @@ export const auditContextMiddleware = async (
       } catch (error) {
         logger.error('Error cleaning up audit context:', error);
       }
-    });
+    };
+
+    // Listen for both finish and close events to handle disconnects
+    res.once('finish', cleanup);
+    res.once('close', cleanup);
 
     next();
   } catch (error) {
@@ -87,23 +97,12 @@ export const auditContextMiddleware = async (
 };
 
 /**
- * Extract client IP address with support for various proxy headers
+ * Extract client IP address using Express's built-in trusted proxy handling
  */
 function getClientIPAddress(req: Request): string | null {
-  const xForwardedFor = req.get('X-Forwarded-For');
-  const xRealIP = req.get('X-Real-IP');
-  const connectionRemoteAddress = req.connection?.remoteAddress;
-  const socketRemoteAddress = req.socket?.remoteAddress;
-  const reqIP = req.ip;
-
-  // Handle X-Forwarded-For header (may contain multiple IPs)
-  if (xForwardedFor) {
-    const ips = xForwardedFor.split(',').map(ip => ip.trim());
-    return ips[0]; // First IP is the original client
-  }
-
-  // Check other headers and properties in order of preference
-  return xRealIP || connectionRemoteAddress || socketRemoteAddress || reqIP || null;
+  // Use Express's built-in req.ip which respects the 'trust proxy' setting
+  // This automatically handles X-Forwarded-For and other proxy headers securely
+  return req.ip || null;
 }
 
 /**
@@ -124,12 +123,13 @@ function generateSessionId(req: Request): string | null {
   return null;
 }
 
-// Extend Express Request interface to include audit query runner
+// Extend Express Request interface to include audit query runner and entity manager
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       auditQueryRunner?: import('typeorm').QueryRunner;
+      auditEntityManager?: import('typeorm').EntityManager;
     }
   }
 }

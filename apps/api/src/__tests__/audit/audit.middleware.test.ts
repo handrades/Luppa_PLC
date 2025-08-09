@@ -34,6 +34,7 @@ describe('Audit Context Middleware', () => {
 
   beforeEach(() => {
     mockRequest = {
+      ip: '10.0.0.1', // Express's built-in IP extraction
       user: {
         id: 'test-user-id',
         sub: 'test-user-id',
@@ -65,6 +66,7 @@ describe('Audit Context Middleware', () => {
 
     mockResponse = {
       on: jest.fn(),
+      once: jest.fn(),
     };
 
     mockNext = jest.fn();
@@ -72,14 +74,23 @@ describe('Audit Context Middleware', () => {
     mockQueryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
       release: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined),
+      manager: {} as unknown,
     };
 
     // Reset AppDataSource mock
-    (AppDataSource as { manager?: unknown }).manager = {};
+    (AppDataSource as { isInitialized?: boolean }).isInitialized = true;
     (AppDataSource.createQueryRunner as jest.Mock).mockReturnValue(mockQueryRunner);
 
-    // Don't automatically trigger finish callback
+    // Store callbacks for both on and once events
     (mockResponse.on as jest.Mock).mockImplementation((event, callback) => {
+      // Store the callback but don't auto-trigger
+      if (event === 'finish') {
+        mockResponse._finishCallback = callback;
+      }
+    });
+
+    (mockResponse.once as jest.Mock).mockImplementation((event, callback) => {
       // Store the callback but don't auto-trigger
       if (event === 'finish') {
         mockResponse._finishCallback = callback;
@@ -128,6 +139,8 @@ describe('Audit Context Middleware', () => {
     });
 
     it('should extract IP from X-Real-IP when X-Forwarded-For is not present', async () => {
+      // Simulate Express's built-in IP extraction from X-Real-IP
+      mockRequest.ip = '172.16.0.1';
       mockRequest.get = jest.fn((header: string) => {
         const headers = {
           'x-real-ip': '172.16.0.1',
@@ -168,7 +181,7 @@ describe('Audit Context Middleware', () => {
     });
 
     it('should log warning if execution exceeds 10ms threshold', async () => {
-      // Mock slow query execution
+      // Mock slow query execution that takes longer than 10ms
       mockQueryRunner.query = jest
         .fn()
         .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 15)));
@@ -176,21 +189,25 @@ describe('Audit Context Middleware', () => {
       // Call the middleware
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Manually trigger the finish callback after a delay
-      await new Promise<void>(resolve => {
-        setTimeout(async () => {
-          if (mockResponse._finishCallback) {
-            await mockResponse._finishCallback();
-          }
-          resolve();
-        }, 20);
-      });
+      // Ensure the finish callback is properly captured and call it
+      expect(mockResponse.once).toHaveBeenCalledWith('finish', expect.any(Function));
+      expect(mockResponse.once).toHaveBeenCalledWith('close', expect.any(Function));
 
-      // Check that warning was logged
+      // Get the finish callback that was registered
+      const finishCallback = (mockResponse.once as jest.Mock).mock.calls.find(
+        call => call[0] === 'finish'
+      )[1];
+
+      // Call the finish callback manually to trigger the performance check
+      await finishCallback();
+
+      // Check that warning was logged with proper duration
       expect(logger.warn).toHaveBeenCalledWith(
         'Audit middleware exceeded 10ms threshold',
         expect.objectContaining({
           duration: expect.any(Number),
+          path: undefined,
+          method: undefined,
         })
       );
     });
@@ -220,10 +237,15 @@ describe('Audit Context Middleware', () => {
     it('should clean up query runner on response finish', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Manually trigger the finish callback
-      if (mockResponse._finishCallback) {
-        await mockResponse._finishCallback();
-      }
+      // Ensure the finish callback is properly captured
+      expect(mockResponse.once).toHaveBeenCalledWith('finish', expect.any(Function));
+
+      // Get and call the finish callback that was registered
+      const finishCallback = (mockResponse.once as jest.Mock).mock.calls.find(
+        call => call[0] === 'finish'
+      )[1];
+
+      await finishCallback();
 
       // Check cleanup was performed
       expect(mockQueryRunner.release).toHaveBeenCalled();

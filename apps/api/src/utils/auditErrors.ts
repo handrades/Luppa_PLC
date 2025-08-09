@@ -55,6 +55,16 @@ export class AuditImmutabilityError extends AuditError {
   }
 }
 
+export class AuditRepositoryError extends AuditError {
+  public readonly cause?: unknown;
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, 'AUDIT_REPOSITORY_ERROR', 500);
+    this.name = 'AuditRepositoryError';
+    this.cause = options?.cause;
+  }
+}
+
 /**
  * Utility function to determine if an error is an audit-related error
  */

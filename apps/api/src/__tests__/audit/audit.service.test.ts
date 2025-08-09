@@ -27,6 +27,19 @@ describe('AuditService', () => {
 
   beforeEach(() => {
     mockAuditRepository = new AuditRepository() as jest.Mocked<AuditRepository>;
+
+    // Mock all the methods including the new ones
+    mockAuditRepository.findAuditLogs = jest.fn();
+    mockAuditRepository.findById = jest.fn();
+    mockAuditRepository.getAuditStatistics = jest.fn();
+    mockAuditRepository.getHighRiskEvents = jest.fn();
+    mockAuditRepository.getHighRiskEventsByPeriod = jest.fn();
+    mockAuditRepository.getUserActivitySummary = jest.fn();
+    mockAuditRepository.getRepository = jest.fn();
+    mockAuditRepository.update = jest.fn();
+    mockAuditRepository.delete = jest.fn();
+    mockAuditRepository.remove = jest.fn();
+
     auditService = new AuditService();
 
     // Replace the repository instance
@@ -148,8 +161,31 @@ describe('AuditService', () => {
     ];
 
     beforeEach(() => {
+      const mockUserActivity = [
+        {
+          userId: 'user-1',
+          userEmail: 'user1@example.com',
+          userName: 'John Doe',
+          totalChanges: 1,
+          actionBreakdown: { UPDATE: 1 },
+          tableBreakdown: { users: 1 },
+          riskBreakdown: { LOW: 1 },
+        },
+        {
+          userId: 'user-2',
+          userEmail: 'user2@example.com',
+          userName: 'Jane Smith',
+          totalChanges: 1,
+          actionBreakdown: { INSERT: 1 },
+          tableBreakdown: { plcs: 1 },
+          riskBreakdown: { LOW: 1 },
+        },
+      ];
+
       mockAuditRepository.getAuditStatistics.mockResolvedValue(mockStatistics);
       mockAuditRepository.getHighRiskEvents.mockResolvedValue(mockHighRiskEvents);
+      mockAuditRepository.getHighRiskEventsByPeriod.mockResolvedValue(mockHighRiskEvents);
+      mockAuditRepository.getUserActivitySummary.mockResolvedValue(mockUserActivity);
       mockAuditRepository.findAuditLogs.mockResolvedValue({
         data: mockAuditLogs,
         pagination: { page: 1, pageSize: 1000, total: 2, totalPages: 1 },
@@ -241,6 +277,7 @@ describe('AuditService', () => {
       };
 
       mockAuditRepository.getAuditStatistics.mockResolvedValue(criticalStats);
+      mockAuditRepository.getHighRiskEventsByPeriod.mockResolvedValue(mockHighRiskEvents);
 
       const report = await auditService.generateComplianceReport(startDate, endDate);
 

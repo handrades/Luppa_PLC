@@ -58,8 +58,12 @@ export class AuditRepository {
       search,
     });
 
-    // Get total count for pagination
-    const total = await queryBuilder.getCount();
+    // Get total count for pagination - clone query to avoid over-counting from joins
+    const countQuery = queryBuilder
+      .clone()
+      .select('DISTINCT audit.id')
+      .leftJoin('audit.user', 'user'); // Use leftJoin instead of leftJoinAndSelect for counting
+    const total = await countQuery.getCount();
 
     // Apply pagination
     const auditLogs = await queryBuilder.skip(offset).take(validatedPageSize).getMany();
@@ -172,6 +176,65 @@ export class AuditRepository {
       .orderBy('audit.timestamp', 'DESC')
       .limit(limit)
       .getMany();
+  }
+
+  /**
+   * Get high-risk events within a specific date period
+   */
+  async getHighRiskEventsByPeriod(
+    startDate: Date,
+    endDate: Date,
+    limit: number = 100
+  ): Promise<AuditLog[]> {
+    return this.repository
+      .createQueryBuilder('audit')
+      .leftJoinAndSelect('audit.user', 'user')
+      .where('audit.riskLevel IN (:...riskLevels)', {
+        riskLevels: [RiskLevel.HIGH, RiskLevel.CRITICAL],
+      })
+      .andWhere('audit.timestamp BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .orderBy('audit.timestamp', 'DESC')
+      .limit(limit)
+      .getMany();
+  }
+
+  /**
+   * Get user activity counts aggregated by user within a date period
+   */
+  async getUserActivitySummary(startDate: Date, endDate: Date): Promise<UserActivitySummary[]> {
+    const results = await this.repository
+      .createQueryBuilder('audit')
+      .leftJoin('audit.user', 'user')
+      .select('audit.userId', 'userId')
+      .addSelect('user.email', 'userEmail')
+      .addSelect('user.firstName', 'firstName')
+      .addSelect('user.lastName', 'lastName')
+      .addSelect('COUNT(*)', 'actionCount')
+      .addSelect('MAX(audit.timestamp)', 'lastAction')
+      .where('audit.timestamp BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .groupBy('audit.userId')
+      .addGroupBy('user.email')
+      .addGroupBy('user.firstName')
+      .addGroupBy('user.lastName')
+      .orderBy('COUNT(*)', 'DESC')
+      .getRawMany();
+
+    return results.map(result => ({
+      userId: result.userId,
+      userEmail: result.userEmail,
+      displayName:
+        result.firstName && result.lastName
+          ? `${result.firstName} ${result.lastName}`
+          : result.userEmail || 'Unknown User',
+      actionCount: parseInt(result.actionCount),
+      lastAction: result.lastAction,
+    }));
   }
 
   /**
@@ -296,4 +359,12 @@ export interface AuditStatistics {
     tableName: string;
     count: number;
   }>;
+}
+
+export interface UserActivitySummary {
+  userId: string;
+  userEmail: string;
+  displayName: string;
+  actionCount: number;
+  lastAction: Date;
 }

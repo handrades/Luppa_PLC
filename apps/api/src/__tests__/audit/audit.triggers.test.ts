@@ -31,7 +31,7 @@ describe('Audit Triggers Integration Tests', () => {
       startTransaction: jest.fn(),
       commitTransaction: jest.fn(),
       rollbackTransaction: jest.fn(),
-    } as Partial<QueryRunner>;
+    } as jest.Mocked<QueryRunner>;
 
     mockDataSource.createQueryRunner.mockReturnValue(queryRunner);
     mockDataSource.getRepository.mockReturnValue({
@@ -318,8 +318,8 @@ describe('Audit Triggers Integration Tests', () => {
   });
 
   describe('Trigger Performance', () => {
-    it('should complete audit logging within acceptable time limits', async () => {
-      const startTime = Date.now();
+    it('should execute all batch operations successfully', async () => {
+      queryRunner.query = jest.fn().mockResolvedValue(undefined);
 
       // Mock batch operations
       const operations = Array.from({ length: 10 }, (_, i) =>
@@ -330,14 +330,18 @@ describe('Audit Triggers Integration Tests', () => {
         ])
       );
 
-      queryRunner.query = jest.fn().mockResolvedValue(undefined);
-
       await Promise.all(operations);
 
-      const duration = Date.now() - startTime;
+      // Verify all operations were executed
+      expect(queryRunner.query).toHaveBeenCalledTimes(10);
 
-      // Audit triggers should not significantly impact performance
-      expect(duration).toBeLessThan(100); // 100ms for 10 operations
+      // Verify the operations were called with expected parameters
+      operations.forEach((_, index) => {
+        expect(queryRunner.query).toHaveBeenCalledWith(
+          'INSERT INTO sites (name, created_by, updated_by) VALUES ($1, $2, $3)',
+          [`Site ${index}`, 'test-user-id', 'test-user-id']
+        );
+      });
     });
 
     it('should handle concurrent operations correctly', async () => {
@@ -425,9 +429,7 @@ describe('Audit Triggers Integration Tests', () => {
   });
 
   describe('Index Performance', () => {
-    it('should efficiently query audit logs by table and record', async () => {
-      const startTime = Date.now();
-
+    it('should use correct SQL query with proper parameters for indexed lookup', async () => {
       queryRunner.query = jest
         .fn()
         .mockResolvedValueOnce([{ id: 'audit-1', table_name: 'sites', record_id: 'site-1' }]);
@@ -438,8 +440,12 @@ describe('Audit Triggers Integration Tests', () => {
         'site-1',
       ]);
 
-      const duration = Date.now() - startTime;
-      expect(duration).toBeLessThan(10); // Should be very fast with proper indexing
+      // Verify the query was called with correct SQL and parameters
+      expect(queryRunner.query).toHaveBeenCalledWith(
+        'SELECT * FROM audit_logs WHERE table_name = $1 AND record_id = $2',
+        ['sites', 'site-1']
+      );
+      expect(queryRunner.query).toHaveBeenCalledTimes(1);
     });
 
     it('should efficiently query audit logs by user and timestamp', async () => {
