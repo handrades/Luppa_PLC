@@ -24,6 +24,13 @@ const createValidatedConfig = () => {
     DB_POOL_MAX: process.env.DB_POOL_MAX,
     DB_CONNECTION_TIMEOUT: process.env.DB_CONNECTION_TIMEOUT,
     DB_IDLE_TIMEOUT: process.env.DB_IDLE_TIMEOUT,
+    // JWT configuration
+    JWT_SECRET: process.env.JWT_SECRET,
+    // Redis configuration
+    REDIS_URL: process.env.REDIS_URL,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   };
 
   // Validate and parse PORT
@@ -69,6 +76,17 @@ const createValidatedConfig = () => {
       poolMax: rawEnv.DB_POOL_MAX,
       connectionTimeout: rawEnv.DB_CONNECTION_TIMEOUT,
       idleTimeout: rawEnv.DB_IDLE_TIMEOUT,
+    },
+    // JWT configuration
+    jwt: {
+      secret: rawEnv.JWT_SECRET,
+    },
+    // Redis configuration
+    redis: {
+      url: rawEnv.REDIS_URL,
+      host: rawEnv.REDIS_HOST,
+      port: rawEnv.REDIS_PORT,
+      password: rawEnv.REDIS_PASSWORD,
     },
   } as const;
 };

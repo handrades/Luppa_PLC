@@ -3,6 +3,7 @@ import { createApp } from './app';
 import { logger } from './config/logger';
 import { config, validateEnvironment } from './config/env';
 import { closeDatabase, initializeDatabase } from './config/database';
+import { closeRedis, initializeRedis } from './config/redis';
 import { Server } from 'http';
 
 // Validate environment variables early
@@ -35,6 +36,10 @@ const startServer = async (): Promise<void> => {
     // Initialize database connection
     await initializeDatabase();
     logger.info('Database initialized successfully');
+
+    // Initialize Redis connection
+    await initializeRedis();
+    logger.info('Redis initialized successfully');
 
     server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {
@@ -82,14 +87,14 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
 
       logger.info('HTTP server closed');
 
-      // Close database connections, cleanup resources, etc.
-      closeDatabase()
+      // Close database and Redis connections, cleanup resources, etc.
+      Promise.all([closeDatabase(), closeRedis()])
         .then(() => {
-          logger.info('Database connections closed');
+          logger.info('Database and Redis connections closed');
           process.exit(0);
         })
         .catch(error => {
-          logger.error('Error closing database connections', {
+          logger.error('Error closing connections', {
             error: error.message,
           });
           process.exit(1);

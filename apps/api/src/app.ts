@@ -14,6 +14,7 @@ import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 
 // Import routes
 import healthRouter from './routes/health';
+import authRouter from './routes/auth';
 
 // Load environment variables
 config();
@@ -135,6 +136,7 @@ export const createApp = (): express.Application => {
 
   // API routes
   app.use('/', healthRouter);
+  app.use('/api/v1/auth', authRouter);
 
   // 404 handler
   app.use(notFoundHandler);
