@@ -8,17 +8,15 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from './env';
-import {
-  AuditLog,
-  Cell,
-  Equipment,
-  Notification,
-  PLC,
-  Role,
-  Site,
-  Tag,
-  User,
-} from '../entities/index';
+import { AuditLog } from '../entities/AuditLog';
+import { Cell } from '../entities/Cell';
+import { Equipment } from '../entities/Equipment';
+import { Notification } from '../entities/Notification';
+import { PLC } from '../entities/PLC';
+import { Role } from '../entities/Role';
+import { Site } from '../entities/Site';
+import { Tag } from '../entities/Tag';
+import { User } from '../entities/User';
 
 /**
  * Database environment variables with validation and defaults
@@ -236,9 +234,21 @@ export const getConnectionPoolStats = async (): Promise<{
 
     // Get connection pool statistics from the driver
     // Note: Pool stats may not be available in all environments (like tests)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const driver = AppDataSource.driver as unknown as { master?: any; pool?: any };
-    const pool = driver.master || driver.pool || driver;
+    const driver = AppDataSource.driver as unknown as {
+      master?: {
+        _pool?: {
+          totalCount?: number;
+          idleCount?: number;
+          waitingCount?: number;
+        };
+      };
+      pool?: {
+        totalCount?: number;
+        idleCount?: number;
+        waitingCount?: number;
+      };
+    };
+    const pool = driver.master?._pool || driver.pool;
 
     return {
       isConnected: true,

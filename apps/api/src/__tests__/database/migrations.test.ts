@@ -23,7 +23,9 @@ describe('Database Migration Tests', () => {
   }, 30000); // Increase timeout for database setup
 
   afterAll(async () => {
-    await teardownTestDatabase(testDataSource);
+    if (testDataSource) {
+      await teardownTestDatabase(testDataSource);
+    }
   });
 
   describe('Initial Schema Migration', () => {
