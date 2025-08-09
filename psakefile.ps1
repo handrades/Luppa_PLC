@@ -62,7 +62,7 @@ Task TypeCheck {
 }
 
 # Build task (matches GitHub Actions build job)
-Task Build -Depends Lint, TypeCheck {
+Task Build -Alias apps-build -Depends Lint, TypeCheck {
     Write-Host "`nBuilding applications..." -ForegroundColor Cyan
     
     if (-not (Test-Command "pnpm")) {
@@ -840,7 +840,7 @@ Task DockerRestart -Alias restart -Description "Restart all services" {
 }
 
 # Build or rebuild all services
-Task DockerBuild -Alias build -Description "Build or rebuild all services" {
+Task DockerBuild -Alias docker-build -Description "Build or rebuild all services" {
     Write-Host "`nBuilding all services..." -ForegroundColor Cyan
     
     Invoke-DockerCompose -Arguments @("build", "--no-cache")
@@ -1323,7 +1323,7 @@ Task DockerHelp -Alias docker-help -Description "Show available Docker commands"
         @{Name="DockerUp (up)"; Description="Start all development services"},
         @{Name="DockerDown (down)"; Description="Stop and remove all containers"},
         @{Name="DockerRestart (restart)"; Description="Restart all services"},
-        @{Name="DockerBuild (build)"; Description="Build or rebuild all services"},
+        @{Name="DockerBuild (docker-build)"; Description="Build or rebuild all services"},
         @{Name="DockerLogs (logs)"; Description="View logs from all services"},
         @{Name="DockerLogsApi (logs-api)"; Description="View API service logs only"},
         @{Name="DockerLogsWeb (logs-web)"; Description="View web service logs only"},
