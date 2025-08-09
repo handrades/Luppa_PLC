@@ -42,7 +42,11 @@ export const apiHealthCheck = {
     return false;
   },
 
-  async testConnection(): Promise<{ success: boolean; response?: HealthResponse; error?: string }> {
+  async testConnection(): Promise<{
+    success: boolean;
+    response?: HealthResponse;
+    error?: string;
+  }> {
     try {
       const response = await this.checkHealth();
       return { success: true, response };

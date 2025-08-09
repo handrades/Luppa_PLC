@@ -469,7 +469,10 @@ describe('Database Entities Validation (Mock)', () => {
 
       const notification = new Notification();
       notification.data = { priority: 'high', tags: ['important', 'urgent'] };
-      expect(notification.data).toEqual({ priority: 'high', tags: ['important', 'urgent'] });
+      expect(notification.data).toEqual({
+        priority: 'high',
+        tags: ['important', 'urgent'],
+      });
     });
   });
 
