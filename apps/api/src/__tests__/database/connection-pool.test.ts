@@ -195,9 +195,10 @@ describe('Connection Pool Configuration', () => {
     it('should handle invalid environment variables gracefully', () => {
       process.env.DB_POOL_MIN = 'invalid';
 
-      // Should not throw for invalid numbers, should use defaults
-      const config = getDatabaseConfig();
-      expect(config.pool.min).toBeNaN();
+      // Should throw error for invalid numeric environment variables
+      expect(() => getDatabaseConfig()).toThrow(
+        'Invalid pool settings: min=NaN, max=10. Min must be >= 1 and max must be >= min.'
+      );
     });
 
     it('should provide meaningful error messages', () => {

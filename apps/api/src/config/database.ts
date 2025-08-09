@@ -58,14 +58,24 @@ const createDatabaseConfig = () => {
   }
 
   // Validate pool settings
-  if (poolConfig.min < 1 || poolConfig.max < poolConfig.min) {
+  if (
+    isNaN(poolConfig.min) ||
+    isNaN(poolConfig.max) ||
+    poolConfig.min < 1 ||
+    poolConfig.max < poolConfig.min
+  ) {
     throw new Error(
       `Invalid pool settings: min=${poolConfig.min}, max=${poolConfig.max}. Min must be >= 1 and max must be >= min.`
     );
   }
 
   // Validate timeout settings
-  if (poolConfig.connectionTimeoutMillis < 1000 || poolConfig.idleTimeoutMillis < 1000) {
+  if (
+    isNaN(poolConfig.connectionTimeoutMillis) ||
+    isNaN(poolConfig.idleTimeoutMillis) ||
+    poolConfig.connectionTimeoutMillis < 1000 ||
+    poolConfig.idleTimeoutMillis < 1000
+  ) {
     throw new Error('Connection and idle timeouts must be at least 1000ms');
   }
 

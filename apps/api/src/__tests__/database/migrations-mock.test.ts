@@ -45,6 +45,12 @@ describe('Database Migration Tests (Mock)', () => {
           executedQueries.push(sql);
           return Promise.resolve();
         }),
+        manager: {
+          query: jest.fn().mockImplementation((sql: string) => {
+            executedQueries.push(sql);
+            return Promise.resolve();
+          }),
+        },
       };
     });
 
@@ -223,6 +229,12 @@ describe('Database Migration Tests (Mock)', () => {
           executedQueries.push(sql);
           return Promise.resolve();
         }),
+        manager: {
+          query: jest.fn().mockImplementation((sql: string) => {
+            executedQueries.push(sql);
+            return Promise.resolve();
+          }),
+        },
       };
     });
 
@@ -334,6 +346,9 @@ describe('Database Migration Tests (Mock)', () => {
     beforeEach(() => {
       mockQueryRunner = {
         query: jest.fn().mockResolvedValue(undefined),
+        manager: {
+          query: jest.fn().mockResolvedValue(undefined),
+        },
       };
     });
 
