@@ -3,15 +3,14 @@
  * Tests the core functionality without complex integration dependencies
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-const request = require('supertest');
-const createApp = require('../../app').default;
-/* eslint-enable @typescript-eslint/no-var-requires */
+import request from 'supertest';
+import createApp from '../../app';
+import type { Application } from 'express';
 
 describe('Health Endpoint Basic Tests', () => {
-  let app;
+  let app: Application;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     app = createApp();
   });
 

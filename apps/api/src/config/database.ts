@@ -8,7 +8,7 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from './env';
-import { createTimeout } from '../utils/timeout';
+import { raceWithTimeout } from '../utils/timeout';
 import { AuditLog } from '../entities/AuditLog';
 import { Cell } from '../entities/Cell';
 import { Equipment } from '../entities/Equipment';
@@ -284,14 +284,15 @@ export const getDatabaseHealth = async (): Promise<{
   let lastError: string | undefined;
 
   try {
-    // Race between the actual health check and a 100ms timeout
-    const healthCheckPromise = (async () => {
-      const isHealthy = await isDatabaseHealthy();
-      const poolStats = await getConnectionPoolStats();
-      return { isHealthy, poolStats };
-    })();
+    // Run health check and pool stats concurrently, then race against 100ms timeout
+    const healthCheckPromise = isDatabaseHealthy();
+    const poolStatsPromise = getConnectionPoolStats();
 
-    const { isHealthy, poolStats } = await Promise.race([healthCheckPromise, createTimeout(100)]);
+    const combinedPromise = Promise.all([healthCheckPromise, poolStatsPromise]).then(
+      ([isHealthy, poolStats]) => ({ isHealthy, poolStats })
+    );
+
+    const { isHealthy, poolStats } = await raceWithTimeout(combinedPromise, 100);
 
     const responseTime = Date.now() - startTime;
 
@@ -307,10 +308,7 @@ export const getDatabaseHealth = async (): Promise<{
     // Try to get pool stats even on failure, but with a shorter timeout
     let poolStats;
     try {
-      poolStats = await Promise.race([
-        getConnectionPoolStats(),
-        createTimeout(50), // Shorter timeout for fallback
-      ]);
+      poolStats = await raceWithTimeout(getConnectionPoolStats(), 50);
     } catch (poolError) {
       // Provide fallback pool stats if we can't get real ones
       poolStats = {

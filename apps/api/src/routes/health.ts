@@ -72,7 +72,7 @@ const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => 
     // Only read version if not cached
     if (version === null) {
       // Try to read version from environment first
-      version = process.env.npm_package_version;
+      version = process.env.npm_package_version ?? null;
 
       if (!version) {
         try {
@@ -106,7 +106,7 @@ const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => 
     }
 
     return {
-      version: cachedVersion,
+      version: cachedVersion ?? '1.0.0',
       deploymentTimestamp,
     };
   } catch (error) {

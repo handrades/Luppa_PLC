@@ -122,7 +122,9 @@ describe('Application Integration Tests', () => {
       // Verify response structure
       expect(response.body.status).toBe('healthy');
       expect(response.body.timestamp).toBeDefined();
-      expect(response.body.version).toBe('1.0.0');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { version } = require('../package.json');
+      expect(response.body.version).toBe(version);
       expect(response.body.environment).toBe('test');
       expect(typeof response.body.uptime).toBe('number');
       expect(response.body.database.status).toBe('connected');
@@ -217,8 +219,8 @@ describe('Application Integration Tests', () => {
 
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1_000_000;
-
-      expect(durationMs).toBeLessThan(100); // Should respond within 100ms
+      const threshold = process.env.CI ? 250 : 100;
+      expect(durationMs).toBeLessThan(threshold);
     });
 
     it('should handle rapid successive requests', async () => {

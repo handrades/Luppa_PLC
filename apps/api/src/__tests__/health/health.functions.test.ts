@@ -3,10 +3,8 @@
  * Tests the health check functions independently
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-const { getDatabaseHealth, getConnectionPoolStats } = require('../../config/database');
-const { getRedisHealth, getRedisMetrics } = require('../../config/redis');
-/* eslint-enable @typescript-eslint/no-var-requires */
+import { getConnectionPoolStats, getDatabaseHealth } from '../../config/database';
+import { getRedisHealth, getRedisMetrics } from '../../config/redis';
 
 describe('Health Configuration Functions', () => {
   describe('Database Health Functions', () => {

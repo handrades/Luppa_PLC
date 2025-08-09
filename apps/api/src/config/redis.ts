@@ -4,7 +4,7 @@
 
 import { RedisClientType, createClient } from 'redis';
 import { config } from './env';
-import { createTimeout } from '../utils/timeout';
+import { raceWithTimeout } from '../utils/timeout';
 
 /**
  * Create Redis client configuration
@@ -186,9 +186,10 @@ export const getRedisMetrics = async (): Promise<{
       return { isConnected: false };
     }
 
-    // Get memory and server information
+    // Get memory, stats and client information
     const serverInfo = await redisClient.info('memory');
     const statsInfo = await redisClient.info('stats');
+    const clientsInfo = await redisClient.info('clients');
     const configInfo = await redisClient.configGet(['maxmemory', 'maxmemory-policy']);
 
     // Parse memory info (handle both CRLF and LF line endings)
@@ -211,6 +212,16 @@ export const getRedisMetrics = async (): Promise<{
       }
     });
 
+    // Parse clients info (handle both CRLF and LF line endings)
+    const clientsLines = clientsInfo.split(/\r?\n/);
+    const clientsData: { [key: string]: string } = {};
+    clientsLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        clientsData[key] = value;
+      }
+    });
+
     // Calculate hit ratio
     const hits = parseInt(statsData.keyspace_hits || '0', 10);
     const misses = parseInt(statsData.keyspace_misses || '0', 10);
@@ -225,15 +236,15 @@ export const getRedisMetrics = async (): Promise<{
         overhead: parseInt(memoryData.used_memory_overhead || '0', 10),
       },
       performance: {
-        connectedClients: parseInt(statsData.connected_clients || '0', 10),
+        connectedClients: parseInt(clientsData.connected_clients || '0', 10),
         commandsProcessed: parseInt(statsData.total_commands_processed || '0', 10),
         keyspaceHits: hits,
         keyspaceMisses: misses,
         hitRatio: Math.round(hitRatio * 100) / 100,
       },
       config: {
-        maxmemory: parseInt(configInfo.maxmemory || '0', 10),
-        maxmemoryPolicy: configInfo['maxmemory-policy'] || 'noeviction',
+        maxmemory: parseInt((configInfo as Record<string, string>).maxmemory || '0', 10),
+        maxmemoryPolicy: (configInfo as Record<string, string>)['maxmemory-policy'] || 'noeviction',
       },
     };
   } catch (error) {
@@ -258,14 +269,15 @@ export const getRedisHealth = async (): Promise<{
   const startTime = Date.now();
 
   try {
-    // Race between the actual health check and a 100ms timeout
-    const healthCheckPromise = (async () => {
-      const isHealthy = await isRedisHealthy();
-      const metrics = await getRedisMetrics();
-      return { isHealthy, metrics };
-    })();
+    // Run health check and metrics concurrently, then race against 100ms timeout
+    const healthCheckPromise = isRedisHealthy();
+    const metricsPromise = getRedisMetrics();
 
-    const { isHealthy, metrics } = await Promise.race([healthCheckPromise, createTimeout(100)]);
+    const combinedPromise = Promise.all([healthCheckPromise, metricsPromise]).then(
+      ([isHealthy, metrics]) => ({ isHealthy, metrics })
+    );
+
+    const { isHealthy, metrics } = await raceWithTimeout(combinedPromise, 100);
 
     const responseTime = Date.now() - startTime;
 
@@ -281,10 +293,7 @@ export const getRedisHealth = async (): Promise<{
     // Try to get metrics even on failure, but with a shorter timeout
     let metrics;
     try {
-      metrics = await Promise.race([
-        getRedisMetrics(),
-        createTimeout(50), // Shorter timeout for fallback
-      ]);
+      metrics = await raceWithTimeout(getRedisMetrics(), 50);
     } catch (metricsError) {
       // Provide fallback metrics if we can't get real ones
       metrics = {

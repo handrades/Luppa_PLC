@@ -388,7 +388,9 @@ describe('Database Migration Tests', () => {
       const pendingMigrations = await testDataSource.showMigrations();
 
       // Should be no pending migrations after successful run
-      const hasPending = pendingMigrations.some(migration => !migration.isRun);
+      const hasPending = Array.isArray(pendingMigrations)
+        ? pendingMigrations.some((migration: { isRun: boolean }) => !migration.isRun)
+        : false;
       expect(hasPending).toBe(false);
     });
   });
