@@ -19,6 +19,23 @@ import authRouter from './routes/auth';
 // Load environment variables
 config();
 
+// Extend Express Request interface for raw body support
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      rawBody?: Buffer;
+    }
+  }
+}
+
+// Extend Node.js IncomingMessage for express.json verify function
+declare module 'http' {
+  interface IncomingMessage {
+    rawBody?: Buffer;
+  }
+}
+
 export const createApp = (): express.Application => {
   const app = express();
 
@@ -74,8 +91,7 @@ export const createApp = (): express.Application => {
       limit: '10mb',
       verify: (req, _res, buf) => {
         // Store raw body for webhook verification if needed
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (req as any).rawBody = buf;
+        req.rawBody = buf;
       },
     })(req, res, err => {
       if (err) {

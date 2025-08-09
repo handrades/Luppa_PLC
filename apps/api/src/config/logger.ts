@@ -100,6 +100,37 @@ try {
   console.warn(`Warning: Could not create file log transports: ${error}`);
 }
 
+// Exception and rejection handlers (only when logs directory is accessible)
+const exceptionHandlers: winston.transport[] = [];
+const rejectionHandlers: winston.transport[] = [];
+
+try {
+  exceptionHandlers.push(
+    new DailyRotateFile({
+      filename: join(logsDir, 'exceptions-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+
+  rejectionHandlers.push(
+    new DailyRotateFile({
+      filename: join(logsDir, 'rejections-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.warn(`Warning: Could not create exception/rejection log transports: ${error}`);
+}
+
 // Create the logger
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
@@ -109,6 +140,8 @@ export const logger = winston.createLogger({
     environment: process.env.NODE_ENV || 'development',
   },
   transports,
+  exceptionHandlers,
+  rejectionHandlers,
   // Handle uncaught exceptions and rejections
   exitOnError: false,
 });

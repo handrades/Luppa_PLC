@@ -4,11 +4,10 @@
  * Provides brute force protection for authentication endpoints
  */
 
-/* eslint-disable no-console */
-
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
 import { getClientIP } from '../utils/ip';
+import { logger } from '../config/logger';
 
 /**
  * Rate limiter for authentication endpoints
@@ -23,13 +22,11 @@ export const authRateLimit = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  // Custom key generator using shared IP extraction function
-  keyGenerator: getClientIP,
+  // Use default keyGenerator (req.ip) which is IPv6-aware
   // Custom handler for when rate limit is exceeded
   handler: (req: Request, res: Response) => {
     const ip = getClientIP(req);
-    // eslint-disable-next-line no-console
-    console.warn(`Rate limit exceeded for IP: ${ip}`, {
+    logger.warn(`Rate limit exceeded for IP: ${ip}`, {
       ip,
       userAgent: req.headers['user-agent'],
       path: req.path,
@@ -60,11 +57,10 @@ export const strictAuthRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIP,
+  // Use default keyGenerator (req.ip) which is IPv6-aware
   handler: (req: Request, res: Response) => {
     const ip = getClientIP(req);
-    // eslint-disable-next-line no-console
-    console.error(`Strict rate limit exceeded for IP: ${ip}`, {
+    logger.error(`Strict rate limit exceeded for IP: ${ip}`, {
       ip,
       userAgent: req.headers['user-agent'],
       path: req.path,
@@ -94,5 +90,5 @@ export const generalRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIP,
+  // Use default keyGenerator (req.ip) which is IPv6-aware
 });

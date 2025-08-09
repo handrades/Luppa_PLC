@@ -4,18 +4,34 @@
  * Integration tests for authentication endpoints
  */
 
-// Set JWT_SECRET before any imports to prevent config errors
-import { TEST_JWT } from '../helpers/test-constants';
-process.env.JWT_SECRET = TEST_JWT.secret;
+// Set JWT_SECRET environment variable before any imports
+process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+
+// Mock all dependencies first, before importing modules that use them
+jest.mock('../../services/AuthService');
+jest.mock('../../middleware/rateLimiter', () => ({
+  authRateLimit: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+  strictAuthRateLimit: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+}));
+jest.mock('../../utils/ip', () => ({
+  getClientIP: jest.fn(() => '127.0.0.1'),
+}));
+jest.mock('../../middleware/auth', () => ({
+  authenticate: jest.fn(),
+  optionalAuthenticate: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+  authorize: jest.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+  requireAdmin: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+  requireActiveUser: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+}));
 
 import request from 'supertest';
 import express from 'express';
 import authRouter from '../../routes/auth';
 import { TokenType } from '../../config/jwt';
-import { TEST_CREDENTIALS, TEST_USER } from '../helpers/test-constants';
-
-// Mock dependencies first
-jest.mock('../../services/AuthService');
+import { authenticate } from '../../middleware/auth';
+import { authRateLimit, strictAuthRateLimit } from '../../middleware/rateLimiter';
+import { AuthService } from '../../services/AuthService';
+import { TEST_CREDENTIALS, TEST_JWT, TEST_USER } from '../helpers/test-constants';
 
 // Create a mock AuthService instance
 const mockAuthService = {
@@ -29,27 +45,8 @@ const mockAuthService = {
   userExistsByEmail: jest.fn(),
 };
 
-jest.mock('../../middleware/rateLimiter', () => ({
-  authRateLimit: jest.fn((_req, _res, next) => next()),
-  strictAuthRateLimit: jest.fn((_req, _res, next) => next()),
-}));
-
-jest.mock('../../utils/ip', () => ({
-  getClientIP: jest.fn(() => '127.0.0.1'),
-}));
-
-jest.mock('../../middleware/auth', () => ({
-  authenticate: jest.fn(),
-  optionalAuthenticate: jest.fn((_req, _res, next) => next()),
-  authorize: jest.fn(() => (_req, _res, next) => next()),
-  requireAdmin: jest.fn((_req, _res, next) => next()),
-  requireActiveUser: jest.fn((_req, _res, next) => next()),
-}));
-
 describe('Auth Routes', () => {
   let app: express.Application;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { authenticate } = require('../../middleware/auth');
 
   beforeEach(() => {
     // Setup Express app with auth routes
@@ -61,9 +58,9 @@ describe('Auth Routes', () => {
     jest.clearAllMocks();
 
     // Setup AuthService mock implementation
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const AuthService = require('../../services/AuthService').AuthService;
-    AuthService.mockImplementation(() => mockAuthService);
+    (AuthService as jest.MockedClass<typeof AuthService>).mockImplementation(
+      () => mockAuthService as AuthService
+    );
 
     // Reset authenticate mock to default behavior (no authentication)
     authenticate.mockImplementation((_req, res) => {
@@ -477,16 +474,12 @@ describe('Auth Routes', () => {
   describe('Rate limiting', () => {
     it('should apply rate limiting to login endpoint', async () => {
       // Assert that rate limiting middleware is mocked
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { authRateLimit, strictAuthRateLimit } = require('../../middleware/rateLimiter');
       expect(authRateLimit).toBeDefined();
       expect(strictAuthRateLimit).toBeDefined();
     });
 
     it('should apply rate limiting to refresh endpoint', async () => {
       // Assert that rate limiting middleware is mocked
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { authRateLimit } = require('../../middleware/rateLimiter');
       expect(authRateLimit).toBeDefined();
     });
   });

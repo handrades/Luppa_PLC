@@ -4,6 +4,32 @@
  * Comprehensive tests for authentication service functionality
  */
 
+// Set JWT_SECRET environment variable before any imports
+process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+
+// Mock dependencies first, before importing modules that use them
+jest.mock('../../config/database', () => ({
+  AppDataSource: {
+    getRepository: jest.fn(),
+  },
+}));
+
+jest.mock('../../config/redis');
+jest.mock('bcrypt');
+
+// Partially mock jsonwebtoken to preserve error classes
+jest.mock('jsonwebtoken', () => {
+  const originalJwt = jest.requireActual('jsonwebtoken');
+  return {
+    ...originalJwt,
+    sign: jest.fn(),
+    verify: jest.fn(),
+    // Preserve error classes
+    TokenExpiredError: originalJwt.TokenExpiredError,
+    JsonWebTokenError: originalJwt.JsonWebTokenError,
+  };
+});
+
 import { DataSource, Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -13,17 +39,6 @@ import { Role } from '../../entities/Role';
 import { TokenType, jwtConfig } from '../../config/jwt';
 import * as redisConfig from '../../config/redis';
 import { TEST_CREDENTIALS, TEST_USER } from '../helpers/test-constants';
-
-// Mock dependencies
-jest.mock('../../config/database', () => ({
-  AppDataSource: {
-    getRepository: jest.fn(),
-  },
-}));
-
-jest.mock('../../config/redis');
-jest.mock('bcrypt');
-jest.mock('jsonwebtoken');
 
 describe('AuthService', () => {
   let authService: AuthService;

@@ -104,17 +104,17 @@ jobs:
         run: |
           echo "Running security checks..."
           echo "Checking for security vulnerabilities in dependencies..."
-          if command -v npm &> /dev/null; then
-            npm audit --audit-level=moderate --production || echo "⚠️ Security vulnerabilities found in dependencies"
-          elif command -v pnpm &> /dev/null; then
+          if command -v pnpm &> /dev/null; then
             pnpm audit --prod || echo "⚠️ Security vulnerabilities found in dependencies"
+          elif command -v npm &> /dev/null; then
+            npm audit --audit-level=moderate --production || echo "⚠️ Security vulnerabilities found in dependencies"
           else
             echo "No package manager found for security audit"
           fi
-          
+
           echo "Scanning for security anti-patterns..."
-          # Basic security scan for common patterns
-          if find . -name "*.js" -o -name "*.ts" -o -name "*.json" | grep -v node_modules | xargs grep -l "password\s*[:=]\s*[\"'].*[\"']" 2>/dev/null; then
+          # Basic security scan for common patterns using portable grep
+          if find . \( -path "./node_modules" -o -path "./.bmad-core" -o -path "./dist" -o -path "./build" \) -prune -o \( -name "*.js" -o -name "*.ts" -o -name "*.json" \) -print0 | xargs -0 -r grep -E -l "password[[:space:]]*[:=][[:space:]]*[\"'].*[\"']" 2>/dev/null; then
             echo "⚠️ Potential hardcoded passwords found - please review"
           fi
           echo "✓ Security checks completed"
@@ -123,23 +123,23 @@ jobs:
         run: |
           echo "Checking API health and configuration..."
           echo "Verifying API builds correctly..."
-          
+
           # Build API to check for TypeScript errors
           pnpm --filter ./apps/api run build
           echo "✓ API builds successfully"
-          
+
           # Type check API
           pnpm --filter ./apps/api run type-check
           echo "✓ TypeScript configuration is valid"
-          
-          # Check required npm scripts exist
+
+          # Check required npm scripts exist using jq
           cd apps/api
           if [[ -f package.json ]]; then
             for script in "build" "type-check" "test" "dev"; do
-              if ! grep -q "\"$script\"" package.json; then
-                echo "⚠️ Missing required script: $script"
-              else
+              if jq -e ".scripts.\"$script\"" package.json > /dev/null; then
                 echo "✓ Script exists: $script"
+              else
+                echo "⚠️ Missing required script: $script"
               fi
             done
           fi

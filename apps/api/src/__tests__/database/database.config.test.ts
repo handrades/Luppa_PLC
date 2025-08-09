@@ -104,6 +104,8 @@ describe('Database Configuration', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    // Ensure deterministic default DB password in tests
+    delete process.env.TEST_DB_PASSWORD;
   });
 
   afterAll(() => {
@@ -118,6 +120,7 @@ describe('Database Configuration', () => {
       delete process.env.DB_NAME;
       delete process.env.DB_USER;
       delete process.env.DB_PASSWORD;
+      delete process.env.TEST_DB_PASSWORD;
       delete process.env.DB_POOL_MIN;
       delete process.env.DB_POOL_MAX;
       delete process.env.DB_CONNECTION_TIMEOUT;

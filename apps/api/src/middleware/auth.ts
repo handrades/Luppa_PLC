@@ -7,6 +7,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload } from '../config/jwt';
 import { AuthService } from '../services/AuthService';
+import { logger } from '../config/logger';
 
 /**
  * Extend Express Request interface to include user information
@@ -115,8 +116,9 @@ export const optionalAuthenticate = async (
     next();
   } catch (error) {
     // Log error but continue without authentication
-    // eslint-disable-next-line no-console
-    console.error('Optional authentication error:', error);
+    logger.error('Optional authentication error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     req.user = undefined;
     next();
   }

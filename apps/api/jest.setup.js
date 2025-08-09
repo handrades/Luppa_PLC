@@ -10,6 +10,16 @@ process.env.NODE_ENV = 'test';
 process.env.PORT = '3002';
 process.env.LOG_LEVEL = 'error'; // Suppress logs during testing
 
+// Set JWT secrets before any modules load to prevent validation failures
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET =
+    'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+}
+if (!process.env.JWT_REFRESH_SECRET) {
+  process.env.JWT_REFRESH_SECRET =
+    'test-jwt-refresh-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+}
+
 // Mock logger to avoid file writes during testing
 jest.mock('./src/config/logger', () => ({
   logger: {
