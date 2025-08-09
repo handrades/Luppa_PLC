@@ -155,3 +155,126 @@ export const updateSessionActivity = async (sessionId: string): Promise<void> =>
     await storeSession(sessionId, session);
   }
 };
+
+/**
+ * Get Redis memory usage and performance metrics
+ */
+export const getRedisMetrics = async (): Promise<{
+  isConnected: boolean;
+  memoryUsage?: {
+    used: number;
+    peak: number;
+    rss: number;
+    overhead: number;
+  };
+  performance?: {
+    connectedClients: number;
+    commandsProcessed: number;
+    keyspaceHits: number;
+    keyspaceMisses: number;
+    hitRatio: number;
+  };
+  config?: {
+    maxmemory: number;
+    maxmemoryPolicy: string;
+  };
+  lastError?: string;
+}> => {
+  try {
+    if (!redisClient.isOpen) {
+      return { isConnected: false };
+    }
+
+    // Get memory and server information
+    const serverInfo = await redisClient.info('memory');
+    const statsInfo = await redisClient.info('stats');
+    const configInfo = await redisClient.configGet(['maxmemory', 'maxmemory-policy']);
+
+    // Parse memory info
+    const memoryLines = serverInfo.split('\r\n');
+    const memoryData: { [key: string]: string } = {};
+    memoryLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        memoryData[key] = value;
+      }
+    });
+
+    // Parse stats info
+    const statsLines = statsInfo.split('\r\n');
+    const statsData: { [key: string]: string } = {};
+    statsLines.forEach(line => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        statsData[key] = value;
+      }
+    });
+
+    // Calculate hit ratio
+    const hits = parseInt(statsData.keyspace_hits || '0', 10);
+    const misses = parseInt(statsData.keyspace_misses || '0', 10);
+    const hitRatio = hits + misses > 0 ? (hits / (hits + misses)) * 100 : 0;
+
+    return {
+      isConnected: true,
+      memoryUsage: {
+        used: parseInt(memoryData.used_memory || '0', 10),
+        peak: parseInt(memoryData.used_memory_peak || '0', 10),
+        rss: parseInt(memoryData.used_memory_rss || '0', 10),
+        overhead: parseInt(memoryData.used_memory_overhead || '0', 10),
+      },
+      performance: {
+        connectedClients: parseInt(statsData.connected_clients || '0', 10),
+        commandsProcessed: parseInt(statsData.total_commands_processed || '0', 10),
+        keyspaceHits: hits,
+        keyspaceMisses: misses,
+        hitRatio: Math.round(hitRatio * 100) / 100,
+      },
+      config: {
+        maxmemory: parseInt(configInfo.maxmemory || '0', 10),
+        maxmemoryPolicy: configInfo['maxmemory-policy'] || 'noeviction',
+      },
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      isConnected: false,
+      lastError: errorMessage,
+    };
+  }
+};
+
+/**
+ * Enhanced Redis health check with metrics and performance data
+ */
+export const getRedisHealth = async (): Promise<{
+  isHealthy: boolean;
+  responseTime: number;
+  metrics: Awaited<ReturnType<typeof getRedisMetrics>>;
+  lastError?: string;
+}> => {
+  const startTime = Date.now();
+
+  try {
+    const isHealthy = await isRedisHealthy();
+    const responseTime = Date.now() - startTime;
+    const metrics = await getRedisMetrics();
+
+    return {
+      isHealthy,
+      responseTime,
+      metrics,
+    };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const lastError = error instanceof Error ? error.message : 'Unknown error';
+    const metrics = await getRedisMetrics();
+
+    return {
+      isHealthy: false,
+      responseTime,
+      metrics,
+      lastError,
+    };
+  }
+};

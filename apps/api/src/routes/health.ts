@@ -1,36 +1,98 @@
 import { Request, Response, Router } from 'express';
-import { isDatabaseHealthy } from '../config/database';
-import { isRedisHealthy } from '../config/redis';
+import { getDatabaseHealth } from '../config/database';
+import { getRedisHealth } from '../config/redis';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const router: Router = Router();
 
 /**
- * Health check response interface
+ * Enhanced health check response interface
  */
 interface HealthResponse {
   status: 'healthy' | 'unhealthy';
   timestamp: string;
+  deploymentTimestamp?: string;
   version: string;
   environment: string;
   uptime: number;
   database: {
     status: 'connected' | 'disconnected';
+    responseTime: number;
+    connectionPool?: {
+      isConnected: boolean;
+      totalConnections?: number;
+      idleConnections?: number;
+      runningConnections?: number;
+      poolConfig: {
+        min: number;
+        max: number;
+        connectionTimeoutMillis: number;
+        idleTimeoutMillis: number;
+      };
+    };
+    lastError?: string;
   };
   redis: {
     status: 'connected' | 'disconnected';
+    responseTime: number;
+    memoryUsage?: {
+      used: number;
+      peak: number;
+      rss: number;
+      overhead: number;
+    };
+    performance?: {
+      connectedClients: number;
+      commandsProcessed: number;
+      keyspaceHits: number;
+      keyspaceMisses: number;
+      hitRatio: number;
+    };
+    config?: {
+      maxmemory: number;
+      maxmemoryPolicy: string;
+    };
+    lastError?: string;
   };
 }
 
 /**
- * Get version from package.json - simplified approach for testing compatibility
+ * Get version information from package.json
  */
-const getVersion = (): string => {
+const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => {
   try {
-    // In production, this would read from the compiled package.json
-    // For testing, we'll use a simple fallback
-    return process.env.npm_package_version || '1.0.0';
+    // Try to read version from package.json
+    let version = process.env.npm_package_version;
+
+    if (!version) {
+      try {
+        // Fallback: read package.json directly
+        const packageJsonPath = join(__dirname, '../../../package.json');
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+        version = packageJson.version;
+      } catch (readError) {
+        version = '1.0.0';
+      }
+    }
+
+    // Get deployment timestamp from environment or build info
+    let deploymentTimestamp: string | undefined;
+
+    if (process.env.DEPLOYMENT_TIMESTAMP) {
+      deploymentTimestamp = process.env.DEPLOYMENT_TIMESTAMP;
+    } else if (process.env.BUILD_TIMESTAMP) {
+      deploymentTimestamp = process.env.BUILD_TIMESTAMP;
+    }
+
+    return {
+      version: version || '1.0.0',
+      deploymentTimestamp,
+    };
   } catch (error) {
-    return '1.0.0';
+    return {
+      version: '1.0.0',
+    };
   }
 };
 
@@ -82,41 +144,74 @@ const getVersion = (): string => {
  *                 status: disconnected
  */
 router.get('/health', async (_req: Request, res: Response) => {
+  const startTime = Date.now();
+
   try {
-    const [dbHealthy, redisHealthy] = await Promise.all([isDatabaseHealthy(), isRedisHealthy()]);
-    const overallHealthy = dbHealthy && redisHealthy;
+    // Get enhanced health information for both database and Redis
+    const [dbHealth, redisHealth] = await Promise.all([getDatabaseHealth(), getRedisHealth()]);
+
+    const overallHealthy = dbHealth.isHealthy && redisHealth.isHealthy;
+    const versionInfo = getVersionInfo();
 
     const healthResponse: HealthResponse = {
       status: overallHealthy ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
-      version: getVersion(),
+      deploymentTimestamp: versionInfo.deploymentTimestamp,
+      version: versionInfo.version,
       environment: process.env.NODE_ENV || 'development',
       uptime: Math.floor(process.uptime()),
       database: {
-        status: dbHealthy ? 'connected' : 'disconnected',
+        status: dbHealth.isHealthy ? 'connected' : 'disconnected',
+        responseTime: dbHealth.responseTime,
+        connectionPool: dbHealth.poolStats,
+        lastError: dbHealth.lastError,
       },
       redis: {
-        status: redisHealthy ? 'connected' : 'disconnected',
+        status: redisHealth.isHealthy ? 'connected' : 'disconnected',
+        responseTime: redisHealth.responseTime,
+        memoryUsage: redisHealth.metrics.memoryUsage,
+        performance: redisHealth.metrics.performance,
+        config: redisHealth.metrics.config,
+        lastError: redisHealth.lastError || redisHealth.metrics.lastError,
       },
     };
+
+    // Measure total response time
+    const totalResponseTime = Date.now() - startTime;
+
+    // Log warning if response time exceeds 100ms requirement
+    if (totalResponseTime > 100) {
+      // eslint-disable-next-line no-console
+      console.warn(`Health check response time exceeded 100ms: ${totalResponseTime}ms`);
+    }
 
     const statusCode = overallHealthy ? 200 : 503;
     res.status(statusCode).json(healthResponse);
   } catch (error) {
+    const versionInfo = getVersionInfo();
+    const totalResponseTime = Date.now() - startTime;
+
     const healthResponse: HealthResponse = {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      version: getVersion(),
+      deploymentTimestamp: versionInfo.deploymentTimestamp,
+      version: versionInfo.version,
       environment: process.env.NODE_ENV || 'development',
       uptime: Math.floor(process.uptime()),
       database: {
         status: 'disconnected',
+        responseTime: totalResponseTime,
+        lastError: error instanceof Error ? error.message : 'Unknown error',
       },
       redis: {
         status: 'disconnected',
+        responseTime: totalResponseTime,
+        lastError: error instanceof Error ? error.message : 'Unknown error',
       },
     };
 
+    // eslint-disable-next-line no-console
+    console.error('Health check failed:', error);
     res.status(503).json(healthResponse);
   }
 });
