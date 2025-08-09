@@ -38,65 +38,20 @@ jobs:
         run: |
           pnpm install
 
-      - name: Lint Markdown files
-        run: |
-          echo "Checking Markdown files..."
-          if find . -name "*.md" -not -path "./node_modules/*" \
-                     -not -path "./.bmad-core/*" | head -1 | grep -q .; then
-            npx markdownlint "**/*.md" \
-                         --ignore node_modules --ignore .bmad-core \
-                         --config config/.markdownlint.json
-            echo "✓ Markdown linting passed"
-          else
-            echo "No markdown files found to lint"
-          fi
+      - name: Run ESLint
+        run: pnpm lint
 
-      - name: Lint JSON files
-        run: |
-          echo "Checking JSON files..."
-          json_files=$(find . -name "*.json" -not -path "./node_modules/*" \
-                                 -not -path "./.bmad-core/*")
-          if [ -n "$json_files" ]; then
-            echo "Found JSON files:"
-            echo "$json_files"
-            for file in $json_files; do
-              echo "Checking $file..."
-              npx "@prantlf/jsonlint" "$file"
-              echo "✓ $file"
-            done
-            echo "✓ JSON linting passed"
-          else
-            echo "No JSON files found to lint"
-          fi
+      - name: Run Prettier check
+        run: pnpm format:check
 
-      - name: Lint YAML files
-        run: |
-          echo "Checking YAML files..."
-          yaml_files=$(find . \( -name "*.yml" -o -name "*.yaml" \) \
-                             -not -path "./node_modules/*" -not -path "./.bmad-core/*")
-          if [ -n "$yaml_files" ]; then
-            echo "Found YAML files:"
-            echo "$yaml_files"
-            npx yaml-lint --config-file config/.yaml-lint.json $yaml_files
-            echo "✓ YAML linting passed"
-          else
-            echo "No YAML files found to lint"
-          fi
+      - name: Run Markdown lint
+        run: pnpm lint:markdown
 
-      - name: Lint TypeScript/JavaScript files
-        run: |
-          echo "Checking TypeScript/JavaScript files..."
-          if [ -f "package.json" ]; then
-            if grep -q '"lint"' package.json; then
-              echo "Using pnpm workspace lint script..."
-              pnpm lint
-              echo "✓ TypeScript/JavaScript linting passed"
-            else
-              echo "No lint script found in package.json - skipping TypeScript/JavaScript linting"
-            fi
-          else
-            echo "No package.json found - skipping TypeScript/JavaScript linting"
-          fi
+      - name: Run JSON lint
+        run: pnpm lint:json
+
+      - name: Run YAML lint
+        run: pnpm lint:yaml
 
       - name: Check files end with newline
         run: |
@@ -114,8 +69,8 @@ jobs:
                       -not -path "./node_modules/*" \
                       -not -path "./.bmad-core/*" \
                       -not -path "./.git/*" \
-                      -not -path "./dist/*" \
-                      -not -path "./build/*" \
+                      -not -path "*/dist/*" \
+                      -not -path "*/build/*" \
                       \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
                          -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
                          -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \

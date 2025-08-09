@@ -24,12 +24,30 @@ const createValidatedConfig = () => {
     DB_POOL_MAX: process.env.DB_POOL_MAX,
     DB_CONNECTION_TIMEOUT: process.env.DB_CONNECTION_TIMEOUT,
     DB_IDLE_TIMEOUT: process.env.DB_IDLE_TIMEOUT,
+    // JWT configuration
+    JWT_SECRET: process.env.JWT_SECRET,
+    // Redis configuration
+    REDIS_URL: process.env.REDIS_URL,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   };
 
   // Validate and parse PORT
   const port = parseInt(rawEnv.PORT, 10);
   if (isNaN(port) || port < 1 || port > 65535) {
     throw new Error(`Invalid PORT value: ${rawEnv.PORT}. Must be a number between 1 and 65535.`);
+  }
+
+  // Validate and parse REDIS_PORT if provided
+  let redisPort: number | undefined;
+  if (rawEnv.REDIS_PORT) {
+    redisPort = parseInt(rawEnv.REDIS_PORT, 10);
+    if (isNaN(redisPort) || redisPort < 1 || redisPort > 65535) {
+      throw new Error(
+        `Invalid REDIS_PORT value: ${rawEnv.REDIS_PORT}. Must be a number between 1 and 65535.`
+      );
+    }
   }
 
   // Validate NODE_ENV
@@ -69,6 +87,17 @@ const createValidatedConfig = () => {
       poolMax: rawEnv.DB_POOL_MAX,
       connectionTimeout: rawEnv.DB_CONNECTION_TIMEOUT,
       idleTimeout: rawEnv.DB_IDLE_TIMEOUT,
+    },
+    // JWT configuration
+    jwt: {
+      secret: rawEnv.JWT_SECRET,
+    },
+    // Redis configuration
+    redis: {
+      url: rawEnv.REDIS_URL,
+      host: rawEnv.REDIS_HOST,
+      port: redisPort,
+      password: rawEnv.REDIS_PASSWORD,
     },
   } as const;
 };

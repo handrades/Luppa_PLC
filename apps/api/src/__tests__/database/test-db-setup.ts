@@ -29,6 +29,7 @@ export const createTestDataSource = (): DataSource => {
     host: process.env.TEST_DB_HOST || 'localhost',
     port: parseInt(process.env.TEST_DB_PORT || '5434', 10), // Use dedicated test port
     username: process.env.TEST_DB_USER || 'testuser',
+    // nosemgrep: generic.secrets.security.detected-generic-secret - Test DB password, not a real secret
     password: process.env.TEST_DB_PASSWORD || 'testpass',
     database: process.env.TEST_DB_NAME || 'luppa_plc_test',
     entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],
@@ -73,6 +74,7 @@ export const createTestFixtures = async (dataSource: DataSource) => {
     email: 'test@example.com',
     firstName: 'Test',
     lastName: 'User',
+    // nosemgrep: generic.secrets.security.detected-generic-secret - Mock password hash for testing, not a real secret
     passwordHash: '$2b$10$rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcO', // "password"
     roleId: testRole.id,
     isActive: true,

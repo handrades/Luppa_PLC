@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { isDatabaseHealthy } from '../config/database';
+import { isRedisHealthy } from '../config/redis';
 
 const router: Router = Router();
 
@@ -13,6 +14,9 @@ interface HealthResponse {
   environment: string;
   uptime: number;
   database: {
+    status: 'connected' | 'disconnected';
+  };
+  redis: {
     status: 'connected' | 'disconnected';
   };
 }
@@ -79,8 +83,8 @@ const getVersion = (): string => {
  */
 router.get('/health', async (_req: Request, res: Response) => {
   try {
-    const dbHealthy = await isDatabaseHealthy();
-    const overallHealthy = dbHealthy;
+    const [dbHealthy, redisHealthy] = await Promise.all([isDatabaseHealthy(), isRedisHealthy()]);
+    const overallHealthy = dbHealthy && redisHealthy;
 
     const healthResponse: HealthResponse = {
       status: overallHealthy ? 'healthy' : 'unhealthy',
@@ -90,6 +94,9 @@ router.get('/health', async (_req: Request, res: Response) => {
       uptime: Math.floor(process.uptime()),
       database: {
         status: dbHealthy ? 'connected' : 'disconnected',
+      },
+      redis: {
+        status: redisHealthy ? 'connected' : 'disconnected',
       },
     };
 
@@ -103,6 +110,9 @@ router.get('/health', async (_req: Request, res: Response) => {
       environment: process.env.NODE_ENV || 'development',
       uptime: Math.floor(process.uptime()),
       database: {
+        status: 'disconnected',
+      },
+      redis: {
         status: 'disconnected',
       },
     };

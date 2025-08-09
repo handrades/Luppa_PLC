@@ -66,6 +66,85 @@ jobs:
       - name: Run YAML lint
         run: pnpm lint:yaml
 
+      - name: Check files end with newline
+        run: |
+          echo "Checking that all files end with newlines..."
+          failed_files=()
+          while IFS= read -r -d '' file; do
+            if [[ -f "$file" && ! -s "$file" ]]; then
+              # Empty files are OK
+              continue
+            fi
+            if [[ -f "$file" && $(tail -c1 "$file" | wc -l) -eq 0 ]]; then
+              failed_files+=("$file")
+            fi
+          done < <(find . -type f \
+                      -not -path "./node_modules/*" \
+                      -not -path "./.bmad-core/*" \
+                      -not -path "./.git/*" \
+                      -not -path "*/dist/*" \
+                      -not -path "*/build/*" \
+                      \( -name "*.md" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \
+                         -o -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
+                         -o -name "*.ps1" -o -name "*.txt" -o -name "*.cjs" \) \
+                      -print0)
+
+          if [[ ${#failed_files[@]} -gt 0 ]]; then
+            echo "❌ The following files do not end with a newline:"
+            printf '%s\n' "${failed_files[@]}"
+            echo ""
+            echo "To fix this, ensure all files end with a newline character."
+            echo "In most editors, this happens automatically when you save."
+            exit 1
+          else
+            echo "✓ All files end with newlines"
+          fi
+
+      - name: Run security checks
+        run: |
+          echo "Running security checks..."
+          echo "Checking for security vulnerabilities in dependencies..."
+          if command -v pnpm &> /dev/null; then
+            pnpm audit --prod || echo "⚠️ Security vulnerabilities found in dependencies"
+          elif command -v npm &> /dev/null; then
+            npm audit --audit-level=moderate --production || echo "⚠️ Security vulnerabilities found in dependencies"
+          else
+            echo "No package manager found for security audit"
+          fi
+
+          echo "Scanning for security anti-patterns..."
+          # Basic security scan for common patterns using portable grep
+          if find . \( -path "./node_modules" -o -path "./.bmad-core" -o -path "*/dist" -o -path "*/build" \) -prune -o \( -name "*.js" -o -name "*.ts" -o -name "*.json" \) -print0 | xargs -0 -r grep -E -l "password[[:space:]]*[:=][[:space:]]*[\"'].*[\"']" 2>/dev/null; then
+            echo "⚠️ Potential hardcoded passwords found - please review"
+          fi
+          echo "✓ Security checks completed"
+
+      - name: Check API health and configuration
+        run: |
+          echo "Checking API health and configuration..."
+          echo "Verifying API builds correctly..."
+
+          # Build API to check for TypeScript errors
+          pnpm --filter ./apps/api run build
+          echo "✓ API builds successfully"
+
+          # Type check API
+          pnpm --filter ./apps/api run type-check
+          echo "✓ TypeScript configuration is valid"
+
+          # Check required npm scripts exist using jq
+          cd apps/api
+          if [[ -f package.json ]]; then
+            for script in "build" "type-check" "test" "dev"; do
+              if jq -e ".scripts.\"$script\"" package.json > /dev/null; then
+                echo "✓ Script exists: $script"
+              else
+                echo "⚠️ Missing required script: $script"
+              fi
+            done
+          fi
+          echo "✓ API health checks completed"
+
   type-check:
     name: Type Check
     runs-on: ${{ matrix.os }}

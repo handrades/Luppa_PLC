@@ -23,12 +23,30 @@ const logFormat = winston.format.combine(
   winston.format.json()
 );
 
+// Safe JSON stringify that handles circular references
+const safeStringify = (obj: unknown): string => {
+  const seen = new WeakSet();
+  return JSON.stringify(
+    obj,
+    (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular Reference]';
+        }
+        seen.add(value);
+      }
+      return value;
+    },
+    2
+  );
+};
+
 // Console format for development
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 2)}` : '';
+    const metaStr = Object.keys(meta).length ? `\n${safeStringify(meta)}` : '';
     return `${timestamp} [${level}]: ${message}${metaStr}`;
   })
 );
@@ -53,29 +71,65 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-// File transports with rotation (production and development)
-transports.push(
-  // Error logs
-  new DailyRotateFile({
-    filename: join(logsDir, 'error-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    level: 'error',
-    format: logFormat,
-    maxSize: '10m',
-    maxFiles: '30d',
-    zippedArchive: true,
-  }),
+// File transports with rotation (only when logs directory is accessible)
+try {
+  transports.push(
+    // Error logs
+    new DailyRotateFile({
+      filename: join(logsDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      level: 'error',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    }),
 
-  // Combined logs
-  new DailyRotateFile({
-    filename: join(logsDir, 'combined-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    format: logFormat,
-    maxSize: '10m',
-    maxFiles: '30d',
-    zippedArchive: true,
-  })
-);
+    // Combined logs
+    new DailyRotateFile({
+      filename: join(logsDir, 'combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.warn(`Warning: Could not create file log transports: ${error}`);
+}
+
+// Exception and rejection handlers (only when logs directory is accessible)
+const exceptionHandlers: winston.transport[] = [];
+const rejectionHandlers: winston.transport[] = [];
+
+try {
+  exceptionHandlers.push(
+    new DailyRotateFile({
+      filename: join(logsDir, 'exceptions-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+
+  rejectionHandlers.push(
+    new DailyRotateFile({
+      filename: join(logsDir, 'rejections-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      format: logFormat,
+      maxSize: '10m',
+      maxFiles: '30d',
+      zippedArchive: true,
+    })
+  );
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.warn(`Warning: Could not create exception/rejection log transports: ${error}`);
+}
 
 // Create the logger
 export const logger = winston.createLogger({
@@ -86,25 +140,10 @@ export const logger = winston.createLogger({
     environment: process.env.NODE_ENV || 'development',
   },
   transports,
+  exceptionHandlers,
+  rejectionHandlers,
   // Handle uncaught exceptions and rejections
-  exceptionHandlers: [
-    new DailyRotateFile({
-      filename: join(logsDir, 'exceptions-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      format: logFormat,
-      maxSize: '10m',
-      maxFiles: '30d',
-    }),
-  ],
-  rejectionHandlers: [
-    new DailyRotateFile({
-      filename: join(logsDir, 'rejections-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      format: logFormat,
-      maxSize: '10m',
-      maxFiles: '30d',
-    }),
-  ],
+  exitOnError: false,
 });
 
 // Create a stream for morgan HTTP logging middleware
