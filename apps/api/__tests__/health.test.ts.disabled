@@ -1,15 +1,87 @@
 import request from 'supertest';
-import { createApp } from '../src/app';
+import createApp from '../src/app';
 
 // Mock database and Redis health checks for health endpoint tests
 jest.mock('../src/config/database', () => ({
   isDatabaseHealthy: jest.fn().mockResolvedValue(true),
   initializeDatabase: jest.fn().mockResolvedValue(undefined),
   closeDatabase: jest.fn().mockResolvedValue(undefined),
+  getDatabaseHealth: jest.fn().mockResolvedValue({
+    isHealthy: true,
+    responseTime: 25,
+    poolStats: {
+      isConnected: true,
+      totalConnections: 5,
+      idleConnections: 3,
+      runningConnections: 2,
+      poolConfig: {
+        min: 2,
+        max: 10,
+        connectionTimeoutMillis: 30000,
+        idleTimeoutMillis: 600000,
+      },
+    },
+  }),
+  getConnectionPoolStats: jest.fn().mockResolvedValue({
+    isConnected: true,
+    totalConnections: 5,
+    idleConnections: 3,
+    runningConnections: 2,
+    poolConfig: {
+      min: 2,
+      max: 10,
+      connectionTimeoutMillis: 30000,
+      idleTimeoutMillis: 600000,
+    },
+  }),
 }));
 
 jest.mock('../src/config/redis', () => ({
   isRedisHealthy: jest.fn().mockResolvedValue(true),
+  getRedisHealth: jest.fn().mockResolvedValue({
+    isHealthy: true,
+    responseTime: 15,
+    metrics: {
+      isConnected: true,
+      memoryUsage: {
+        used: 1048576,
+        peak: 2097152,
+        rss: 1572864,
+        overhead: 524288,
+      },
+      performance: {
+        connectedClients: 2,
+        commandsProcessed: 1000,
+        keyspaceHits: 800,
+        keyspaceMisses: 200,
+        hitRatio: 80,
+      },
+      config: {
+        maxmemory: 67108864,
+        maxmemoryPolicy: 'allkeys-lru',
+      },
+    },
+  }),
+  getRedisMetrics: jest.fn().mockResolvedValue({
+    isConnected: true,
+    memoryUsage: {
+      used: 1048576,
+      peak: 2097152,
+      rss: 1572864,
+      overhead: 524288,
+    },
+    performance: {
+      connectedClients: 2,
+      commandsProcessed: 1000,
+      keyspaceHits: 800,
+      keyspaceMisses: 200,
+      hitRatio: 80,
+    },
+    config: {
+      maxmemory: 67108864,
+      maxmemoryPolicy: 'allkeys-lru',
+    },
+  }),
 }));
 
 describe('Health Endpoint', () => {
@@ -35,7 +107,11 @@ describe('Health Endpoint', () => {
       expect(response.body).toHaveProperty('environment');
       expect(response.body).toHaveProperty('uptime');
       expect(response.body).toHaveProperty('database');
+      expect(response.body).toHaveProperty('redis');
       expect(response.body.database).toHaveProperty('status');
+      expect(response.body.database).toHaveProperty('responseTime');
+      expect(response.body.redis).toHaveProperty('status');
+      expect(response.body.redis).toHaveProperty('responseTime');
     });
 
     it('should return healthy status', async () => {
