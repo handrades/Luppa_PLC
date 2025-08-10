@@ -7,7 +7,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { auditContextMiddleware } from '../../middleware/auditContext';
 import { AppDataSource } from '../../config/database';
-import { EntityManager, QueryRunner } from 'typeorm';
+import { QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
 
 // Request properties are now defined globally in types/express.d.ts
@@ -128,10 +128,7 @@ describe('Audit Context Middleware', () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       // Should set user ID to empty string when not authenticated to avoid stale context
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        'SET app.current_user_id = $1',
-        ['']
-      );
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.current_user_id = $1', ['']);
       expect(mockNext).toHaveBeenCalledWith();
     });
 
@@ -192,10 +189,20 @@ describe('Audit Context Middleware', () => {
     });
 
     it('should log warning if execution exceeds 10ms threshold', async () => {
-      // Mock slow query execution that takes longer than 10ms
-      mockQueryRunner.query = jest
-        .fn()
-        .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 15)));
+      // Use Jest fake timers for deterministic timing
+      jest.useFakeTimers();
+
+      // Mock Date.now to control the timing measurement
+      const mockStartTime = 1000;
+      const mockEndTime = mockStartTime + 15; // 15ms duration
+
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValueOnce(mockStartTime) // Initial call in middleware
+        .mockReturnValueOnce(mockEndTime); // Call in cleanup function
+
+      // Mock slow query execution (the actual delay doesn't matter with fake timers)
+      mockQueryRunner.query = jest.fn().mockResolvedValue(undefined);
 
       // Call the middleware
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -216,11 +223,14 @@ describe('Audit Context Middleware', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         'Audit middleware exceeded 10ms threshold',
         expect.objectContaining({
-          duration: expect.any(Number),
+          duration: 15,
           path: undefined,
           method: undefined,
         })
       );
+
+      // Restore real timers
+      jest.useRealTimers();
     });
   });
 
@@ -273,7 +283,10 @@ describe('Audit Context Middleware', () => {
     });
 
     it('should extract session ID from X-Session-ID header', async () => {
-      mockRequest.user = { ...mockRequest.user, sessionId: undefined } as typeof mockRequest.user;
+      mockRequest.user = {
+        ...mockRequest.user,
+        sessionId: undefined,
+      } as typeof mockRequest.user;
       mockRequest.get = jest.fn((header: string) => {
         const headers = {
           'user-agent': 'Test User Agent',
@@ -291,15 +304,15 @@ describe('Audit Context Middleware', () => {
     });
 
     it('should handle missing session ID gracefully', async () => {
-      mockRequest.user = { ...mockRequest.user, sessionId: undefined } as typeof mockRequest.user;
+      mockRequest.user = {
+        ...mockRequest.user,
+        sessionId: undefined,
+      } as typeof mockRequest.user;
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       // Should set session ID to empty string when not available to avoid stale context
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        'SET app.session_id = $1',
-        ['']
-      );
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', ['']);
       expect(mockNext).toHaveBeenCalledWith();
     });
   });
