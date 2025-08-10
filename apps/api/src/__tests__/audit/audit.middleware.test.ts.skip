@@ -7,8 +7,18 @@
 import { NextFunction, Request, Response } from 'express';
 import { auditContextMiddleware } from '../../middleware/auditContext';
 import { AppDataSource } from '../../config/database';
-import { QueryRunner } from 'typeorm';
+import { EntityManager, QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
+
+// Define type for Request with audit properties for testing
+type RequestWithAudit = Request & {
+  auditEntityManager?: EntityManager;
+  user?: {
+    id: string;
+    sub: string;
+    email: string;
+  };
+};
 
 // Mock dependencies
 jest.mock('../../config/database', () => ({
@@ -27,7 +37,7 @@ jest.mock('../../config/logger', () => ({
 }));
 
 describe('Audit Context Middleware', () => {
-  let mockRequest: Partial<Request>;
+  let mockRequest: Partial<RequestWithAudit>;
   let mockResponse: Partial<Response & { _finishCallback?: () => Promise<void> }>;
   let mockNext: NextFunction;
   let mockQueryRunner: Partial<QueryRunner>;

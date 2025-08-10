@@ -18,6 +18,11 @@ const router: Router = Router();
  * Get AuthService with request-scoped EntityManager for session context
  */
 const getAuthService = (req: Request): AuthService => {
+  if (!req.auditEntityManager) {
+    throw new Error(
+      'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth routes.'
+    );
+  }
   return new AuthService(req.auditEntityManager);
 };
 
@@ -40,7 +45,10 @@ const refreshTokenSchema = Joi.object({
 router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = loginSchema.validate(req.body, {
+      allowUnknown: false,
+      abortEarly: false,
+    });
     if (error) {
       res.status(400).json({
         error: 'Validation error',
@@ -100,7 +108,10 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
 router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = refreshTokenSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = refreshTokenSchema.validate(req.body, {
+      allowUnknown: false,
+      abortEarly: false,
+    });
     if (error) {
       res.status(400).json({
         error: 'Validation error',

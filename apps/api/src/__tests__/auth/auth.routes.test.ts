@@ -18,10 +18,28 @@ jest.mock('../../utils/ip', () => ({
 }));
 jest.mock('../../middleware/auth', () => ({
   authenticate: jest.fn(),
-  optionalAuthenticate: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
-  authorize: jest.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
-  requireAdmin: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
-  requireActiveUser: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
+  optionalAuthenticate: jest.fn(
+    (req: { auditEntityManager?: unknown }, res: unknown, next: () => void) => {
+      req.auditEntityManager = {};
+      next();
+    }
+  ),
+  authorize: jest.fn(
+    () => (req: { auditEntityManager?: unknown }, res: unknown, next: () => void) => {
+      req.auditEntityManager = {};
+      next();
+    }
+  ),
+  requireAdmin: jest.fn((req: { auditEntityManager?: unknown }, res: unknown, next: () => void) => {
+    req.auditEntityManager = {};
+    next();
+  }),
+  requireActiveUser: jest.fn(
+    (req: { auditEntityManager?: unknown }, res: unknown, next: () => void) => {
+      req.auditEntityManager = {};
+      next();
+    }
+  ),
 }));
 
 import request from 'supertest';
@@ -52,6 +70,13 @@ describe('Auth Routes', () => {
     // Setup Express app with auth routes
     app = express();
     app.use(express.json());
+
+    // Add auditEntityManager to all requests for runtime validation
+    app.use((req: { auditEntityManager?: unknown }, _res, next) => {
+      req.auditEntityManager = {};
+      next();
+    });
+
     app.use('/auth', authRouter);
 
     // Reset mocks

@@ -93,11 +93,14 @@ describe('AuthService', () => {
     // Configure the existing mocked AppDataSource
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { AppDataSource } = require('../../config/database');
-    AppDataSource.getRepository.mockImplementation((entity: unknown) => {
+    const repositoryMockImplementation = (entity: unknown) => {
       if (entity === User) return mockUserRepository;
       if (entity === Role) return mockRoleRepository;
       return null;
-    });
+    };
+
+    AppDataSource.getRepository.mockImplementation(repositoryMockImplementation);
+    AppDataSource.manager.getRepository.mockImplementation(repositoryMockImplementation);
 
     // Setup bcrypt mock
     mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;

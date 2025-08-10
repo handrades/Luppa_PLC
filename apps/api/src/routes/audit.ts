@@ -18,6 +18,11 @@ const router: Router = Router();
  * Get AuditService with request-scoped EntityManager for session context
  */
 const getAuditService = (req: Request): AuditService => {
+  if (!req.auditEntityManager) {
+    throw new Error(
+      'auditEntityManager is not available on request. Ensure auditContext middleware is registered before audit routes.'
+    );
+  }
   return new AuditService(req.auditEntityManager);
 };
 
@@ -95,6 +100,7 @@ router.get(
     try {
       // Validate query parameters
       const { error, value } = auditQuerySchema.validate(req.query, {
+        allowUnknown: false,
         abortEarly: false,
         convert: true,
       });
@@ -243,12 +249,15 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       // Validate query parameters using Joi schema
-      const { error, value } = statsQuerySchema.validate(req.query);
+      const { error, value } = statsQuerySchema.validate(req.query, {
+        allowUnknown: false,
+        abortEarly: false,
+      });
 
       if (error) {
         res.status(400).json({
           error: 'Invalid query parameters',
-          message: error.details[0].message,
+          message: error.details.map(detail => detail.message).join(', '),
           details: error.details,
         });
         return;
@@ -322,7 +331,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       // Validate audit log ID parameter
-      const { error, value } = auditIdSchema.validate(req.params, { abortEarly: false });
+      const { error, value } = auditIdSchema.validate(req.params, {
+        allowUnknown: false,
+        abortEarly: false,
+      });
 
       if (error) {
         res.status(400).json({
@@ -390,6 +402,7 @@ router.post(
     try {
       // Validate request body
       const { error, value } = complianceReportSchema.validate(req.body, {
+        allowUnknown: false,
         abortEarly: false,
         convert: true,
       });
