@@ -8,8 +8,6 @@ import { Request, Response, Router } from 'express';
 import Joi from 'joi';
 import { AuthService, LoginCredentials } from '../services/AuthService';
 import { PasswordResetService } from '../services/PasswordResetService';
-import { EmailNotificationService } from '../services/EmailNotificationService';
-import { User } from '../entities/User';
 import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
 import {
@@ -19,6 +17,11 @@ import {
 } from '../validation/userSchemas';
 import { logger } from '../config/logger';
 import { getClientIP } from '../utils/ip';
+import {
+  handleValidationErrorFromMessage,
+  sendGenericValidationError,
+  sendValidationError,
+} from '../utils/validation';
 
 const router: Router = Router();
 
@@ -70,18 +73,22 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
       abortEarly: false,
     });
     if (error) {
-      res.status(400).json({
-        error: 'Validation error',
-        message: error.details.map(detail => detail.message).join('; '),
-      });
+      sendValidationError(res, error);
       return;
     }
 
-    const { email, password } = value as LoginCredentials;
+    // Type-safe extraction after Joi validation
+    const { email, password }: LoginCredentials = value;
+
+    // Additional runtime type checks for safety
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      sendGenericValidationError(res, 'Email and password must be strings');
+      return;
+    }
 
     // Get client information for session tracking
     const ipAddress = getClientIP(req);
-    const userAgent = req.headers['user-agent'] || 'unknown';
+    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
 
     // Attempt login
     const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
@@ -109,7 +116,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
       email: req.body?.email,
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: req.headers['user-agent'],
+      userAgent: (req.headers['user-agent'] as string) || 'unknown',
       timestamp: new Date().toISOString(),
     });
 
@@ -133,10 +140,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
       abortEarly: false,
     });
     if (error) {
-      res.status(400).json({
-        error: 'Validation error',
-        message: error.details.map(detail => detail.message).join('; '),
-      });
+      sendValidationError(res, error);
       return;
     }
 
@@ -144,7 +148,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
 
     // Get client information
     const ipAddress = getClientIP(req);
-    const userAgent = req.headers['user-agent'] || 'unknown';
+    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
 
     // Refresh tokens
     const newTokens = await getAuthService(req).refreshToken(refreshToken, ipAddress, userAgent);
@@ -166,7 +170,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     logger.warn('Token refresh failed', {
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: req.headers['user-agent'],
+      userAgent: (req.headers['user-agent'] as string) || 'unknown',
       timestamp: new Date().toISOString(),
     });
 
@@ -306,31 +310,9 @@ router.post('/password-reset', authRateLimit, async (req: Request, res: Response
     const { email } = validateSchema(passwordResetRequestSchema)(req.body);
 
     const passwordResetService = getPasswordResetService(req);
-    const emailService = new EmailNotificationService();
 
-    // Generate reset token (always returns success for security)
-    const token = await passwordResetService.generatePasswordResetToken(email);
-
-    // If token generation was successful and user exists, send email
-    if (token) {
-      // Send email notification asynchronously
-      emailService
-        .sendPasswordResetNotification({
-          user: {
-            email,
-            firstName: '',
-            lastName: '',
-          } as User, // Minimal user object for password reset notifications
-          resetToken: token,
-          resetUrl: `${process.env.FRONTEND_URL || 'https://inventory.local'}/reset-password?token=${token}`,
-        })
-        .catch(error => {
-          logger.error('Failed to send password reset email', {
-            email,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-        });
-    }
+    // Generate reset token and send email (handles user existence internally for security)
+    await passwordResetService.generatePasswordResetToken(email);
 
     logger.info('Password reset requested', {
       email,
@@ -346,13 +328,7 @@ router.post('/password-reset', authRateLimit, async (req: Request, res: Response
     const message = error instanceof Error ? error.message : 'Password reset failed';
 
     // Check for validation errors
-    if (message.includes('Validation failed')) {
-      const validationError = JSON.parse(message);
-      res.status(400).json({
-        error: 'Validation error',
-        message: validationError.message,
-        errors: validationError.errors,
-      });
+    if (handleValidationErrorFromMessage(res, message)) {
       return;
     }
 
@@ -379,6 +355,24 @@ router.post('/password-reset/verify', authRateLimit, async (req: Request, res: R
     // Validate request body
     const { token, newPassword } = validateSchema(passwordResetVerifySchema)(req.body);
 
+    // Early validation: Check token format before processing
+    if (!token || typeof token !== 'string') {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'Reset token is required and must be a string',
+      });
+      return;
+    }
+
+    // Validate token format (should be alphanumeric and hyphens for security)
+    if (!/^[a-zA-Z0-9\-_]+$/.test(token) || token.length < 16) {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'The password reset token format is invalid',
+      });
+      return;
+    }
+
     const passwordResetService = getPasswordResetService(req);
 
     // Reset password using token
@@ -404,13 +398,7 @@ router.post('/password-reset/verify', authRateLimit, async (req: Request, res: R
     const message = error instanceof Error ? error.message : 'Password reset verification failed';
 
     // Check for validation errors
-    if (message.includes('Validation failed')) {
-      const validationError = JSON.parse(message);
-      res.status(400).json({
-        error: 'Validation error',
-        message: validationError.message,
-        errors: validationError.errors,
-      });
+    if (handleValidationErrorFromMessage(res, message)) {
       return;
     }
 

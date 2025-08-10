@@ -10,6 +10,7 @@ import { EntityManager } from 'typeorm';
 import { redisClient } from '../config/redis';
 import { UserRepository } from '../repositories/UserRepository';
 import { AuthService } from './AuthService';
+import { EmailNotificationService } from './EmailNotificationService';
 import { logger } from '../config/logger';
 
 export interface PasswordResetToken {
@@ -22,18 +23,27 @@ export interface PasswordResetToken {
 export class PasswordResetService {
   private userRepository: UserRepository;
   private authService: AuthService;
+  private emailService: EmailNotificationService;
   private readonly TOKEN_PREFIX = 'password_reset:';
   private readonly TOKEN_LENGTH = 32;
   private readonly TOKEN_TTL_HOURS = 1;
   private readonly TOKEN_TTL_SECONDS = this.TOKEN_TTL_HOURS * 60 * 60;
 
   constructor(entityManager?: EntityManager) {
+    // EntityManager is required for proper audit context in AuthService
+    if (!entityManager) {
+      throw new Error(
+        'EntityManager is required for PasswordResetService initialization. Ensure auditContext middleware is registered.'
+      );
+    }
+
     this.userRepository = new UserRepository();
     this.authService = new AuthService(entityManager);
+    this.emailService = new EmailNotificationService();
   }
 
   /**
-   * Generate secure password reset token for user
+   * Generate secure password reset token for user and send email notification
    */
   async generatePasswordResetToken(email: string): Promise<string> {
     const normalizedEmail = email.toLowerCase().trim();
@@ -68,6 +78,21 @@ export class PasswordResetService {
       const userTokenKey = `${this.TOKEN_PREFIX}user:${user.id}`;
       await redisClient.setEx(userTokenKey, this.TOKEN_TTL_SECONDS, token);
 
+      // Send password reset email
+      this.emailService
+        .sendPasswordResetNotification({
+          user,
+          resetToken: token,
+          resetUrl: `${process.env.FRONTEND_URL || 'https://inventory.local'}/reset-password?token=${token}`,
+        })
+        .catch(error => {
+          logger.error('Failed to send password reset email', {
+            userId: user.id,
+            email: user.email,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        });
+
       logger.info('Password reset token generated', {
         userId: user.id,
         email: user.email,
@@ -99,7 +124,9 @@ export class PasswordResetService {
       const tokenDataJson = await redisClient.get(tokenKey);
 
       if (!tokenDataJson) {
-        logger.warn('Password reset token not found or expired', { token });
+        logger.warn('Password reset token not found or expired', {
+          tokenHash: token.substring(0, 6) + '***',
+        });
         return null;
       }
 
@@ -107,7 +134,10 @@ export class PasswordResetService {
 
       // Verify token hasn't expired (double-check even though Redis TTL should handle this)
       if (new Date() > new Date(tokenData.expiresAt)) {
-        logger.warn('Password reset token expired', { token, expiresAt: tokenData.expiresAt });
+        logger.warn('Password reset token expired', {
+          tokenHash: token.substring(0, 6) + '***',
+          expiresAt: tokenData.expiresAt,
+        });
         await this.invalidateToken(token);
         return null;
       }
@@ -116,7 +146,7 @@ export class PasswordResetService {
     } catch (error) {
       logger.error('Failed to validate password reset token', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        token,
+        tokenHash: token.substring(0, 6) + '***',
       });
       return null;
     }
@@ -181,11 +211,11 @@ export class PasswordResetService {
 
     try {
       await redisClient.del(tokenKey);
-      logger.info('Password reset token invalidated', { token });
+      logger.info('Password reset token invalidated', { tokenHash: token.substring(0, 6) + '***' });
     } catch (error) {
       logger.error('Failed to invalidate password reset token', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        token,
+        tokenHash: token.substring(0, 6) + '***',
       });
     }
   }

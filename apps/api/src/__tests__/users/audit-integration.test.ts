@@ -162,12 +162,22 @@ describe('User Management Audit Integration', () => {
         roleId: TEST_JWT.roleId,
       };
 
+      // Extract actual header values from the request
+      const clientIp =
+        (req.headers['x-forwarded-for'] as string) ||
+        (req.headers['x-real-ip'] as string) ||
+        req.connection?.remoteAddress ||
+        req.socket?.remoteAddress ||
+        '127.0.0.1';
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      const sessionId = (req.headers['x-session-id'] as string) || req.sessionID || '';
+
       // Simulate the SQL context setting calls that tests expect
       await mockQueryRunner.connect();
       await mockQueryRunner.query('SET app.current_user_id = $1', [TEST_JWT.userId]);
-      await mockQueryRunner.query('SET app.client_ip = $1', ['']);
-      await mockQueryRunner.query('SET app.user_agent = $1', ['']);
-      await mockQueryRunner.query('SET app.session_id = $1', ['']);
+      await mockQueryRunner.query('SET app.client_ip = $1', [clientIp]);
+      await mockQueryRunner.query('SET app.user_agent = $1', [userAgent]);
+      await mockQueryRunner.query('SET app.session_id = $1', [sessionId]);
 
       next();
     });
@@ -424,7 +434,9 @@ describe('User Management Audit Integration', () => {
         .expect(200);
 
       // IP address context should be set for audit logging
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.client_ip = $1', ['']);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.client_ip = $1', [
+        '192.168.1.100',
+      ]);
     });
 
     it('should set user agent context from request headers', async () => {
@@ -436,7 +448,9 @@ describe('User Management Audit Integration', () => {
         .expect(200);
 
       // User agent context should be set for audit logging
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.user_agent = $1', ['']);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.user_agent = $1', [
+        'Mozilla/5.0 (Test Browser)',
+      ]);
     });
 
     it('should handle missing session context gracefully', async () => {
@@ -444,7 +458,7 @@ describe('User Management Audit Integration', () => {
 
       await request(app).get(`/users/${mockUser.id}`).expect(200);
 
-      // Should set empty values for missing context
+      // Should set empty values for missing session context
       expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', ['']);
     });
   });

@@ -424,9 +424,48 @@ LIMIT 1000;
 
 -- Initial data insertion
 INSERT INTO roles (name, permissions, description, is_system) VALUES
-('Admin', '{"sites": {"create": true, "read": true, "update": true, "delete": true}, "cells": {"create": true, "read": true, "update": true, "delete": true}, "equipment": {"create": true, "read": true, "update": true, "delete": true}, "plcs": {"create": true, "read": true, "update": true, "delete": true}, "tags": {"create": true, "read": true, "update": true, "delete": true}, "users": {"create": true, "read": true, "update": true, "delete": true}, "audit": {"read": true, "export": true}}', 'Full system access', true),
-('Engineer', '{"sites": {"create": false, "read": true, "update": false, "delete": false}, "cells": {"create": false, "read": true, "update": false, "delete": false}, "equipment": {"create": true, "read": true, "update": true, "delete": false}, "plcs": {"create": true, "read": true, "update": true, "delete": false}, "tags": {"create": true, "read": true, "update": true, "delete": true}, "users": {"create": false, "read": false, "update": false, "delete": false}, "audit": {"read": true, "export": false}}', 'Equipment management access', true),
-('Viewer', '{"sites": {"create": false, "read": true, "update": false, "delete": false}, "cells": {"create": false, "read": true, "update": false, "delete": false}, "equipment": {"create": false, "read": true, "update": false, "delete": false}, "plcs": {"create": false, "read": true, "update": false, "delete": false}, "tags": {"create": false, "read": true, "update": false, "delete": false}, "users": {"create": false, "read": false, "update": false, "delete": false}, "audit": {"read": false, "export": false}}', 'Read-only access', true);
+(
+  'Admin',
+  '{
+    "sites": {"create": true, "read": true, "update": true, "delete": true},
+    "cells": {"create": true, "read": true, "update": true, "delete": true},
+    "equipment": {"create": true, "read": true, "update": true, "delete": true},
+    "plcs": {"create": true, "read": true, "update": true, "delete": true},
+    "tags": {"create": true, "read": true, "update": true, "delete": true},
+    "users": {"create": true, "read": true, "update": true, "delete": true},
+    "audit": {"read": true, "export": true}
+  }',
+  'Full system access',
+  true
+),
+(
+  'Engineer',
+  '{
+    "sites": {"create": false, "read": true, "update": false, "delete": false},
+    "cells": {"create": false, "read": true, "update": false, "delete": false},
+    "equipment": {"create": true, "read": true, "update": true, "delete": false},
+    "plcs": {"create": true, "read": true, "update": true, "delete": false},
+    "tags": {"create": true, "read": true, "update": true, "delete": true},
+    "users": {"create": false, "read": false, "update": false, "delete": false},
+    "audit": {"read": true, "export": false}
+  }',
+  'Equipment management access',
+  true
+),
+(
+  'Viewer',
+  '{
+    "sites": {"create": false, "read": true, "update": false, "delete": false},
+    "cells": {"create": false, "read": true, "update": false, "delete": false},
+    "equipment": {"create": false, "read": true, "update": false, "delete": false},
+    "plcs": {"create": false, "read": true, "update": false, "delete": false},
+    "tags": {"create": false, "read": true, "update": false, "delete": false},
+    "users": {"create": false, "read": false, "update": false, "delete": false},
+    "audit": {"read": false, "export": false}
+  }',
+  'Read-only access',
+  true
+);
 
 -- Initial Admin User Setup
 -- ========================

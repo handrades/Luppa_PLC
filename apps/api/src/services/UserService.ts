@@ -6,7 +6,8 @@
  */
 
 import { EntityManager } from 'typeorm';
-import { AppDataSource } from '../config/database';
+// AppDataSource no longer used - EntityManager is now required
+// import { AppDataSource } from '../config/database';
 import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import {
@@ -47,13 +48,16 @@ export class UserService {
   private manager: EntityManager;
 
   constructor(entityManager?: EntityManager) {
-    this.manager = entityManager || AppDataSource.manager;
-
-    if (!this.manager) {
-      throw new Error('EntityManager is required for UserService initialization');
+    // Always require an EntityManager for proper audit context
+    if (!entityManager) {
+      throw new Error(
+        'EntityManager is required for UserService initialization. Ensure auditContext middleware is registered.'
+      );
     }
 
-    this.userRepository = new UserRepository();
+    this.manager = entityManager;
+
+    this.userRepository = new UserRepository(this.manager);
     this.authService = new AuthService(this.manager);
     this.passwordResetService = new PasswordResetService(this.manager);
     this.emailService = new EmailNotificationService();

@@ -9,6 +9,7 @@
 import { logger } from '../config/logger';
 import { User } from '../entities/User';
 import { Role } from '../entities/Role';
+import { sanitizeErrorMessage } from '../utils/errorHandler';
 
 export interface EmailNotificationData {
   to: string;
@@ -134,7 +135,7 @@ export class EmailNotificationService {
         lastName: user.lastName,
         systemName: this.SYSTEM_NAME,
         changedBy: changedBy || 'yourself',
-        changedAt: new Date().toLocaleString(),
+        changedAt: new Date().toISOString(),
         supportEmail: process.env.SUPPORT_EMAIL || 'support@luppa-plc.local',
         loginUrl: process.env.FRONTEND_URL || 'https://inventory.local',
       },
@@ -167,7 +168,7 @@ export class EmailNotificationService {
         newRoleName: newRole.name,
         assignedBy,
         reason,
-        assignedAt: new Date().toLocaleString(),
+        assignedAt: new Date().toISOString(),
         supportEmail: process.env.SUPPORT_EMAIL || 'support@luppa-plc.local',
         loginUrl: process.env.FRONTEND_URL || 'https://inventory.local',
       },
@@ -197,7 +198,7 @@ export class EmailNotificationService {
         lastName: user.lastName,
         systemName: this.SYSTEM_NAME,
         deactivatedBy,
-        deactivatedAt: new Date().toLocaleString(),
+        deactivatedAt: new Date().toISOString(),
         supportEmail: process.env.SUPPORT_EMAIL || 'support@luppa-plc.local',
       },
     };
@@ -241,19 +242,23 @@ export class EmailNotificationService {
    */
   private async sendEmail(emailData: EmailNotificationData): Promise<void> {
     if (!this.isEmailEnabled) {
-      logger.debug('Email notification would be sent (disabled in test)', emailData);
+      // Sanitize email data to prevent sensitive information exposure
+      const sanitizedData = this.sanitizeEmailData(emailData);
+      logger.debug('Email notification would be sent (disabled in test)', sanitizedData);
       return;
     }
 
     try {
       // In a real implementation, this would use an SMTP client like nodemailer
-      // For now, we'll log the email that would be sent
+      // For now, we'll log the email that would be sent (with sanitized data)
+      const sanitizedData = this.sanitizeEmailData(emailData);
       logger.info('EMAIL NOTIFICATION (Mock Implementation)', {
         from: this.FROM_EMAIL,
         to: emailData.to,
         subject: emailData.subject,
         template: emailData.template,
-        data: emailData.data,
+        // Log sanitized version of data to prevent token exposure
+        data: sanitizedData.data,
       });
 
       // Simulate async email sending
@@ -279,9 +284,14 @@ export class EmailNotificationService {
       });
       */
     } catch (error) {
+      const sanitizedMessage = sanitizeErrorMessage(
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      const sanitizedData = this.sanitizeEmailData(emailData);
+
       logger.error('Failed to send email notification', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        emailData,
+        error: sanitizedMessage,
+        emailData: sanitizedData,
       });
 
       // In production, you might want to queue the email for retry
@@ -314,6 +324,51 @@ export class EmailNotificationService {
       enabled: this.isEmailEnabled,
       fromEmail: this.FROM_EMAIL,
       systemName: this.SYSTEM_NAME,
+    };
+  }
+
+  /**
+   * Sanitize email data to prevent logging of sensitive information
+   */
+  private sanitizeEmailData(emailData: EmailNotificationData): EmailNotificationData {
+    const sanitizedData = { ...emailData.data };
+
+    // Remove or mask sensitive fields
+    if (sanitizedData.resetToken) {
+      sanitizedData.resetToken = '[REDACTED_TOKEN]';
+    }
+
+    if (sanitizedData.resetUrl && typeof sanitizedData.resetUrl === 'string') {
+      // Replace token parameter in reset URL
+      sanitizedData.resetUrl = (sanitizedData.resetUrl as string).replace(
+        /([?&]token=)[^&]+/g,
+        '$1[REDACTED_TOKEN]'
+      );
+    }
+
+    if (sanitizedData.tempPassword) {
+      sanitizedData.tempPassword = '[REDACTED_PASSWORD]';
+    }
+
+    // Ensure no other potentially sensitive data is logged
+    Object.keys(sanitizedData).forEach(key => {
+      const value = sanitizedData[key];
+      if (typeof value === 'string') {
+        // Sanitize any field that might contain sensitive patterns
+        if (
+          key.toLowerCase().includes('password') ||
+          key.toLowerCase().includes('token') ||
+          key.toLowerCase().includes('secret') ||
+          key.toLowerCase().includes('key')
+        ) {
+          sanitizedData[key] = '[REDACTED]';
+        }
+      }
+    });
+
+    return {
+      ...emailData,
+      data: sanitizedData,
     };
   }
 }

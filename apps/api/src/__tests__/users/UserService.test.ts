@@ -32,6 +32,7 @@ import { PasswordResetService } from '../../services/PasswordResetService';
 import { EmailNotificationService } from '../../services/EmailNotificationService';
 import { AppDataSource } from '../../config/database';
 import { User } from '../../entities/User';
+import { EntityManager } from 'typeorm';
 import { Role } from '../../entities/Role';
 
 describe('UserService', () => {
@@ -128,7 +129,17 @@ describe('UserService', () => {
       return mockUserRepository;
     });
 
-    userService = new UserService();
+    // Create a mock EntityManager for testing
+    const mockEntityManager = {
+      getRepository: jest.fn().mockImplementation(entity => {
+        if (entity.name === 'Role') {
+          return mockRoleRepository;
+        }
+        return mockUserRepository;
+      }),
+    } as unknown as EntityManager;
+
+    userService = new UserService(mockEntityManager);
   });
 
   describe('createUser', () => {

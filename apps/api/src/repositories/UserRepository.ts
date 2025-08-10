@@ -5,8 +5,7 @@
  * Provides efficient querying methods for user management functionality.
  */
 
-import { Repository } from 'typeorm';
-import { AppDataSource } from '../config/database';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from '../entities/User';
 
 export interface UserSearchFilters {
@@ -32,8 +31,11 @@ export interface PaginatedResponse<T> {
 export class UserRepository {
   private repository: Repository<User>;
 
-  constructor() {
-    this.repository = AppDataSource.getRepository(User);
+  constructor(entityManager?: EntityManager) {
+    if (!entityManager) {
+      throw new Error('EntityManager is required for UserRepository initialization');
+    }
+    this.repository = entityManager.getRepository(User);
   }
 
   /**
@@ -154,7 +156,13 @@ export class UserRepository {
    * Update user by ID
    */
   async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {
-    await this.repository.update(id, updateData);
+    const updateResult = await this.repository.update(id, updateData);
+
+    // Check if any rows were actually updated
+    if (updateResult.affected === 0) {
+      return null; // User not found
+    }
+
     return this.findWithRole(id);
   }
 
@@ -162,7 +170,12 @@ export class UserRepository {
    * Soft delete user (set isActive to false)
    */
   async softDeleteUser(id: string): Promise<void> {
-    await this.repository.update(id, { isActive: false });
+    const updateResult = await this.repository.update(id, { isActive: false });
+
+    // Throw error if user doesn't exist
+    if (updateResult.affected === 0) {
+      throw new Error('User not found');
+    }
   }
 
   /**

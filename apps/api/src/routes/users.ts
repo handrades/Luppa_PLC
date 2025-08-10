@@ -19,6 +19,8 @@ import {
 } from '../validation/userSchemas';
 import { logger } from '../config/logger';
 import { getClientIP } from '../utils/ip';
+// Centralized error handling utilities available for future use
+// import { handleRouteError, ValidationError } from '../utils/errorHandler';
 
 const router: Router = Router();
 
