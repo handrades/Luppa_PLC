@@ -78,8 +78,8 @@ const testUser = {
   },
 };
 
-// Use a sanitized test token to prevent exposure patterns in logs
-const mockResetToken = 'test-reset-token-sanitized-for-security';
+// Use a 64-character hex token format to match validation in auth routes
+const mockResetToken = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
 describe('Password Reset Flow', () => {
   let app: express.Application;

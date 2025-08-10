@@ -4,21 +4,9 @@
  * Provides consistent error handling and response formatting across all routes.
  */
 
-import { Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
-
-/**
- * Custom validation error class for type-safe error handling
- */
-export class ValidationError extends Error {
-  public readonly errors: Array<{ field: string; message: string }>;
-
-  constructor(message: string, errors: Array<{ field: string; message: string }> = []) {
-    super(message);
-    this.name = 'ValidationError';
-    this.errors = errors;
-  }
-}
+import { ValidationError } from '../errors/ValidationError';
 
 /**
  * Custom business logic error class
@@ -83,7 +71,7 @@ export function handleRouteError(
 
     if (error.statusCode >= 500) {
       logger.error(defaultMessage, {
-        error: message,
+        error: sanitizeErrorMessage(message),
         ...requestContext,
       });
     }
@@ -99,29 +87,24 @@ export function handleRouteError(
     return;
   }
 
-  if (message.includes('not found') || message.includes('User not found')) {
-    res.status(404).json({
-      error: 'Not found',
-      message: message.includes('User') ? 'User not found' : 'Resource not found',
-    });
-    return;
-  }
-
-  if (message.includes('Role not found')) {
-    res.status(400).json({
-      error: 'Invalid role',
-      message: 'Specified role does not exist',
-    });
-    return;
-  }
-
+  // Handle role-related errors first (before generic "not found" check)
   if (
+    message.includes('Role not found') ||
     message.includes('New role not found') ||
     message.includes('Default Engineer role not found')
   ) {
     res.status(400).json({
       error: 'Invalid role',
       message: 'Specified role does not exist',
+    });
+    return;
+  }
+
+  // Handle generic "not found" errors after specific role checks
+  if (message.includes('not found') || message.includes('User not found')) {
+    res.status(404).json({
+      error: 'Not found',
+      message: message.includes('User') ? 'User not found' : 'Resource not found',
     });
     return;
   }
@@ -152,14 +135,14 @@ export function handleRouteError(
 
   // Log server errors
   logger.error(defaultMessage, {
-    error: message,
+    error: sanitizeErrorMessage(message),
     ...requestContext,
   });
 
-  // Default to 500 for unhandled errors
+  // Default to 500 for unhandled errors - use provided default message or generic fallback
   res.status(500).json({
     error: 'Internal server error',
-    message: defaultMessage,
+    message: defaultMessage || 'An unexpected error occurred. Please try again later.',
   });
 }
 
@@ -202,4 +185,30 @@ export function sanitizeErrorMessage(message: string): string {
     .replace(/api[_-]?key[=:]\s*[^\s]+/gi, 'api_key=[REDACTED]');
 
   return sanitized;
+}
+
+/**
+ * Async handler wrapper to centralize error handling for route handlers
+ *
+ * Usage:
+ *   router.post('/users', asyncHandler(async (req, res) => {
+ *     // Your handler code here
+ *     // Errors will be automatically handled by handleRouteError
+ *   }));
+ */
+export function asyncHandler(
+  handler: (_req: Request, _res: Response, _next: NextFunction) => Promise<void>,
+  defaultErrorMessage: string = 'Internal server error'
+) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await handler(req, res, next);
+    } catch (error) {
+      handleRouteError(error, res, defaultErrorMessage, {
+        operation: req.method + ' ' + req.path,
+        userId: req.user?.sub,
+        ipAddress: req.ip,
+      });
+    }
+  };
 }
