@@ -127,9 +127,10 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Should not set user ID when not authenticated
-      expect(mockQueryRunner.query).not.toHaveBeenCalledWith(
-        expect.stringContaining('app.current_user_id')
+      // Should set user ID to empty string when not authenticated to avoid stale context
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        'SET app.current_user_id = $1',
+        ['']
       );
       expect(mockNext).toHaveBeenCalledWith();
     });
@@ -294,9 +295,10 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Should not set session ID when not available
-      expect(mockQueryRunner.query).not.toHaveBeenCalledWith(
-        expect.stringContaining('app.session_id')
+      // Should set session ID to empty string when not available to avoid stale context
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        'SET app.session_id = $1',
+        ['']
       );
       expect(mockNext).toHaveBeenCalledWith();
     });
