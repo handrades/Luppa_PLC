@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm';
+import type { EntityManager, QueryRunner } from 'typeorm';
 
 declare global {
   namespace Express {
@@ -6,6 +6,7 @@ declare global {
       id: string;
       rawBody?: Buffer;
       auditEntityManager?: EntityManager;
+      auditQueryRunner?: QueryRunner;
     }
   }
 }

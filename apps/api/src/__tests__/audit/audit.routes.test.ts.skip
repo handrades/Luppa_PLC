@@ -10,8 +10,7 @@ import { createApp } from '../../app';
 import { AuditService } from '../../services/AuditService';
 import { AuditAction, RiskLevel } from '../../entities/AuditLog';
 
-// Mock the AuditService
-jest.mock('../../services/AuditService');
+// Note: AuditService will be spied on using jest.spyOn instead of mocked
 jest.mock('../../config/database', () => ({
   AppDataSource: {
     manager: {},
@@ -43,16 +42,15 @@ describe('Audit Routes', () => {
   let mockAuditService: jest.Mocked<AuditService>;
 
   beforeEach(() => {
-    app = createApp();
-    mockAuditService = new AuditService() as jest.Mocked<AuditService>;
+    // Setup spies before creating the app to ensure they're attached during initialization
+    mockAuditService = {
+      getAuditLogs: jest.fn(),
+      getAuditLogById: jest.fn(),
+      getHighRiskEvents: jest.fn(),
+      generateComplianceReport: jest.fn(),
+    } as jest.Mocked<AuditService>;
 
-    // Setup default mock implementations
-    mockAuditService.getAuditLogs = jest.fn();
-    mockAuditService.getAuditLogById = jest.fn();
-    mockAuditService.getHighRiskEvents = jest.fn();
-    mockAuditService.generateComplianceReport = jest.fn();
-
-    // Replace the service instance
+    // Setup spies on AuditService prototype methods before app creation
     jest
       .spyOn(AuditService.prototype, 'getAuditLogs')
       .mockImplementation(mockAuditService.getAuditLogs);
@@ -65,10 +63,13 @@ describe('Audit Routes', () => {
     jest
       .spyOn(AuditService.prototype, 'generateComplianceReport')
       .mockImplementation(mockAuditService.generateComplianceReport);
+
+    // Create app after spies are set up
+    app = createApp();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('GET /api/v1/audit-logs', () => {
@@ -412,22 +413,8 @@ describe('Audit Routes', () => {
   });
 
   describe('Authorization', () => {
-    it('should require authentication for all endpoints', async () => {
-      // This would require mocking the auth middleware to return 401
-      // For now, we assume authentication is mocked to pass
-      expect(true).toBe(true);
-    });
-
-    it('should require audit.read permission for read endpoints', async () => {
-      // This would require testing the authorize middleware
-      // For now, we assume authorization is mocked to pass
-      expect(true).toBe(true);
-    });
-
-    it('should require audit.export permission for compliance reports', async () => {
-      // This would require testing the authorize middleware
-      // For now, we assume authorization is mocked to pass
-      expect(true).toBe(true);
-    });
+    test.todo('should require authentication for all endpoints');
+    test.todo('should require audit.read permission for read endpoints');
+    test.todo('should require audit.export permission for compliance reports');
   });
 });
