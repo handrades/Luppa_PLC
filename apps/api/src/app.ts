@@ -22,14 +22,7 @@ import auditRouter from './routes/audit';
 config();
 
 // Extend Express Request interface for raw body support
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      rawBody?: Buffer;
-    }
-  }
-}
+// Express Request interface augmented in types/express.d.ts
 
 // Extend Node.js IncomingMessage for express.json verify function
 declare module 'http' {

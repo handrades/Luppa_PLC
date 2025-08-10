@@ -113,13 +113,4 @@ function generateSessionId(req: Request): string | null {
   return null;
 }
 
-// Extend Express Request interface to include audit query runner and entity manager
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      auditQueryRunner?: import('typeorm').QueryRunner;
-      auditEntityManager?: import('typeorm').EntityManager;
-    }
-  }
-}
+// Express Request interface augmented in types/express.d.ts

@@ -10,15 +10,8 @@ import { AppDataSource } from '../../config/database';
 import { EntityManager, QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
 
-// Define type for Request with audit properties for testing
-type RequestWithAudit = Request & {
-  auditEntityManager?: EntityManager;
-  user?: {
-    id: string;
-    sub: string;
-    email: string;
-  };
-};
+// Request properties are now defined globally in types/express.d.ts
+type RequestWithAudit = Request;
 
 // Mock dependencies
 jest.mock('../../config/database', () => ({
