@@ -11,6 +11,9 @@ process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-fo
 jest.mock('../../config/database', () => ({
   AppDataSource: {
     getRepository: jest.fn(),
+    manager: {
+      getRepository: jest.fn(),
+    },
   },
 }));
 
@@ -90,11 +93,14 @@ describe('AuthService', () => {
     // Configure the existing mocked AppDataSource
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { AppDataSource } = require('../../config/database');
-    AppDataSource.getRepository.mockImplementation((entity: unknown) => {
+    const repositoryMockImplementation = (entity: unknown) => {
       if (entity === User) return mockUserRepository;
       if (entity === Role) return mockRoleRepository;
       return null;
-    });
+    };
+
+    AppDataSource.getRepository.mockImplementation(repositoryMockImplementation);
+    AppDataSource.manager.getRepository.mockImplementation(repositoryMockImplementation);
 
     // Setup bcrypt mock
     mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;

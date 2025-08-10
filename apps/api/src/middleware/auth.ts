@@ -5,21 +5,13 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
-import { JwtPayload } from '../config/jwt';
 import { AuthService } from '../services/AuthService';
 import { logger } from '../config/logger';
 
 /**
  * Extend Express Request interface to include user information
  */
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
-  }
-}
+// Express Request interface augmented in types/express.d.ts
 
 /**
  * Authentication middleware that validates JWT tokens

@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 
 // Import middleware and configuration
 import { requestIdMiddleware } from './middleware/requestId';
+import { auditContextMiddleware } from './middleware/auditContext';
 import { ValidationError, errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
 import { config as appConfig } from './config/env';
@@ -15,19 +16,13 @@ import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 // Import routes
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
+import auditRouter from './routes/audit';
 
 // Load environment variables
 config();
 
 // Extend Express Request interface for raw body support
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      rawBody?: Buffer;
-    }
-  }
-}
+// Express Request interface augmented in types/express.d.ts
 
 // Extend Node.js IncomingMessage for express.json verify function
 declare module 'http' {
@@ -112,6 +107,9 @@ export const createApp = (): express.Application => {
   // Request ID middleware for tracing
   app.use(requestIdMiddleware);
 
+  // Audit context middleware for database session variables
+  app.use(auditContextMiddleware);
+
   // Request logging middleware
   app.use((req, _res, next) => {
     const start = Date.now();
@@ -153,6 +151,7 @@ export const createApp = (): express.Application => {
   // API routes
   app.use('/', healthRouter);
   app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1', auditRouter);
 
   // 404 handler
   app.use(notFoundHandler);

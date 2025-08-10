@@ -14,13 +14,16 @@ import { getClientIP } from '../utils/ip';
 
 const router: Router = Router();
 
-// Memoized AuthService instance to avoid repeated database connection overhead
-let authServiceInstance: AuthService | null = null;
-const getAuthService = (): AuthService => {
-  if (!authServiceInstance) {
-    authServiceInstance = new AuthService();
+/**
+ * Get AuthService with request-scoped EntityManager for session context
+ */
+const getAuthService = (req: Request): AuthService => {
+  if (!req.auditEntityManager) {
+    throw new Error(
+      'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth routes.'
+    );
   }
-  return authServiceInstance;
+  return new AuthService(req.auditEntityManager);
 };
 
 /**
@@ -42,7 +45,10 @@ const refreshTokenSchema = Joi.object({
 router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = loginSchema.validate(req.body, {
+      allowUnknown: false,
+      abortEarly: false,
+    });
     if (error) {
       res.status(400).json({
         error: 'Validation error',
@@ -58,7 +64,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Attempt login
-    const result = await getAuthService().login({ email, password }, ipAddress, userAgent);
+    const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
 
     // Log successful login
     logger.info('Successful login', {
@@ -102,7 +108,10 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
 router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
-    const { error, value } = refreshTokenSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = refreshTokenSchema.validate(req.body, {
+      allowUnknown: false,
+      abortEarly: false,
+    });
     if (error) {
       res.status(400).json({
         error: 'Validation error',
@@ -118,7 +127,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Refresh tokens
-    const newTokens = await getAuthService().refreshToken(refreshToken, ipAddress, userAgent);
+    const newTokens = await getAuthService(req).refreshToken(refreshToken, ipAddress, userAgent);
 
     logger.info('Token refreshed successfully', {
       ipAddress,
@@ -166,7 +175,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
     const tokenId = req.user.jti;
 
     // Logout user
-    await getAuthService().logout(req.user.sub, tokenId);
+    await getAuthService(req).logout(req.user.sub, tokenId);
 
     logger.info('User logged out successfully', {
       userId: req.user.sub,
@@ -209,7 +218,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     }
 
     // Get user information from database
-    const user = await getAuthService().getUserById(req.user.sub);
+    const user = await getAuthService(req).getUserById(req.user.sub);
 
     if (!user || !user.isActive) {
       res.status(401).json({
