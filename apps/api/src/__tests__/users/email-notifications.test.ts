@@ -120,7 +120,7 @@ describe('Email Notification Service Integration', () => {
           data: expect.objectContaining({
             firstName: mockUser.firstName,
             lastName: mockUser.lastName,
-            email: mockUser.email,
+            email: 't**t@example.com', // Masked for PII protection
             systemName: 'Luppa PLC Inventory System',
             loginUrl: 'https://inventory.local',
             hasTemporaryPassword: false,
@@ -146,7 +146,7 @@ describe('Email Notification Service Integration', () => {
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
           data: expect.objectContaining({
-            tempPassword: '[REDACTED]', // Sanitized for security
+            tempPassword: '[REDACTED_PASSWORD]', // Sanitized for security
             hasTemporaryPassword: true,
           }),
         })

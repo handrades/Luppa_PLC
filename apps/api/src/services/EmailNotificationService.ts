@@ -358,7 +358,23 @@ export class EmailNotificationService {
   private sanitizeEmailData(emailData: EmailNotificationData): EmailNotificationData {
     const sanitizedData = { ...emailData.data };
 
-    // Remove or mask sensitive fields
+    // First, apply generic catch-all sanitization for potentially sensitive fields
+    Object.keys(sanitizedData).forEach(key => {
+      const value = sanitizedData[key];
+      if (typeof value === 'string') {
+        // Sanitize any field that might contain sensitive patterns (except specific ones we handle below)
+        if (
+          (key.toLowerCase().includes('password') && key !== 'tempPassword') ||
+          (key.toLowerCase().includes('token') && key !== 'resetToken') ||
+          key.toLowerCase().includes('secret') ||
+          key.toLowerCase().includes('key')
+        ) {
+          sanitizedData[key] = '[REDACTED]';
+        }
+      }
+    });
+
+    // Then apply specific sanitization for known fields (these take precedence)
     if (sanitizedData.resetToken) {
       sanitizedData.resetToken = '[REDACTED_TOKEN]';
     }
@@ -375,21 +391,10 @@ export class EmailNotificationService {
       sanitizedData.tempPassword = '[REDACTED_PASSWORD]';
     }
 
-    // Ensure no other potentially sensitive data is logged
-    Object.keys(sanitizedData).forEach(key => {
-      const value = sanitizedData[key];
-      if (typeof value === 'string') {
-        // Sanitize any field that might contain sensitive patterns
-        if (
-          key.toLowerCase().includes('password') ||
-          key.toLowerCase().includes('token') ||
-          key.toLowerCase().includes('secret') ||
-          key.toLowerCase().includes('key')
-        ) {
-          sanitizedData[key] = '[REDACTED]';
-        }
-      }
-    });
+    // Mask email addresses in data for PII protection
+    if (sanitizedData.email && typeof sanitizedData.email === 'string') {
+      sanitizedData.email = maskEmail(sanitizedData.email as string);
+    }
 
     return {
       ...emailData,
