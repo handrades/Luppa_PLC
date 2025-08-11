@@ -114,7 +114,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Welcome to Luppa PLC Inventory System',
           template: 'account-creation',
           data: expect.objectContaining({
@@ -130,7 +130,7 @@ describe('Email Notification Service Integration', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Account creation notification sent', {
         userId: mockUser.id,
-        email: mockUser.email,
+        email: 't**t@example.com', // Masked email
       });
     });
 
@@ -161,7 +161,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Welcome to Luppa PLC Inventory System',
           template: 'account-creation',
         })
@@ -194,7 +194,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Password Reset Request - Luppa PLC Inventory System',
           template: 'password-reset',
           data: expect.objectContaining({
@@ -210,7 +210,7 @@ describe('Email Notification Service Integration', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Password reset notification sent', {
         userId: mockUser.id,
-        email: mockUser.email,
+        email: 't**t@example.com', // Masked email
       });
     });
 
@@ -270,7 +270,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Password Changed - Luppa PLC Inventory System',
           template: 'password-changed',
           data: expect.objectContaining({
@@ -287,7 +287,7 @@ describe('Email Notification Service Integration', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Password change notification sent', {
         userId: mockUser.id,
-        email: mockUser.email,
+        email: 't**t@example.com', // Masked email
         changedBy,
       });
     });
@@ -352,7 +352,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Role Assignment Updated - Luppa PLC Inventory System',
           template: 'role-assignment',
           data: expect.objectContaining({
@@ -372,7 +372,7 @@ describe('Email Notification Service Integration', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Role assignment notification sent', {
         userId: mockUser.id,
-        email: mockUser.email,
+        email: 't**t@example.com', // Masked email
         oldRole: 'Engineer',
         newRole: 'Admin',
         assignedBy,
@@ -425,7 +425,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to: mockUser.email,
+          to: 't**t@example.com', // Masked email
           subject: 'Account Deactivated - Luppa PLC Inventory System',
           template: 'account-deactivated',
           data: expect.objectContaining({
@@ -441,7 +441,7 @@ describe('Email Notification Service Integration', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Account deactivation notification sent', {
         userId: mockUser.id,
-        email: mockUser.email,
+        email: 't**t@example.com', // Masked email
         deactivatedBy,
       });
     });
@@ -484,7 +484,7 @@ describe('Email Notification Service Integration', () => {
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
         expect.objectContaining({
-          to,
+          to: 'r*******t@example.com', // Masked email
           subject: `${subject} - Luppa PLC Inventory System`,
           template: 'generic-text',
           data: expect.objectContaining({
@@ -495,7 +495,10 @@ describe('Email Notification Service Integration', () => {
         })
       );
 
-      expect(logger.info).toHaveBeenCalledWith('Generic notification sent', { to, subject });
+      expect(logger.info).toHaveBeenCalledWith('Generic notification sent', {
+        to: 'r*******t@example.com',
+        subject,
+      });
     });
 
     it('should send generic HTML notification', async () => {
@@ -574,7 +577,7 @@ describe('Email Notification Service Integration', () => {
         expect.objectContaining({
           error: 'Custom SMTP error',
           emailData: expect.objectContaining({
-            to: mockUser.email,
+            to: 't**t@example.com', // Masked email
             template: 'password-reset',
           }),
         })

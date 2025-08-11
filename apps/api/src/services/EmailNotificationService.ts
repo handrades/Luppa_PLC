@@ -10,6 +10,21 @@ import { logger } from '../config/logger';
 import { Role } from '../entities/Role';
 import { sanitizeErrorMessage } from '../utils/errorHandler';
 
+/**
+ * Mask email address for privacy-compliant logging
+ */
+const maskEmail = (email: string): string => {
+  const [localPart, domain] = email.split('@');
+  if (!domain) return email; // Invalid email format
+
+  if (localPart.length <= 2) {
+    return `*@${domain}`;
+  }
+
+  const masked = localPart[0] + '*'.repeat(localPart.length - 2) + localPart[localPart.length - 1];
+  return `${masked}@${domain}`;
+};
+
 export interface EmailNotificationData {
   to: string;
   subject: string;
@@ -93,7 +108,7 @@ export class EmailNotificationService {
 
     logger.info('Account creation notification sent', {
       userId: user.id,
-      email: user.email,
+      email: maskEmail(user.email),
     });
   }
 
@@ -123,7 +138,7 @@ export class EmailNotificationService {
 
     logger.info('Password reset notification sent', {
       userId: user.id,
-      email: user.email,
+      email: maskEmail(user.email),
     });
   }
 
@@ -152,7 +167,7 @@ export class EmailNotificationService {
 
     logger.info('Password change notification sent', {
       userId: user.id,
-      email: user.email,
+      email: maskEmail(user.email),
       changedBy,
     });
   }
@@ -185,7 +200,7 @@ export class EmailNotificationService {
 
     logger.info('Role assignment notification sent', {
       userId: user.id,
-      email: user.email,
+      email: maskEmail(user.email),
       oldRole: oldRole?.name,
       newRole: newRole.name,
       assignedBy,
@@ -217,7 +232,7 @@ export class EmailNotificationService {
 
     logger.info('Account deactivation notification sent', {
       userId: user.id,
-      email: user.email,
+      email: maskEmail(user.email),
       deactivatedBy,
     });
   }
@@ -244,7 +259,7 @@ export class EmailNotificationService {
 
     await this.sendEmail(emailData);
 
-    logger.info('Generic notification sent', { to, subject });
+    logger.info('Generic notification sent', { to: maskEmail(to), subject });
   }
 
   /**
@@ -378,6 +393,7 @@ export class EmailNotificationService {
 
     return {
       ...emailData,
+      to: maskEmail(emailData.to),
       data: sanitizedData,
     };
   }

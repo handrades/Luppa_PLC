@@ -180,7 +180,7 @@ export class UserRepository {
 
     // Throw error if user doesn't exist
     if (updateResult.affected === 0) {
-      throw new Error('User not found');
+      throw new UserNotFoundError(id);
     }
   }
 
