@@ -37,7 +37,7 @@ export class PasswordResetService {
       );
     }
 
-    this.userRepository = new UserRepository();
+    this.userRepository = new UserRepository(entityManager);
     this.authService = new AuthService(entityManager);
     this.emailService = new EmailNotificationService();
   }
@@ -72,10 +72,18 @@ export class PasswordResetService {
     };
 
     try {
+      // Before setting new token, invalidate any existing token for this user
+      const userTokenKey = `${this.TOKEN_PREFIX}user:${user.id}`;
+      const existingToken = await redisClient.get(userTokenKey);
+      if (existingToken) {
+        const existingTokenKey = `${this.TOKEN_PREFIX}${existingToken}`;
+        await redisClient.del(existingTokenKey);
+      }
+
+      // Store the new token data
       await redisClient.setEx(tokenKey, this.TOKEN_TTL_SECONDS, JSON.stringify(tokenData));
 
       // Also store by user ID to prevent multiple concurrent tokens
-      const userTokenKey = `${this.TOKEN_PREFIX}user:${user.id}`;
       await redisClient.setEx(userTokenKey, this.TOKEN_TTL_SECONDS, token);
 
       // Send password reset email
@@ -113,8 +121,13 @@ export class PasswordResetService {
    * Validate password reset token and return token data
    */
   async validatePasswordResetToken(token: string): Promise<PasswordResetToken | null> {
-    if (!token || token.length !== this.TOKEN_LENGTH * 2) {
+    if (!token || token.length !== this.TOKEN_LENGTH * 2 || !/^[0-9a-fA-F]{64}$/.test(token)) {
       // hex string is 2x the byte length
+      return null;
+    }
+
+    // Verify token is valid hexadecimal before making Redis lookup
+    if (!/^[0-9a-fA-F]+$/.test(token)) {
       return null;
     }
 

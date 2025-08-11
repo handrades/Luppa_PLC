@@ -31,6 +31,13 @@ describe('Authentication Middleware', () => {
     mockRequest = {
       headers: {},
       user: undefined,
+      auditEntityManager: {
+        getRepository: jest.fn(),
+        query: jest.fn(),
+        save: jest.fn(),
+        create: jest.fn(),
+        findOne: jest.fn(),
+      } as any,
     };
 
     // Setup mock response
@@ -43,7 +50,7 @@ describe('Authentication Middleware', () => {
     mockNext = jest.fn();
 
     // Setup AuthService mock
-    mockAuthService = new AuthService() as jest.Mocked<AuthService>;
+    mockAuthService = new AuthService(mockRequest.auditEntityManager!) as jest.Mocked<AuthService>;
     (AuthService as jest.MockedClass<typeof AuthService>).mockImplementation(() => mockAuthService);
 
     // Reset mocks

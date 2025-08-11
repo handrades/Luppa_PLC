@@ -35,15 +35,15 @@ jest.mock('../../validation/userSchemas', () => ({
   validateSchema: jest.fn(() => data => data),
 }));
 
-import request from 'supertest';
 import express from 'express';
-import userRouter from '../../routes/users';
-import { UserService } from '../../services/UserService';
-import { AuditService } from '../../services/AuditService';
+import request from 'supertest';
 import { AppDataSource } from '../../config/database';
+import { AuditAction, RiskLevel } from '../../entities/AuditLog';
 import { auditContextMiddleware } from '../../middleware/auditContext';
 import { authenticate, authorize } from '../../middleware/auth';
-import { AuditAction, RiskLevel } from '../../entities/AuditLog';
+import userRouter from '../../routes/users';
+import { AuditService } from '../../services/AuditService';
+import { UserService } from '../../services/UserService';
 import { TEST_JWT } from '../helpers/test-constants';
 
 // Create mock service instances
@@ -536,7 +536,7 @@ describe('User Management Audit Integration', () => {
 
       const auditService = new AuditService();
       const createAuditLogs = await auditService.getAuditLogs({
-        action: AuditAction.CREATE,
+        action: AuditAction.INSERT,
         tableName: 'users',
       });
 

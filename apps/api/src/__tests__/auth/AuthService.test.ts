@@ -127,10 +127,10 @@ describe('AuthService', () => {
       save: jest.fn(),
       create: jest.fn(),
       findOne: jest.fn(),
-    } as jest.Mocked<Partial<EntityManager>>;
+    };
 
     // Create service instance
-    authService = new AuthService(mockEntityManager);
+    authService = new AuthService(mockEntityManager as EntityManager);
   });
 
   describe('login', () => {

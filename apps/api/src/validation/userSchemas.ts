@@ -6,6 +6,7 @@
  */
 
 import Joi from 'joi';
+import { ValidationError } from '../errors/ValidationError';
 
 /**
  * Password complexity requirements
@@ -207,13 +208,17 @@ export const validateSchema = (schema: Joi.ObjectSchema) => {
       const validationErrors = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message,
+        value: detail.context?.value,
       }));
 
-      throw new Error(
-        JSON.stringify({
-          message: 'Validation failed',
-          errors: validationErrors,
-        })
+      throw ValidationError.forFields(
+        validationErrors.reduce(
+          (acc, err) => {
+            acc[err.field] = err.message;
+            return acc;
+          },
+          {} as Record<string, string>
+        )
       );
     }
 

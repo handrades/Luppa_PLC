@@ -26,6 +26,17 @@ import {
 const router: Router = Router();
 
 /**
+ * Safely extract user-agent header, handling arrays and undefined values
+ */
+const getUserAgent = (req: Request): string => {
+  const userAgent = req.headers['user-agent'];
+  if (Array.isArray(userAgent)) {
+    return userAgent[0] || 'unknown';
+  }
+  return userAgent || 'unknown';
+};
+
+/**
  * Get AuthService with request-scoped EntityManager for session context
  */
 const getAuthService = (req: Request): AuthService => {
@@ -88,7 +99,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
 
     // Get client information for session tracking
     const ipAddress = getClientIP(req);
-    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+    const userAgent = getUserAgent(req);
 
     // Attempt login
     const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
@@ -116,7 +127,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
       email: req.body?.email,
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: (req.headers['user-agent'] as string) || 'unknown',
+      userAgent: getUserAgent(req),
       timestamp: new Date().toISOString(),
     });
 
@@ -148,7 +159,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
 
     // Get client information
     const ipAddress = getClientIP(req);
-    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+    const userAgent = getUserAgent(req);
 
     // Refresh tokens
     const newTokens = await getAuthService(req).refreshToken(refreshToken, ipAddress, userAgent);
@@ -170,7 +181,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     logger.warn('Token refresh failed', {
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: (req.headers['user-agent'] as string) || 'unknown',
+      userAgent: getUserAgent(req),
       timestamp: new Date().toISOString(),
     });
 
@@ -350,7 +361,7 @@ router.post('/password-reset', authRateLimit, async (req: Request, res: Response
  * POST /auth/password-reset/verify
  * Complete password reset
  */
-router.post('/password-reset/verify', authRateLimit, async (req: Request, res: Response) => {
+router.post('/password-reset/verify', strictAuthRateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
     const { token, newPassword } = validateSchema(passwordResetVerifySchema)(req.body);
@@ -364,8 +375,8 @@ router.post('/password-reset/verify', authRateLimit, async (req: Request, res: R
       return;
     }
 
-    // Validate token format (should be alphanumeric and hyphens for security)
-    if (!/^[a-zA-Z0-9\-_]+$/.test(token) || token.length < 16) {
+    // Validate token format (should be exactly 64 hex characters for security)
+    if (!/^[0-9a-fA-F]{64}$/.test(token)) {
       res.status(400).json({
         error: 'Invalid token',
         message: 'The password reset token format is invalid',

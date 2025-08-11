@@ -13,6 +13,9 @@ export class UserError extends Error {
     this.code = code;
     this.statusCode = statusCode;
 
+    // Set prototype explicitly to ensure instanceof checks work after transpilation
+    Object.setPrototypeOf(this, UserError.prototype);
+
     // Maintains proper stack trace for debugging
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, UserError);

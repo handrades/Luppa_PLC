@@ -54,15 +54,8 @@ export class AuthService {
   private userRepository: Repository<User>;
   private manager: EntityManager;
 
-  constructor(entityManager?: EntityManager) {
+  constructor(entityManager: EntityManager) {
     validateJwtConfig();
-
-    // Always require an EntityManager for proper audit context
-    if (!entityManager) {
-      throw new Error(
-        'EntityManager is required for AuthService initialization. Ensure auditContext middleware is registered.'
-      );
-    }
 
     this.manager = entityManager;
     this.userRepository = this.manager.getRepository(User);

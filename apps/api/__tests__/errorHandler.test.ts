@@ -13,9 +13,9 @@ import {
   AppError,
   NotFoundError,
   UnauthorizedError,
-  ValidationError,
   errorHandler,
 } from '../src/middleware/errorHandler';
+import { ValidationError } from '../src/errors/ValidationError';
 import { requestIdMiddleware } from '../src/middleware/requestId';
 import type { Express } from 'express';
 
@@ -40,14 +40,17 @@ describe('Error Handling', () => {
     });
 
     it('should create ValidationError with correct defaults', () => {
-      const error = new ValidationError('Validation failed', {
-        field: 'email',
-      });
+      const error = new ValidationError('Validation failed', [
+        {
+          field: 'email',
+          message: 'Invalid email format',
+        },
+      ]);
 
       expect(error.message).toBe('Validation failed');
       expect(error.statusCode).toBe(400);
-      expect(error.code).toBe('VALIDATION_ERROR');
-      expect(error.details).toEqual({ field: 'email' });
+      expect(error.errorType).toBe('Validation error');
+      expect(error.errors).toEqual([{ field: 'email', message: 'Invalid email format' }]);
     });
 
     it('should create NotFoundError with correct defaults', () => {
@@ -131,7 +134,11 @@ describe('Error Handling', () => {
       });
 
       testApp.get('/test-validation-error', (req, res, next) => {
-        next(new ValidationError('Validation failed', { field: 'email' }));
+        next(
+          new ValidationError('Validation failed', [
+            { field: 'email', message: 'Invalid email format' },
+          ])
+        );
       });
 
       testApp.get('/test-generic-error', (req, res, next) => {
@@ -160,7 +167,9 @@ describe('Error Handling', () => {
 
       expect(response.body.error.message).toBe('Validation failed');
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error.details).toEqual({ field: 'email' });
+      expect(response.body.error.details).toEqual([
+        { field: 'email', message: 'Invalid email format' },
+      ]);
     });
 
     it('should handle generic errors correctly', async () => {

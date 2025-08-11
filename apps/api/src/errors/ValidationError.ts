@@ -17,7 +17,7 @@ export interface ValidationErrorDetail {
 export class ValidationError extends Error {
   public readonly statusCode: number;
   public readonly errors: ValidationErrorDetail[];
-  public readonly errorType: string = 'ValidationError';
+  public readonly errorType: string = 'Validation error';
 
   constructor(message: string, errors: ValidationErrorDetail[] = [], statusCode: number = 400) {
     super(message);
@@ -95,11 +95,11 @@ export class ValidationError extends Error {
    */
   getErrorResponse(): { error: string; message: string; errors?: string[] } {
     const response: { error: string; message: string; errors?: string[] } = {
-      error: 'Validation error',
+      error: this.errorType,
       message: this.message,
     };
 
-    if (this.errors.length > 1) {
+    if (this.errors.length > 0) {
       response.errors = this.errors.map(e => e.message);
     }
 

@@ -7,6 +7,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
 import { ValidationError } from '../errors/ValidationError';
+import { UserError } from '../errors/UserError';
 
 /**
  * Custom business logic error class
@@ -72,6 +73,23 @@ export function handleRouteError(
     if (error.statusCode >= 500) {
       logger.error(defaultMessage, {
         error: sanitizeErrorMessage(message),
+        ...requestContext,
+      });
+    }
+    return;
+  }
+
+  // Handle UserError instances with their intended status codes
+  if (error instanceof UserError) {
+    res.status(error.statusCode).json({
+      error: getErrorType(error.statusCode),
+      message: error.message,
+    });
+
+    if (error.statusCode >= 500) {
+      logger.error(defaultMessage, {
+        error: sanitizeErrorMessage(message),
+        code: error.code,
         ...requestContext,
       });
     }

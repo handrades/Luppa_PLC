@@ -170,8 +170,8 @@ describe('Email Notification Service Integration', () => {
   });
 
   describe('Password Reset Notifications', () => {
-    // Use sanitized token that won't expose sensitive patterns if logged
-    const resetToken = 'test-token-***';
+    // Use realistic token that resembles production tokens for better testing
+    const resetToken = 'abc123def456ghi789jkl012mno345pqr';
     const resetUrl = `https://inventory.local/reset-password?token=${resetToken}`;
 
     it('should send password reset email', async () => {
@@ -180,6 +180,16 @@ describe('Email Notification Service Integration', () => {
         resetToken,
         resetUrl,
       });
+
+      const loggerCall = (logger.debug as jest.Mock).mock.calls.find(
+        call => call[0] === 'Email notification would be sent (disabled in test)'
+      );
+
+      expect(loggerCall).toBeDefined();
+
+      // Ensure raw token doesn't appear anywhere in logged payload
+      const loggedPayload = JSON.stringify(loggerCall[1]);
+      expect(loggedPayload).not.toContain(resetToken);
 
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
@@ -210,6 +220,14 @@ describe('Email Notification Service Integration', () => {
         resetToken,
         resetUrl: '',
       });
+
+      const loggerCall = (logger.debug as jest.Mock).mock.calls.find(
+        call => call[0] === 'Email notification would be sent (disabled in test)'
+      );
+
+      // Ensure raw token doesn't appear anywhere in logged payload
+      const loggedPayload = JSON.stringify(loggerCall[1]);
+      expect(loggedPayload).not.toContain(resetToken);
 
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
@@ -293,6 +311,19 @@ describe('Email Notification Service Integration', () => {
       await emailService.sendPasswordChangeNotification({
         user: mockUser,
       });
+
+      const loggerCall = (logger.debug as jest.Mock).mock.calls.find(
+        call => call[0] === 'Email notification would be sent (disabled in test)'
+      );
+
+      expect(loggerCall).toBeDefined();
+      const changedAt = loggerCall[1].data.changedAt;
+
+      // Validate that changedAt is a parseable date string
+      expect(typeof changedAt).toBe('string');
+      const parsedDate = Date.parse(changedAt);
+      expect(parsedDate).not.toBeNaN();
+      expect(new Date(parsedDate)).toBeInstanceOf(Date);
 
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',
@@ -417,6 +448,19 @@ describe('Email Notification Service Integration', () => {
 
     it('should include deactivation timestamp', async () => {
       await emailService.sendAccountDeactivationNotification(mockUser, deactivatedBy);
+
+      const loggerCall = (logger.debug as jest.Mock).mock.calls.find(
+        call => call[0] === 'Email notification would be sent (disabled in test)'
+      );
+
+      expect(loggerCall).toBeDefined();
+      const deactivatedAt = loggerCall[1].data.deactivatedAt;
+
+      // Validate that deactivatedAt is a parseable date string
+      expect(typeof deactivatedAt).toBe('string');
+      const parsedDate = Date.parse(deactivatedAt);
+      expect(parsedDate).not.toBeNaN();
+      expect(new Date(parsedDate)).toBeInstanceOf(Date);
 
       expect(logger.debug).toHaveBeenCalledWith(
         'Email notification would be sent (disabled in test)',

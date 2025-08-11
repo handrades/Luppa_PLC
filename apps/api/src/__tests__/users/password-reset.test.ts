@@ -6,7 +6,6 @@
  */
 
 // Set environment variables before any imports
-process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
 process.env.FRONTEND_URL = 'https://inventory.local';
 
 // Mock all dependencies first, before importing modules that use them

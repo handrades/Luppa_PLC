@@ -44,7 +44,12 @@ export const authenticate = async (
     }
 
     // Validate token using AuthService
-    const authService = new AuthService();
+    if (!req.auditEntityManager) {
+      throw new Error(
+        'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth middleware.'
+      );
+    }
+    const authService = new AuthService(req.auditEntityManager);
     const decoded = await authService.validateToken(token);
 
     // Populate request with user information
@@ -96,7 +101,10 @@ export const optionalAuthenticate = async (
     }
 
     // Try to validate token, but don't fail if invalid
-    const authService = new AuthService();
+    if (!req.auditEntityManager) {
+      return next(); // Skip auth for optional auth if no EntityManager available
+    }
+    const authService = new AuthService(req.auditEntityManager);
     try {
       const decoded = await authService.validateToken(token);
       req.user = decoded;
@@ -187,7 +195,12 @@ export const requireActiveUser = async (
 
   try {
     // Verify user is still active in database
-    const authService = new AuthService();
+    if (!req.auditEntityManager) {
+      throw new Error(
+        'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth middleware.'
+      );
+    }
+    const authService = new AuthService(req.auditEntityManager);
     const user = await authService.getUserById(req.user.sub);
 
     if (!user || !user.isActive) {

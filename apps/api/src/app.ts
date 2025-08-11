@@ -8,7 +8,8 @@ import { config } from 'dotenv';
 // Import middleware and configuration
 import { requestIdMiddleware } from './middleware/requestId';
 import { auditContextMiddleware } from './middleware/auditContext';
-import { ValidationError, errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { ValidationError } from './errors/ValidationError';
 import { logger } from './config/logger';
 import { config as appConfig } from './config/env';
 import { swaggerSpec, swaggerUiOptions } from './config/swagger';
@@ -93,9 +94,13 @@ export const createApp = (): express.Application => {
       if (err) {
         // Handle JSON parsing errors
         if (err.type === 'entity.parse.failed') {
-          const error = new ValidationError('Invalid JSON format', {
-            body: err.body?.substring(0, 100), // Only include first 100 chars
-          });
+          const error = new ValidationError('Invalid JSON format', [
+            {
+              field: 'body',
+              message: 'Invalid JSON format',
+              value: err.body?.substring(0, 100), // Only include first 100 chars
+            },
+          ]);
           return next(error);
         }
         return next(err);

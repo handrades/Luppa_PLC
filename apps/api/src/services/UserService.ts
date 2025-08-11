@@ -345,27 +345,30 @@ export class UserService {
    * Reset user password using token
    */
   async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    // Capture token data BEFORE calling resetPassword in case token is single-use
+    const tokenData = await this.passwordResetService.validatePasswordResetToken(token);
+    if (!tokenData) {
+      return false; // Invalid or expired token
+    }
+
     const success = await this.passwordResetService.resetPassword(token, newPassword);
 
-    if (success) {
-      // Get token data to identify user for notification
-      const tokenData = await this.passwordResetService.validatePasswordResetToken(token);
-      if (tokenData) {
-        const user = await this.userRepository.findWithRole(tokenData.userId);
-        if (user) {
-          // Send password change notification
-          this.emailService
-            .sendPasswordChangeNotification({
-              user,
-              changedBy: 'password reset',
-            })
-            .catch(error => {
-              logger.error('Failed to send password change notification', {
-                userId: user.id,
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
+    if (success && tokenData) {
+      // Use the previously captured token data for notification
+      const user = await this.userRepository.findWithRole(tokenData.userId);
+      if (user) {
+        // Send password change notification
+        this.emailService
+          .sendPasswordChangeNotification({
+            user,
+            changedBy: 'password reset',
+          })
+          .catch(error => {
+            logger.error('Failed to send password change notification', {
+              userId: user.id,
+              error: error instanceof Error ? error.message : 'Unknown error',
             });
-        }
+          });
       }
     }
 

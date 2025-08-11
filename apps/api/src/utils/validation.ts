@@ -47,7 +47,12 @@ export function sendGenericValidationError(
  * Returns true if handled, false if not a validation error
  */
 export function handleValidationError(res: Response, error: unknown): boolean {
-  if (error && typeof error === 'object' && 'isJoi' in error && error.isJoi) {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'isJoi' in error &&
+    (error as { isJoi: boolean }).isJoi
+  ) {
     sendValidationError(res, error as JoiValidationError);
     return true;
   }

@@ -7,7 +7,6 @@
  */
 
 import { logger } from '../config/logger';
-import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import { sanitizeErrorMessage } from '../utils/errorHandler';
 
@@ -18,24 +17,32 @@ export interface EmailNotificationData {
   data: Record<string, unknown>;
 }
 
+// DTO for minimal user data required for email notifications
+export interface EmailUserData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface AccountCreationData {
-  user: User;
+  user: EmailUserData;
   tempPassword?: string;
 }
 
 export interface PasswordResetData {
-  user: User;
+  user: EmailUserData;
   resetToken: string;
   resetUrl: string;
 }
 
 export interface PasswordChangeData {
-  user: User;
+  user: EmailUserData;
   changedBy?: string;
 }
 
 export interface RoleAssignmentData {
-  user: User;
+  user: EmailUserData;
   oldRole?: Role;
   newRole: Role;
   assignedBy: string;
@@ -188,7 +195,10 @@ export class EmailNotificationService {
   /**
    * Send account deactivation notification
    */
-  async sendAccountDeactivationNotification(user: User, deactivatedBy: string): Promise<void> {
+  async sendAccountDeactivationNotification(
+    user: EmailUserData,
+    deactivatedBy: string
+  ): Promise<void> {
     const emailData: EmailNotificationData = {
       to: user.email,
       subject: `Account Deactivated - ${this.SYSTEM_NAME}`,
@@ -252,7 +262,7 @@ export class EmailNotificationService {
       // In a real implementation, this would use an SMTP client like nodemailer
       // For now, we'll log the email that would be sent (with sanitized data)
       const sanitizedData = this.sanitizeEmailData(emailData);
-      logger.info('EMAIL NOTIFICATION (Mock Implementation)', {
+      logger.debug('EMAIL NOTIFICATION (Mock Implementation)', {
         from: this.FROM_EMAIL,
         to: emailData.to,
         subject: emailData.subject,

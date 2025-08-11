@@ -4,7 +4,8 @@
 - Check for any failed github actions
 - Check for any coderabbitai comments (including nested) that are still unresolved
 - Resolve all outstanding comments
-- Run invoke-psake ci and successfully resolved all CI pipeline errors and test failures
-- you can run psake as many times as you need to solve all errors
+- If PSake isn't installed: Install-Module PSake -Scope CurrentUser (run in PowerShell)
+- Invoke-psake CI
+- Run Invoke-psake as many times as needed to resolve all errors
 - Commit changes
 - Push

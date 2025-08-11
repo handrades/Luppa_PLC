@@ -7,6 +7,7 @@
 
 import { EntityManager, Repository } from 'typeorm';
 import { User } from '../entities/User';
+import { UserNotFoundError } from '../errors/UserError';
 
 export interface UserSearchFilters {
   search?: string;
@@ -155,15 +156,20 @@ export class UserRepository {
   /**
    * Update user by ID
    */
-  async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {
+  async updateUser(id: string, updateData: Partial<User>): Promise<User> {
     const updateResult = await this.repository.update(id, updateData);
 
     // Check if any rows were actually updated
     if (updateResult.affected === 0) {
-      return null; // User not found
+      throw new UserNotFoundError(id);
     }
 
-    return this.findWithRole(id);
+    const updatedUser = await this.findWithRole(id);
+    if (!updatedUser) {
+      throw new UserNotFoundError(id);
+    }
+
+    return updatedUser;
   }
 
   /**
