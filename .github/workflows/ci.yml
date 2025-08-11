@@ -66,6 +66,12 @@ jobs:
       - name: Run YAML lint
         run: pnpm lint:yaml
 
+      - name: Validate Grafana dashboards JSON
+        run: |
+          echo "Validating Grafana dashboard JSON files..."
+          find infrastructure/monitoring/grafana/dashboards -name "*.json" -print0 | xargs -0 -I {} sh -c 'echo "Validating: {}" && jq -e type "{}" > /dev/null'
+          echo "✓ All Grafana dashboard JSON files are valid"
+
       - name: Check files end with newline
         run: |
           echo "Checking that all files end with newlines..."

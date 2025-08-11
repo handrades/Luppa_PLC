@@ -126,12 +126,12 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.95, sum by (operation, le) (rate(database_query_duration_seconds_bucket[5m])))",
             "legendFormat": "95th percentile - {{operation}}",
             "refId": "A"
           },
           {
-            "expr": "histogram_quantile(0.50, rate(database_query_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.50, sum by (operation, le) (rate(database_query_duration_seconds_bucket[5m])))",
             "legendFormat": "50th percentile - {{operation}}",
             "refId": "B"
           }
@@ -190,7 +190,7 @@
         "type": "table",
         "targets": [
           {
-            "expr": "topk(10, avg by (operation, table) (histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))))",
+            "expr": "topk(10, histogram_quantile(0.95, sum by (le, operation, table) (rate(database_query_duration_seconds_bucket[5m]))))",
             "format": "table",
             "refId": "A"
           }
