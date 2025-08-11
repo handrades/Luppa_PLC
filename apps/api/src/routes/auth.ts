@@ -7,12 +7,34 @@
 import { Request, Response, Router } from 'express';
 import Joi from 'joi';
 import { AuthService, LoginCredentials } from '../services/AuthService';
+import { PasswordResetService } from '../services/PasswordResetService';
 import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
+import {
+  passwordResetRequestSchema,
+  passwordResetVerifySchema,
+  validateSchema,
+} from '../validation/userSchemas';
 import { logger } from '../config/logger';
 import { getClientIP } from '../utils/ip';
+import {
+  handleValidationErrorFromMessage,
+  sendGenericValidationError,
+  sendValidationError,
+} from '../utils/validation';
 
 const router: Router = Router();
+
+/**
+ * Safely extract user-agent header, handling arrays and undefined values
+ */
+const getUserAgent = (req: Request): string => {
+  const userAgent = req.headers['user-agent'];
+  if (Array.isArray(userAgent)) {
+    return userAgent[0] || 'unknown';
+  }
+  return userAgent || 'unknown';
+};
 
 /**
  * Get AuthService with request-scoped EntityManager for session context
@@ -24,6 +46,18 @@ const getAuthService = (req: Request): AuthService => {
     );
   }
   return new AuthService(req.auditEntityManager);
+};
+
+/**
+ * Get PasswordResetService with request-scoped EntityManager
+ */
+const getPasswordResetService = (req: Request): PasswordResetService => {
+  if (!req.auditEntityManager) {
+    throw new Error(
+      'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth routes.'
+    );
+  }
+  return new PasswordResetService(req.auditEntityManager);
 };
 
 /**
@@ -50,18 +84,22 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
       abortEarly: false,
     });
     if (error) {
-      res.status(400).json({
-        error: 'Validation error',
-        message: error.details.map(detail => detail.message).join('; '),
-      });
+      sendValidationError(res, error);
       return;
     }
 
-    const { email, password } = value as LoginCredentials;
+    // Type-safe extraction after Joi validation
+    const { email, password }: LoginCredentials = value;
+
+    // Additional runtime type checks for safety
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      sendGenericValidationError(res, 'Email and password must be strings');
+      return;
+    }
 
     // Get client information for session tracking
     const ipAddress = getClientIP(req);
-    const userAgent = req.headers['user-agent'] || 'unknown';
+    const userAgent = getUserAgent(req);
 
     // Attempt login
     const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
@@ -89,7 +127,7 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
       email: req.body?.email,
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: req.headers['user-agent'],
+      userAgent: getUserAgent(req),
       timestamp: new Date().toISOString(),
     });
 
@@ -113,10 +151,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
       abortEarly: false,
     });
     if (error) {
-      res.status(400).json({
-        error: 'Validation error',
-        message: error.details.map(detail => detail.message).join('; '),
-      });
+      sendValidationError(res, error);
       return;
     }
 
@@ -124,7 +159,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
 
     // Get client information
     const ipAddress = getClientIP(req);
-    const userAgent = req.headers['user-agent'] || 'unknown';
+    const userAgent = getUserAgent(req);
 
     // Refresh tokens
     const newTokens = await getAuthService(req).refreshToken(refreshToken, ipAddress, userAgent);
@@ -146,7 +181,7 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
     logger.warn('Token refresh failed', {
       error: message,
       ipAddress: getClientIP(req),
-      userAgent: req.headers['user-agent'],
+      userAgent: getUserAgent(req),
       timestamp: new Date().toISOString(),
     });
 
@@ -274,6 +309,121 @@ router.get('/verify', authenticate, (req: Request, res: Response) => {
       permissions: req.user!.permissions,
     },
   });
+});
+
+/**
+ * POST /auth/password-reset
+ * Request password reset
+ */
+router.post('/password-reset', authRateLimit, async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    const { email } = validateSchema(passwordResetRequestSchema)(req.body);
+
+    const passwordResetService = getPasswordResetService(req);
+
+    // Generate reset token and send email (handles user existence internally for security)
+    await passwordResetService.generatePasswordResetToken(email);
+
+    logger.info('Password reset requested', {
+      email,
+      ipAddress: getClientIP(req),
+      timestamp: new Date().toISOString(),
+    });
+
+    // Always return success to prevent email enumeration attacks
+    res.status(200).json({
+      message: 'If an account with that email exists, a password reset link has been sent',
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Password reset failed';
+
+    // Check for validation errors
+    if (handleValidationErrorFromMessage(res, message)) {
+      return;
+    }
+
+    logger.error('Password reset request failed', {
+      email: req.body?.email,
+      error: message,
+      ipAddress: getClientIP(req),
+      timestamp: new Date().toISOString(),
+    });
+
+    // Always return success to prevent information disclosure
+    res.status(200).json({
+      message: 'If an account with that email exists, a password reset link has been sent',
+    });
+  }
+});
+
+/**
+ * POST /auth/password-reset/verify
+ * Complete password reset
+ */
+router.post('/password-reset/verify', strictAuthRateLimit, async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    const { token, newPassword } = validateSchema(passwordResetVerifySchema)(req.body);
+
+    // Early validation: Check token format before processing
+    if (!token || typeof token !== 'string') {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'Reset token is required and must be a string',
+      });
+      return;
+    }
+
+    // Validate token format (should be exactly 64 hex characters for security)
+    if (!/^[0-9a-fA-F]{64}$/.test(token)) {
+      res.status(400).json({
+        error: 'Invalid token',
+        message: 'The password reset token format is invalid',
+      });
+      return;
+    }
+
+    const passwordResetService = getPasswordResetService(req);
+
+    // Reset password using token
+    const success = await passwordResetService.resetPassword(token, newPassword);
+
+    if (!success) {
+      res.status(400).json({
+        error: 'Invalid or expired token',
+        message: 'The password reset token is invalid or has expired',
+      });
+      return;
+    }
+
+    logger.info('Password reset completed successfully', {
+      ipAddress: getClientIP(req),
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(200).json({
+      message: 'Password reset successfully',
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Password reset verification failed';
+
+    // Check for validation errors
+    if (handleValidationErrorFromMessage(res, message)) {
+      return;
+    }
+
+    logger.error('Password reset verification failed', {
+      error: message,
+      ipAddress: getClientIP(req),
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(400).json({
+      error: 'Password reset failed',
+      message: 'Invalid or expired reset token',
+    });
+  }
 });
 
 export default router;

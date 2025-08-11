@@ -9,7 +9,8 @@ import bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { EntityManager, Repository } from 'typeorm';
-import { AppDataSource } from '../config/database';
+// AppDataSource no longer used - EntityManager is now required
+// import { AppDataSource } from '../config/database';
 import { JwtPayload, TokenType, jwtConfig, validateJwtConfig } from '../config/jwt';
 import {
   SessionData,
@@ -53,9 +54,10 @@ export class AuthService {
   private userRepository: Repository<User>;
   private manager: EntityManager;
 
-  constructor(entityManager?: EntityManager) {
+  constructor(entityManager: EntityManager) {
     validateJwtConfig();
-    this.manager = entityManager || AppDataSource.manager;
+
+    this.manager = entityManager;
     this.userRepository = this.manager.getRepository(User);
   }
 

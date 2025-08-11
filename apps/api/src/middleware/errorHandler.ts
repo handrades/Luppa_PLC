@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
+import { ValidationError } from '../errors/ValidationError';
 
 /**
  * Standardized error response format for API endpoints
@@ -50,24 +51,6 @@ export class AppError extends Error {
     this.details = details;
 
     Error.captureStackTrace(this, this.constructor);
-  }
-}
-
-/**
- * Validation error for request data that doesn't meet requirements
- *
- * Used when request data fails validation (e.g., missing required fields,
- * invalid format, out of range values). Automatically sets status code to 400.
- */
-export class ValidationError extends AppError {
-  /**
-   * Creates a new ValidationError
-   *
-   * @param message - Description of the validation failure
-   * @param details - Optional validation details (e.g., which fields failed)
-   */
-  constructor(message: string, details?: unknown) {
-    super(message, 400, 'VALIDATION_ERROR', details);
   }
 }
 
@@ -146,6 +129,11 @@ export const errorHandler = (
     code = error.code;
     message = error.message;
     details = error.details;
+  } else if (error instanceof ValidationError) {
+    statusCode = error.statusCode;
+    code = 'VALIDATION_ERROR';
+    message = error.message;
+    details = error.errors;
   } else if (error.name === 'ValidationError') {
     statusCode = 400;
     code = 'VALIDATION_ERROR';

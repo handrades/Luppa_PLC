@@ -33,7 +33,7 @@ jest.mock('jsonwebtoken', () => {
   };
 });
 
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../../services/AuthService';
@@ -120,8 +120,17 @@ describe('AuthService', () => {
     mockRedis.isTokenBlacklisted = jest.fn();
     mockRedis.blacklistToken = jest.fn();
 
+    // Create mock EntityManager
+    const mockEntityManager = {
+      getRepository: jest.fn().mockImplementation(repositoryMockImplementation),
+      query: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+      findOne: jest.fn(),
+    };
+
     // Create service instance
-    authService = new AuthService();
+    authService = new AuthService(mockEntityManager as EntityManager);
   });
 
   describe('login', () => {
