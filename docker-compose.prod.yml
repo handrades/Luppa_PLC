@@ -397,7 +397,7 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: false
       GF_LOG_LEVEL: info
       GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-localhost}
-      GF_SERVER_ROOT_URL: https://${GRAFANA_DOMAIN:-localhost}/grafana/
+      GF_SERVER_ROOT_URL: https://${GRAFANA_DOMAIN:-localhost}/monitoring/
       GF_SERVER_SERVE_FROM_SUB_PATH: true
     volumes:
       - grafana-data:/var/lib/grafana

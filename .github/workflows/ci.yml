@@ -66,6 +66,32 @@ jobs:
       - name: Run YAML lint
         run: pnpm lint:yaml
 
+      - name: Validate Grafana dashboards JSON
+        run: |
+          echo "Validating Grafana dashboard JSON files..."
+
+          # Install jq if not available
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+          # Check if dashboards directory exists and has JSON files
+          if [ ! -d "infrastructure/monitoring/grafana/dashboards" ]; then
+            echo "Dashboards directory not found - skipping validation"
+            exit 0
+          fi
+
+          json_files=$(find infrastructure/monitoring/grafana/dashboards -name "*.json" 2>/dev/null | wc -l)
+          if [ "$json_files" -eq 0 ]; then
+            echo "No JSON dashboard files found - skipping validation"
+            exit 0
+          fi
+
+          # Validate JSON files
+          find infrastructure/monitoring/grafana/dashboards -name "*.json" -print0 | xargs -0 -r -I {} sh -c 'echo "Validating: {}" && jq -e type "{}" > /dev/null'
+          echo "✓ All Grafana dashboard JSON files are valid"
+
       - name: Check files end with newline
         run: |
           echo "Checking that all files end with newlines..."

@@ -43,6 +43,27 @@ groups:
 
   - name: "performance.rules"
     rules:
+      # API Error Rate Alerts (Story 2.3 AC 7)
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status_code=~"4..|5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API error rate detected"
+          description: "API error rate is {{ $value }}% over the last 5 minutes, exceeding the 5% threshold"
+
+      - alert: CriticalAPIErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "Critical API error rate detected"
+          description: "API server error rate is {{ $value }}% over the last 2 minutes, exceeding the 10% threshold"
+
       # High response time alerts
       - alert: HighResponseTime
         expr: histogram_quantile(0.95, sum by (le, job, instance) (rate(http_request_duration_seconds_bucket[5m]))) > 1.0
@@ -83,6 +104,27 @@ groups:
 
   - name: "database.rules"
     rules:
+      # Database Connection Pool Alerts (Story 2.3 AC 7)
+      - alert: DatabasePoolExhaustion
+        expr: database_pool_utilization > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database connection pool utilization high"
+          description: "Database connection pool utilization is {{ $value }}%, exceeding 80% threshold"
+
+      - alert: DatabasePoolCritical
+        expr: database_pool_utilization > 95
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Database connection pool utilization is {{ $value }}%, approaching 100%"
+
       # Database-specific alerts
       - alert: DatabaseHighConnections
         expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
@@ -110,6 +152,40 @@ groups:
         annotations:
           summary: "Database lock contention detected"
           description: "{{ $value }} queries are waiting for locks for more than 2 minutes."
+
+  - name: "redis.rules"
+    rules:
+      # Redis Memory Usage Alerts (Story 2.3 AC 7)
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / (256 * 1024 * 1024) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is {{ $value }}% of 256MB limit, exceeding 80% threshold"
+
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_memory_used_bytes / (256 * 1024 * 1024) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis memory usage critical"
+          description: "Redis memory usage is {{ $value }}% of 256MB limit, approaching memory limit"
+
+      # Redis Cache Performance Alert
+      - alert: LowRedisCacheHitRatio
+        expr: rate(redis_operations_total{result="hit"}[5m]) / (rate(redis_operations_total{result="hit"}[5m]) + rate(redis_operations_total{result="miss"}[5m])) * 100 < 70
+        for: 10m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Low Redis cache hit ratio"
+          description: "Redis cache hit ratio is {{ $value }}%, below 70% threshold for 10 minutes"
 
   - name: "application.rules"
     rules:

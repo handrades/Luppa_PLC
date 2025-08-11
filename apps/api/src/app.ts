@@ -8,6 +8,7 @@ import { config } from 'dotenv';
 // Import middleware and configuration
 import { requestIdMiddleware } from './middleware/requestId';
 import { auditContextMiddleware } from './middleware/auditContext';
+import { metricsMiddleware } from './middleware/metricsMiddleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { ValidationError } from './errors/ValidationError';
 import { logger } from './config/logger';
@@ -19,6 +20,7 @@ import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import auditRouter from './routes/audit';
 import usersRouter from './routes/users';
+import metricsRouter from './routes/metrics';
 
 // Load environment variables
 config();
@@ -116,6 +118,9 @@ export const createApp = (): express.Application => {
   // Audit context middleware for database session variables
   app.use(auditContextMiddleware);
 
+  // Metrics collection middleware
+  app.use(metricsMiddleware);
+
   // Request logging middleware
   app.use((req, _res, next) => {
     const start = Date.now();
@@ -156,6 +161,7 @@ export const createApp = (): express.Application => {
 
   // API routes
   app.use('/', healthRouter);
+  app.use('/api/v1', metricsRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1', auditRouter);

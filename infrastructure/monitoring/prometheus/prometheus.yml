@@ -3,7 +3,7 @@
 
 global:
   # How frequently to scrape targets by default
-  scrape_interval: 15s
+  scrape_interval: 30s
 
   # How long until a scrape request times out
   scrape_timeout: 10s
@@ -39,9 +39,9 @@ scrape_configs:
   # API application metrics
   - job_name: "api"
     static_configs:
-      - targets: ["api:9090"]
-    scrape_interval: 15s
-    metrics_path: /metrics
+      - targets: ["api:3000"]
+    scrape_interval: 30s
+    metrics_path: /api/v1/metrics
     scrape_timeout: 10s
     honor_labels: false
     params:
