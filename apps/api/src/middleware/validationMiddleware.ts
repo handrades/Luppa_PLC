@@ -61,24 +61,41 @@ export const validate = (options: ValidationOptions) => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const validationPromises: Promise<unknown>[] = [];
+      const validationKeys: string[] = [];
 
       // Validate request body if schema provided
       if (options.body) {
         validationPromises.push(options.body.validateAsync(req.body, { abortEarly: false }));
+        validationKeys.push('body');
       }
 
       // Validate query parameters if schema provided
       if (options.query) {
         validationPromises.push(options.query.validateAsync(req.query, { abortEarly: false }));
+        validationKeys.push('query');
       }
 
       // Validate URL parameters if schema provided
       if (options.params) {
         validationPromises.push(options.params.validateAsync(req.params, { abortEarly: false }));
+        validationKeys.push('params');
       }
 
-      // Execute all validations concurrently
-      await Promise.all(validationPromises);
+      // Execute all validations concurrently and assign results back
+      const validationResults = await Promise.all(validationPromises);
+
+      // Assign validated values back to request object
+      validationResults.forEach((result, index) => {
+        const key = validationKeys[index];
+        if (key === 'body') {
+          req.body = result;
+        } else if (key === 'query') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          req.query = result as any;
+        } else if (key === 'params') {
+          req.params = result as Record<string, string>;
+        }
+      });
 
       next();
     } catch (error) {

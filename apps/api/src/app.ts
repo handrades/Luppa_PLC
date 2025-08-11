@@ -3,10 +3,13 @@ import swaggerUi from 'swagger-ui-express';
 import { config } from 'dotenv';
 
 // Import middleware and configuration
-import { securityMiddleware } from './middleware/securityMiddleware';
+import { initializeSecurityMiddleware, securityMiddleware } from './middleware/securityMiddleware';
 import { requestIdMiddleware } from './middleware/requestId';
 import { corsMiddleware } from './middleware/corsMiddleware';
-import { compressionMiddleware } from './middleware/compressionMiddleware';
+import {
+  compressionMiddleware,
+  initializeCompressionMiddleware,
+} from './middleware/compressionMiddleware';
 import { loggingMiddleware } from './middleware/loggingMiddleware';
 import { auditContextMiddleware } from './middleware/auditContext';
 import { metricsMiddleware } from './middleware/metricsMiddleware';
@@ -38,6 +41,10 @@ declare module 'http' {
 
 export const createApp = (): express.Application => {
   const app = express();
+
+  // Initialize middleware logging
+  initializeSecurityMiddleware();
+  initializeCompressionMiddleware();
 
   // Trust proxy for accurate client IP addresses
   app.set('trust proxy', 1);

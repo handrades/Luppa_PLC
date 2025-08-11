@@ -197,13 +197,16 @@ export const cspViolationHandler = (req: express.Request, res: express.Response)
 };
 
 /**
- * Log security middleware configuration on startup
+ * Initialize security middleware and log configuration
+ * Must be called during app bootstrap
  */
-const { isDevelopment, isProduction } = getEnvironment();
-logger.info('Security middleware configured', {
-  environment: process.env.NODE_ENV,
-  hstsEnabled: isProduction,
-  cspReportOnly: isDevelopment,
-  framePolicy: 'deny',
-  contentTypeOptionsEnabled: true,
-});
+export function initializeSecurityMiddleware(): void {
+  const { isDevelopment, isProduction } = getEnvironment();
+  logger.info('Security middleware configured', {
+    environment: process.env.NODE_ENV,
+    hstsEnabled: isProduction,
+    cspReportOnly: isDevelopment,
+    framePolicy: 'deny',
+    contentTypeOptionsEnabled: true,
+  });
+}

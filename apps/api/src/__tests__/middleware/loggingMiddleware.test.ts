@@ -21,6 +21,9 @@ describe('Logging Middleware', () => {
   beforeEach(() => {
     app = express();
 
+    // Enable trust proxy for IP header testing
+    app.set('trust proxy', true);
+
     // Add request ID middleware for testing
     app.use((req, res, next) => {
       req.id = 'test-request-id-123';

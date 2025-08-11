@@ -327,48 +327,5 @@ describe('Validation Middleware', () => {
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Custom error');
     });
-
-    it('should handle validation errors with request context logging', async () => {
-      // Mock logger to capture log entries
-      const mockLogger = {
-        warn: jest.fn(),
-      };
-
-      // Temporarily replace logger (this is a simplified approach)
-      // eslint-disable-next-line no-console
-      const originalConsole = console.warn;
-      // eslint-disable-next-line no-console
-      console.warn = mockLogger.warn;
-
-      const schema = Joi.object({ name: nameSchema });
-
-      app.use((req, res, next) => {
-        req.id = 'test-request-id';
-        next();
-      });
-
-      app.post('/test', validate({ body: schema }), (req, res) => {
-        res.json({ success: true });
-      });
-
-      app.use(
-        (err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-          if (err instanceof JoiValidationError) {
-            res.status(err.statusCode).json({ error: err.message });
-          } else {
-            next(err);
-          }
-        }
-      );
-
-      await request(app).post('/test').send({ name: '' });
-
-      // Restore original console
-      // eslint-disable-next-line no-console
-      console.warn = originalConsole;
-
-      // Note: In a real test, you would mock the actual logger module
-      // This is a simplified test to demonstrate the concept
-    });
   });
 });

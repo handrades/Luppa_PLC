@@ -86,7 +86,7 @@ export const optionalIpAddressSchema = Joi.string()
 export const passwordSchema = Joi.string()
   .min(8)
   .max(128)
-  .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+  .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/)
   .required()
   .messages({
     'string.min': 'Password must be at least 8 characters long',

@@ -54,7 +54,7 @@ const shouldCompress = (req: Request, res: Response): boolean => {
   // Log compression decisions for monitoring (debug level only)
   if (process.env.NODE_ENV === 'development') {
     logger.debug('Compression decision', {
-      requestId: req.id,
+      requestId: req.id || req.headers['x-request-id'] || 'unknown-request-id',
       url: req.originalUrl,
       contentType,
       willCompress: isCompressible,
@@ -96,10 +96,12 @@ const compressionOptions: compression.CompressionOptions = {
 export const compressionMiddleware: Handler = compression(compressionOptions);
 
 /**
- * Log compression middleware configuration on startup
+ * Initialize compression middleware and log configuration
  */
-logger.info('Compression middleware configured', {
-  threshold: compressionOptions.threshold,
-  level: compressionOptions.level,
-  chunkSize: compressionOptions.chunkSize,
-});
+export function initializeCompressionMiddleware(): void {
+  logger.info('Compression middleware configured', {
+    threshold: compressionOptions.threshold,
+    level: compressionOptions.level,
+    chunkSize: compressionOptions.chunkSize,
+  });
+}

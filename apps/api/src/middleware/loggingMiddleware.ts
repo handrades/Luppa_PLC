@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
+import { getClientIP } from '../utils/ip';
 
 /**
  * Request logging middleware for comprehensive request/response tracking
@@ -37,23 +38,6 @@ const shouldExcludeFromLogging = (path: string): boolean => {
 };
 
 /**
- * Get client IP address from request, handling proxies
- *
- * @param req - Express request object
- * @returns Client IP address
- */
-const getClientIP = (req: Request): string => {
-  return (
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    (req.headers['x-real-ip'] as string) ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    req.ip ||
-    'unknown'
-  );
-};
-
-/**
  * Get user ID from authenticated request
  *
  * @param req - Express request object with potential user context
@@ -79,7 +63,8 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
 
   // Skip logging for excluded paths
   if (shouldExcludeFromLogging(path)) {
-    return next();
+    next();
+    return;
   }
 
   // Log incoming request
@@ -93,14 +78,10 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
     userId: getUserId(req),
   });
 
-  // Capture original res.end to log response
-  const originalEnd = res.end;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  res.end = function (...args: any[]): Response {
+  // Log response when finished
+  res.once('finish', () => {
     const duration = Date.now() - startTime;
-    const contentLengthHeader = res.get('Content-Length');
-    const contentLength = contentLengthHeader || '0';
+    const contentLength = res.get('Content-Length') || '0';
 
     // Log response details
     const logLevel = res.statusCode >= 400 ? 'warn' : 'info';
@@ -117,7 +98,6 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
 
     // Log slow requests as warnings
     if (duration > 1000) {
-      // Requests taking more than 1 second
       logger.warn('Slow request detected', {
         requestId,
         method: req.method,
@@ -126,11 +106,7 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
         statusCode: res.statusCode,
       });
     }
-
-    // Call original end method
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (originalEnd as any).apply(this, args);
-  };
+  });
 
   next();
 };
