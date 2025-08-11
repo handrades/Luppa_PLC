@@ -23,7 +23,7 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "rate(http_requests_total[5m])",
+            "expr": "sum by (method, route) (rate(http_requests_total[5m]))",
             "legendFormat": "{{method}} {{route}}",
             "refId": "A"
           }
@@ -105,7 +105,7 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "increase(http_requests_total[1m])",
+            "expr": "sum by (status_code, method, route) (increase(http_requests_total[1m]))",
             "legendFormat": "{{status_code}} - {{method}} {{route}}",
             "refId": "A"
           }
