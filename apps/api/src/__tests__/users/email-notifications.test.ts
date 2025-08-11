@@ -170,8 +170,8 @@ describe('Email Notification Service Integration', () => {
   });
 
   describe('Password Reset Notifications', () => {
-    // Use realistic token that resembles production tokens for better testing
-    const resetToken = 'abc123def456ghi789jkl012mno345pqr';
+    // Use clearly non-secret placeholder token for testing
+    const resetToken = 'test-reset-token';
     const resetUrl = `https://inventory.local/reset-password?token=${resetToken}`;
 
     it('should send password reset email', async () => {
@@ -533,57 +533,62 @@ describe('Email Notification Service Integration', () => {
     });
 
     it('should handle email sending failures gracefully', async () => {
-      // Use Jest spy instead of replacing global setTimeout
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(() => {
+      // Use type-safe Jest spy with proper error throwing implementation
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((() => {
         throw new Error('SMTP connection failed');
-      });
+      }) as typeof setTimeout);
 
-      await expect(
-        emailService.sendAccountCreationNotification({
-          user: mockUser,
-        })
-      ).rejects.toThrow('SMTP connection failed');
+      try {
+        await expect(
+          emailService.sendAccountCreationNotification({
+            user: mockUser,
+          })
+        ).rejects.toThrow('SMTP connection failed');
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to send email notification',
-        expect.objectContaining({
-          error: 'SMTP connection failed',
-        })
-      );
-
-      // Restore setTimeout
-      setTimeoutSpy.mockRestore();
+        expect(logger.error).toHaveBeenCalledWith(
+          'Failed to send email notification',
+          expect.objectContaining({
+            error: 'SMTP connection failed',
+          })
+        );
+      } finally {
+        // Always restore setTimeout even if test throws
+        setTimeoutSpy.mockRestore();
+      }
     });
 
     it('should log detailed error information', async () => {
       const customError = new Error('Custom SMTP error');
       customError.stack = 'Error stack trace';
 
-      // Use Jest spy instead of replacing global setTimeout
+      // Use type-safe Jest spy with proper cleanup
       const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(() => {
         throw customError;
       });
 
-      await expect(
-        emailService.sendPasswordResetNotification({
-          user: mockUser,
-          resetToken: 'test-token-***',
-          resetUrl: 'https://test.com/reset',
-        })
-      ).rejects.toThrow('Custom SMTP error');
+      try {
+        await expect(
+          emailService.sendPasswordResetNotification({
+            user: mockUser,
+            resetToken: 'test-token-placeholder',
+            resetUrl: 'https://test.com/reset',
+          })
+        ).rejects.toThrow('Custom SMTP error');
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to send email notification',
-        expect.objectContaining({
-          error: 'Custom SMTP error',
-          emailData: expect.objectContaining({
-            to: 't**t@example.com', // Masked email
-            template: 'password-reset',
-          }),
-        })
-      );
-
-      setTimeoutSpy.mockRestore();
+        expect(logger.error).toHaveBeenCalledWith(
+          'Failed to send email notification',
+          expect.objectContaining({
+            error: 'Custom SMTP error',
+            emailData: expect.objectContaining({
+              to: 't**t@example.com', // Masked email
+              template: 'password-reset',
+            }),
+          })
+        );
+      } finally {
+        // Always restore setTimeout even if test throws
+        setTimeoutSpy.mockRestore();
+      }
     });
   });
 

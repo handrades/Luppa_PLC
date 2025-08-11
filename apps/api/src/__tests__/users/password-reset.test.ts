@@ -77,8 +77,8 @@ const testUser = {
   },
 };
 
-// Use a 64-character hex token format to match validation in auth routes
-const mockResetToken = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+// Use 64-character hex format for testing - clearly not a real secret (test pattern)
+const mockResetToken = '1111111111111111222222222222222233333333333333334444444444444444';
 
 describe('Password Reset Flow', () => {
   let app: express.Application;
