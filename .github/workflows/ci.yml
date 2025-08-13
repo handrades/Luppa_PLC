@@ -17,6 +17,8 @@ jobs:
     name: Lint Code
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    env:
+      ALLOW_INSTALL_FALLBACK: ${{ !github.ref_protected }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -52,8 +54,13 @@ jobs:
         run: |
           echo "Installing dependencies..."
           if ! pnpm install --frozen-lockfile; then
-            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
-            pnpm install --no-frozen-lockfile
+            if [ "$ALLOW_INSTALL_FALLBACK" = "true" ]; then
+              echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+              pnpm install --no-frozen-lockfile
+            else
+              echo "ERROR: Frozen lockfile failed and fallback is not allowed on protected branches"
+              exit 1
+            fi
           fi
 
       - name: Run ESLint
@@ -180,6 +187,8 @@ jobs:
     name: Type Check
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    env:
+      ALLOW_INSTALL_FALLBACK: ${{ !github.ref_protected }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -204,8 +213,13 @@ jobs:
         run: |
           echo "Installing dependencies..."
           if ! pnpm install --frozen-lockfile; then
-            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
-            pnpm install --no-frozen-lockfile
+            if [ "$ALLOW_INSTALL_FALLBACK" = "true" ]; then
+              echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+              pnpm install --no-frozen-lockfile
+            else
+              echo "ERROR: Frozen lockfile failed and fallback is not allowed on protected branches"
+              exit 1
+            fi
           fi
 
       - name: Build shared types
@@ -231,6 +245,8 @@ jobs:
     name: Run Tests
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    env:
+      ALLOW_INSTALL_FALLBACK: ${{ !github.ref_protected }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -290,8 +306,13 @@ jobs:
         run: |
           echo "Installing dependencies..."
           if ! pnpm install --frozen-lockfile; then
-            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
-            pnpm install --no-frozen-lockfile
+            if [ "$ALLOW_INSTALL_FALLBACK" = "true" ]; then
+              echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+              pnpm install --no-frozen-lockfile
+            else
+              echo "ERROR: Frozen lockfile failed and fallback is not allowed on protected branches"
+              exit 1
+            fi
           fi
 
       - name: Create test environment file
@@ -341,6 +362,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     needs: [lint, type-check]
+    env:
+      ALLOW_INSTALL_FALLBACK: ${{ !github.ref_protected }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -365,8 +388,13 @@ jobs:
         run: |
           echo "Installing dependencies..."
           if ! pnpm install --frozen-lockfile; then
-            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
-            pnpm install --no-frozen-lockfile
+            if [ "$ALLOW_INSTALL_FALLBACK" = "true" ]; then
+              echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+              pnpm install --no-frozen-lockfile
+            else
+              echo "ERROR: Frozen lockfile failed and fallback is not allowed on protected branches"
+              exit 1
+            fi
           fi
 
       - name: Build shared types

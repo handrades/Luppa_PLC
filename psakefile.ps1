@@ -1328,7 +1328,25 @@ Task DockerRestoreDb -Alias restore-db -Description "Restore database from backu
     
   Test-Docker
     
-  Get-Content $BackupFile | Invoke-DockerComposeExec -Service "postgres" -Command @("psql", "-U", "postgres", "-d", "luppa_dev") -Interactive:$false -ErrorMessage "Failed to restore database"
+  # Create temporary file path inside the container
+  $tempFile = "/tmp/backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').sql"
+    
+  # Copy backup file into the postgres container
+  Write-Host "Copying backup file to container..." -ForegroundColor Cyan
+  Invoke-DockerCompose -Arguments @("cp", $BackupFile, "postgres:$tempFile") -ErrorMessage "Failed to copy backup file to container"
+    
+  # Restore database from the file inside the container
+  Write-Host "Executing restore command..." -ForegroundColor Cyan
+  Invoke-DockerComposeExec -Service "postgres" -Command @("psql", "-U", "postgres", "-d", "luppa_dev", "-f", $tempFile) -Interactive:$false -ErrorMessage "Failed to restore database"
+    
+  # Clean up temporary file in container
+  Write-Host "Cleaning up temporary file..." -ForegroundColor Cyan
+  try {
+    Invoke-DockerComposeExec -Service "postgres" -Command @("rm", $tempFile) -Interactive:$false -ErrorMessage "Failed to clean up temporary file"
+  }
+  catch {
+    Write-Host "Warning: Could not clean up temporary file $tempFile" -ForegroundColor Yellow
+  }
     
   Write-Host "Database restore completed." -ForegroundColor Green
 }

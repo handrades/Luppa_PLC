@@ -8,5 +8,7 @@
     "build": "../../node_modules/.bin/tsc",
     "clean": "rimraf dist"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  }
 }

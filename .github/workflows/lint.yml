@@ -17,6 +17,8 @@ jobs:
   lint:
     name: Run Linting Checks
     runs-on: ubuntu-latest
+    env:
+      ALLOW_INSTALL_FALLBACK: ${{ !github.ref_protected }}
 
     steps:
       - name: Checkout repository
@@ -38,8 +40,13 @@ jobs:
         run: |
           echo "Installing dependencies..."
           if ! pnpm install --frozen-lockfile; then
-            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
-            pnpm install --no-frozen-lockfile
+            if [ "$ALLOW_INSTALL_FALLBACK" = "true" ]; then
+              echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+              pnpm install --no-frozen-lockfile
+            else
+              echo "ERROR: Frozen lockfile failed and fallback is not allowed on protected branches"
+              exit 1
+            fi
           fi
 
       - name: Run ESLint
