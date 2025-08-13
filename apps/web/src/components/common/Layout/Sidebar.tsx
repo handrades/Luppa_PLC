@@ -7,6 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
+  useTheme,
 } from '@mui/material';
 import {
   Computer as ComputerIcon,
@@ -20,6 +21,7 @@ const DRAWER_WIDTH = 240;
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  variant?: 'permanent' | 'persistent' | 'temporary';
 }
 
 const navigationItems = [
@@ -28,18 +30,70 @@ const navigationItems = [
   { label: 'Settings', path: '/settings', icon: SettingsIcon },
 ];
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, variant = 'temporary' }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
 
   const handleNavigate = (path: string) => {
     navigate(path);
-    onClose();
+    if (variant === 'temporary') {
+      onClose();
+    }
   };
+
+  const isActiveRoute = (path: string) => {
+    if (path === '/') {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const drawerContent = (
+    <>
+      <Toolbar />
+      <Box sx={{ overflow: 'auto' }}>
+        <List>
+          {navigationItems.map(item => {
+            const Icon = item.icon;
+            const isActive = isActiveRoute(item.path);
+
+            return (
+              <ListItem key={item.path} disablePadding>
+                <ListItemButton
+                  onClick={() => handleNavigate(item.path)}
+                  selected={isActive}
+                  sx={{
+                    '&.Mui-selected': {
+                      backgroundColor: theme.palette.action.selected,
+                      borderLeft: `4px solid ${theme.palette.primary.main}`,
+                      '&:hover': {
+                        backgroundColor: theme.palette.action.hover,
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon>
+                    <Icon color={isActive ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
+    </>
+  );
 
   return (
     <Drawer
-      variant='temporary'
+      variant={variant}
       open={open}
       onClose={onClose}
       sx={{
@@ -48,29 +102,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         '& .MuiDrawer-paper': {
           width: DRAWER_WIDTH,
           boxSizing: 'border-box',
+          borderRight: variant === 'permanent' ? `1px solid ${theme.palette.divider}` : undefined,
         },
       }}
+      ModalProps={{
+        keepMounted: variant === 'temporary',
+      }}
     >
-      <Toolbar />
-      <Box sx={{ overflow: 'auto' }}>
-        <List>
-          {navigationItems.map(item => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-
-            return (
-              <ListItem key={item.path} disablePadding>
-                <ListItemButton onClick={() => handleNavigate(item.path)} selected={isActive}>
-                  <ListItemIcon>
-                    <Icon color={isActive ? 'primary' : 'inherit'} />
-                  </ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-        </List>
-      </Box>
+      {drawerContent}
     </Drawer>
   );
 }
