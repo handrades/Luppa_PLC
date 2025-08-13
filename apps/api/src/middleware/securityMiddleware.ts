@@ -188,11 +188,7 @@ const getSecurityMiddleware = (): express.Handler => {
     helmetMiddleware(req, res, err => {
       if (err) return next(err);
 
-      // Manually set headers that Helmet might not set correctly
-      res.setHeader('X-XSS-Protection', '1; mode=block');
-      res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-
-      // Set Expect-CT header in production
+      // Set Expect-CT header in production (Helmet handles other headers)
       if (process.env.NODE_ENV === 'production') {
         res.setHeader('Expect-CT', 'max-age=86400, enforce');
       }

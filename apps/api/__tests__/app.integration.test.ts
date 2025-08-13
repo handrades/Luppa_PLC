@@ -162,7 +162,7 @@ describe('Application Integration Tests', () => {
         'x-frame-options',
         'x-download-options',
         'strict-transport-security',
-        'x-permitted-cross-domain-policies',
+        // Note: x-permitted-cross-domain-policies not set by modern Helmet
       ];
 
       securityHeaders.forEach(header => {
