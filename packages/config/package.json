@@ -8,7 +8,5 @@
     "build": "../../node_modules/.bin/tsc",
     "clean": "rimraf dist"
   },
-  "devDependencies": {
-    "typescript": "~5.5.4"
-  }
+  "devDependencies": {}
 }

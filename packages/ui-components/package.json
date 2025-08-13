@@ -5,14 +5,18 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "../../node_modules/.bin/tsc",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "echo \"No tests defined for ui-components\"",
     "clean": "rimraf dist"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "typescript": "~5.5.4"
   }
 }

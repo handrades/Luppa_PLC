@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "../../node_modules/.bin/tsc",
-    "clean": "rimraf dist"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "clean": "rimraf dist",
+    "test": "echo \"No tests defined for shared-types\""
   },
   "devDependencies": {
     "typescript": "~5.5.4"

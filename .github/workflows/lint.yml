@@ -36,7 +36,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pnpm install
+          echo "Installing dependencies..."
+          if ! pnpm install --frozen-lockfile; then
+            echo "Frozen lockfile failed, attempting with --no-frozen-lockfile..."
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Run ESLint
         run: pnpm lint

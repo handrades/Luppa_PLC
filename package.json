@@ -12,7 +12,7 @@
     "lint:fix": "eslint --config config/.eslintrc.cjs . --fix",
     "type-check": "tsc --project config/tsconfig.json",
     "setup": "pnpm install && pnpm build:types && pnpm db:setup",
-    "build:types": "npm run build --prefix packages/shared-types",
+    "build:types": "pnpm --filter ./packages/shared-types run build",
     "db:setup": "pnpm -C apps/api db:migrate && pnpm -C apps/api db:seed",
     "docker:dev": "docker compose -f config/docker-compose.dev.yml up",
     "docker:down": "docker compose -f config/docker-compose.dev.yml down",
