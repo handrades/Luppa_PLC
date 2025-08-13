@@ -49,7 +49,7 @@ describe('Workspace Configuration', () => {
         dev: 'concurrently "pnpm -C apps/api dev" "pnpm -C apps/web dev"',
         build: 'pnpm -r build',
         test: 'jest --config config/jest.config.js --passWithNoTests',
-        lint: 'eslint --config config/.eslintrc.cjs .',
+        lint: 'eslint --config config/.eslintrc.cjs . --ignore-path config/.eslintignore',
         'type-check': 'tsc --project config/tsconfig.json',
         setup: 'pnpm install && pnpm build:types && pnpm db:setup',
       });

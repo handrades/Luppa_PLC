@@ -31,7 +31,7 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['dist/', 'build/', 'node_modules/', '*.js', '!.eslintrc.js', 'apps/web/'],
+  ignorePatterns: ['dist/', 'build/', 'node_modules/', '*.js', '!.eslintrc.js'],
   overrides: [
     {
       files: [
