@@ -2,6 +2,52 @@ import request from 'supertest';
 import express from 'express';
 import { securityMiddleware } from '../../middleware/securityMiddleware';
 
+/**
+ * Helper function to create an Express app with security middleware for a specific environment
+ * This ensures clean module loading and proper environment isolation between tests
+ */
+function createAppWithEnvironment(nodeEnv: string): express.Application {
+  const originalEnv = process.env.NODE_ENV;
+
+  // Set the environment
+  process.env.NODE_ENV = nodeEnv;
+
+  // Clear module cache to force fresh loading
+  delete require.cache[require.resolve('../../middleware/securityMiddleware')];
+
+  // Re-require modules with the new environment
+  const {
+    securityMiddleware: envSecurityMiddleware,
+    clearSecurityMiddlewareCache,
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+  } = require('../../middleware/securityMiddleware');
+
+  // Clear any cached middleware instances
+  clearSecurityMiddlewareCache();
+
+  // Create and configure the app
+  const app = express();
+  app.use(envSecurityMiddleware);
+
+  // Add test routes
+  app.get('/test', (req, res) => {
+    res.json({ success: true });
+  });
+
+  app.get('/test-html', (req, res) => {
+    res.send('<html><body><h1>Test Page</h1></body></html>');
+  });
+
+  // Store cleanup function on the app for later use
+  // @ts-expect-error - Adding custom cleanup function to app
+  app._cleanup = () => {
+    process.env.NODE_ENV = originalEnv;
+    delete require.cache[require.resolve('../../middleware/securityMiddleware')];
+  };
+
+  return app;
+}
+
 describe('Security Middleware', () => {
   let app: express.Application;
 
@@ -77,162 +123,99 @@ describe('Security Middleware', () => {
   });
 
   describe('development environment CSP', () => {
-    const originalEnv = process.env.NODE_ENV;
-
-    beforeAll(() => {
-      process.env.NODE_ENV = 'development';
-    });
-
-    afterAll(() => {
-      process.env.NODE_ENV = originalEnv;
-    });
-
     it('should be in report-only mode in development', async () => {
-      // Need to recreate app with development environment
-      app = express();
+      const devApp = createAppWithEnvironment('development');
 
-      // Re-require the middleware to get updated configuration
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: devSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(devApp).get('/test');
 
-      app.use(devSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.status).toBe(200);
-      expect(response.headers['content-security-policy-report-only']).toBeDefined();
-      expect(response.headers['content-security-policy']).toBeUndefined();
+        expect(response.status).toBe(200);
+        expect(response.headers['content-security-policy-report-only']).toBeDefined();
+        expect(response.headers['content-security-policy']).toBeUndefined();
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        devApp._cleanup();
+      }
     });
 
     it('should allow unsafe-inline and unsafe-eval scripts in development', async () => {
-      app = express();
+      const devApp = createAppWithEnvironment('development');
 
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: devSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(devApp).get('/test');
 
-      app.use(devSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.headers['content-security-policy-report-only']).toContain(
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-      );
+        expect(response.headers['content-security-policy-report-only']).toContain(
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        );
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        devApp._cleanup();
+      }
     });
 
     it('should include localhost in connect-src for development', async () => {
-      app = express();
+      const devApp = createAppWithEnvironment('development');
 
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: devSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(devApp).get('/test');
 
-      app.use(devSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.headers['content-security-policy-report-only']).toContain(
-        'http://localhost:3000'
-      );
-      expect(response.headers['content-security-policy-report-only']).toContain(
-        'http://localhost:5173'
-      );
-      expect(response.headers['content-security-policy-report-only']).toContain('ws://localhost:*');
+        expect(response.headers['content-security-policy-report-only']).toContain(
+          'http://localhost:3000'
+        );
+        expect(response.headers['content-security-policy-report-only']).toContain(
+          'http://localhost:5173'
+        );
+        expect(response.headers['content-security-policy-report-only']).toContain(
+          'ws://localhost:*'
+        );
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        devApp._cleanup();
+      }
     });
   });
 
   describe('production environment CSP', () => {
-    const originalEnv = process.env.NODE_ENV;
-
-    beforeAll(() => {
-      process.env.NODE_ENV = 'production';
-    });
-
-    afterAll(() => {
-      process.env.NODE_ENV = originalEnv;
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-    });
-
     it('should enforce CSP in production', async () => {
-      app = express();
+      const prodApp = createAppWithEnvironment('production');
 
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: prodSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(prodApp).get('/test');
 
-      app.use(prodSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.status).toBe(200);
-      expect(response.headers['content-security-policy']).toBeDefined();
-      expect(response.headers['content-security-policy-report-only']).toBeUndefined();
+        expect(response.status).toBe(200);
+        expect(response.headers['content-security-policy']).toBeDefined();
+        expect(response.headers['content-security-policy-report-only']).toBeUndefined();
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        prodApp._cleanup();
+      }
     });
 
     it('should include upgrade-insecure-requests in production', async () => {
-      app = express();
+      const prodApp = createAppWithEnvironment('production');
 
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: prodSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(prodApp).get('/test');
 
-      app.use(prodSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.headers['content-security-policy']).toContain('upgrade-insecure-requests');
+        expect(response.headers['content-security-policy']).toContain('upgrade-insecure-requests');
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        prodApp._cleanup();
+      }
     });
 
     it('should not allow unsafe-inline scripts in production', async () => {
-      app = express();
+      const prodApp = createAppWithEnvironment('production');
 
-      delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {
-        securityMiddleware: prodSecurityMiddleware,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('../../middleware/securityMiddleware');
+      try {
+        const response = await request(prodApp).get('/test');
 
-      app.use(prodSecurityMiddleware);
-      app.get('/test', (req, res) => {
-        res.json({ success: true });
-      });
-
-      const response = await request(app).get('/test');
-
-      expect(response.headers['content-security-policy']).not.toContain("'unsafe-inline'");
-      expect(response.headers['content-security-policy']).not.toContain("'unsafe-eval'");
+        expect(response.headers['content-security-policy']).not.toContain("'unsafe-inline'");
+        expect(response.headers['content-security-policy']).not.toContain("'unsafe-eval'");
+      } finally {
+        // @ts-expect-error - Custom cleanup function
+        prodApp._cleanup();
+      }
     });
   });
 
@@ -274,57 +257,38 @@ describe('Security Middleware', () => {
   });
 
   describe('HTTP Strict Transport Security (HSTS)', () => {
-    const originalEnv = process.env.NODE_ENV;
-
     describe('in production', () => {
-      beforeAll(() => {
-        process.env.NODE_ENV = 'production';
-      });
-
-      afterAll(() => {
-        process.env.NODE_ENV = originalEnv;
-        delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      });
-
       it('should set HSTS header in production', async () => {
-        app = express();
+        const prodApp = createAppWithEnvironment('production');
 
-        delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const {
-          securityMiddleware: prodSecurityMiddleware,
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-        } = require('../../middleware/securityMiddleware');
+        try {
+          const response = await request(prodApp).get('/test');
 
-        app.use(prodSecurityMiddleware);
-        app.get('/test', (req, res) => {
-          res.json({ success: true });
-        });
-
-        const response = await request(app).get('/test');
-
-        expect(response.status).toBe(200);
-        expect(response.headers['strict-transport-security']).toBeDefined();
-        expect(response.headers['strict-transport-security']).toContain('max-age=31536000');
-        expect(response.headers['strict-transport-security']).toContain('includeSubDomains');
-        expect(response.headers['strict-transport-security']).toContain('preload');
+          expect(response.status).toBe(200);
+          expect(response.headers['strict-transport-security']).toBeDefined();
+          expect(response.headers['strict-transport-security']).toContain('max-age=31536000');
+          expect(response.headers['strict-transport-security']).toContain('includeSubDomains');
+          expect(response.headers['strict-transport-security']).toContain('preload');
+        } finally {
+          // @ts-expect-error - Custom cleanup function
+          prodApp._cleanup();
+        }
       });
     });
 
     describe('in development', () => {
-      beforeAll(() => {
-        process.env.NODE_ENV = 'development';
-      });
-
-      afterAll(() => {
-        process.env.NODE_ENV = originalEnv;
-      });
-
       it('should not set HSTS header in development', async () => {
-        const response = await request(app).get('/test');
+        const devApp = createAppWithEnvironment('development');
 
-        expect(response.status).toBe(200);
-        expect(response.headers['strict-transport-security']).toBeUndefined();
+        try {
+          const response = await request(devApp).get('/test');
+
+          expect(response.status).toBe(200);
+          expect(response.headers['strict-transport-security']).toBeUndefined();
+        } finally {
+          // @ts-expect-error - Custom cleanup function
+          devApp._cleanup();
+        }
       });
     });
   });
@@ -337,53 +301,6 @@ describe('Security Middleware', () => {
       // Modern Helmet may not set this header - check if it's undefined or has expected value
       const header = response.headers['x-permitted-cross-domain-policies'];
       expect(header === undefined || header === 'none').toBe(true);
-    });
-  });
-
-  describe('Expect-CT', () => {
-    const originalEnv = process.env.NODE_ENV;
-
-    describe('in production', () => {
-      beforeAll(() => {
-        process.env.NODE_ENV = 'production';
-      });
-
-      afterAll(() => {
-        process.env.NODE_ENV = originalEnv;
-        delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-      });
-
-      it('should set Expect-CT header in production', async () => {
-        app = express();
-
-        delete require.cache[require.resolve('../../middleware/securityMiddleware')];
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const {
-          securityMiddleware: prodSecurityMiddleware,
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-        } = require('../../middleware/securityMiddleware');
-
-        app.use(prodSecurityMiddleware);
-        app.get('/test', (req, res) => {
-          res.json({ success: true });
-        });
-
-        const response = await request(app).get('/test');
-
-        expect(response.status).toBe(200);
-        expect(response.headers['expect-ct']).toBeDefined();
-        expect(response.headers['expect-ct']).toContain('max-age=86400');
-        expect(response.headers['expect-ct']).toContain('enforce');
-      });
-    });
-
-    describe('in development', () => {
-      it('should not set Expect-CT header in development', async () => {
-        const response = await request(app).get('/test');
-
-        expect(response.status).toBe(200);
-        expect(response.headers['expect-ct']).toBeUndefined();
-      });
     });
   });
 

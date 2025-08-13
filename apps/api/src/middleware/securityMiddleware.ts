@@ -187,12 +187,6 @@ const getSecurityMiddleware = (): express.Handler => {
     // Apply cached Helmet middleware
     helmetMiddleware(req, res, err => {
       if (err) return next(err);
-
-      // Set Expect-CT header in production (Helmet handles other headers)
-      if (process.env.NODE_ENV === 'production') {
-        res.setHeader('Expect-CT', 'max-age=86400, enforce');
-      }
-
       next();
     });
   };
