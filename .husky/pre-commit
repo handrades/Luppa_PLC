@@ -1,4 +1,8 @@
-#\!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#!/usr/bin/env sh
 
-pwsh -command "Invoke-Psake CI"
+# Run fast lint checks on staged files only
+if command -v pwsh &> /dev/null; then
+  pwsh -command "Invoke-Psake CI"
+else
+  npx lint-staged
+fi

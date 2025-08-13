@@ -150,15 +150,41 @@ const createHelmetConfig = () => {
   };
 };
 
-/**
- * Security middleware factory function that creates middleware with current environment
- */
-export const createSecurityMiddleware = () => {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // Create Helmet middleware with current environment (checked at runtime)
-    const helmetMiddleware = helmet(createHelmetConfig());
+// Cache for Helmet middleware instances by environment - optimized for performance
+const helmetCache = new Map<string, express.Handler>();
 
-    // Apply Helmet middleware first
+/**
+ * Clear the Helmet middleware cache (useful for testing)
+ * @internal
+ */
+export const clearSecurityMiddlewareCache = (): void => {
+  helmetCache.clear();
+};
+
+/**
+ * Get or create a cached Helmet middleware instance for the current environment
+ */
+const getCachedHelmetMiddleware = (): express.Handler => {
+  const env = process.env.NODE_ENV || 'development';
+  let helmetMiddleware = helmetCache.get(env);
+
+  if (!helmetMiddleware) {
+    helmetMiddleware = helmet(createHelmetConfig());
+    helmetCache.set(env, helmetMiddleware);
+  }
+
+  return helmetMiddleware;
+};
+
+/**
+ * Security middleware that efficiently caches Helmet but allows dynamic header setting
+ */
+const getSecurityMiddleware = (): express.Handler => {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // Get cached Helmet middleware for current environment
+    const helmetMiddleware = getCachedHelmetMiddleware();
+
+    // Apply cached Helmet middleware
     helmetMiddleware(req, res, err => {
       if (err) return next(err);
 
@@ -177,9 +203,16 @@ export const createSecurityMiddleware = () => {
 };
 
 /**
- * Security middleware instance with OWASP-compliant configuration
+ * Security middleware factory function that creates middleware with current environment
+ * @deprecated Use securityMiddleware directly instead
  */
-export const securityMiddleware = createSecurityMiddleware();
+export const createSecurityMiddleware = getSecurityMiddleware;
+
+/**
+ * Security middleware instance with OWASP-compliant configuration
+ * This middleware is cached and reused across requests for optimal performance
+ */
+export const securityMiddleware = getSecurityMiddleware();
 
 /**
  * CSP violation reporting endpoint (for future implementation)
