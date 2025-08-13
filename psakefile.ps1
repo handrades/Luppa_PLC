@@ -103,7 +103,20 @@ Task Build -Alias apps-build -Depends Lint, TypeCheck {
 Task LintMarkdown {
     Write-Host "`nChecking Markdown files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "markdownlint")) {
+    # Check if markdownlint is available via npx or globally
+    $markdownLintAvailable = $false
+    try {
+        $null = & npx markdownlint-cli --version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $markdownLintAvailable = $true
+        }
+    } catch {
+        if (Test-Command "markdownlint") {
+            $markdownLintAvailable = $true
+        }
+    }
+    
+    if (-not $markdownLintAvailable) {
         throw "markdownlint not found. Install with: npm install -g markdownlint-cli"
     }
     
@@ -119,10 +132,19 @@ Task LintMarkdown {
     
     Push-Location $PSScriptRoot
     try {
-        if ($script:MarkdownFixMode -or $MarkdownFix) {
-            exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+        # Use the appropriate command (global or npx)
+        if (Test-Command "markdownlint") {
+            if ($script:MarkdownFixMode -or $MarkdownFix) {
+                exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+            } else {
+                exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
+            }
         } else {
-            exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
+            if ($script:MarkdownFixMode -or $MarkdownFix) {
+                exec { npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+            } else {
+                exec { npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
+            }
         }
         Write-Host "✓ Markdown linting passed" -ForegroundColor Green
     }
@@ -135,7 +157,20 @@ Task LintMarkdown {
 Task LintJson {
     Write-Host "`nChecking JSON files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "jsonlint")) {
+    # Check if jsonlint is available via npx or globally
+    $jsonlintAvailable = $false
+    try {
+        $null = & npx jsonlint --version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $jsonlintAvailable = $true
+        }
+    } catch {
+        if (Test-Command "jsonlint") {
+            $jsonlintAvailable = $true
+        }
+    }
+    
+    if (-not $jsonlintAvailable) {
         throw "jsonlint not found. Install with: npm install -g jsonlint"
     }
     
@@ -152,7 +187,11 @@ Task LintJson {
     $hasErrors = $false
     foreach ($file in $jsonFiles) {
         try {
-            exec { jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
+            if (Test-Command "jsonlint") {
+                exec { jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
+            } else {
+                exec { npx jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
+            }
             Write-Host "✓ $($file.Name)" -ForegroundColor DarkGreen
         }
         catch {
@@ -172,9 +211,7 @@ Task LintJson {
 Task LintYaml {
     Write-Host "`nChecking YAML files..." -ForegroundColor Cyan
     
-    if (-not (Test-Command "pnpm")) {
-        throw "pnpm not found. Install Node.js and pnpm first"
-    }
+    # yaml-lint uses npx, no need to check for pnpm
     
     # Use a more robust approach to find YAML files including hidden directories
     $yamlFiles = @()
@@ -218,13 +255,16 @@ Task LintTypeScript {
         if ($packageJson.scripts -and $packageJson.scripts.lint) {
             Write-Host "Using pnpm workspace lint script..." -ForegroundColor Cyan
             
-            if (-not (Test-Command "pnpm")) {
-                throw "pnpm not found. Please install pnpm first."
-            }
+            # Use npm run lint as fallback if pnpm is not available
+            $lintCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
             
             Push-Location $PSScriptRoot
             try {
-                exec { pnpm lint } "TypeScript/JavaScript linting failed"
+                if ($lintCommand -eq "pnpm") {
+                    exec { pnpm lint } "TypeScript/JavaScript linting failed"
+                } else {
+                    exec { npm run lint } "TypeScript/JavaScript linting failed"
+                }
                 Write-Host "✓ TypeScript/JavaScript linting passed" -ForegroundColor Green
             }
             finally {
@@ -250,13 +290,16 @@ Task CheckFormatting {
         if ($packageJson.scripts -and $packageJson.scripts."format:check") {
             Write-Host "Running Prettier format check..." -ForegroundColor Cyan
             
-            if (-not (Test-Command "pnpm")) {
-                throw "pnpm not found. Please install pnpm first."
-            }
+            # Use npm run format:check as fallback if pnpm is not available
+            $formatCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
             
             Push-Location $PSScriptRoot
             try {
-                exec { pnpm format:check } "Prettier format check failed"
+                if ($formatCommand -eq "pnpm") {
+                    exec { pnpm format:check } "Prettier format check failed"
+                } else {
+                    exec { npm run format:check } "Prettier format check failed"
+                }
                 Write-Host "✓ Code formatting check passed" -ForegroundColor Green
             }
             finally {

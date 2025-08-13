@@ -31,7 +31,7 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['dist/', 'build/', 'node_modules/', '*.js', '!.eslintrc.js'],
+  ignorePatterns: ['dist/', 'build/', 'node_modules/', '*.js'],
   overrides: [
     {
       files: [
@@ -48,6 +48,13 @@ module.exports = {
       rules: {
         'no-unused-vars': 'off',
       },
+    },
+    {
+      files: ['apps/web/**/*.{ts,tsx}'],
+      env: {
+        browser: true,
+      },
+      rules: {},
     },
   ],
 };
