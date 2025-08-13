@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { act } from '@testing-library/react';
 import { ThemeToggle } from './ThemeToggle';
 import { ThemeProvider } from '../../../contexts/ThemeContext';
 
@@ -34,11 +35,15 @@ describe('ThemeToggle', () => {
     expect(localStorage.getItem('themeMode')).toBeNull();
 
     // Click to switch to dark mode
-    fireEvent.click(button);
+    act(() => {
+      fireEvent.click(button);
+    });
     expect(localStorage.getItem('themeMode')).toBe('dark');
 
     // Click to switch back to light mode
-    fireEvent.click(button);
+    act(() => {
+      fireEvent.click(button);
+    });
     expect(localStorage.getItem('themeMode')).toBe('light');
   });
 
@@ -67,12 +72,16 @@ describe('ThemeToggle', () => {
     const button = screen.getByRole('button', { name: /toggle theme/i });
 
     // Should be focusable
-    button.focus();
+    act(() => {
+      button.focus();
+    });
     expect(document.activeElement).toBe(button);
 
     // Keyboard navigation handled by Material-UI IconButton
     // Click simulates both mouse and keyboard activation
-    fireEvent.click(button);
+    act(() => {
+      fireEvent.click(button);
+    });
     expect(localStorage.getItem('themeMode')).toBe('dark');
   });
 
@@ -84,11 +93,15 @@ describe('ThemeToggle', () => {
     expect(button).toHaveAttribute('aria-pressed', 'false');
 
     // Click to dark mode
-    fireEvent.click(button);
+    act(() => {
+      fireEvent.click(button);
+    });
     expect(button).toHaveAttribute('aria-pressed', 'true');
 
     // Click back to light mode
-    fireEvent.click(button);
+    act(() => {
+      fireEvent.click(button);
+    });
     expect(button).toHaveAttribute('aria-pressed', 'false');
   });
 });

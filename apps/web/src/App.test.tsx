@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from './contexts/ThemeContext';
 import App from './App';
-import { theme } from './styles/theme';
 
 // Mock the entire auth service module
 jest.mock('./services/auth.service', () => ({
@@ -34,7 +33,7 @@ const AppWrapper = ({
       v7_relativeSplatPath: true,
     }}
   >
-    <ThemeProvider theme={theme}>{children}</ThemeProvider>
+    <ThemeProvider>{children}</ThemeProvider>
   </MemoryRouter>
 );
 

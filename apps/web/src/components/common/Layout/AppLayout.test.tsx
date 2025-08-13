@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '../../../contexts/ThemeContext';
 import { AppLayout } from './AppLayout';
-import { theme } from '../../../styles/theme';
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter
@@ -11,7 +10,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
       v7_relativeSplatPath: true,
     }}
   >
-    <ThemeProvider theme={theme}>{children}</ThemeProvider>
+    <ThemeProvider>{children}</ThemeProvider>
   </BrowserRouter>
 );
 

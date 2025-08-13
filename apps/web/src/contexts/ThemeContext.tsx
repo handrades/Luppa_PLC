@@ -1,4 +1,5 @@
-import React, { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { ReactNode, createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { PaletteMode } from '@mui/material';
@@ -28,11 +29,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const theme = useMemo(() => createAppTheme(mode), [mode]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newMode = mode === 'light' ? 'dark' : 'light';
     setMode(newMode);
     setStoredThemeMode(newMode);
-  };
+  }, [mode]);
 
   useEffect(() => {
     // Apply theme mode to document for any global styles
@@ -44,7 +45,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       mode,
       toggleTheme,
     }),
-    [mode]
+    [mode, toggleTheme]
   );
 
   return (
