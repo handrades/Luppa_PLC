@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { LoadingSkeleton } from './LoadingSkeleton';
 
 describe('LoadingSkeleton', () => {
@@ -9,8 +9,8 @@ describe('LoadingSkeleton', () => {
   });
 
   test('renders specified number of rows', () => {
-    const { container } = render(<LoadingSkeleton rows={3} />);
-    const skeletons = container.querySelectorAll('.MuiSkeleton-text');
+    render(<LoadingSkeleton rows={3} />);
+    const skeletons = screen.getAllByTestId(/^text-skeleton-\d+$/);
     expect(skeletons.length).toBe(3);
   });
 

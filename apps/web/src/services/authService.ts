@@ -1,3 +1,5 @@
+import { env } from '../utils/env';
+
 export interface User {
   id: string;
   email: string;
@@ -15,11 +17,28 @@ interface LoginResponse {
 }
 
 class AuthService {
-  private readonly TOKEN_KEY = 'access_token';
+  // Using sessionStorage for enhanced security - tokens cleared when browser session ends
+  // This reduces risk of token persistence across browser restarts
+  private readonly TOKEN_KEY = env.AUTH_TOKEN_KEY;
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly USER_KEY = 'user';
 
   async login(credentials: { email: string; password: string }): Promise<LoginResponse> {
+    // Input validation for security
+    if (!credentials.email || !credentials.password) {
+      throw new Error('Email and password are required');
+    }
+    if (typeof credentials.email !== 'string' || typeof credentials.password !== 'string') {
+      throw new Error('Invalid credential format');
+    }
+    if (credentials.email.length > 320) {
+      // RFC 5321 limit
+      throw new Error('Email address too long');
+    }
+    if (credentials.password.length > 128) {
+      // Reasonable limit
+      throw new Error('Password too long');
+    }
     // TODO: Replace with actual API call
     const mockResponse: LoginResponse = {
       access_token: 'mock-access-token',
@@ -35,17 +54,17 @@ class AuthService {
       },
     };
 
-    localStorage.setItem(this.TOKEN_KEY, mockResponse.access_token);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, mockResponse.refresh_token);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(mockResponse.user));
+    sessionStorage.setItem(this.TOKEN_KEY, mockResponse.access_token);
+    sessionStorage.setItem(this.REFRESH_TOKEN_KEY, mockResponse.refresh_token);
+    sessionStorage.setItem(this.USER_KEY, JSON.stringify(mockResponse.user));
 
     return mockResponse;
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
   }
 
   async refreshToken(): Promise<LoginResponse> {
@@ -62,7 +81,7 @@ class AuthService {
   }
 
   getCurrentUser(): User | null {
-    const userJson = localStorage.getItem(this.USER_KEY);
+    const userJson = sessionStorage.getItem(this.USER_KEY);
     if (!userJson) return null;
 
     try {
@@ -73,11 +92,11 @@ class AuthService {
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {

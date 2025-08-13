@@ -85,20 +85,25 @@ export function LoadingSkeleton({
     </Box>
   );
 
-  const renderTextSkeleton = () => (
-    <Box>
-      {[...Array(rows)].map((_, i) => (
-        <Skeleton
-          key={i}
-          variant='text'
-          width={i === rows - 1 ? '60%' : '100%'}
-          height={20}
-          sx={{ mb: 1 }}
-          {...skeletonProps}
-        />
-      ))}
-    </Box>
-  );
+  const renderTextSkeleton = () => {
+    const safeRows = Math.max(0, Math.floor(rows || 0));
+    return (
+      <Box>
+        {[...Array(safeRows)].map((_, i) => (
+          <Skeleton
+            key={i}
+            variant='text'
+            width={i === safeRows - 1 ? '60%' : '100%'}
+            height={20}
+            sx={{ mb: 1 }}
+            data-testid={`text-skeleton-${i}`}
+            animation={skeletonProps.animation ?? 'wave'}
+            {...skeletonProps}
+          />
+        ))}
+      </Box>
+    );
+  };
 
   switch (variant) {
     case 'table':

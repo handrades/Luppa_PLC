@@ -78,7 +78,7 @@ describe('App', () => {
     // Check for dashboard content - there should be multiple Dashboard texts (sidebar + main content)
     const dashboardElements = screen.getAllByText('Dashboard');
     expect(dashboardElements.length).toBeGreaterThan(0);
-    
+
     // Check for text that's specific to the dashboard page
     expect(screen.getByText('Overview of your PLC inventory system')).toBeInTheDocument();
     expect(screen.getByText('Total PLCs')).toBeInTheDocument();

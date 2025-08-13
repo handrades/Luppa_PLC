@@ -2,12 +2,15 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useScrollStore } from '../stores/scrollStore';
 
-// Throttle function to limit scroll event handling
-function throttle<T extends (..._args: unknown[]) => void>(func: T, delay: number): T {
+// Throttle function to limit scroll event handling with cancellation support
+function throttle<T extends (..._args: unknown[]) => void>(
+  func: T,
+  delay: number
+): T & { cancel: () => void } {
   let timeoutId: NodeJS.Timeout | null = null;
   let lastExecTime = 0;
 
-  return ((...args: Parameters<T>) => {
+  const throttledFn = ((...args: Parameters<T>) => {
     const currentTime = Date.now();
 
     if (currentTime - lastExecTime > delay) {
@@ -19,32 +22,37 @@ function throttle<T extends (..._args: unknown[]) => void>(func: T, delay: numbe
         () => {
           func(...args);
           lastExecTime = Date.now();
+          timeoutId = null;
         },
         delay - (currentTime - lastExecTime)
       );
     }
-  }) as T;
+  }) as T & { cancel: () => void };
+
+  throttledFn.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  return throttledFn;
 }
 
 export function useScrollRestoration() {
   const location = useLocation();
   const { savePosition, getPosition } = useScrollStore();
   const previousPath = useRef(location.pathname);
-  const scrollHandlerRef = useRef<(() => void) | null>(null);
+  const throttledScrollHandler = useRef<ReturnType<typeof throttle> | null>(null);
 
   // Create throttled scroll handler
   const handleScroll = useCallback(() => {
     savePosition(location.pathname, window.scrollY);
   }, [location.pathname, savePosition]);
 
-  const throttledScrollHandler = useRef(throttle(handleScroll, 100));
-
   useEffect(() => {
-    // Update throttled handler with new callback
+    // Create new throttled handler with new callback
     throttledScrollHandler.current = throttle(handleScroll, 100);
-
-    // Store the handler reference for cleanup
-    scrollHandlerRef.current = throttledScrollHandler.current;
 
     // Restore scroll position when entering a route
     const restoredPosition = getPosition(location.pathname);
@@ -65,9 +73,11 @@ export function useScrollRestoration() {
       }
       previousPath.current = location.pathname;
 
-      // Remove scroll listener
-      if (scrollHandlerRef.current) {
-        window.removeEventListener('scroll', scrollHandlerRef.current);
+      // Remove scroll listener and cancel any pending throttled calls
+      if (throttledScrollHandler.current) {
+        window.removeEventListener('scroll', throttledScrollHandler.current);
+        throttledScrollHandler.current.cancel();
+        throttledScrollHandler.current = null;
       }
     };
   }, [location.pathname, savePosition, getPosition, handleScroll]);

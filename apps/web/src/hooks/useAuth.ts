@@ -30,10 +30,9 @@ export function useAuth() {
 
   const isAuthenticated = !!user && !!token;
 
-  const hasRole = () => {
-    // This would need to be implemented based on your role system
-    // For now, just check if user exists
-    return !!user;
+  const hasRole = (role: string): boolean => {
+    if (!user) return false;
+    return user.roleId === role;
   };
 
   return {

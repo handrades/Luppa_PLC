@@ -1,7 +1,7 @@
 import { ComponentProps, ReactNode, useState } from 'react';
 import { Box, Container, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import { DRAWER_WIDTH, Sidebar } from './Sidebar';
 import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 
 interface AppLayoutProps {
@@ -52,7 +52,7 @@ export function AppLayout({
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        ml: isDesktop ? '240px' : 0,
+        ml: isDesktop ? `${DRAWER_WIDTH}px` : 0,
         transition: theme.transitions.create(['margin-left'], {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,

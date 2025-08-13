@@ -16,7 +16,7 @@ import {
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const DRAWER_WIDTH = 240;
+export const DRAWER_WIDTH = 240;
 
 interface SidebarProps {
   open: boolean;
