@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { action } from '@storybook/addon-actions';
 import { Header } from '../components/common/Layout/Header';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -64,7 +63,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   args: {
-    onMenuClick: action('menu-clicked'),
+    onMenuClick: () => console.log('menu-clicked'),
   },
   parameters: {
     docs: {
@@ -80,7 +79,7 @@ export const Default: Story = {
  */
 export const Interactive: Story = {
   args: {
-    onMenuClick: action('menu-clicked'),
+    onMenuClick: () => console.log('menu-clicked'),
   },
   parameters: {
     docs: {
@@ -96,7 +95,7 @@ export const Interactive: Story = {
  */
 export const TabletView: Story = {
   args: {
-    onMenuClick: action('menu-clicked'),
+    onMenuClick: () => console.log('menu-clicked'),
   },
   parameters: {
     viewport: {
@@ -115,7 +114,7 @@ export const TabletView: Story = {
  */
 export const AccessibilityFocused: Story = {
   args: {
-    onMenuClick: action('menu-clicked'),
+    onMenuClick: () => console.log('menu-clicked'),
   },
   parameters: {
     docs: {
@@ -184,7 +183,7 @@ export const IndustrialContext: Story = {
     </div>
   ),
   args: {
-    onMenuClick: action('menu-clicked'),
+    onMenuClick: () => console.log('menu-clicked'),
   },
   parameters: {
     docs: {

@@ -14,6 +14,7 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -47,7 +48,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           Luppa Inventory
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ThemeToggle />
           <IconButton size='large' edge='end' onClick={handleProfileMenuOpen} color='inherit'>
             <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
               <AccountCircleIcon />
