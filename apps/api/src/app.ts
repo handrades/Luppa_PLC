@@ -1,12 +1,16 @@
 import express from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { config } from 'dotenv';
 
 // Import middleware and configuration
+import { initializeSecurityMiddleware, securityMiddleware } from './middleware/securityMiddleware';
 import { requestIdMiddleware } from './middleware/requestId';
+import { corsMiddleware } from './middleware/corsMiddleware';
+import {
+  compressionMiddleware,
+  initializeCompressionMiddleware,
+} from './middleware/compressionMiddleware';
+import { loggingMiddleware } from './middleware/loggingMiddleware';
 import { auditContextMiddleware } from './middleware/auditContext';
 import { metricsMiddleware } from './middleware/metricsMiddleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -38,53 +42,42 @@ declare module 'http' {
 export const createApp = (): express.Application => {
   const app = express();
 
+  // Initialize middleware logging
+  initializeSecurityMiddleware();
+  initializeCompressionMiddleware();
+
   // Trust proxy for accurate client IP addresses
   app.set('trust proxy', 1);
 
-  // Security middleware - helmet should be first
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for Swagger UI
-          imgSrc: ["'self'", 'data:', 'https:'],
-          fontSrc: ["'self'", 'data:'],
-        },
-      },
-      crossOriginEmbedderPolicy: false, // Allow embedding for industrial UIs
-      frameguard: { action: 'deny' }, // Explicitly set X-Frame-Options to DENY
-    })
-  );
+  /*
+   * MIDDLEWARE ORDER (CRITICAL FOR PROPER FUNCTIONALITY):
+   * 1. Security headers middleware (first for security)
+   * 2. Request ID middleware (for request tracing)
+   * 3. CORS middleware (for cross-origin support)
+   * 4. Compression middleware (for response optimization)
+   * 5. Body parsing middleware (existing express.json())
+   * 6. Logging middleware (for request tracking)
+   * 7. Authentication middleware (existing auth.ts)
+   * 8. Audit context middleware (existing auditContext.ts)
+   * 9. Metrics middleware (existing metricsMiddleware.ts)
+   * 10. Route handlers
+   * 11. 404 not found handler (existing notFoundHandler)
+   * 12. Error handling middleware (existing errorHandler - must be last)
+   */
 
-  // CORS configuration
-  const corsOptions: cors.CorsOptions = {
-    origin: appConfig.allowedOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-    exposedHeaders: ['X-Request-ID'],
-  };
-  app.use(cors(corsOptions));
+  // 1. Security headers middleware (OWASP-compliant, environment-aware)
+  app.use(securityMiddleware);
 
-  // Compression middleware
-  app.use(
-    compression({
-      level: 6,
-      threshold: 1024, // Only compress responses > 1KB
-      filter: (req, res) => {
-        // Don't compress if client doesn't support it
-        if (req.headers['x-no-compression']) {
-          return false;
-        }
-        // Use compression filter
-        return compression.filter(req, res);
-      },
-    })
-  );
+  // 2. Request ID middleware (for request tracing)
+  app.use(requestIdMiddleware);
 
-  // Request parsing middleware with error handling
+  // 3. CORS middleware (environment-specific configuration)
+  app.use(corsMiddleware);
+
+  // 4. Compression middleware (optimized for JSON responses)
+  app.use(compressionMiddleware);
+
+  // 5. Body parsing middleware (with error handling)
   app.use((req, res, next) => {
     express.json({
       limit: '10mb',
@@ -112,34 +105,15 @@ export const createApp = (): express.Application => {
   });
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Request ID middleware for tracing
-  app.use(requestIdMiddleware);
+  // 6. Request logging middleware (comprehensive request/response tracking)
+  app.use(loggingMiddleware);
 
-  // Audit context middleware for database session variables
+  // 7. Authentication middleware will be applied per-route as needed
+  // 8. Audit context middleware (for database session variables)
   app.use(auditContextMiddleware);
 
-  // Metrics collection middleware
+  // 9. Metrics collection middleware (for monitoring)
   app.use(metricsMiddleware);
-
-  // Request logging middleware
-  app.use((req, _res, next) => {
-    const start = Date.now();
-
-    _res.on('finish', () => {
-      const duration = Date.now() - start;
-      logger.info('HTTP Request', {
-        requestId: req.id,
-        method: req.method,
-        url: req.originalUrl,
-        statusCode: _res.statusCode,
-        duration,
-        userAgent: req.get('User-Agent'),
-        ip: req.ip,
-      });
-    });
-
-    next();
-  });
 
   // API Documentation (Swagger UI) - only in development
   if (appConfig.env === 'development') {
@@ -159,17 +133,17 @@ export const createApp = (): express.Application => {
     });
   }
 
-  // API routes
+  // 10. API route handlers
   app.use('/', healthRouter);
   app.use('/api/v1', metricsRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1', auditRouter);
 
-  // 404 handler
+  // 11. 404 not found handler (must come after all routes)
   app.use(notFoundHandler);
 
-  // Global error handler (must be last)
+  // 12. Global error handler (MUST be last middleware)
   app.use(errorHandler);
 
   return app;
