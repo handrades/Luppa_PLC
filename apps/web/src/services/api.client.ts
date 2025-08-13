@@ -26,8 +26,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage or auth store
-    const token = localStorage.getItem(env.AUTH_TOKEN_KEY);
+    // Get token from sessionStorage for enhanced security
+    const token = sessionStorage.getItem(env.AUTH_TOKEN_KEY);
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -66,7 +66,7 @@ apiClient.interceptors.response.use(
       switch (status) {
         case 401:
           // Unauthorized - clear token and redirect to login
-          localStorage.removeItem(env.AUTH_TOKEN_KEY);
+          sessionStorage.removeItem(env.AUTH_TOKEN_KEY);
           window.location.href = '/login';
           break;
 
