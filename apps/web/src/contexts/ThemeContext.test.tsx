@@ -62,14 +62,13 @@ describe('ThemeContext', () => {
   describe('useTheme hook', () => {
     it('should throw error when used outside ThemeProvider', () => {
       // Suppress console.error for this test
-      const originalError = console.error;
-      console.error = jest.fn();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => {
         renderHook(() => useTheme());
       }).toThrow('useTheme must be used within a ThemeProvider');
 
-      console.error = originalError;
+      consoleSpy.mockRestore();
     });
 
     it('should provide theme mode', () => {
