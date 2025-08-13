@@ -1,0 +1,14 @@
+{
+  "name": "@luppa/shared-types",
+  "version": "1.0.0",
+  "description": "Shared types for the multi-app framework",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "../../node_modules/.bin/tsc",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "typescript": "~5.5.4"
+  }
+}

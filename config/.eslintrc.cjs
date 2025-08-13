@@ -31,7 +31,16 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['dist/', 'build/', 'node_modules/', '*.js'],
+  ignorePatterns: [
+    '**/dist/**',
+    '**/build/**', 
+    '**/node_modules/**',
+    '**/coverage/**',
+    '**/storybook-static/**',
+    '**/*.config.js',
+    '**/*.setup.js',
+    'apps/api/jest.setup.js'
+  ],
   overrides: [
     {
       files: [
@@ -55,6 +64,18 @@ module.exports = {
         browser: true,
       },
       rules: {},
+    },
+    {
+      files: ['**/*.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        'no-undef': 'off',
+        'no-console': 'off',
+      },
+      env: {
+        node: true,
+        jest: true,
+      },
     },
   ],
 };

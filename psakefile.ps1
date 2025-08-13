@@ -451,7 +451,14 @@ Task CheckApiHealth {
         Write-Host "Validating TypeScript configuration..." -ForegroundColor Cyan
         if (Test-Path "tsconfig.json") {
             try {
-                exec { pnpm type-check } "TypeScript type checking failed"
+                # Use npm run type-check as fallback if pnpm is not available
+                $typeCheckCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
+                
+                if ($typeCheckCommand -eq "pnpm") {
+                    exec { pnpm type-check } "TypeScript type checking failed"
+                } else {
+                    exec { npm run type-check } "TypeScript type checking failed"
+                }
                 Write-Host "✓ TypeScript configuration is valid" -ForegroundColor Green
             }
             catch {
@@ -535,11 +542,14 @@ Task Test -Description "Run workspace configuration tests" {
             if ($packageJson.scripts -and $packageJson.scripts.test) {
                 Write-Host "Running Jest tests..." -ForegroundColor Cyan
                 
-                if (-not (Test-Command "pnpm")) {
-                    throw "pnpm not found. Please install pnpm first."
-                }
+                # Use npm run test as fallback if pnpm is not available
+                $testCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
                 
-                exec { pnpm test } "Jest tests failed"
+                if ($testCommand -eq "pnpm") {
+                    exec { pnpm test } "Jest tests failed"
+                } else {
+                    exec { npm run test } "Jest tests failed"
+                }
                 Write-Host "✓ Jest tests passed" -ForegroundColor Green
             }
         }

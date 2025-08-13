@@ -1,5 +1,2 @@
-dist/
-build/
-node_modules/
-*.js
-!.eslintrc.js
+# This file is no longer used - patterns moved to .eslintrc.cjs ignorePatterns
+# File will be removed in next commit
