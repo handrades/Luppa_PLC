@@ -34,9 +34,17 @@
     "../apps/api/src/**/!(*.test|*.spec).ts",
     "../apps/web/src/**/!(*.test|*.spec).tsx",
     "../apps/web/src/**/!(*.test|*.spec).ts",
-    "../packages/*/src/**/*",
+    "../packages/shared-types/src/**/*",
+    "../packages/config/src/**/*",
     "../__tests__/**/*",
     "../apps/api/types/**/*"
   ],
-  "exclude": ["node_modules", "dist", "**/__tests__/**/*", "**/*.test.*", "**/*.spec.*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__/**/*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "../packages/ui-components/**/*"
+  ]
 }

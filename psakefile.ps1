@@ -467,7 +467,10 @@ Task CheckApiHealth {
     Write-Host "Validating TypeScript configuration..." -ForegroundColor Cyan
     if (Test-Path "tsconfig.json") {
       try {
-        exec { pnpm type-check } "TypeScript type checking failed"
+        # Use tsc directly instead of pnpm type-check to avoid dependency issues
+        $tscPath = Join-Path $PSScriptRoot "node_modules/.bin/tsc"
+        $tsConfigPath = Join-Path $PSScriptRoot "config/tsconfig.json"
+        exec { & $tscPath --project $tsConfigPath --noEmit } "TypeScript type checking failed"
         Write-Host "✓ TypeScript configuration is valid" -ForegroundColor Green
       }
       catch {

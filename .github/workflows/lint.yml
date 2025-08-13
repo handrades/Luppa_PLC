@@ -64,6 +64,61 @@ jobs:
       - name: Run YAML lint
         run: pnpm lint:yaml
 
+      - name: Validate package hygiene
+        run: |
+          echo "Validating package publish-hygiene fields..."
+          failed_packages=()
+          
+          for package_json in packages/*/package.json; do
+            if [ -f "$package_json" ]; then
+              package_name=$(jq -r '.name' "$package_json")
+              echo "Checking $package_name..."
+              
+              # Check for private field
+              if ! jq -e '.private == true' "$package_json" > /dev/null; then
+                echo "  ❌ Missing private: true"
+                failed_packages+=("$package_name")
+              fi
+              
+              # Check for files array
+              if ! jq -e '.files | type == "array"' "$package_json" > /dev/null; then
+                echo "  ❌ Missing files array"
+                failed_packages+=("$package_name")
+              fi
+              
+              # Check for exports field
+              if ! jq -e '.exports' "$package_json" > /dev/null; then
+                echo "  ❌ Missing exports field"
+                failed_packages+=("$package_name")
+              fi
+              
+              # Check for sideEffects field
+              if ! jq -e 'has("sideEffects")' "$package_json" > /dev/null; then
+                echo "  ❌ Missing sideEffects field"
+                failed_packages+=("$package_name")
+              fi
+              
+              # Check for trailing newline
+              if [ ! -s "$package_json" ] || [ "$(tail -c1 "$package_json" | wc -l)" -eq 0 ]; then
+                echo "  ❌ Missing trailing newline"
+                failed_packages+=("$package_name")
+              fi
+              
+              if [[ ! " ${failed_packages[@]} " =~ " $package_name " ]]; then
+                echo "  ✓ All publish-hygiene checks passed"
+              fi
+            fi
+          done
+          
+          if [[ ${#failed_packages[@]} -gt 0 ]]; then
+            echo ""
+            echo "❌ Package validation failed for:"
+            printf '%s\n' "${failed_packages[@]}" | sort -u
+            exit 1
+          else
+            echo "✓ All packages pass publish-hygiene validation"
+          fi
+
       - name: Check files end with newline
         run: |
           echo "Checking that all files end with newlines..."
