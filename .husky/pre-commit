@@ -1,13 +1,16 @@
 #!/usr/bin/env sh
 
+# Exit immediately on any command failure
+set -e
+
 # First, run lint-staged to auto-fix and format staged files
 echo "🔧 Auto-fixing and formatting staged files..."
 npx lint-staged
 
 # Then run additional psake checks if PowerShell is available
-if command -v pwsh &> /dev/null; then
+if command -v pwsh >/dev/null 2>&1; then
   echo "🔍 Running additional psake checks..."
-  pwsh -command "Invoke-Psake CheckFormatting"
+  pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CheckFormatting"
 fi
 
 echo "✅ Pre-commit checks completed"
