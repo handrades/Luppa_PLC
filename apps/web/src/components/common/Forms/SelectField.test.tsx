@@ -18,14 +18,21 @@ const mockOptions: SelectOption[] = [
 describe('SelectField', () => {
   it('renders with label', () => {
     renderWithTheme(
-      <SelectField id='test-select' label='Select Field' options={mockOptions} value='' />
+      <SelectField
+        id='test-select'
+        label='Select Field'
+        options={mockOptions}
+        value='__EMPTY_OPTION__'
+      />
     );
 
     expect(screen.getByText('Select Field')).toBeInTheDocument();
   });
 
   it('displays placeholder when no value selected', () => {
-    renderWithTheme(<SelectField id='test-select' label='Select' options={mockOptions} value='' />);
+    renderWithTheme(
+      <SelectField id='test-select' label='Select' options={mockOptions} value='__EMPTY_OPTION__' />
+    );
 
     expect(screen.getByText('Select an option...')).toBeInTheDocument();
   });
@@ -39,7 +46,9 @@ describe('SelectField', () => {
   });
 
   it('opens dropdown on click', () => {
-    renderWithTheme(<SelectField id='test-select' label='Select' options={mockOptions} value='' />);
+    renderWithTheme(
+      <SelectField id='test-select' label='Select' options={mockOptions} value='__EMPTY_OPTION__' />
+    );
 
     const selectButton = screen.getByRole('combobox');
     fireEvent.mouseDown(selectButton);
@@ -56,7 +65,7 @@ describe('SelectField', () => {
         id='test-select'
         label='Select'
         options={mockOptions}
-        value=''
+        value='__EMPTY_OPTION__'
         showEmptyOption
         emptyOptionLabel='Clear selection'
       />
@@ -69,7 +78,9 @@ describe('SelectField', () => {
   });
 
   it('handles disabled options', () => {
-    renderWithTheme(<SelectField id='test-select' label='Select' options={mockOptions} value='' />);
+    renderWithTheme(
+      <SelectField id='test-select' label='Select' options={mockOptions} value='__EMPTY_OPTION__' />
+    );
 
     const selectButton = screen.getByRole('combobox');
     fireEvent.mouseDown(selectButton);
@@ -84,7 +95,7 @@ describe('SelectField', () => {
         id='test-select'
         label='Select'
         options={mockOptions}
-        value=''
+        value='__EMPTY_OPTION__'
         error='Please select an option'
       />
     );
@@ -100,7 +111,7 @@ describe('SelectField', () => {
         id='test-select'
         label='Required Select'
         options={mockOptions}
-        value=''
+        value='__EMPTY_OPTION__'
         required
       />
     );
@@ -167,7 +178,12 @@ describe('SelectField', () => {
 
   it('has minimum height for touch-friendly size', () => {
     renderWithTheme(
-      <SelectField id='test-select' label='Touch Select' options={mockOptions} value='' />
+      <SelectField
+        id='test-select'
+        label='Touch Select'
+        options={mockOptions}
+        value='__EMPTY_OPTION__'
+      />
     );
 
     const combobox = screen.getByRole('combobox');
@@ -182,7 +198,7 @@ describe('SelectField', () => {
         id='test-select'
         label='Select'
         options={mockOptions}
-        value=''
+        value='__EMPTY_OPTION__'
         onChange={handleChange}
       />
     );
