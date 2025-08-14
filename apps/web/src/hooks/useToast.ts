@@ -1,7 +1,11 @@
 import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 
 // Types for notistack compatibility
-type SnackbarMessage = string | React.ReactNode;
+type SnackbarMessage = string | ReactNode;
+// TODO: Replace with actual notistack import when available
+// import type { VariantType as NotistackVariant } from 'notistack';
+// type VariantType = NotistackVariant;
 type VariantType = 'default' | 'error' | 'success' | 'warning' | 'info';
 
 export interface ToastOptions {
@@ -19,37 +23,37 @@ export interface ToastOptions {
  * Wraps notistack's enqueueSnackbar for consistent usage
  */
 export const useToast = () => {
-  const showToast = useCallback(() => {
+  const showToast = useCallback((_message?: SnackbarMessage, _options?: ToastOptions) => {
     // TODO: Replace with actual notistack implementation
     // Temporarily disabled for linting compliance
-    // console.log(`Toast [${variant}]:`, message, options);
+    // console.log(`Toast [${_options?.variant || 'default'}]:`, _message, _options);
     return '';
   }, []);
 
   const showSuccess = useCallback(
-    (_message: SnackbarMessage, _options?: ToastOptions) => {
-      return showToast();
+    (message: SnackbarMessage, options?: ToastOptions) => {
+      return showToast(message, { ...options, variant: 'success' });
     },
     [showToast]
   );
 
   const showError = useCallback(
-    (_message: SnackbarMessage, _options?: ToastOptions) => {
-      return showToast();
+    (message: SnackbarMessage, options?: ToastOptions) => {
+      return showToast(message, { ...options, variant: 'error' });
     },
     [showToast]
   );
 
   const showWarning = useCallback(
-    (_message: SnackbarMessage, _options?: ToastOptions) => {
-      return showToast();
+    (message: SnackbarMessage, options?: ToastOptions) => {
+      return showToast(message, { ...options, variant: 'warning' });
     },
     [showToast]
   );
 
   const showInfo = useCallback(
-    (_message: SnackbarMessage, _options?: ToastOptions) => {
-      return showToast();
+    (message: SnackbarMessage, options?: ToastOptions) => {
+      return showToast(message, { ...options, variant: 'info' });
     },
     [showToast]
   );

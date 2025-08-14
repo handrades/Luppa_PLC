@@ -41,7 +41,8 @@ module.exports = {
     '**/*.config.js',
     '**/*.setup.js',
     'apps/api/jest.setup.js',
-    'apps/api/test-server.js'
+    'apps/api/test-server.js',
+    'apps/api/minimal-server.js'
   ],
   overrides: [
     {

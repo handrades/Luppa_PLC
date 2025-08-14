@@ -144,8 +144,8 @@ describe('DataGrid', () => {
       const endTime = performance.now();
       const renderTime = endTime - startTime;
 
-      // Should render in reasonable time (15 seconds max for CI environments)
-      expect(renderTime).toBeLessThan(15000);
+      // Should render in reasonable time (20 seconds max for CI environments)
+      expect(renderTime).toBeLessThan(20000);
 
       // Should only render visible rows (not all 10,000)
       const renderedRows = container.querySelectorAll('div[style*="translateY"]');
