@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { DataGrid, Column } from './DataGrid';
+import { DataGridWithSelection as DataGrid, Column } from './DataGridWithSelection';
 
 // Mock ResizeObserver for tests
 class ResizeObserverMock {

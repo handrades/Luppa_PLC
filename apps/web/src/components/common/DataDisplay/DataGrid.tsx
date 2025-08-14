@@ -555,6 +555,7 @@ export function DataGrid<T = any>({
               ) : (
                 virtualColumns.map((virtualColumn) => {
                   const column = columns[virtualColumn.index];
+                  if (!column) return null;
                   return (
                     <Box
                       key={column.id}
@@ -656,6 +657,7 @@ export function DataGrid<T = any>({
           ) : (
             virtualColumns.map((virtualColumn) => {
               const column = columns[virtualColumn.index];
+              if (!column) return null;
               return (
                 <GridHeaderCell
                   key={column.id}
@@ -937,6 +939,7 @@ export function DataGrid<T = any>({
               {virtualColumns.length > 0 ? (
                 virtualColumns.map((virtualColumn) => {
                   const column = columns[virtualColumn.index];
+                  if (!column) return null;
                   return renderCell(row, column, virtualColumn);
                 })
               ) : (

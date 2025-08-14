@@ -1,24 +1,23 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  IconButton,
-  Popover,
   Button,
-  Stack,
-  Chip,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Popover,
+  Select,
   SelectChangeEvent,
+  Stack,
+  TextField,
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import { styled } from '@mui/material/styles';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { styled } from '@mui/material/styles';
 import { debounce } from 'lodash';
 
 export type FilterType = 'text' | 'number' | 'date' | 'select';
@@ -30,8 +29,8 @@ export interface FilterValue {
   columnId: string;
   type: FilterType;
   operator: TextOperator | NumberOperator | DateOperator;
-  value: any;
-  value2?: any; // For between operations
+  value: unknown;
+  value2?: unknown; // For between operations
 }
 
 export interface ColumnFilterProps {
@@ -40,7 +39,7 @@ export interface ColumnFilterProps {
   type: FilterType;
   options?: { value: string; label: string }[]; // For select type
   filterValue?: FilterValue;
-  onFilterChange: (filter: FilterValue | null) => void;
+  onFilterChange: (_filter: FilterValue | null) => void;
   disabled?: boolean;
 }
 
@@ -99,7 +98,7 @@ export function ColumnFilter({
     }
   };
 
-  const handleValueChange = (newValue: any, isSecondValue = false) => {
+  const handleValueChange = (newValue: unknown, isSecondValue = false) => {
     if (isSecondValue) {
       setValue2(newValue);
     } else {
@@ -381,7 +380,7 @@ export function filterData<T>(
   });
 }
 
-export function filterText(value: any, operator: TextOperator, filterValue: string): boolean {
+export function filterText(value: unknown, operator: TextOperator, filterValue: string): boolean {
   if (value == null) return false;
   const textValue = String(value).toLowerCase();
   const searchValue = String(filterValue).toLowerCase();

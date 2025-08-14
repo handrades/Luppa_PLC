@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, IconButton } from '@mui/material';
+import { Box } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SwapVertIcon from '@mui/icons-material/SwapVert';

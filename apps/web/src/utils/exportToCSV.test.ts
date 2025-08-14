@@ -1,4 +1,4 @@
-import { exportToCSV, escapeCSVValue, downloadCSV, getSafeFilename } from './exportToCSV';
+import { downloadCSV, exportToCSV, getSafeFilename } from './exportToCSV';
 
 describe('exportToCSV', () => {
   interface TestData {

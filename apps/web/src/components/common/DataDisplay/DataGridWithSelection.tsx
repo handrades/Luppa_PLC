@@ -5,7 +5,6 @@ import { styled, useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DownloadIcon from '@mui/icons-material/Download';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   DndContext,
   closestCenter,
@@ -347,7 +346,7 @@ export function DataGridWithSelection<T = any>({
   exportable = false,
   exportFilename = 'data_export',
   stickyFirstColumn = false,
-  mobileBreakpoint = 600,
+  mobileBreakpoint: _mobileBreakpoint = 600,
 }: DataGridProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
@@ -389,8 +388,8 @@ export function DataGridWithSelection<T = any>({
             ...c,
             width: columnWidths[c.id] || c.width || c.minWidth || 150,
           }));
-        } catch (e) {
-          console.error('Failed to restore column layout:', e);
+        } catch {
+          // Failed to restore column layout - use defaults
         }
       }
     }

@@ -1,6 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { DataGridWithSelection as DataGrid, Column } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';

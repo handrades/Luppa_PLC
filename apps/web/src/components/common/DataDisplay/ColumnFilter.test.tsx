@@ -5,9 +5,6 @@ import {
   ColumnFilter,
   FilterValue,
   filterData,
-  filterText,
-  filterNumber,
-  filterDate,
   getActiveFilterCount,
   getFilterSummary,
 } from './ColumnFilter';

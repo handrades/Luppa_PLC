@@ -8,13 +8,13 @@ export interface CSVExportOptions {
   includeHeaders?: boolean;
   delimiter?: string;
   lineEnding?: string;
-  dateFormat?: (date: Date) => string;
+  dateFormat?: (_date: Date) => string;
 }
 
 /**
  * Escapes special characters in CSV values
  */
-function escapeCSVValue(value: any, delimiter: string = ','): string {
+function escapeCSVValue(value: unknown, delimiter: string = ','): string {
   if (value === null || value === undefined) {
     return '';
   }
@@ -42,7 +42,7 @@ function escapeCSVValue(value: any, delimiter: string = ','): string {
  * Formats a row of data as CSV
  */
 function formatCSVRow(
-  row: any[],
+  row: unknown[],
   delimiter: string = ','
 ): string {
   return row.map(value => escapeCSVValue(value, delimiter)).join(delimiter);
@@ -51,12 +51,12 @@ function formatCSVRow(
 /**
  * Exports data to CSV format
  */
-export function exportToCSV<T = any>(
+export function exportToCSV<T = Record<string, unknown>>(
   data: T[],
   columns: Array<{
     id: string;
     label: string;
-    format?: (value: any, row: T) => any;
+    format?: (_value: unknown, _row: T) => unknown;
   }>,
   options: CSVExportOptions = {}
 ): string {
@@ -78,7 +78,7 @@ export function exportToCSV<T = any>(
   // Add data rows
   for (const row of data) {
     const values = columns.map(col => {
-      const rawValue = (row as any)[col.id];
+      const rawValue = (row as Record<string, unknown>)[col.id];
       
       // Apply column formatter if available
       if (col.format) {
@@ -145,12 +145,12 @@ export function downloadCSV(
 /**
  * Exports selected or filtered data to CSV and downloads it
  */
-export function exportDataToCSV<T = any>(
+export function exportDataToCSV<T = Record<string, unknown>>(
   data: T[],
   columns: Array<{
     id: string;
     label: string;
-    format?: (value: any, row: T) => any;
+    format?: (_value: unknown, _row: T) => unknown;
   }>,
   options: CSVExportOptions & {
     selectedRows?: Set<string | number>;
@@ -187,7 +187,7 @@ export function exportDataToCSV<T = any>(
 export function getSafeFilename(name: string): string {
   // Remove or replace invalid characters
   return name
-    .replace(/[^a-z0-9\-\.]/gi, '_')
+    .replace(/[^a-z0-9\-.]/gi, '_')
     .replace(/_{2,}/g, '_')
     .replace(/^_+|_+$/g, '');
 }

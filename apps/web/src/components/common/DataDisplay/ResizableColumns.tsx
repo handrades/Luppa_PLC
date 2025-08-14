@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, IconButton, Divider } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import RestoreIcon from '@mui/icons-material/Restore';
 import { styled } from '@mui/material/styles';
@@ -57,7 +57,7 @@ const ResizeHandle = styled(Box)(({ theme }) => ({
   },
 }));
 
-const DragHandle = styled(Box)(({ theme }) => ({
+const DragHandle = styled(Box)(() => ({
   cursor: 'move',
   display: 'flex',
   alignItems: 'center',
@@ -130,8 +130,8 @@ export function ResizableColumns({
           const parsed = JSON.parse(saved);
           setLocalColumns(parsed);
           onColumnReorder(parsed);
-        } catch (e) {
-          console.error('Failed to load column configuration:', e);
+        } catch {
+          // Failed to load column configuration - use defaults
         }
       }
     }
