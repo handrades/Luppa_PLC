@@ -73,6 +73,24 @@ export function SortableColumnHeader({
     onSort(columnId, event.shiftKey);
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!sortable || !onSort) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      onSort(columnId, event.shiftKey);
+    }
+  };
+
+  // Get aria-sort value based on current sort state
+  const getAriaSortValue = () => {
+    if (!sortable) return undefined;
+    if (sortDirection === 'asc') return 'ascending';
+    if (sortDirection === 'desc') return 'descending';
+    return 'none';
+  };
+
   const renderSortIcon = () => {
     if (!sortable) return null;
 
@@ -108,6 +126,10 @@ export function SortableColumnHeader({
   return (
     <HeaderContainer
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={sortable ? 0 : undefined}
+      role={sortable ? 'button' : undefined}
+      aria-sort={getAriaSortValue()}
       sx={{
         justifyContent:
           align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start',

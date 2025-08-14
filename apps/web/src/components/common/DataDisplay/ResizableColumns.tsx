@@ -20,11 +20,23 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { ColumnConfig } from '../../../utils/columnUtils';
 
-export interface ColumnConfig {
-  id: string;
-  width: number;
-  order: number;
+// Runtime type guard to validate parsed localStorage data
+function isValidColumns(value: unknown): value is ColumnConfig[] {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  return value.every(item => {
+    return (
+      typeof item === 'object' &&
+      item !== null &&
+      typeof item.id === 'string' &&
+      typeof item.width === 'number' &&
+      typeof item.order === 'number'
+    );
+  });
 }
 
 export interface ResizableColumnsProps {
@@ -133,10 +145,19 @@ export function ResizableColumns({
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setLocalColumns(parsed);
-          onColumnReorder(parsed);
+          if (isValidColumns(parsed)) {
+            setLocalColumns(parsed);
+            onColumnReorder(parsed);
+          } else {
+            // Invalid column configuration - remove malformed data and use defaults
+            console.warn(
+              'Invalid column configuration found in localStorage, falling back to defaults'
+            );
+            localStorage.removeItem(`grid-columns-${persistKey}`);
+          }
         } catch {
-          // Failed to load column configuration - use defaults
+          // Failed to parse column configuration - use defaults
+          console.warn('Failed to parse column configuration from localStorage');
         }
       }
     }
@@ -221,6 +242,11 @@ export function ResizableColumns({
         const oldIndex = currentColumns.findIndex(col => col.id === active.id);
         const newIndex = currentColumns.findIndex(col => col.id === over.id);
 
+        // Guard against invalid indices before calling arrayMove
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+          return; // No-op if indices are invalid or identical
+        }
+
         const newColumns = arrayMove(currentColumns, oldIndex, newIndex).map((col, index) => ({
           ...col,
           order: index,
@@ -254,20 +280,21 @@ export function ResizableColumns({
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {localColumns.map(column => (
-            <Box
-              key={column.id}
-              sx={{
-                width: column.width,
-                position: 'relative',
-                flexShrink: 0,
-              }}
-            >
-              <ResizeHandle
-                className={resizing === column.id ? 'resizing' : ''}
-                onMouseDown={e => handleResizeStart(e, column.id)}
-                onTouchStart={e => handleResizeStart(e, column.id)}
-              />
-            </Box>
+            <SortableColumn key={column.id} columnId={column.id} isDraggable={true}>
+              <Box
+                sx={{
+                  width: column.width,
+                  position: 'relative',
+                  flexShrink: 0,
+                }}
+              >
+                <ResizeHandle
+                  className={resizing === column.id ? 'resizing' : ''}
+                  onMouseDown={e => handleResizeStart(e, column.id)}
+                  onTouchStart={e => handleResizeStart(e, column.id)}
+                />
+              </Box>
+            </SortableColumn>
           ))}
           {onReset && (
             <IconButton
