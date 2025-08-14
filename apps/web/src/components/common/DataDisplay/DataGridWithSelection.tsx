@@ -1,51 +1,40 @@
-import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Box, Paper, IconButton, Checkbox, Button, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Checkbox, IconButton, Menu, MenuItem, Paper } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DownloadIcon from '@mui/icons-material/Download';
 import {
   DndContext,
-  closestCenter,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
+  arrayMove,
   horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
-  SortableColumnHeader, 
-  SortState, 
-  sortData, 
-  updateSortState 
-} from './SortableColumnHeader';
-import {
-  ColumnFilter,
-  FilterValue,
-  FilterType,
-  filterData,
-} from './ColumnFilter';
+import { SortState, SortableColumnHeader, sortData, updateSortState } from './SortableColumnHeader';
+import { ColumnFilter, FilterType, FilterValue } from './ColumnFilter';
+import { filterData } from '../../../utils/filterUtils';
 import { exportDataToCSV } from '../../../utils/exportToCSV';
 
-export interface Column<T = any> {
+export interface Column<T = Record<string, unknown>> {
   id: string;
   label: string;
   width?: number;
   minWidth?: number;
   maxWidth?: number;
   align?: 'left' | 'center' | 'right';
-  format?: (value: any, row: T) => React.ReactNode;
+  format?: (_value: unknown, _row: T) => React.ReactNode;
   sortable?: boolean;
   filterable?: boolean;
   filterType?: FilterType;
@@ -54,7 +43,7 @@ export interface Column<T = any> {
   reorderable?: boolean;
 }
 
-export interface DataGridProps<T = any> {
+export interface DataGridProps<T = Record<string, unknown>> {
   data: T[];
   columns: Column<T>[];
   rowHeight?: number;
@@ -62,25 +51,25 @@ export interface DataGridProps<T = any> {
   width?: number | string;
   overscanRowCount?: number;
   overscanColumnCount?: number;
-  onRowClick?: (row: T, index: number) => void;
-  rowKey?: (row: T, index?: number) => string | number;
+  onRowClick?: (_row: T, _index: number) => void;
+  rowKey?: (_row: T, _index?: number) => string | number;
   loading?: boolean;
   emptyMessage?: string;
   sortable?: boolean;
   multiSort?: boolean;
-  onSortChange?: (sortState: SortState[]) => void;
+  onSortChange?: (_sortState: SortState[]) => void;
   filterable?: boolean;
-  onFilterChange?: (filters: FilterValue[]) => void;
-  getValueFn?: (item: T, columnId: string) => any;
+  onFilterChange?: (_filters: FilterValue[]) => void;
+  getValueFn?: (_item: T, _columnId: string) => unknown;
   resizable?: boolean;
   reorderable?: boolean;
   persistLayoutKey?: string;
-  onColumnResize?: (columnId: string, width: number) => void;
-  onColumnReorder?: (columns: Column<T>[]) => void;
+  onColumnResize?: (_columnId: string, _width: number) => void;
+  onColumnReorder?: (_columns: Column<T>[]) => void;
   selectable?: boolean;
   selectionMode?: 'single' | 'multiple';
   selectedRows?: Set<string | number>;
-  onSelectionChange?: (selectedRows: Set<string | number>) => void;
+  onSelectionChange?: (_selectedRows: Set<string | number>) => void;
   exportable?: boolean;
   exportFilename?: string;
   stickyFirstColumn?: boolean;
@@ -199,7 +188,7 @@ const ExportToolbar = styled(Box)(({ theme }) => ({
 }));
 
 // Draggable column header component
-function DraggableColumnHeader<T = any>({
+function DraggableColumnHeader<T = Record<string, unknown>>({
   column,
   sortable,
   sortState,
@@ -213,33 +202,31 @@ function DraggableColumnHeader<T = any>({
   column: Column<T>;
   sortable: boolean;
   sortState: SortState[];
-  onSort: (columnId: string, shiftKey?: boolean) => void;
+  onSort: (_columnId: string, _shiftKey?: boolean) => void;
   filterable: boolean;
   filters: FilterValue[];
-  onFilterChange: (columnId: string, filter: FilterValue | null) => void;
-  onResize?: (columnId: string, width: number) => void;
+  onFilterChange: (_columnId: string, _filter: FilterValue | null) => void;
+  onResize?: (_columnId: string, _width: number) => void;
   resizable: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: column.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: column.id,
+  });
 
   const [isResizing, setIsResizing] = useState(false);
   const startX = useRef<number>(0);
   const startWidth = useRef<number>(0);
 
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizing(true);
-    startX.current = e.clientX;
-    startWidth.current = column.width || column.minWidth || 150;
-  }, [column]);
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizing(true);
+      startX.current = e.clientX;
+      startWidth.current = column.width || column.minWidth || 150;
+    },
+    [column]
+  );
 
   useEffect(() => {
     if (!isResizing) return;
@@ -301,22 +288,19 @@ function DraggableColumnHeader<T = any>({
             label={column.label}
             type={column.filterType || 'text'}
             options={column.filterOptions}
-            filterValue={filters.find((f) => f.columnId === column.id)}
-            onFilterChange={(filter) => onFilterChange(column.id, filter)}
+            filterValue={filters.find(f => f.columnId === column.id)}
+            onFilterChange={filter => onFilterChange(column.id, filter)}
           />
         )}
       </Box>
       {resizable && column.resizable !== false && (
-        <ResizeHandle
-          className={isResizing ? 'resizing' : ''}
-          onMouseDown={handleResizeStart}
-        />
+        <ResizeHandle className={isResizing ? 'resizing' : ''} onMouseDown={handleResizeStart} />
       )}
     </GridHeaderCell>
   );
 }
 
-export function DataGridWithSelection<T = any>({
+export function DataGridWithSelection<T = Record<string, unknown>>({
   data,
   columns: initialColumns,
   rowHeight = 52,
@@ -346,51 +330,48 @@ export function DataGridWithSelection<T = any>({
   exportable = false,
   exportFilename = 'data_export',
   stickyFirstColumn = false,
-  mobileBreakpoint: _mobileBreakpoint = 600,
 }: DataGridProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
   // Sort state management
   const [sortState, setSortState] = useState<SortState[]>([]);
-  
+
   // Filter state management
   const [filters, setFilters] = useState<FilterValue[]>([]);
-  
+
   // Selection state management
   const [internalSelectedRows, setInternalSelectedRows] = useState<Set<string | number>>(new Set());
   const selectedRows = externalSelectedRows || internalSelectedRows;
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
-  
+
   // Export menu state
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
   const exportMenuOpen = Boolean(exportMenuAnchor);
-  
+
   // Column state management with persistence
   const [columns, setColumns] = useState<Column<T>[]>(() => {
-    if (persistLayoutKey) {
-      const savedLayout = localStorage.getItem(`datagrid-layout-${persistLayoutKey}`);
-      if (savedLayout) {
-        try {
+    if (persistLayoutKey && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedLayout = localStorage.getItem(`datagrid-layout-${persistLayoutKey}`);
+        if (savedLayout) {
           const { columnOrder, columnWidths } = JSON.parse(savedLayout);
           // Apply saved order and widths
           const orderedColumns = columnOrder
             .map((id: string) => initialColumns.find(c => c.id === id))
             .filter(Boolean);
           // Add any new columns that weren't in saved layout
-          const newColumns = initialColumns.filter(
-            c => !columnOrder.includes(c.id)
-          );
+          const newColumns = initialColumns.filter(c => !columnOrder.includes(c.id));
           const allColumns = [...orderedColumns, ...newColumns];
           // Apply saved widths
           return allColumns.map(c => ({
             ...c,
             width: columnWidths[c.id] || c.width || c.minWidth || 150,
           }));
-        } catch {
-          // Failed to restore column layout - use defaults
         }
+      } catch {
+        // Failed to restore column layout - use defaults
       }
     }
     return initialColumns;
@@ -400,10 +381,13 @@ export function DataGridWithSelection<T = any>({
   useEffect(() => {
     if (persistLayoutKey) {
       const columnOrder = columns.map(c => c.id);
-      const columnWidths = columns.reduce((acc, c) => {
-        acc[c.id] = c.width || c.minWidth || 150;
-        return acc;
-      }, {} as Record<string, number>);
+      const columnWidths = columns.reduce(
+        (acc, c) => {
+          acc[c.id] = c.width || c.minWidth || 150;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
       localStorage.setItem(
         `datagrid-layout-${persistLayoutKey}`,
         JSON.stringify({ columnOrder, columnWidths })
@@ -420,33 +404,37 @@ export function DataGridWithSelection<T = any>({
   );
 
   // Handle column drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-    if (active.id !== over?.id) {
-      setColumns((items) => {
-        const oldIndex = items.findIndex((c) => c.id === active.id);
-        const newIndex = items.findIndex((c) => c.id === over?.id);
-        const newColumns = arrayMove(items, oldIndex, newIndex);
-        if (onColumnReorder) {
-          onColumnReorder(newColumns);
-        }
-        return newColumns;
-      });
-    }
-  }, [onColumnReorder]);
+      if (active.id !== over?.id) {
+        setColumns(items => {
+          const oldIndex = items.findIndex(c => c.id === active.id);
+          const newIndex = items.findIndex(c => c.id === over?.id);
+          const newColumns = arrayMove(items, oldIndex, newIndex);
+          if (onColumnReorder) {
+            onColumnReorder(newColumns);
+          }
+          return newColumns;
+        });
+      }
+    },
+    [onColumnReorder]
+  );
 
   // Handle column resize
-  const handleColumnResize = useCallback((columnId: string, width: number) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((col) =>
-        col.id === columnId ? { ...col, width } : col
-      )
-    );
-    if (onColumnResize) {
-      onColumnResize(columnId, width);
-    }
-  }, [onColumnResize]);
+  const handleColumnResize = useCallback(
+    (columnId: string, width: number) => {
+      setColumns(prevColumns =>
+        prevColumns.map(col => (col.id === columnId ? { ...col, width } : col))
+      );
+      if (onColumnResize) {
+        onColumnResize(columnId, width);
+      }
+    },
+    [onColumnResize]
+  );
 
   // Reset layout to default
   const resetLayout = useCallback(() => {
@@ -457,58 +445,105 @@ export function DataGridWithSelection<T = any>({
   }, [initialColumns, persistLayoutKey]);
 
   // Handle sort changes
-  const handleSort = useCallback((columnId: string, shiftKey?: boolean) => {
-    const newSortState = updateSortState(sortState, columnId, multiSort && shiftKey);
-    setSortState(newSortState);
-    if (onSortChange) {
-      onSortChange(newSortState);
-    }
-  }, [sortState, multiSort, onSortChange]);
-  
-  // Handle filter changes
-  const handleFilterChange = useCallback((columnId: string, filter: FilterValue | null) => {
-    const newFilters = [...filters];
-    const existingIndex = newFilters.findIndex((f) => f.columnId === columnId);
-    
-    if (filter) {
-      if (existingIndex >= 0) {
-        newFilters[existingIndex] = filter;
-      } else {
-        newFilters.push(filter);
+  const handleSort = useCallback(
+    (columnId: string, shiftKey?: boolean) => {
+      const newSortState = updateSortState(sortState, columnId, multiSort && shiftKey);
+      setSortState(newSortState);
+      if (onSortChange) {
+        onSortChange(newSortState);
       }
-    } else if (existingIndex >= 0) {
-      newFilters.splice(existingIndex, 1);
-    }
-    
-    setFilters(newFilters);
-    if (onFilterChange) {
-      onFilterChange(newFilters);
-    }
-  }, [filters, onFilterChange]);
-  
+    },
+    [sortState, multiSort, onSortChange]
+  );
+
+  // Handle filter changes
+  const handleFilterChange = useCallback(
+    (columnId: string, filter: FilterValue | null) => {
+      const newFilters = [...filters];
+      const existingIndex = newFilters.findIndex(f => f.columnId === columnId);
+
+      if (filter) {
+        if (existingIndex >= 0) {
+          newFilters[existingIndex] = filter;
+        } else {
+          newFilters.push(filter);
+        }
+      } else if (existingIndex >= 0) {
+        newFilters.splice(existingIndex, 1);
+      }
+
+      setFilters(newFilters);
+      if (onFilterChange) {
+        onFilterChange(newFilters);
+      }
+    },
+    [filters, onFilterChange]
+  );
+
   // Filter and sort data
   const processedData = useMemo(() => {
     let result = [...data];
-    
+
     // Apply filters first
     if (filters.length > 0) {
       result = filterData(result, filters, getValueFn);
     }
-    
+
     // Then apply sorting
     if (sortState.length > 0) {
       result = sortData(result, sortState, getValueFn);
     }
-    
+
     return result;
   }, [data, filters, sortState, getValueFn]);
+
+  // Check if all rows are selected
+  const isAllSelected = useMemo(() => {
+    if (processedData.length === 0) return false;
+    return processedData.every((row, index) => {
+      const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
+      return selectedRows.has(key);
+    });
+  }, [processedData, selectedRows, rowKey]);
+
+  // Check if some rows are selected
+  const isSomeSelected = useMemo(() => {
+    if (processedData.length === 0) return false;
+    return (
+      processedData.some((row, index) => {
+        const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
+        return selectedRows.has(key);
+      }) && !isAllSelected
+    );
+  }, [processedData, selectedRows, rowKey, isAllSelected]);
+
+  // Handle select all/none
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      const newSelection = new Set<string | number>();
+
+      if (checked) {
+        processedData.forEach((row, index) => {
+          const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
+          newSelection.add(key);
+        });
+      }
+
+      if (onSelectionChange) {
+        onSelectionChange(newSelection);
+      } else {
+        setInternalSelectedRows(newSelection);
+      }
+    },
+    [processedData, rowKey, onSelectionChange]
+  );
 
   // Handle row selection
   const handleRowSelection = useCallback(
     (row: T, index: number, event?: React.MouseEvent) => {
       const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
       const newSelection = new Set(selectedRows);
-      
+
       if (selectionMode === 'single') {
         if (newSelection.has(key)) {
           newSelection.clear();
@@ -544,9 +579,9 @@ export function DataGridWithSelection<T = any>({
           }
         }
       }
-      
+
       setLastSelectedIndex(index);
-      
+
       if (onSelectionChange) {
         onSelectionChange(newSelection);
       } else {
@@ -555,28 +590,7 @@ export function DataGridWithSelection<T = any>({
     },
     [selectedRows, selectionMode, lastSelectedIndex, processedData, rowKey, onSelectionChange]
   );
-  
-  // Handle select all/none
-  const handleSelectAll = useCallback(
-    (checked: boolean) => {
-      const newSelection = new Set<string | number>();
-      
-      if (checked) {
-        processedData.forEach((row, index) => {
-          const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
-          newSelection.add(key);
-        });
-      }
-      
-      if (onSelectionChange) {
-        onSelectionChange(newSelection);
-      } else {
-        setInternalSelectedRows(newSelection);
-      }
-    },
-    [processedData, rowKey, onSelectionChange]
-  );
-  
+
   // Handle row click
   const handleRowClick = useCallback(
     (row: T, index: number, event: React.MouseEvent) => {
@@ -589,50 +603,32 @@ export function DataGridWithSelection<T = any>({
     },
     [onRowClick, selectable, handleRowSelection]
   );
-  
-  // Check if all rows are selected
-  const isAllSelected = useMemo(() => {
-    if (processedData.length === 0) return false;
-    return processedData.every((row, index) => {
-      const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
-      return selectedRows.has(key);
-    });
-  }, [processedData, selectedRows, rowKey]);
-  
-  // Check if some rows are selected
-  const isSomeSelected = useMemo(() => {
-    if (processedData.length === 0) return false;
-    return processedData.some((row, index) => {
-      const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
-      return selectedRows.has(key);
-    }) && !isAllSelected;
-  }, [processedData, selectedRows, rowKey, isAllSelected]);
-  
+
   // Handle CSV export
   const handleExportClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     setExportMenuAnchor(event.currentTarget);
   }, []);
-  
+
   const handleExportClose = useCallback(() => {
     setExportMenuAnchor(null);
   }, []);
-  
+
   const handleExportAll = useCallback(() => {
     exportDataToCSV(processedData, columns, {
       filename: `${exportFilename}_all_${new Date().toISOString().split('T')[0]}`,
       rowKey,
     });
     handleExportClose();
-  }, [processedData, columns, exportFilename, rowKey]);
-  
+  }, [processedData, columns, exportFilename, rowKey, handleExportClose]);
+
   const handleExportFiltered = useCallback(() => {
     exportDataToCSV(processedData, columns, {
       filename: `${exportFilename}_filtered_${new Date().toISOString().split('T')[0]}`,
       rowKey,
     });
     handleExportClose();
-  }, [processedData, columns, exportFilename, rowKey]);
-  
+  }, [processedData, columns, exportFilename, rowKey, handleExportClose]);
+
   const handleExportSelected = useCallback(() => {
     exportDataToCSV(processedData, columns, {
       selectedRows,
@@ -640,11 +636,11 @@ export function DataGridWithSelection<T = any>({
       rowKey,
     });
     handleExportClose();
-  }, [processedData, columns, selectedRows, exportFilename, rowKey]);
+  }, [processedData, columns, selectedRows, exportFilename, rowKey, handleExportClose]);
 
   // Adjust row height for mobile
   const adjustedRowHeight = isMobile ? rowHeight * 0.8 : rowHeight;
-  
+
   // Row virtualizer
   const rowVirtualizer = useVirtualizer({
     count: processedData.length,
@@ -669,41 +665,46 @@ export function DataGridWithSelection<T = any>({
     overscan: isMobile ? 2 : overscanColumnCount,
   });
 
-  // Calculate total width for columns  
+  // Calculate total width for columns
   const totalColumnsWidth = useMemo(() => {
     const baseWidth = columns.reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
     return selectable ? baseWidth + 48 : baseWidth; // Add 48px for checkbox column
   }, [columns, selectable]);
 
   // Render cell
-  const renderCell = useCallback(
-    (row: T, column: Column<T>, virtualColumn: any) => {
-      const value = (row as any)[column.id];
-      const displayValue = column.format ? column.format(value, row) : value;
+  const renderCell = useCallback((row: T, column: Column<T>, virtualColumn: unknown) => {
+    const value = (row as Record<string, unknown>)[column.id];
+    const displayValue = column.format ? column.format(value, row) : value;
 
-      return (
-        <GridCell
-          key={column.id}
-          role="gridcell"
-          aria-label={`${column.label}: ${displayValue}`}
-          sx={{
-            width: virtualColumn.size,
-            position: 'absolute',
-            left: 0,
-            transform: `translateX(${virtualColumn.start}px)`,
-            textAlign: column.align || 'left',
-          }}
-        >
-          {displayValue}
-        </GridCell>
-      );
-    },
-    []
-  );
+    return (
+      <GridCell
+        key={column.id}
+        role='gridcell'
+        aria-label={`${column.label}: ${displayValue}`}
+        sx={{
+          width: (virtualColumn as { size: number }).size,
+          position: 'absolute',
+          left: 0,
+          transform: `translateX(${(virtualColumn as { start: number }).start}px)`,
+          textAlign: column.align || 'left',
+        }}
+      >
+        {displayValue as React.ReactNode}
+      </GridCell>
+    );
+  }, []);
 
   if (loading) {
     return (
-      <Paper sx={{ height, width, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper
+        sx={{
+          height,
+          width,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         Loading...
       </Paper>
     );
@@ -711,7 +712,15 @@ export function DataGridWithSelection<T = any>({
 
   if (data.length === 0) {
     return (
-      <Paper sx={{ height, width, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper
+        sx={{
+          height,
+          width,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {emptyMessage}
       </Paper>
     );
@@ -724,19 +733,13 @@ export function DataGridWithSelection<T = any>({
           <Button
             startIcon={<DownloadIcon />}
             onClick={handleExportClick}
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
           >
             Export CSV
           </Button>
-          <Menu
-            anchorEl={exportMenuAnchor}
-            open={exportMenuOpen}
-            onClose={handleExportClose}
-          >
-            <MenuItem onClick={handleExportAll}>
-              Export All ({data.length} rows)
-            </MenuItem>
+          <Menu anchorEl={exportMenuAnchor} open={exportMenuOpen} onClose={handleExportClose}>
+            <MenuItem onClick={handleExportAll}>Export All ({data.length} rows)</MenuItem>
             {filters.length > 0 && (
               <MenuItem onClick={handleExportFiltered}>
                 Export Filtered ({processedData.length} rows)
@@ -753,8 +756,8 @@ export function DataGridWithSelection<T = any>({
       <MobileScrollContainer>
         <GridContainer
           ref={parentRef}
-          role="grid"
-          aria-label="Data grid"
+          role='grid'
+          aria-label='Data grid'
           aria-rowcount={processedData.length}
           aria-colcount={columns.length + (selectable ? 1 : 0)}
           tabIndex={0}
@@ -766,7 +769,7 @@ export function DataGridWithSelection<T = any>({
               boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
             },
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             // Keyboard navigation
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
@@ -774,244 +777,306 @@ export function DataGridWithSelection<T = any>({
             } else if (e.key === ' ' && selectable) {
               e.preventDefault();
               // Toggle selection
-            } else if (e.key === 'a' && (e.ctrlKey || e.metaKey) && selectable && selectionMode === 'multiple') {
+            } else if (
+              e.key === 'a' &&
+              (e.ctrlKey || e.metaKey) &&
+              selectable &&
+              selectionMode === 'multiple'
+            ) {
               e.preventDefault();
               handleSelectAll(!isAllSelected);
             }
           }}
         >
-      <GridHeader
-        role="row"
-        aria-rowindex={1}
-        sx={{
-          width: totalColumnsWidth,
-          minWidth: '100%',
-        }}
-      >
-        {persistLayoutKey && (
-          <IconButton
-            size="small"
-            onClick={resetLayout}
+          <GridHeader
+            role='row'
+            aria-rowindex={1}
             sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              zIndex: 11,
-            }}
-            title="Reset layout to default"
-          >
-            <RestoreIcon fontSize="small" />
-          </IconButton>
-        )}
-        
-        {/* Checkbox column header */}
-        {selectable && (
-          <GridHeaderCell
-            role="columnheader"
-            aria-label="Select all rows"
-            sticky={stickyFirstColumn && isMobile}
-            sx={{
-              width: 48,
-              position: 'absolute',
-              left: 0,
-              transform: 'translateX(0px)',
+              width: totalColumnsWidth,
+              minWidth: '100%',
             }}
           >
-            {selectionMode === 'multiple' && (
-              <Checkbox
-                checked={isAllSelected}
-                indeterminate={isSomeSelected}
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                size="small"
-                inputProps={{
-                  'aria-label': isAllSelected ? 'Deselect all rows' : 'Select all rows',
+            {persistLayoutKey && (
+              <IconButton
+                size='small'
+                onClick={resetLayout}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  zIndex: 11,
                 }}
-              />
+                title='Reset layout to default'
+              >
+                <RestoreIcon fontSize='small' />
+              </IconButton>
             )}
-          </GridHeaderCell>
-        )}
-        
-        {/* Regular column headers */}
-        {reorderable ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={columns.map(c => c.id)}
-              strategy={horizontalListSortingStrategy}
-            >
-              {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
+
+            {/* Checkbox column header */}
+            {selectable && (
+              <GridHeaderCell
+                role='columnheader'
+                aria-label='Select all rows'
+                sticky={stickyFirstColumn && isMobile ? true : undefined}
+                sx={{
+                  width: 48,
+                  position: 'absolute',
+                  left: 0,
+                  transform: 'translateX(0px)',
+                }}
+              >
+                {selectionMode === 'multiple' && (
+                  <Checkbox
+                    checked={isAllSelected}
+                    indeterminate={isSomeSelected}
+                    onChange={e => handleSelectAll(e.target.checked)}
+                    size='small'
+                    inputProps={{
+                      'aria-label': isAllSelected ? 'Deselect all rows' : 'Select all rows',
+                    }}
+                  />
+                )}
+              </GridHeaderCell>
+            )}
+
+            {/* Regular column headers */}
+            {reorderable ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={columns.map(c => c.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {columnVirtualizer.getVirtualItems().map(virtualColumn => {
+                    const column = columns[virtualColumn.index];
+                    const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
+                    return (
+                      <Box
+                        key={column.id}
+                        sx={{
+                          position: 'absolute',
+                          left: 0,
+                          transform: `translateX(${left}px)`,
+                        }}
+                      >
+                        <DraggableColumnHeader
+                          column={column}
+                          sortable={sortable}
+                          sortState={sortState}
+                          onSort={handleSort}
+                          filterable={filterable}
+                          filters={filters}
+                          onFilterChange={handleFilterChange}
+                          onResize={handleColumnResize}
+                          resizable={resizable}
+                        />
+                      </Box>
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
+            ) : (
+              columnVirtualizer.getVirtualItems().map(virtualColumn => {
                 const column = columns[virtualColumn.index];
                 const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
                 return (
-                  <Box
+                  <GridHeaderCell
                     key={column.id}
                     sx={{
+                      width: virtualColumn.size,
                       position: 'absolute',
                       left: 0,
                       transform: `translateX(${left}px)`,
                     }}
                   >
-                    <DraggableColumnHeader
-                      column={column}
-                      sortable={sortable}
-                      sortState={sortState}
-                      onSort={handleSort}
-                      filterable={filterable}
-                      filters={filters}
-                      onFilterChange={handleFilterChange}
-                      onResize={handleColumnResize}
-                      resizable={resizable}
-                    />
-                  </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      {sortable ? (
+                        <SortableColumnHeader
+                          columnId={column.id}
+                          label={column.label}
+                          sortable={column.sortable !== false}
+                          sortState={sortState}
+                          onSort={handleSort}
+                          align={column.align}
+                        />
+                      ) : (
+                        <Box sx={{ flex: 1 }}>{column.label}</Box>
+                      )}
+                      {filterable && column.filterable !== false && (
+                        <ColumnFilter
+                          columnId={column.id}
+                          label={column.label}
+                          type={column.filterType || 'text'}
+                          options={column.filterOptions}
+                          filterValue={filters.find(f => f.columnId === column.id)}
+                          onFilterChange={filter => handleFilterChange(column.id, filter)}
+                        />
+                      )}
+                    </Box>
+                    {resizable && column.resizable !== false && (
+                      <ResizeHandle
+                        onMouseDown={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const startX = e.clientX;
+                          const startWidth = column.width || column.minWidth || 150;
+
+                          const handleMouseMove = (e: MouseEvent) => {
+                            const diff = e.clientX - startX;
+                            const newWidth = Math.max(
+                              column.minWidth || 50,
+                              Math.min(column.maxWidth || 1000, startWidth + diff)
+                            );
+                            handleColumnResize(column.id, newWidth);
+                          };
+
+                          const handleMouseUp = () => {
+                            document.removeEventListener('mousemove', handleMouseMove);
+                            document.removeEventListener('mouseup', handleMouseUp);
+                          };
+
+                          document.addEventListener('mousemove', handleMouseMove);
+                          document.addEventListener('mouseup', handleMouseUp);
+                        }}
+                      />
+                    )}
+                  </GridHeaderCell>
                 );
-              })}
-            </SortableContext>
-          </DndContext>
-        ) : (
-          columnVirtualizer.getVirtualItems().map((virtualColumn) => {
-            const column = columns[virtualColumn.index];
-            const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
-            return (
-              <GridHeaderCell
-                key={column.id}
-                sx={{
-                  width: virtualColumn.size,
-                  position: 'absolute',
-                  left: 0,
-                  transform: `translateX(${left}px)`,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  {sortable ? (
-                    <SortableColumnHeader
-                      columnId={column.id}
-                      label={column.label}
-                      sortable={column.sortable !== false}
-                      sortState={sortState}
-                      onSort={handleSort}
-                      align={column.align}
-                    />
-                  ) : (
-                    <Box sx={{ flex: 1 }}>{column.label}</Box>
-                  )}
-                  {filterable && column.filterable !== false && (
-                    <ColumnFilter
-                      columnId={column.id}
-                      label={column.label}
-                      type={column.filterType || 'text'}
-                      options={column.filterOptions}
-                      filterValue={filters.find((f) => f.columnId === column.id)}
-                      onFilterChange={(filter) => handleFilterChange(column.id, filter)}
-                    />
-                  )}
-                </Box>
-                {resizable && column.resizable !== false && (
-                  <ResizeHandle
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const startX = e.clientX;
-                      const startWidth = column.width || column.minWidth || 150;
-                      
-                      const handleMouseMove = (e: MouseEvent) => {
-                        const diff = e.clientX - startX;
-                        const newWidth = Math.max(
-                          column.minWidth || 50,
-                          Math.min(column.maxWidth || 1000, startWidth + diff)
-                        );
-                        handleColumnResize(column.id, newWidth);
-                      };
-                      
-                      const handleMouseUp = () => {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  />
-                )}
-              </GridHeaderCell>
-            );
-          })
-        )}
-      </GridHeader>
-      
-      <VirtualGridContent
-        sx={{
-          height: rowVirtualizer.getTotalSize(),
-          width: totalColumnsWidth,
-          minWidth: '100%',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-          const row = processedData[virtualRow.index];
-          const key = typeof rowKey === 'function' ? rowKey(row, virtualRow.index) : virtualRow.index;
-          const virtualColumns = columnVirtualizer.getVirtualItems();
-          const isSelected = selectedRows.has(key);
-          
-          return (
-            <GridRow
-              key={key}
-              role="row"
-              aria-rowindex={virtualRow.index + 2}
-              aria-selected={isSelected}
-              onClick={(e) => handleRowClick(row, virtualRow.index, e)}
-              className={isSelected ? 'selected' : ''}
-              tabIndex={virtualRow.index === 0 ? 0 : -1}
-              sx={{
-                height: virtualRow.size,
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: totalColumnsWidth,
-                minWidth: '100%',
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              {/* Checkbox cell */}
-              {selectable && (
-                <GridCell
-                  role="gridcell"
-                  sticky={stickyFirstColumn && isMobile}
+              })
+            )}
+          </GridHeader>
+
+          <VirtualGridContent
+            sx={{
+              height: rowVirtualizer.getTotalSize(),
+              width: totalColumnsWidth,
+              minWidth: '100%',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map(virtualRow => {
+              const row = processedData[virtualRow.index];
+              const key =
+                typeof rowKey === 'function' ? rowKey(row, virtualRow.index) : virtualRow.index;
+              const virtualColumns = columnVirtualizer.getVirtualItems();
+              const isSelected = selectedRows.has(key);
+
+              return (
+                <GridRow
+                  key={key}
+                  role='row'
+                  aria-rowindex={virtualRow.index + 2}
+                  aria-selected={isSelected}
+                  onClick={e => handleRowClick(row, virtualRow.index, e)}
+                  className={isSelected ? 'selected' : ''}
+                  tabIndex={virtualRow.index === 0 ? 0 : -1}
                   sx={{
-                    width: 48,
+                    height: virtualRow.size,
                     position: 'absolute',
+                    top: 0,
                     left: 0,
-                    transform: 'translateX(0px)',
+                    width: totalColumnsWidth,
+                    minWidth: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleRowSelection(row, virtualRow.index);
-                    }}
-                    size="small"
-                    inputProps={{
-                      'aria-label': `Select row ${virtualRow.index + 1}`,
-                    }}
-                  />
-                </GridCell>
-              )}
-              
-              {/* Regular cells */}
-              {virtualColumns.map((virtualColumn) => {
-                const column = columns[virtualColumn.index];
-                const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
-                return renderCell(row, column, {
-                  ...virtualColumn,
-                  start: left,
-                });
-              })}
-            </GridRow>
-          );
-        })}
-      </VirtualGridContent>
+                  {/* Checkbox cell */}
+                  {selectable && (
+                    <GridCell
+                      role='gridcell'
+                      sticky={stickyFirstColumn && isMobile ? true : undefined}
+                      sx={{
+                        width: 48,
+                        position: 'absolute',
+                        left: 0,
+                        transform: 'translateX(0px)',
+                      }}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={e => {
+                          e.stopPropagation();
+                          // For checkbox clicks, always toggle individual selection
+                          const key =
+                            typeof rowKey === 'function'
+                              ? rowKey(row, virtualRow.index)
+                              : virtualRow.index;
+
+                          if (onSelectionChange) {
+                            // Use callback pattern for external state management
+                            const currentSelection = externalSelectedRows || new Set();
+                            const newSelection = new Set(currentSelection);
+
+                            if (selectionMode === 'single') {
+                              if (newSelection.has(key)) {
+                                newSelection.clear();
+                              } else {
+                                newSelection.clear();
+                                newSelection.add(key);
+                              }
+                            } else {
+                              // For multiple mode, checkboxes always toggle individual selection
+                              if (newSelection.has(key)) {
+                                newSelection.delete(key);
+                              } else {
+                                newSelection.add(key);
+                              }
+                            }
+                            onSelectionChange(newSelection);
+                          } else {
+                            // Use setter callback for internal state management
+                            setInternalSelectedRows(prev => {
+                              const newSelection = new Set(prev);
+                              if (selectionMode === 'single') {
+                                if (newSelection.has(key)) {
+                                  newSelection.clear();
+                                } else {
+                                  newSelection.clear();
+                                  newSelection.add(key);
+                                }
+                              } else {
+                                // For multiple mode, checkboxes always toggle individual selection
+                                if (newSelection.has(key)) {
+                                  newSelection.delete(key);
+                                } else {
+                                  newSelection.add(key);
+                                }
+                              }
+                              return newSelection;
+                            });
+                          }
+
+                          setLastSelectedIndex(virtualRow.index);
+                        }}
+                        size='small'
+                        inputProps={{
+                          'aria-label': `Select row ${virtualRow.index + 1}`,
+                        }}
+                      />
+                    </GridCell>
+                  )}
+
+                  {/* Regular cells */}
+                  {virtualColumns.map(virtualColumn => {
+                    const column = columns[virtualColumn.index];
+                    const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
+                    return renderCell(row, column, {
+                      ...virtualColumn,
+                      start: left,
+                    });
+                  })}
+                </GridRow>
+              );
+            })}
+          </VirtualGridContent>
         </GridContainer>
       </MobileScrollContainer>
     </Box>

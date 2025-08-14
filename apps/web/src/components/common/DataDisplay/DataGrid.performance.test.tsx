@@ -3,6 +3,20 @@ import { render } from '@testing-library/react';
 import { DataGridWithSelection as DataGrid } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
+// Mock @tanstack/react-virtual for performance tests
+jest.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: jest.fn(() => ({
+    getVirtualItems: () => [
+      { index: 0, start: 0, size: 52, key: 0 },
+      { index: 1, start: 52, size: 52, key: 1 },
+      { index: 2, start: 104, size: 52, key: 2 },
+    ],
+    getTotalSize: () => 156,
+    scrollToIndex: jest.fn(),
+    scrollToOffset: jest.fn(),
+  })),
+}));
+
 // Mock ResizeObserver
 class ResizeObserverMock {
   observe() {}
@@ -10,7 +24,7 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-global.ResizeObserver = ResizeObserverMock as any;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // Mock DnD Kit
 jest.mock('@dnd-kit/core', () => ({
@@ -23,7 +37,7 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn((array: any[], from: number, to: number) => {
+  arrayMove: jest.fn((array: unknown[], from: number, to: number) => {
     const result = [...array];
     const [removed] = result.splice(from, 1);
     result.splice(to, 0, removed);
@@ -63,15 +77,10 @@ describe('DataGrid Performance', () => {
     ];
 
     const startTime = performance.now();
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={largeData} 
-          columns={columns}
-          height={600}
-          overscanRowCount={10}
-        />
+        <DataGrid data={largeData} columns={columns} height={600} overscanRowCount={10} />
       </ThemeProvider>
     );
 
@@ -97,15 +106,10 @@ describe('DataGrid Performance', () => {
     ];
 
     const startTime = performance.now();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={largeData} 
-          columns={columns}
-          sortable={true}
-          height={600}
-        />
+        <DataGrid data={largeData} columns={columns} sortable={true} height={600} />
       </ThemeProvider>
     );
 

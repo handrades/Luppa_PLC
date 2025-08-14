@@ -1,22 +1,22 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, IconButton } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import RestoreIcon from '@mui/icons-material/Restore';
 import { styled } from '@mui/material/styles';
 import {
   DndContext,
-  closestCenter,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
+  arrayMove,
   horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -29,8 +29,8 @@ export interface ColumnConfig {
 
 export interface ResizableColumnsProps {
   columns: ColumnConfig[];
-  onColumnResize: (columnId: string, newWidth: number) => void;
-  onColumnReorder: (newOrder: ColumnConfig[]) => void;
+  onColumnResize: (_columnId: string, _newWidth: number) => void;
+  onColumnReorder: (_newOrder: ColumnConfig[]) => void;
   onReset?: () => void;
   minColumnWidth?: number;
   maxColumnWidth?: number;
@@ -74,14 +74,10 @@ interface SortableColumnProps {
 }
 
 export function SortableColumn({ columnId, children, isDraggable = true }: SortableColumnProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: columnId, disabled: !isDraggable });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: columnId,
+    disabled: !isDraggable,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -93,7 +89,7 @@ export function SortableColumn({ columnId, children, isDraggable = true }: Sorta
     <Box ref={setNodeRef} style={style} sx={{ position: 'relative' }}>
       {isDraggable && (
         <DragHandle {...attributes} {...listeners}>
-          <DragIndicatorIcon fontSize="small" />
+          <DragIndicatorIcon fontSize='small' />
         </DragHandle>
       )}
       {children}
@@ -112,7 +108,10 @@ export function ResizableColumns({
 }: ResizableColumnsProps) {
   const [localColumns, setLocalColumns] = useState<ColumnConfig[]>(columns);
   const [resizing, setResizing] = useState<string | null>(null);
-  const resizeRef = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
+  const resizeRef = useRef<{ startX: number; startWidth: number }>({
+    startX: 0,
+    startWidth: 0,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -135,27 +134,33 @@ export function ResizableColumns({
         }
       }
     }
-  }, [persistKey]);
+  }, [persistKey, onColumnReorder]);
 
   // Save column config
-  const saveColumns = useCallback((cols: ColumnConfig[]) => {
-    if (persistKey) {
-      localStorage.setItem(`grid-columns-${persistKey}`, JSON.stringify(cols));
-    }
-  }, [persistKey]);
+  const saveColumns = useCallback(
+    (cols: ColumnConfig[]) => {
+      if (persistKey) {
+        localStorage.setItem(`grid-columns-${persistKey}`, JSON.stringify(cols));
+      }
+    },
+    [persistKey]
+  );
 
   // Handle resize start
-  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, columnId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const column = localColumns.find(c => c.id === columnId);
-    if (!column) return;
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent, columnId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    resizeRef.current = { startX, startWidth: column.width };
-    setResizing(columnId);
-  }, [localColumns]);
+      const column = localColumns.find(c => c.id === columnId);
+      if (!column) return;
+
+      const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      resizeRef.current = { startX, startWidth: column.width };
+      setResizing(columnId);
+    },
+    [localColumns]
+  );
 
   // Handle resize move
   useEffect(() => {
@@ -164,8 +169,11 @@ export function ResizableColumns({
     const handleMouseMove = (e: MouseEvent | TouchEvent) => {
       const currentX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const diff = currentX - resizeRef.current.startX;
-      const newWidth = Math.max(minColumnWidth, Math.min(maxColumnWidth, resizeRef.current.startWidth + diff));
-      
+      const newWidth = Math.max(
+        minColumnWidth,
+        Math.min(maxColumnWidth, resizeRef.current.startWidth + diff)
+      );
+
       const updatedColumns = localColumns.map(col =>
         col.id === resizing ? { ...col, width: newWidth } : col
       );
@@ -197,23 +205,26 @@ export function ResizableColumns({
   }, [resizing, localColumns, minColumnWidth, maxColumnWidth, onColumnResize, saveColumns]);
 
   // Handle drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = localColumns.findIndex(col => col.id === active.id);
-      const newIndex = localColumns.findIndex(col => col.id === over.id);
-      
-      const newColumns = arrayMove(localColumns, oldIndex, newIndex).map((col, index) => ({
-        ...col,
-        order: index,
-      }));
-      
-      setLocalColumns(newColumns);
-      onColumnReorder(newColumns);
-      saveColumns(newColumns);
-    }
-  }, [localColumns, onColumnReorder, saveColumns]);
+      if (over && active.id !== over.id) {
+        const oldIndex = localColumns.findIndex(col => col.id === active.id);
+        const newIndex = localColumns.findIndex(col => col.id === over.id);
+
+        const newColumns = arrayMove(localColumns, oldIndex, newIndex).map((col, index) => ({
+          ...col,
+          order: index,
+        }));
+
+        setLocalColumns(newColumns);
+        onColumnReorder(newColumns);
+        saveColumns(newColumns);
+      }
+    },
+    [localColumns, onColumnReorder, saveColumns]
+  );
 
   // Handle reset
   const handleReset = useCallback(() => {
@@ -228,11 +239,7 @@ export function ResizableColumns({
   }, [columns, onColumnReorder, onReset, persistKey]);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext
         items={localColumns.map(col => col.id)}
         strategy={horizontalListSortingStrategy}
@@ -249,19 +256,19 @@ export function ResizableColumns({
             >
               <ResizeHandle
                 className={resizing === column.id ? 'resizing' : ''}
-                onMouseDown={(e) => handleResizeStart(e, column.id)}
-                onTouchStart={(e) => handleResizeStart(e, column.id)}
+                onMouseDown={e => handleResizeStart(e, column.id)}
+                onTouchStart={e => handleResizeStart(e, column.id)}
               />
             </Box>
           ))}
           {onReset && (
             <IconButton
-              size="small"
+              size='small'
               onClick={handleReset}
-              title="Reset column layout"
+              title='Reset column layout'
               sx={{ ml: 1 }}
             >
-              <RestoreIcon fontSize="small" />
+              <RestoreIcon fontSize='small' />
             </IconButton>
           )}
         </Box>
@@ -279,22 +286,19 @@ export function getDefaultColumnConfig(columns: { id: string; width?: number }[]
   }));
 }
 
-export function applyColumnConfig(
-  columns: any[],
-  config: ColumnConfig[]
-): any[] {
+export function applyColumnConfig(columns: unknown[], config: ColumnConfig[]): unknown[] {
   const configMap = new Map(config.map(c => [c.id, c]));
-  
+
   return columns
     .map(col => {
-      const cfg = configMap.get(col.id);
+      const cfg = configMap.get((col as { id: string }).id);
       if (!cfg) return null;
       return {
-        ...col,
+        ...(col as Record<string, unknown>),
         width: cfg.width,
         order: cfg.order,
       };
     })
     .filter(Boolean)
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) => (a as { order: number }).order - (b as { order: number }).order);
 }

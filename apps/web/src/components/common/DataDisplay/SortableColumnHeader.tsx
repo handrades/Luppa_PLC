@@ -18,7 +18,7 @@ export interface SortableColumnHeaderProps {
   label: string;
   sortable?: boolean;
   sortState?: SortState[];
-  onSort?: (columnId: string, shiftKey?: boolean) => void;
+  onSort?: (_columnId: string, _shiftKey?: boolean) => void;
   align?: 'left' | 'center' | 'right';
 }
 
@@ -66,14 +66,14 @@ export function SortableColumnHeader({
   onSort,
   align = 'left',
 }: SortableColumnHeaderProps) {
-  const columnSort = sortState.find((s) => s.columnId === columnId);
+  const columnSort = sortState.find(s => s.columnId === columnId);
   const sortDirection = columnSort?.direction || null;
   const sortPriority = columnSort?.priority;
   const isMultiSort = sortState.length > 1;
 
   const handleClick = (event: React.MouseEvent) => {
     if (!sortable || !onSort) return;
-    
+
     event.stopPropagation();
     onSort(columnId, event.shiftKey);
   };
@@ -84,28 +84,28 @@ export function SortableColumnHeader({
     if (sortDirection === 'asc') {
       return (
         <SortIndicatorContainer>
-          <ArrowUpwardIcon fontSize="small" color="primary" />
+          <ArrowUpwardIcon fontSize='small' color='primary' />
           {isMultiSort && sortPriority !== undefined && (
             <SortPriorityBadge>{sortPriority + 1}</SortPriorityBadge>
           )}
         </SortIndicatorContainer>
       );
     }
-    
+
     if (sortDirection === 'desc') {
       return (
         <SortIndicatorContainer>
-          <ArrowDownwardIcon fontSize="small" color="primary" />
+          <ArrowDownwardIcon fontSize='small' color='primary' />
           {isMultiSort && sortPriority !== undefined && (
             <SortPriorityBadge>{sortPriority + 1}</SortPriorityBadge>
           )}
         </SortIndicatorContainer>
       );
     }
-    
+
     return (
       <SortIndicatorContainer sx={{ opacity: 0.3 }}>
-        <SwapVertIcon fontSize="small" />
+        <SwapVertIcon fontSize='small' />
       </SortIndicatorContainer>
     );
   };
@@ -114,14 +114,14 @@ export function SortableColumnHeader({
     <HeaderContainer
       onClick={handleClick}
       sx={{
-        justifyContent: align === 'center' ? 'center' : 
-                       align === 'right' ? 'flex-end' : 'flex-start',
+        justifyContent:
+          align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start',
       }}
     >
       <LabelContainer
         sx={{
-          justifyContent: align === 'center' ? 'center' : 
-                         align === 'right' ? 'flex-end' : 'flex-start',
+          justifyContent:
+            align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start',
         }}
       >
         {label}
@@ -135,23 +135,23 @@ export function SortableColumnHeader({
 export function sortData<T>(
   data: T[],
   sortState: SortState[],
-  getValueFn?: (item: T, columnId: string) => any
+  getValueFn?: (_item: T, _columnId: string) => unknown
 ): T[] {
   if (sortState.length === 0) return data;
 
   const sorted = [...data];
-  
+
   sorted.sort((a, b) => {
     for (const sort of sortState) {
-      const getValue = getValueFn || ((item: any, col: string) => item[col]);
-      const aValue = getValue(a, sort.columnId);
-      const bValue = getValue(b, sort.columnId);
-      
+      const getValue = getValueFn || ((item: Record<string, unknown>, col: string) => item[col]);
+      const aValue = getValue(a as T & Record<string, unknown>, sort.columnId);
+      const bValue = getValue(b as T & Record<string, unknown>, sort.columnId);
+
       // Handle null/undefined values
       if (aValue == null && bValue == null) continue;
       if (aValue == null) return sort.direction === 'asc' ? 1 : -1;
       if (bValue == null) return sort.direction === 'asc' ? -1 : 1;
-      
+
       // Compare values
       let comparison = 0;
       if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -161,14 +161,14 @@ export function sortData<T>(
       } else {
         comparison = String(aValue).localeCompare(String(bValue));
       }
-      
+
       if (comparison !== 0) {
         return sort.direction === 'asc' ? comparison : -comparison;
       }
     }
     return 0;
   });
-  
+
   return sorted;
 }
 
@@ -177,8 +177,8 @@ export function updateSortState(
   columnId: string,
   multiSort: boolean = false
 ): SortState[] {
-  const existingIndex = currentState.findIndex((s) => s.columnId === columnId);
-  
+  const existingIndex = currentState.findIndex(s => s.columnId === columnId);
+
   if (!multiSort) {
     // Single column sort
     if (existingIndex >= 0) {
@@ -191,10 +191,10 @@ export function updateSortState(
     }
     return [{ columnId, direction: 'asc', priority: 0 }];
   }
-  
+
   // Multi-column sort
   const newState = [...currentState];
-  
+
   if (existingIndex >= 0) {
     const current = newState[existingIndex];
     if (current.direction === 'asc') {
@@ -215,6 +215,6 @@ export function updateSortState(
       priority: newState.length,
     });
   }
-  
+
   return newState;
 }

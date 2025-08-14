@@ -1,8 +1,24 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { DataGridWithSelection as DataGrid, Column } from './DataGridWithSelection';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { Column, DataGridWithSelection as DataGrid } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
+
+// Mock @tanstack/react-virtual
+jest.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: jest.fn(() => ({
+    getVirtualItems: () => [
+      { index: 0, start: 0, size: 52, key: 0 },
+      { index: 1, start: 52, size: 52, key: 1 },
+      { index: 2, start: 104, size: 52, key: 2 },
+      { index: 3, start: 156, size: 52, key: 3 },
+      { index: 4, start: 208, size: 52, key: 4 },
+    ],
+    getTotalSize: () => 260,
+    scrollToIndex: jest.fn(),
+    scrollToOffset: jest.fn(),
+  })),
+}));
 
 // Mock ResizeObserver
 class ResizeObserverMock {
@@ -11,7 +27,7 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-global.ResizeObserver = ResizeObserverMock as any;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -45,7 +61,7 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn((array: any[], from: number, to: number) => {
+  arrayMove: jest.fn((array: unknown[], from: number, to: number) => {
     const result = [...array];
     const [removed] = result.splice(from, 1);
     result.splice(to, 0, removed);
@@ -99,14 +115,10 @@ describe('DataGrid - Single Selection Mode', () => {
 
   it('should render without selection when selectable is false', () => {
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns}
-          selectable={false}
-        />
+        <DataGrid data={data} columns={testColumns} selectable={false} />
       </ThemeProvider>
     );
 
@@ -117,14 +129,10 @@ describe('DataGrid - Single Selection Mode', () => {
 
   it('should render checkbox column when selectable is true', () => {
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns}
-          selectable={true}
-        />
+        <DataGrid data={data} columns={testColumns} selectable={true} />
       </ThemeProvider>
     );
 
@@ -133,28 +141,32 @@ describe('DataGrid - Single Selection Mode', () => {
     expect(checkboxes.length).toBeGreaterThan(0);
   });
 
-  it('should allow single selection in single mode', () => {
+  it('should allow single selection in single mode', async () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="single"
+          selectionMode='single'
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
     );
 
-    // Click first row
+    // Wait for virtualized row to appear and click it
+    await waitFor(() => {
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
+    });
+
     const firstRow = screen.getByText('Item 1').closest('[class*="GridRow"]');
     if (firstRow) {
       fireEvent.click(firstRow);
       expect(onSelectionChange).toHaveBeenCalledWith(expect.any(Set));
-      
+
       const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
       const selectedSet = lastCall[0];
       expect(selectedSet.size).toBe(1);
@@ -164,14 +176,14 @@ describe('DataGrid - Single Selection Mode', () => {
   it('should deselect when clicking selected row in single mode', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="single"
+          selectionMode='single'
           selectedRows={new Set([0])}
           onSelectionChange={onSelectionChange}
         />
@@ -182,7 +194,7 @@ describe('DataGrid - Single Selection Mode', () => {
     const firstRow = screen.getByText('Item 1').closest('[class*="GridRow"]');
     if (firstRow) {
       fireEvent.click(firstRow);
-      
+
       const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
       const selectedSet = lastCall[0];
       expect(selectedSet.size).toBe(0);
@@ -192,14 +204,14 @@ describe('DataGrid - Single Selection Mode', () => {
   it('should replace selection when clicking another row in single mode', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="single"
+          selectionMode='single'
           selectedRows={new Set([0])}
           onSelectionChange={onSelectionChange}
         />
@@ -210,7 +222,7 @@ describe('DataGrid - Single Selection Mode', () => {
     const secondRow = screen.getByText('Item 2').closest('[class*="GridRow"]');
     if (secondRow) {
       fireEvent.click(secondRow);
-      
+
       const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
       const selectedSet = lastCall[0];
       expect(selectedSet.size).toBe(1);
@@ -228,14 +240,21 @@ describe('DataGrid - Multiple Selection Mode', () => {
   it('should allow multiple selection in multiple mode', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
-    render(
+    let currentSelection = new Set<string | number>();
+
+    // Mock the callback to update our local state
+    onSelectionChange.mockImplementation((newSelection: Set<string | number>) => {
+      currentSelection = newSelection;
+    });
+
+    const { rerender } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
+          selectedRows={currentSelection}
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -243,34 +262,45 @@ describe('DataGrid - Multiple Selection Mode', () => {
 
     // Click first checkbox
     const checkboxes = screen.getAllByRole('checkbox');
-    if (checkboxes.length > 1) {
-      fireEvent.click(checkboxes[1]); // First row checkbox (0 is header)
-      
-      let lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
-      let selectedSet = lastCall[0];
-      expect(selectedSet.size).toBe(1);
-      
-      // Click second checkbox
-      if (checkboxes.length > 2) {
-        fireEvent.click(checkboxes[2]);
-        lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
-        selectedSet = lastCall[0];
-        expect(selectedSet.size).toBe(2);
-      }
-    }
+    expect(checkboxes.length).toBeGreaterThan(2); // Should have header + at least 2 row checkboxes
+
+    fireEvent.click(checkboxes[1]); // First row checkbox (0 is header)
+
+    expect(onSelectionChange).toHaveBeenCalled();
+    expect(currentSelection.size).toBe(1);
+
+    // Rerender with updated selection
+    rerender(
+      <ThemeProvider theme={theme}>
+        <DataGrid
+          data={data}
+          columns={testColumns}
+          selectable={true}
+          selectionMode='multiple'
+          selectedRows={currentSelection}
+          onSelectionChange={onSelectionChange}
+        />
+      </ThemeProvider>
+    );
+
+    // Click second checkbox
+    const updatedCheckboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(updatedCheckboxes[2]);
+
+    expect(currentSelection.size).toBe(2);
   });
 
   it('should handle select all checkbox', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -279,7 +309,7 @@ describe('DataGrid - Multiple Selection Mode', () => {
     // Click header checkbox to select all
     const headerCheckbox = screen.getAllByRole('checkbox')[0];
     fireEvent.click(headerCheckbox);
-    
+
     const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
     const selectedSet = lastCall[0];
     expect(selectedSet.size).toBe(5); // All 5 rows selected
@@ -288,14 +318,14 @@ describe('DataGrid - Multiple Selection Mode', () => {
   it('should handle deselect all when all are selected', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={new Set([0, 1, 2, 3, 4])}
           onSelectionChange={onSelectionChange}
         />
@@ -305,7 +335,7 @@ describe('DataGrid - Multiple Selection Mode', () => {
     // Click header checkbox to deselect all
     const headerCheckbox = screen.getAllByRole('checkbox')[0];
     fireEvent.click(headerCheckbox);
-    
+
     const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
     const selectedSet = lastCall[0];
     expect(selectedSet.size).toBe(0);
@@ -314,14 +344,14 @@ describe('DataGrid - Multiple Selection Mode', () => {
   it('should handle Ctrl+Click for individual selection', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={new Set([0])}
           onSelectionChange={onSelectionChange}
         />
@@ -332,7 +362,7 @@ describe('DataGrid - Multiple Selection Mode', () => {
     const secondRow = screen.getByText('Item 2').closest('[class*="GridRow"]');
     if (secondRow) {
       fireEvent.click(secondRow, { ctrlKey: true });
-      
+
       const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
       const selectedSet = lastCall[0];
       expect(selectedSet.size).toBe(2);
@@ -344,14 +374,14 @@ describe('DataGrid - Multiple Selection Mode', () => {
   it('should handle Shift+Click for range selection', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -361,12 +391,12 @@ describe('DataGrid - Multiple Selection Mode', () => {
     const firstRow = screen.getByText('Item 1').closest('[class*="GridRow"]');
     if (firstRow) {
       fireEvent.click(firstRow);
-      
+
       // Shift+Click third row
       const thirdRow = screen.getByText('Item 3').closest('[class*="GridRow"]');
       if (thirdRow) {
         fireEvent.click(thirdRow, { shiftKey: true });
-        
+
         const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
         const selectedSet = lastCall[0];
         expect(selectedSet.size).toBe(3); // Rows 1, 2, 3 selected
@@ -377,16 +407,16 @@ describe('DataGrid - Multiple Selection Mode', () => {
     }
   });
 
-  it('should show indeterminate state when some rows are selected', () => {
+  it('should show indeterminate state when some rows are selected', async () => {
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={new Set([0, 1])} // 2 of 5 selected
         />
       </ThemeProvider>
@@ -394,7 +424,7 @@ describe('DataGrid - Multiple Selection Mode', () => {
 
     // Header checkbox should be indeterminate
     const headerCheckbox = screen.getAllByRole('checkbox')[0] as HTMLInputElement;
-    expect(headerCheckbox.indeterminate).toBe(true);
+    expect(headerCheckbox.getAttribute('data-indeterminate')).toBe('true');
   });
 });
 
@@ -406,14 +436,14 @@ describe('DataGrid - Selection with Other Features', () => {
   it('should maintain selection when sorting', () => {
     const data = generateTestData(5);
     const selectedRows = new Set([0, 2]);
-    
+
     const { rerender } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={selectedRows}
           sortable={true}
         />
@@ -432,11 +462,11 @@ describe('DataGrid - Selection with Other Features', () => {
     // Selection should be maintained after sort
     rerender(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={selectedRows}
           sortable={true}
         />
@@ -450,14 +480,14 @@ describe('DataGrid - Selection with Other Features', () => {
   it('should maintain selection when filtering', () => {
     const data = generateTestData(10);
     const selectedRows = new Set([0, 2, 4]);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={selectedRows}
           filterable={true}
         />
@@ -472,11 +502,11 @@ describe('DataGrid - Selection with Other Features', () => {
     const data = generateTestData(5);
     const onRowClick = jest.fn();
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
           onRowClick={onRowClick}
@@ -489,7 +519,7 @@ describe('DataGrid - Selection with Other Features', () => {
     const firstRow = screen.getByText('Item 1').closest('[class*="GridRow"]');
     if (firstRow) {
       fireEvent.click(firstRow);
-      
+
       // Both callbacks should be called
       expect(onRowClick).toHaveBeenCalled();
       expect(onSelectionChange).toHaveBeenCalled();
@@ -499,14 +529,14 @@ describe('DataGrid - Selection with Other Features', () => {
   it('should work with custom rowKey function', () => {
     const data = generateTestData(5);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
-          rowKey={(row) => `row-${row.id}`}
+          rowKey={row => `row-${row.id}`}
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -516,7 +546,7 @@ describe('DataGrid - Selection with Other Features', () => {
     const firstRow = screen.getByText('Item 1').closest('[class*="GridRow"]');
     if (firstRow) {
       fireEvent.click(firstRow);
-      
+
       const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1];
       const selectedSet = lastCall[0];
       expect(selectedSet.has('row-1')).toBe(true);
@@ -527,11 +557,11 @@ describe('DataGrid - Selection with Other Features', () => {
     const data = generateTestData(5);
     const selectedRows = new Set<string | number>([0]);
     const setSelectedRows = jest.fn();
-    
+
     const { rerender } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
           selectedRows={selectedRows}
@@ -547,8 +577,8 @@ describe('DataGrid - Selection with Other Features', () => {
     // Update selection externally
     rerender(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
+        <DataGrid
+          data={data}
           columns={testColumns}
           selectable={true}
           selectedRows={new Set([1, 2])}

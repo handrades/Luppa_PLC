@@ -20,7 +20,7 @@
     "reset": "pnpm clean && pnpm install",
     "format": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --write",
     "format:check": "prettier --config config/.prettierrc \"**/*.{ts,tsx,js,jsx,json,md}\" --check",
-    "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --config config/.markdownlint.json",
+    "lint:markdown": "markdownlint \"**/*.md\" --ignore node_modules --ignore .bmad-core --ignore \"**/node_modules/**\" --config config/.markdownlint.json",
     "lint:json": "jsonlint **/*.json",
     "lint:yaml": "npx yaml-lint --config-file config/.yaml-lint.json $(find . -name '*.yml' -o -name '*.yaml' -not -path './node_modules/*' -not -path './.bmad-core/*')",
     "prepare": "husky",

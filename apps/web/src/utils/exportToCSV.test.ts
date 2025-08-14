@@ -60,11 +60,9 @@ describe('exportToCSV', () => {
     });
 
     it('should escape values with commas', () => {
-      const result = exportToCSV(
-        [{ name: 'Value, with comma' }],
-        [{ id: 'name', label: 'Name' }],
-        { includeHeaders: false }
-      );
+      const result = exportToCSV([{ name: 'Value, with comma' }], [{ id: 'name', label: 'Name' }], {
+        includeHeaders: false,
+      });
       expect(result).toBe('"Value, with comma"');
     });
 
@@ -78,11 +76,9 @@ describe('exportToCSV', () => {
     });
 
     it('should escape values with newlines', () => {
-      const result = exportToCSV(
-        [{ name: 'Line 1\nLine 2' }],
-        [{ id: 'name', label: 'Name' }],
-        { includeHeaders: false }
-      );
+      const result = exportToCSV([{ name: 'Line 1\nLine 2' }], [{ id: 'name', label: 'Name' }], {
+        includeHeaders: false,
+      });
       expect(result).toBe('"Line 1\nLine 2"');
     });
 
@@ -135,7 +131,7 @@ describe('exportToCSV', () => {
           {
             id: 'value',
             label: 'Value',
-            format: (value) => `$${value.toFixed(2)}`,
+            format: value => `$${(value as number).toFixed(2)}`,
           },
         ],
         { includeHeaders: false }
@@ -145,14 +141,10 @@ describe('exportToCSV', () => {
 
     it('should format dates with custom formatter', () => {
       const date = new Date('2024-01-01T12:00:00Z');
-      const result = exportToCSV(
-        [{ date }],
-        [{ id: 'date', label: 'Date' }],
-        {
-          includeHeaders: false,
-          dateFormat: (d) => d.toISOString().split('T')[0],
-        }
-      );
+      const result = exportToCSV([{ date }], [{ id: 'date', label: 'Date' }], {
+        includeHeaders: false,
+        dateFormat: d => d.toISOString().split('T')[0],
+      });
       expect(result).toBe('2024-01-01');
     });
 
@@ -166,11 +158,9 @@ describe('exportToCSV', () => {
     });
 
     it('should handle objects by stringifying', () => {
-      const result = exportToCSV(
-        [{ meta: { key: 'value' } }],
-        [{ id: 'meta', label: 'Meta' }],
-        { includeHeaders: false }
-      );
+      const result = exportToCSV([{ meta: { key: 'value' } }], [{ id: 'meta', label: 'Meta' }], {
+        includeHeaders: false,
+      });
       expect(result).toBe('"{""key"":""value""}"');
     });
   });
@@ -200,11 +190,10 @@ describe('exportToCSV', () => {
 
   describe('Line endings', () => {
     it('should use custom line ending', () => {
-      const result = exportToCSV(
-        [{ id: 1 }, { id: 2 }],
-        [{ id: 'id', label: 'ID' }],
-        { includeHeaders: false, lineEnding: '\r\n' }
-      );
+      const result = exportToCSV([{ id: 1 }, { id: 2 }], [{ id: 'id', label: 'ID' }], {
+        includeHeaders: false,
+        lineEnding: '\r\n',
+      });
       expect(result).toBe('1\r\n2');
     });
   });
@@ -213,15 +202,15 @@ describe('exportToCSV', () => {
     it('should export complete dataset with all features', () => {
       const result = exportToCSV(testData, columns);
       const lines = result.split('\n');
-      
+
       // Check headers
       expect(lines[0]).toBe('ID,Name,Value,Date,Tags,Description');
-      
+
       // Check first data row
       expect(lines[1]).toContain('1,Item 1,100');
       expect(lines[1]).toContain('tag1; tag2');
       expect(lines[1]).toContain('Simple description');
-      
+
       // Check escaped values
       expect(lines[2]).toContain('"Item, with comma"');
       expect(lines[3]).toContain('"Item ""with quotes"""');
@@ -245,11 +234,11 @@ describe('downloadCSV', () => {
     linkElement.click = clickSpy;
     createElementSpy = jest.spyOn(document, 'createElement');
     createElementSpy.mockReturnValue(linkElement);
-    
+
     // Mock URL methods directly
     URL.createObjectURL = jest.fn().mockReturnValue('blob:url');
     URL.revokeObjectURL = jest.fn();
-    
+
     appendChildSpy = jest.spyOn(document.body, 'appendChild');
     removeChildSpy = jest.spyOn(document.body, 'removeChild');
   });
@@ -262,7 +251,7 @@ describe('downloadCSV', () => {
 
   it('should trigger download with correct filename', () => {
     downloadCSV('test,content', 'export.csv');
-    
+
     expect(createElementSpy).toHaveBeenCalledWith('a');
     expect(clickSpy).toHaveBeenCalled();
     expect(appendChildSpy).toHaveBeenCalled();
@@ -272,14 +261,14 @@ describe('downloadCSV', () => {
 
   it('should add .csv extension if missing', () => {
     downloadCSV('content', 'export');
-    
+
     const link = createElementSpy.mock.results[0].value;
     expect(link.download).toBe('export.csv');
   });
 
   it('should not add .csv extension if already present', () => {
     downloadCSV('content', 'export.csv');
-    
+
     const link = createElementSpy.mock.results[0].value;
     expect(link.download).toBe('export.csv');
   });

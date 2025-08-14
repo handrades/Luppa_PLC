@@ -1,8 +1,29 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { DataGridWithSelection as DataGrid, Column } from './DataGridWithSelection';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Column, DataGridWithSelection as DataGrid } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
+
+// Mock @tanstack/react-virtual
+jest.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: jest.fn(opts => {
+    const count = opts?.count || 4;
+    const itemSize = 150; // Default column width
+    const items = Array.from({ length: count }, (_, index) => ({
+      index,
+      start: index * itemSize,
+      size: itemSize,
+      key: index,
+    }));
+
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => count * itemSize,
+      scrollToIndex: jest.fn(),
+      scrollToOffset: jest.fn(),
+    };
+  }),
+}));
 
 // Mock ResizeObserver
 class ResizeObserverMock {
@@ -11,7 +32,7 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-global.ResizeObserver = ResizeObserverMock as any;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -45,7 +66,7 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn((array: any[], from: number, to: number) => {
+  arrayMove: jest.fn((array: unknown[], from: number, to: number) => {
     const result = [...array];
     const [removed] = result.splice(from, 1);
     result.splice(to, 0, removed);
@@ -85,47 +106,47 @@ const generateTestData = (count: number): TestData[] => {
 };
 
 const testColumns: Column<TestData>[] = [
-  { 
-    id: 'id', 
-    label: 'ID', 
-    width: 80, 
-    minWidth: 50, 
+  {
+    id: 'id',
+    label: 'ID',
+    width: 80,
+    minWidth: 50,
     maxWidth: 150,
     resizable: true,
     reorderable: true,
   },
-  { 
-    id: 'name', 
-    label: 'Name', 
-    width: 200, 
-    minWidth: 100, 
+  {
+    id: 'name',
+    label: 'Name',
+    width: 200,
+    minWidth: 100,
     maxWidth: 400,
     resizable: true,
     reorderable: true,
   },
-  { 
-    id: 'value', 
-    label: 'Value', 
-    width: 120, 
-    minWidth: 80, 
+  {
+    id: 'value',
+    label: 'Value',
+    width: 120,
+    minWidth: 80,
     maxWidth: 200,
     resizable: true,
     reorderable: true,
   },
-  { 
-    id: 'status', 
-    label: 'Status', 
-    width: 150, 
-    minWidth: 100, 
+  {
+    id: 'status',
+    label: 'Status',
+    width: 150,
+    minWidth: 100,
     maxWidth: 250,
     resizable: true,
     reorderable: true,
   },
-  { 
-    id: 'date', 
-    label: 'Date', 
-    width: 150, 
-    minWidth: 100, 
+  {
+    id: 'date',
+    label: 'Date',
+    width: 150,
+    minWidth: 100,
     maxWidth: 300,
     resizable: false, // Not resizable
     reorderable: true,
@@ -141,16 +162,14 @@ describe('DataGrid - Column Resizing', () => {
     const data = generateTestData(5);
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          resizable={true}
-        />
+        <DataGrid data={data} columns={testColumns} resizable={true} />
       </ThemeProvider>
     );
 
     // Check for resize handles (4 resizable columns)
-    const resizeHandles = container.querySelectorAll('.MuiBox-root > div[style*="cursor: col-resize"]');
+    const resizeHandles = container.querySelectorAll(
+      '.MuiBox-root > div[style*="cursor: col-resize"]'
+    );
     expect(resizeHandles.length).toBeGreaterThanOrEqual(0); // Handles may be virtualized
   });
 
@@ -158,11 +177,7 @@ describe('DataGrid - Column Resizing', () => {
     const data = generateTestData(5);
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          resizable={false}
-        />
+        <DataGrid data={data} columns={testColumns} resizable={false} />
       </ThemeProvider>
     );
 
@@ -173,12 +188,12 @@ describe('DataGrid - Column Resizing', () => {
   it('should call onColumnResize when column is resized', () => {
     const data = generateTestData(5);
     const onColumnResize = jest.fn();
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           resizable={true}
           onColumnResize={onColumnResize}
         />
@@ -191,7 +206,7 @@ describe('DataGrid - Column Resizing', () => {
       fireEvent.mouseDown(resizeHandle, { clientX: 100 });
       fireEvent.mouseMove(document, { clientX: 150 });
       fireEvent.mouseUp(document);
-      
+
       expect(onColumnResize).toHaveBeenCalled();
     }
   });
@@ -199,12 +214,12 @@ describe('DataGrid - Column Resizing', () => {
   it('should respect minWidth when resizing', () => {
     const data = generateTestData(5);
     const onColumnResize = jest.fn();
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           resizable={true}
           onColumnResize={onColumnResize}
         />
@@ -217,7 +232,7 @@ describe('DataGrid - Column Resizing', () => {
       fireEvent.mouseDown(resizeHandle, { clientX: 100 });
       fireEvent.mouseMove(document, { clientX: 20 }); // Try to make it very small
       fireEvent.mouseUp(document);
-      
+
       if (onColumnResize.mock.calls.length > 0) {
         const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
         const column = testColumns.find(c => c.id === columnId);
@@ -229,12 +244,12 @@ describe('DataGrid - Column Resizing', () => {
   it('should respect maxWidth when resizing', () => {
     const data = generateTestData(5);
     const onColumnResize = jest.fn();
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           resizable={true}
           onColumnResize={onColumnResize}
         />
@@ -247,7 +262,7 @@ describe('DataGrid - Column Resizing', () => {
       fireEvent.mouseDown(resizeHandle, { clientX: 100 });
       fireEvent.mouseMove(document, { clientX: 500 }); // Try to make it very large
       fireEvent.mouseUp(document);
-      
+
       if (onColumnResize.mock.calls.length > 0) {
         const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
         const column = testColumns.find(c => c.id === columnId);
@@ -264,14 +279,10 @@ describe('DataGrid - Column Reordering', () => {
 
   it('should enable drag and drop when reorderable is true', () => {
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          reorderable={true}
-        />
+        <DataGrid data={data} columns={testColumns} reorderable={true} />
       </ThemeProvider>
     );
 
@@ -283,12 +294,12 @@ describe('DataGrid - Column Reordering', () => {
   it('should call onColumnReorder when columns are reordered', () => {
     const data = generateTestData(5);
     const onColumnReorder = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           reorderable={true}
           onColumnReorder={onColumnReorder}
         />
@@ -305,16 +316,12 @@ describe('DataGrid - Column Reordering', () => {
       ...col,
       reorderable: i !== 2, // Make third column non-reorderable
     }));
-    
+
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={columnsWithNonReorderable} 
-          reorderable={true}
-        />
+        <DataGrid data={data} columns={columnsWithNonReorderable} reorderable={true} />
       </ThemeProvider>
     );
 
@@ -330,20 +337,16 @@ describe('DataGrid - Layout Persistence', () => {
 
   it('should save column layout to localStorage', () => {
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          persistLayoutKey="test-grid"
-        />
+        <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
       </ThemeProvider>
     );
 
     const savedLayout = localStorageMock.getItem('datagrid-layout-test-grid');
     expect(savedLayout).toBeTruthy();
-    
+
     const parsed = JSON.parse(savedLayout || '{}');
     expect(parsed).toHaveProperty('columnOrder');
     expect(parsed).toHaveProperty('columnWidths');
@@ -361,18 +364,14 @@ describe('DataGrid - Layout Persistence', () => {
         date: 200,
       },
     };
-    
+
     localStorageMock.setItem('datagrid-layout-test-grid', JSON.stringify(savedLayout));
-    
+
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          persistLayoutKey="test-grid"
-        />
+        <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
       </ThemeProvider>
     );
 
@@ -383,14 +382,10 @@ describe('DataGrid - Layout Persistence', () => {
 
   it('should show reset button when persistLayoutKey is provided', () => {
     const data = generateTestData(5);
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          persistLayoutKey="test-grid"
-        />
+        <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
       </ThemeProvider>
     );
 
@@ -409,25 +404,21 @@ describe('DataGrid - Layout Persistence', () => {
         date: 200,
       },
     };
-    
+
     localStorageMock.setItem('datagrid-layout-test-grid', JSON.stringify(savedLayout));
-    
+
     const data = generateTestData(5);
-    
+
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          persistLayoutKey="test-grid"
-        />
+        <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
       </ThemeProvider>
     );
 
     const resetButton = container.querySelector('button[title="Reset layout to default"]');
     if (resetButton) {
       fireEvent.click(resetButton);
-      
+
       // Check that localStorage was cleared
       const newLayout = localStorageMock.getItem('datagrid-layout-test-grid');
       // After reset, new default layout should be saved
@@ -447,18 +438,14 @@ describe('DataGrid - Layout Persistence', () => {
         value: 150,
       },
     };
-    
+
     localStorageMock.setItem('datagrid-layout-test-grid', JSON.stringify(savedLayout));
-    
+
     const data = generateTestData(5);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          persistLayoutKey="test-grid"
-        />
+        <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
       </ThemeProvider>
     );
 
@@ -472,18 +459,14 @@ describe('DataGrid - Layout Persistence', () => {
 
   it('should handle invalid localStorage data gracefully', () => {
     localStorageMock.setItem('datagrid-layout-test-grid', 'invalid-json');
-    
+
     const data = generateTestData(5);
-    
+
     // Should not throw error
     expect(() => {
       render(
         <ThemeProvider theme={theme}>
-          <DataGrid 
-            data={data} 
-            columns={testColumns} 
-            persistLayoutKey="test-grid"
-          />
+          <DataGrid data={data} columns={testColumns} persistLayoutKey='test-grid' />
         </ThemeProvider>
       );
     }).not.toThrow();
@@ -500,15 +483,10 @@ describe('DataGrid - Integration with Other Features', () => {
 
   it('should maintain column order when sorting', () => {
     const data = generateTestData(10);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
-          reorderable={true}
-          sortable={true}
-        />
+        <DataGrid data={data} columns={testColumns} reorderable={true} sortable={true} />
       </ThemeProvider>
     );
 
@@ -524,12 +502,12 @@ describe('DataGrid - Integration with Other Features', () => {
   it('should maintain column widths when filtering', () => {
     const data = generateTestData(10);
     const onColumnResize = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           resizable={true}
           filterable={true}
           onColumnResize={onColumnResize}
@@ -544,12 +522,12 @@ describe('DataGrid - Integration with Other Features', () => {
 
   it('should work with virtual scrolling', () => {
     const data = generateTestData(1000);
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={data} 
-          columns={testColumns} 
+        <DataGrid
+          data={data}
+          columns={testColumns}
           resizable={true}
           reorderable={true}
           height={400}

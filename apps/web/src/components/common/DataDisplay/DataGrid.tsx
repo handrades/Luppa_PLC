@@ -1,51 +1,40 @@
-import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Box, Paper, IconButton } from '@mui/material';
+import { Box, IconButton, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import RestoreIcon from '@mui/icons-material/Restore';
 import {
   DndContext,
-  closestCenter,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
+  arrayMove,
   horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
-  SortableColumnHeader, 
-  SortState, 
-  sortData, 
-  updateSortState 
-} from './SortableColumnHeader';
-import {
-  ColumnFilter,
-  FilterValue,
-  FilterType,
-  filterData,
-} from './ColumnFilter';
+import { SortState, SortableColumnHeader, sortData, updateSortState } from './SortableColumnHeader';
+import { ColumnFilter, FilterType, FilterValue } from './ColumnFilter';
+import { filterData } from '../../../utils/filterUtils';
 
 // Export the version with selection support
 export { DataGridWithSelection } from './DataGridWithSelection';
 
-export interface Column<T = any> {
+export interface Column<T = Record<string, unknown>> {
   id: string;
   label: string;
   width?: number;
   minWidth?: number;
   maxWidth?: number;
   align?: 'left' | 'center' | 'right';
-  format?: (value: any, row: T) => React.ReactNode;
+  format?: (_value: unknown, _row: T) => React.ReactNode;
   sortable?: boolean;
   filterable?: boolean;
   filterType?: FilterType;
@@ -54,7 +43,7 @@ export interface Column<T = any> {
   reorderable?: boolean;
 }
 
-export interface DataGridProps<T = any> {
+export interface DataGridProps<T = Record<string, unknown>> {
   data: T[];
   columns: Column<T>[];
   rowHeight?: number;
@@ -62,25 +51,25 @@ export interface DataGridProps<T = any> {
   width?: number | string;
   overscanRowCount?: number;
   overscanColumnCount?: number;
-  onRowClick?: (row: T, index: number) => void;
-  rowKey?: (row: T, index?: number) => string | number;
+  onRowClick?: (_row: T, _index: number) => void;
+  rowKey?: (_row: T, _index?: number) => string | number;
   loading?: boolean;
   emptyMessage?: string;
   sortable?: boolean;
   multiSort?: boolean;
-  onSortChange?: (sortState: SortState[]) => void;
+  onSortChange?: (_sortState: SortState[]) => void;
   filterable?: boolean;
-  onFilterChange?: (filters: FilterValue[]) => void;
-  getValueFn?: (item: T, columnId: string) => any;
+  onFilterChange?: (_filters: FilterValue[]) => void;
+  getValueFn?: (_item: T, _columnId: string) => unknown;
   resizable?: boolean;
   reorderable?: boolean;
   persistLayoutKey?: string;
-  onColumnResize?: (columnId: string, width: number) => void;
-  onColumnReorder?: (columns: Column<T>[]) => void;
+  onColumnResize?: (_columnId: string, _width: number) => void;
+  onColumnReorder?: (_columns: Column<T>[]) => void;
   selectable?: boolean;
   selectionMode?: 'single' | 'multiple';
   selectedRows?: Set<string | number>;
-  onSelectionChange?: (selectedRows: Set<string | number>) => void;
+  onSelectionChange?: (_selectedRows: Set<string | number>) => void;
 }
 
 const GridContainer = styled(Box)(({ theme }) => ({
@@ -160,7 +149,7 @@ const VirtualGridContent = styled(Box)({
 });
 
 // Draggable column header component
-function DraggableColumnHeader<T = any>({
+function DraggableColumnHeader<T = Record<string, unknown>>({
   column,
   sortable,
   sortState,
@@ -174,33 +163,31 @@ function DraggableColumnHeader<T = any>({
   column: Column<T>;
   sortable: boolean;
   sortState: SortState[];
-  onSort: (columnId: string, shiftKey?: boolean) => void;
+  onSort: (_columnId: string, _shiftKey?: boolean) => void;
   filterable: boolean;
   filters: FilterValue[];
-  onFilterChange: (columnId: string, filter: FilterValue | null) => void;
-  onResize?: (columnId: string, width: number) => void;
+  onFilterChange: (_columnId: string, _filter: FilterValue | null) => void;
+  onResize?: (_columnId: string, _width: number) => void;
   resizable: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: column.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: column.id,
+  });
 
   const [isResizing, setIsResizing] = useState(false);
   const startX = useRef<number>(0);
   const startWidth = useRef<number>(0);
 
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizing(true);
-    startX.current = e.clientX;
-    startWidth.current = column.width || column.minWidth || 150;
-  }, [column]);
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizing(true);
+      startX.current = e.clientX;
+      startWidth.current = column.width || column.minWidth || 150;
+    },
+    [column]
+  );
 
   useEffect(() => {
     if (!isResizing) return;
@@ -242,6 +229,7 @@ function DraggableColumnHeader<T = any>({
       style={style}
       {...(column.reorderable !== false ? attributes : {})}
       {...(column.reorderable !== false ? listeners : {})}
+      role='columnheader'
     >
       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
         {sortable ? (
@@ -262,22 +250,19 @@ function DraggableColumnHeader<T = any>({
             label={column.label}
             type={column.filterType || 'text'}
             options={column.filterOptions}
-            filterValue={filters.find((f) => f.columnId === column.id)}
-            onFilterChange={(filter) => onFilterChange(column.id, filter)}
+            filterValue={filters.find(f => f.columnId === column.id)}
+            onFilterChange={filter => onFilterChange(column.id, filter)}
           />
         )}
       </Box>
       {resizable && column.resizable !== false && (
-        <ResizeHandle
-          className={isResizing ? 'resizing' : ''}
-          onMouseDown={handleResizeStart}
-        />
+        <ResizeHandle className={isResizing ? 'resizing' : ''} onMouseDown={handleResizeStart} />
       )}
     </GridHeaderCell>
   );
 }
 
-export function DataGrid<T = any>({
+export function DataGrid<T = Record<string, unknown>>({
   data,
   columns: initialColumns,
   rowHeight = 52,
@@ -306,42 +291,40 @@ export function DataGrid<T = any>({
   onSelectionChange,
 }: DataGridProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   // Sort state management
   const [sortState, setSortState] = useState<SortState[]>([]);
-  
+
   // Filter state management
   const [filters, setFilters] = useState<FilterValue[]>([]);
-  
+
   // Selection state management
   const [internalSelectedRows, setInternalSelectedRows] = useState<Set<string | number>>(new Set());
   const selectedRows = externalSelectedRows || internalSelectedRows;
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
-  
+
   // Column state management with persistence
   const [columns, setColumns] = useState<Column<T>[]>(() => {
-    if (persistLayoutKey) {
-      const savedLayout = localStorage.getItem(`datagrid-layout-${persistLayoutKey}`);
-      if (savedLayout) {
-        try {
+    if (persistLayoutKey && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedLayout = localStorage.getItem(`datagrid-layout-${persistLayoutKey}`);
+        if (savedLayout) {
           const { columnOrder, columnWidths } = JSON.parse(savedLayout);
           // Apply saved order and widths
           const orderedColumns = columnOrder
             .map((id: string) => initialColumns.find(c => c.id === id))
             .filter(Boolean);
           // Add any new columns that weren't in saved layout
-          const newColumns = initialColumns.filter(
-            c => !columnOrder.includes(c.id)
-          );
+          const newColumns = initialColumns.filter(c => !columnOrder.includes(c.id));
           const allColumns = [...orderedColumns, ...newColumns];
           // Apply saved widths
           return allColumns.map(c => ({
             ...c,
             width: columnWidths[c.id] || c.width || c.minWidth || 150,
           }));
-        } catch (e) {
-          console.error('Failed to restore column layout:', e);
         }
+      } catch {
+        // Failed to restore column layout - use defaults
       }
     }
     return initialColumns;
@@ -351,10 +334,13 @@ export function DataGrid<T = any>({
   useEffect(() => {
     if (persistLayoutKey) {
       const columnOrder = columns.map(c => c.id);
-      const columnWidths = columns.reduce((acc, c) => {
-        acc[c.id] = c.width || c.minWidth || 150;
-        return acc;
-      }, {} as Record<string, number>);
+      const columnWidths = columns.reduce(
+        (acc, c) => {
+          acc[c.id] = c.width || c.minWidth || 150;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
       localStorage.setItem(
         `datagrid-layout-${persistLayoutKey}`,
         JSON.stringify({ columnOrder, columnWidths })
@@ -369,35 +355,39 @@ export function DataGrid<T = any>({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  
-  // Handle column drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
 
-    if (active.id !== over?.id) {
-      setColumns((items) => {
-        const oldIndex = items.findIndex((c) => c.id === active.id);
-        const newIndex = items.findIndex((c) => c.id === over?.id);
-        const newColumns = arrayMove(items, oldIndex, newIndex);
-        if (onColumnReorder) {
-          onColumnReorder(newColumns);
-        }
-        return newColumns;
-      });
-    }
-  }, [onColumnReorder]);
+  // Handle column drag end
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (active.id !== over?.id) {
+        setColumns(items => {
+          const oldIndex = items.findIndex(c => c.id === active.id);
+          const newIndex = items.findIndex(c => c.id === over?.id);
+          const newColumns = arrayMove(items, oldIndex, newIndex);
+          if (onColumnReorder) {
+            onColumnReorder(newColumns);
+          }
+          return newColumns;
+        });
+      }
+    },
+    [onColumnReorder]
+  );
 
   // Handle column resize
-  const handleColumnResize = useCallback((columnId: string, width: number) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((col) =>
-        col.id === columnId ? { ...col, width } : col
-      )
-    );
-    if (onColumnResize) {
-      onColumnResize(columnId, width);
-    }
-  }, [onColumnResize]);
+  const handleColumnResize = useCallback(
+    (columnId: string, width: number) => {
+      setColumns(prevColumns =>
+        prevColumns.map(col => (col.id === columnId ? { ...col, width } : col))
+      );
+      if (onColumnResize) {
+        onColumnResize(columnId, width);
+      }
+    },
+    [onColumnResize]
+  );
 
   // Reset layout to default
   const resetLayout = useCallback(() => {
@@ -408,49 +398,55 @@ export function DataGrid<T = any>({
   }, [initialColumns, persistLayoutKey]);
 
   // Handle sort changes
-  const handleSort = useCallback((columnId: string, shiftKey?: boolean) => {
-    const newSortState = updateSortState(sortState, columnId, multiSort && shiftKey);
-    setSortState(newSortState);
-    if (onSortChange) {
-      onSortChange(newSortState);
-    }
-  }, [sortState, multiSort, onSortChange]);
-  
-  // Handle filter changes
-  const handleFilterChange = useCallback((columnId: string, filter: FilterValue | null) => {
-    const newFilters = [...filters];
-    const existingIndex = newFilters.findIndex((f) => f.columnId === columnId);
-    
-    if (filter) {
-      if (existingIndex >= 0) {
-        newFilters[existingIndex] = filter;
-      } else {
-        newFilters.push(filter);
+  const handleSort = useCallback(
+    (columnId: string, shiftKey?: boolean) => {
+      const newSortState = updateSortState(sortState, columnId, multiSort && shiftKey);
+      setSortState(newSortState);
+      if (onSortChange) {
+        onSortChange(newSortState);
       }
-    } else if (existingIndex >= 0) {
-      newFilters.splice(existingIndex, 1);
-    }
-    
-    setFilters(newFilters);
-    if (onFilterChange) {
-      onFilterChange(newFilters);
-    }
-  }, [filters, onFilterChange]);
-  
+    },
+    [sortState, multiSort, onSortChange]
+  );
+
+  // Handle filter changes
+  const handleFilterChange = useCallback(
+    (columnId: string, filter: FilterValue | null) => {
+      const newFilters = [...filters];
+      const existingIndex = newFilters.findIndex(f => f.columnId === columnId);
+
+      if (filter) {
+        if (existingIndex >= 0) {
+          newFilters[existingIndex] = filter;
+        } else {
+          newFilters.push(filter);
+        }
+      } else if (existingIndex >= 0) {
+        newFilters.splice(existingIndex, 1);
+      }
+
+      setFilters(newFilters);
+      if (onFilterChange) {
+        onFilterChange(newFilters);
+      }
+    },
+    [filters, onFilterChange]
+  );
+
   // Filter and sort data
   const processedData = useMemo(() => {
     let result = [...data];
-    
+
     // Apply filters first
     if (filters.length > 0) {
       result = filterData(result, filters, getValueFn);
     }
-    
+
     // Then apply sorting
     if (sortState.length > 0) {
       result = sortData(result, sortState, getValueFn);
     }
-    
+
     return result;
   }, [data, filters, sortState, getValueFn]);
 
@@ -479,28 +475,21 @@ export function DataGrid<T = any>({
     const baseWidth = columns.reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
     return selectable ? baseWidth + 48 : baseWidth; // Add 48px for checkbox column
   }, [columns, selectable]);
-  
-  // Adjusted columns for virtualization (include checkbox column)
-  const virtualColumns = useMemo(() => {
-    if (selectable) {
-      return [
-        { id: '__selection__', width: 48 },
-        ...columns,
-      ];
-    }
-    return columns;
-  }, [columns, selectable]);
+
+  // Note: Selection column is handled separately in the rendering logic
+
+  // Get virtual column items for stable dependency
+  const virtualColumnItems = columnVirtualizer.getVirtualItems();
 
   // Render header
   const renderHeader = useMemo(() => {
-    const virtualColumnItems = columnVirtualizer.getVirtualItems();
     const columnIds = columns.map(c => c.id);
-    
+
     const headerContent = (
       <>
         {persistLayoutKey && (
           <IconButton
-            size="small"
+            size='small'
             onClick={resetLayout}
             sx={{
               position: 'absolute',
@@ -508,9 +497,9 @@ export function DataGrid<T = any>({
               top: 8,
               zIndex: 11,
             }}
-            title="Reset layout to default"
+            title='Reset layout to default'
           >
-            <RestoreIcon fontSize="small" />
+            <RestoreIcon fontSize='small' />
           </IconButton>
         )}
         {reorderable ? (
@@ -519,216 +508,211 @@ export function DataGrid<T = any>({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={columnIds}
-              strategy={horizontalListSortingStrategy}
-            >
-              {virtualColumns.length === 0 ? (
-                columns.map((column, index) => {
-                  const left = columns.slice(0, index).reduce(
-                    (acc, col) => acc + (col.width || col.minWidth || 150),
-                    0
-                  );
-                  return (
-                    <Box
-                      key={column.id}
-                      sx={{
-                        position: 'absolute',
-                        left: 0,
-                        transform: `translateX(${left}px)`,
-                      }}
-                    >
-                      <DraggableColumnHeader
-                        column={column}
-                        sortable={sortable}
-                        sortState={sortState}
-                        onSort={handleSort}
-                        filterable={filterable}
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        onResize={handleColumnResize}
-                        resizable={resizable}
-                      />
-                    </Box>
-                  );
-                })
-              ) : (
-                virtualColumns.map((virtualColumn) => {
-                  const column = columns[virtualColumn.index];
-                  if (!column) return null;
-                  return (
-                    <Box
-                      key={column.id}
-                      sx={{
-                        position: 'absolute',
-                        left: 0,
-                        transform: `translateX(${virtualColumn.start}px)`,
-                      }}
-                    >
-                      <DraggableColumnHeader
-                        column={column}
-                        sortable={sortable}
-                        sortState={sortState}
-                        onSort={handleSort}
-                        filterable={filterable}
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        onResize={handleColumnResize}
-                        resizable={resizable}
-                      />
-                    </Box>
-                  );
-                })
-              )}
+            <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+              {virtualColumnItems.length === 0
+                ? columns.map((column, index) => {
+                    const left = columns
+                      .slice(0, index)
+                      .reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
+                    return (
+                      <Box
+                        key={column.id}
+                        sx={{
+                          position: 'absolute',
+                          left: 0,
+                          transform: `translateX(${left}px)`,
+                        }}
+                      >
+                        <DraggableColumnHeader
+                          column={column}
+                          sortable={sortable}
+                          sortState={sortState}
+                          onSort={handleSort}
+                          filterable={filterable}
+                          filters={filters}
+                          onFilterChange={handleFilterChange}
+                          onResize={handleColumnResize}
+                          resizable={resizable}
+                        />
+                      </Box>
+                    );
+                  })
+                : virtualColumnItems.map(virtualColumn => {
+                    const column = columns[virtualColumn.index];
+                    if (!column) return null;
+                    return (
+                      <Box
+                        key={column.id}
+                        sx={{
+                          position: 'absolute',
+                          left: 0,
+                          transform: `translateX(${virtualColumn.start}px)`,
+                        }}
+                      >
+                        <DraggableColumnHeader
+                          column={column}
+                          sortable={sortable}
+                          sortState={sortState}
+                          onSort={handleSort}
+                          filterable={filterable}
+                          filters={filters}
+                          onFilterChange={handleFilterChange}
+                          onResize={handleColumnResize}
+                          resizable={resizable}
+                        />
+                      </Box>
+                    );
+                  })}
             </SortableContext>
           </DndContext>
+        ) : // Non-reorderable headers
+        virtualColumnItems.length === 0 ? (
+          columns.map((column, index) => {
+            const left = columns
+              .slice(0, index)
+              .reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
+            return (
+              <GridHeaderCell
+                key={column.id}
+                role='columnheader'
+                sx={{
+                  width: column.width || column.minWidth || 150,
+                  position: 'absolute',
+                  left: 0,
+                  transform: `translateX(${left}px)`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  {sortable ? (
+                    <SortableColumnHeader
+                      columnId={column.id}
+                      label={column.label}
+                      sortable={column.sortable !== false}
+                      sortState={sortState}
+                      onSort={handleSort}
+                      align={column.align}
+                    />
+                  ) : (
+                    <Box sx={{ flex: 1 }}>{column.label}</Box>
+                  )}
+                  {filterable && column.filterable !== false && (
+                    <ColumnFilter
+                      columnId={column.id}
+                      label={column.label}
+                      type={column.filterType || 'text'}
+                      options={column.filterOptions}
+                      filterValue={filters.find(f => f.columnId === column.id)}
+                      onFilterChange={filter => handleFilterChange(column.id, filter)}
+                    />
+                  )}
+                </Box>
+                {resizable && column.resizable !== false && (
+                  <ResizeHandle
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const startX = e.clientX;
+                      const startWidth = column.width || column.minWidth || 150;
+
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const diff = e.clientX - startX;
+                        const newWidth = Math.max(
+                          column.minWidth || 50,
+                          Math.min(column.maxWidth || 1000, startWidth + diff)
+                        );
+                        handleColumnResize(column.id, newWidth);
+                      };
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  />
+                )}
+              </GridHeaderCell>
+            );
+          })
         ) : (
-          // Non-reorderable headers
-          virtualColumns.length === 0 ? (
-            columns.map((column, index) => {
-              const left = columns.slice(0, index).reduce(
-                (acc, col) => acc + (col.width || col.minWidth || 150),
-                0
-              );
-              return (
-                <GridHeaderCell
-                  key={column.id}
-                  sx={{
-                    width: column.width || column.minWidth || 150,
-                    position: 'absolute',
-                    left: 0,
-                    transform: `translateX(${left}px)`,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    {sortable ? (
-                      <SortableColumnHeader
-                        columnId={column.id}
-                        label={column.label}
-                        sortable={column.sortable !== false}
-                        sortState={sortState}
-                        onSort={handleSort}
-                        align={column.align}
-                      />
-                    ) : (
-                      <Box sx={{ flex: 1 }}>{column.label}</Box>
-                    )}
-                    {filterable && column.filterable !== false && (
-                      <ColumnFilter
-                        columnId={column.id}
-                        label={column.label}
-                        type={column.filterType || 'text'}
-                        options={column.filterOptions}
-                        filterValue={filters.find((f) => f.columnId === column.id)}
-                        onFilterChange={(filter) => handleFilterChange(column.id, filter)}
-                      />
-                    )}
-                  </Box>
-                  {resizable && column.resizable !== false && (
-                    <ResizeHandle
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const startX = e.clientX;
-                        const startWidth = column.width || column.minWidth || 150;
-                        
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const diff = e.clientX - startX;
-                          const newWidth = Math.max(
-                            column.minWidth || 50,
-                            Math.min(column.maxWidth || 1000, startWidth + diff)
-                          );
-                          handleColumnResize(column.id, newWidth);
-                        };
-                        
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
+          virtualColumnItems.map(virtualColumn => {
+            const column = columns[virtualColumn.index];
+            if (!column) return null;
+            return (
+              <GridHeaderCell
+                key={column.id}
+                role='columnheader'
+                sx={{
+                  width: virtualColumn.size,
+                  position: 'absolute',
+                  left: 0,
+                  transform: `translateX(${virtualColumn.start}px)`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  {sortable ? (
+                    <SortableColumnHeader
+                      columnId={column.id}
+                      label={column.label}
+                      sortable={column.sortable !== false}
+                      sortState={sortState}
+                      onSort={handleSort}
+                      align={column.align}
+                    />
+                  ) : (
+                    <Box sx={{ flex: 1 }}>{column.label}</Box>
+                  )}
+                  {filterable && column.filterable !== false && (
+                    <ColumnFilter
+                      columnId={column.id}
+                      label={column.label}
+                      type={column.filterType || 'text'}
+                      options={column.filterOptions}
+                      filterValue={filters.find(f => f.columnId === column.id)}
+                      onFilterChange={filter => handleFilterChange(column.id, filter)}
                     />
                   )}
-                </GridHeaderCell>
-              );
-            })
-          ) : (
-            virtualColumns.map((virtualColumn) => {
-              const column = columns[virtualColumn.index];
-              if (!column) return null;
-              return (
-                <GridHeaderCell
-                  key={column.id}
-                  sx={{
-                    width: virtualColumn.size,
-                    position: 'absolute',
-                    left: 0,
-                    transform: `translateX(${virtualColumn.start}px)`,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    {sortable ? (
-                      <SortableColumnHeader
-                        columnId={column.id}
-                        label={column.label}
-                        sortable={column.sortable !== false}
-                        sortState={sortState}
-                        onSort={handleSort}
-                        align={column.align}
-                      />
-                    ) : (
-                      <Box sx={{ flex: 1 }}>{column.label}</Box>
-                    )}
-                    {filterable && column.filterable !== false && (
-                      <ColumnFilter
-                        columnId={column.id}
-                        label={column.label}
-                        type={column.filterType || 'text'}
-                        options={column.filterOptions}
-                        filterValue={filters.find((f) => f.columnId === column.id)}
-                        onFilterChange={(filter) => handleFilterChange(column.id, filter)}
-                      />
-                    )}
-                  </Box>
-                  {resizable && column.resizable !== false && (
-                    <ResizeHandle
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const startX = e.clientX;
-                        const startWidth = column.width || column.minWidth || 150;
-                        
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const diff = e.clientX - startX;
-                          const newWidth = Math.max(
-                            column.minWidth || 50,
-                            Math.min(column.maxWidth || 1000, startWidth + diff)
-                          );
-                          handleColumnResize(column.id, newWidth);
-                        };
-                        
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  )}
-                </GridHeaderCell>
-              );
-            })
-          )
+                </Box>
+                {resizable && column.resizable !== false && (
+                  <ResizeHandle
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const startX = e.clientX;
+                      const startWidth = column.width || column.minWidth || 150;
+
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const diff = e.clientX - startX;
+                        const newWidth = Math.max(
+                          column.minWidth || 50,
+                          Math.min(column.maxWidth || 1000, startWidth + diff)
+                        );
+                        handleColumnResize(column.id, newWidth);
+                      };
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  />
+                )}
+              </GridHeaderCell>
+            );
+          })
         )}
       </>
     );
-    
+
     return (
       <GridHeader
+        role='row'
+        aria-rowindex={1}
         sx={{
           width: totalColumnsWidth,
           minWidth: '100%',
@@ -738,7 +722,7 @@ export function DataGrid<T = any>({
       </GridHeader>
     );
   }, [
-    columnVirtualizer.getVirtualItems(),
+    virtualColumnItems,
     columns,
     totalColumnsWidth,
     sortable,
@@ -757,35 +741,36 @@ export function DataGrid<T = any>({
   ]);
 
   // Render cell
-  const renderCell = useCallback(
-    (row: T, column: Column<T>, virtualColumn: any) => {
-      const value = (row as any)[column.id];
-      const displayValue = column.format ? column.format(value, row) : value;
+  const renderCell = useCallback((row: T, column: Column<T>, virtualColumn: unknown) => {
+    const value = (row as Record<string, unknown>)[column.id];
+    const displayValue = column.format ? column.format(value, row) : value;
 
-      return (
-        <GridCell
-          key={column.id}
-          sx={{
-            width: virtualColumn.size,
-            position: 'absolute',
-            left: 0,
-            transform: `translateX(${virtualColumn.start}px)`,
-            textAlign: column.align || 'left',
-          }}
-        >
-          {displayValue}
-        </GridCell>
-      );
-    },
-    []
-  );
+    const ariaLabel = `${column.label || column.id}: ${String(displayValue ?? '')}`;
+
+    return (
+      <GridCell
+        key={column.id}
+        role='gridcell'
+        aria-label={ariaLabel}
+        sx={{
+          width: (virtualColumn as { size: number }).size,
+          position: 'absolute',
+          left: 0,
+          transform: `translateX(${(virtualColumn as { start: number }).start}px)`,
+          textAlign: column.align || 'left',
+        }}
+      >
+        {displayValue as React.ReactNode}
+      </GridCell>
+    );
+  }, []);
 
   // Handle row selection
   const handleRowSelection = useCallback(
     (row: T, index: number, event?: React.MouseEvent) => {
       const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
       const newSelection = new Set(selectedRows);
-      
+
       if (selectionMode === 'single') {
         if (newSelection.has(key)) {
           newSelection.clear();
@@ -821,9 +806,9 @@ export function DataGrid<T = any>({
           }
         }
       }
-      
+
       setLastSelectedIndex(index);
-      
+
       if (onSelectionChange) {
         onSelectionChange(newSelection);
       } else {
@@ -832,9 +817,10 @@ export function DataGrid<T = any>({
     },
     [selectedRows, selectionMode, lastSelectedIndex, processedData, rowKey, onSelectionChange]
   );
-  
+
   // Handle select all/none
-  const handleSelectAll = useCallback(
+  /*
+  const _handleSelectAll = useCallback(
     (checked: boolean) => {
       const newSelection = new Set<string | number>();
       
@@ -853,7 +839,8 @@ export function DataGrid<T = any>({
     },
     [processedData, rowKey, onSelectionChange]
   );
-  
+  */
+
   // Handle row click
   const handleRowClick = useCallback(
     (row: T, index: number, event: React.MouseEvent) => {
@@ -866,28 +853,38 @@ export function DataGrid<T = any>({
     },
     [onRowClick, selectable, handleRowSelection]
   );
-  
+
   // Check if all rows are selected
-  const isAllSelected = useMemo(() => {
-    if (processedData.length === 0) return false;
-    return processedData.every((row, index) => {
-      const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
-      return selectedRows.has(key);
-    });
-  }, [processedData, selectedRows, rowKey]);
-  
+  // const _isAllSelected = useMemo(() => {
+  //   if (processedData.length === 0) return false;
+  //   return processedData.every((row, index) => {
+  //     const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
+  //     return selectedRows.has(key);
+  //   });
+  // }, [processedData, selectedRows, rowKey]);
+
   // Check if some rows are selected
-  const isSomeSelected = useMemo(() => {
+  /*
+  const _isSomeSelected = useMemo(() => {
     if (processedData.length === 0) return false;
     return processedData.some((row, index) => {
       const key = typeof rowKey === 'function' ? rowKey(row, index) : index;
       return selectedRows.has(key);
     }) && !isAllSelected;
   }, [processedData, selectedRows, rowKey, isAllSelected]);
+  */
 
   if (loading) {
     return (
-      <Paper sx={{ height, width, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper
+        sx={{
+          height,
+          width,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         Loading...
       </Paper>
     );
@@ -895,7 +892,15 @@ export function DataGrid<T = any>({
 
   if (data.length === 0) {
     return (
-      <Paper sx={{ height, width, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper
+        sx={{
+          height,
+          width,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {emptyMessage}
       </Paper>
     );
@@ -904,6 +909,11 @@ export function DataGrid<T = any>({
   return (
     <GridContainer
       ref={parentRef}
+      role='grid'
+      aria-rowcount={processedData.length + 1}
+      aria-colcount={columns.length}
+      aria-label='Data grid'
+      tabIndex={0}
       sx={{
         height,
         width,
@@ -917,15 +927,16 @@ export function DataGrid<T = any>({
           minWidth: '100%',
         }}
       >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+        {rowVirtualizer.getVirtualItems().map(virtualRow => {
           const row = processedData[virtualRow.index];
-          const key = typeof rowKey === 'function' ? rowKey(row, virtualRow.index) : virtualRow.index;
+          const key =
+            typeof rowKey === 'function' ? rowKey(row, virtualRow.index) : virtualRow.index;
           const virtualColumns = columnVirtualizer.getVirtualItems();
-          
+
           return (
             <GridRow
               key={key}
-              onClick={() => handleRowClick(row, virtualRow.index)}
+              onClick={e => handleRowClick(row, virtualRow.index, e)}
               sx={{
                 height: virtualRow.size,
                 position: 'absolute',
@@ -936,22 +947,22 @@ export function DataGrid<T = any>({
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
-              {virtualColumns.length > 0 ? (
-                virtualColumns.map((virtualColumn) => {
-                  const column = columns[virtualColumn.index];
-                  if (!column) return null;
-                  return renderCell(row, column, virtualColumn);
-                })
-              ) : (
-                columns.map((column, index) => {
-                  const left = columns.slice(0, index).reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
-                  const virtualColumn = {
-                    size: column.width || column.minWidth || 150,
-                    start: left,
-                  };
-                  return renderCell(row, column, virtualColumn);
-                })
-              )}
+              {virtualColumns.length > 0
+                ? virtualColumns.map(virtualColumn => {
+                    const column = columns[virtualColumn.index];
+                    if (!column) return null;
+                    return renderCell(row, column, virtualColumn);
+                  })
+                : columns.map((column, index) => {
+                    const left = columns
+                      .slice(0, index)
+                      .reduce((acc, col) => acc + (col.width || col.minWidth || 150), 0);
+                    const virtualColumn = {
+                      size: column.width || column.minWidth || 150,
+                      start: left,
+                    };
+                    return renderCell(row, column, virtualColumn);
+                  })}
             </GridRow>
           );
         })}

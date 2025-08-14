@@ -578,20 +578,39 @@ Task Test -Description "Run workspace configuration tests" {
       Write-Host "✓ Workspace validation passed" -ForegroundColor Green
     }
         
-    # Run API-specific tests if they exist
+    # Run API tests with coverage (matches GitHub Actions)
     if (Test-Path "apps/api/package.json") {
-      Write-Host "Running API-specific tests..." -ForegroundColor Cyan
+      Write-Host "Running API tests with coverage..." -ForegroundColor Cyan
             
       Push-Location "apps/api"
       try {
         if (Test-Command "pnpm") {
-          exec { pnpm test } "API tests failed"
+          exec { pnpm test:coverage --passWithNoTests } "API tests failed"
           Write-Host "✓ API tests passed" -ForegroundColor Green
         }
       }
       finally {
         Pop-Location
       }
+    }
+
+    # Run Web tests with coverage (matches GitHub Actions)
+    if ((Test-Path "apps/web/package.json") -and (Test-Path "apps/web")) {
+      Write-Host "Running Web tests with coverage..." -ForegroundColor Cyan
+            
+      Push-Location "apps/web"
+      try {
+        if (Test-Command "pnpm") {
+          exec { pnpm test:coverage --passWithNoTests } "Web tests failed"
+          Write-Host "✓ Web tests passed" -ForegroundColor Green
+        }
+      }
+      finally {
+        Pop-Location
+      }
+    }
+    else {
+      Write-Host "No web package found - skipping web tests" -ForegroundColor Yellow
     }
         
     Write-Host "✓ All tests passed" -ForegroundColor Green

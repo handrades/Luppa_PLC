@@ -22,7 +22,7 @@ function escapeCSVValue(value: unknown, delimiter: string = ','): string {
   let stringValue = String(value);
 
   // Check if escaping is needed
-  const needsEscaping = 
+  const needsEscaping =
     stringValue.includes(delimiter) ||
     stringValue.includes('"') ||
     stringValue.includes('\n') ||
@@ -41,10 +41,7 @@ function escapeCSVValue(value: unknown, delimiter: string = ','): string {
 /**
  * Formats a row of data as CSV
  */
-function formatCSVRow(
-  row: unknown[],
-  delimiter: string = ','
-): string {
+function formatCSVRow(row: unknown[], delimiter: string = ','): string {
   return row.map(value => escapeCSVValue(value, delimiter)).join(delimiter);
 }
 
@@ -79,30 +76,30 @@ export function exportToCSV<T = Record<string, unknown>>(
   for (const row of data) {
     const values = columns.map(col => {
       const rawValue = (row as Record<string, unknown>)[col.id];
-      
+
       // Apply column formatter if available
       if (col.format) {
         return col.format(rawValue, row);
       }
-      
+
       // Handle dates
       if (rawValue instanceof Date) {
         return dateFormat(rawValue);
       }
-      
+
       // Handle arrays
       if (Array.isArray(rawValue)) {
         return rawValue.join('; ');
       }
-      
+
       // Handle objects
       if (typeof rawValue === 'object' && rawValue !== null) {
         return JSON.stringify(rawValue);
       }
-      
+
       return rawValue;
     });
-    
+
     lines.push(formatCSVRow(values, delimiter));
   }
 
@@ -112,10 +109,7 @@ export function exportToCSV<T = Record<string, unknown>>(
 /**
  * Downloads CSV content as a file
  */
-export function downloadCSV(
-  content: string,
-  filename: string = 'export.csv'
-): void {
+export function downloadCSV(content: string, filename: string = 'export.csv'): void {
   // Ensure filename ends with .csv
   if (!filename.endsWith('.csv')) {
     filename += '.csv';
@@ -124,19 +118,19 @@ export function downloadCSV(
   // Create blob with BOM for Excel compatibility
   const BOM = '\uFEFF';
   const blob = new Blob([BOM + content], { type: 'text/csv;charset=utf-8;' });
-  
+
   // Create download link
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
-  
+
   link.setAttribute('href', url);
   link.setAttribute('download', filename);
   link.style.visibility = 'hidden';
-  
+
   // Trigger download
   document.body.appendChild(link);
   link.click();
-  
+
   // Cleanup
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
@@ -154,13 +148,13 @@ export function exportDataToCSV<T = Record<string, unknown>>(
   }>,
   options: CSVExportOptions & {
     selectedRows?: Set<string | number>;
-    rowKey?: (row: T, index: number) => string | number;
+    rowKey?: (_row: T, _index: number) => string | number;
     filename?: string;
   } = {}
 ): void {
   const {
     selectedRows,
-    rowKey = (_row: T, index: number) => index,
+    rowKey = (_row: T, _index: number) => _index,
     filename = `export_${new Date().toISOString().split('T')[0]}`,
     ...csvOptions
   } = options;
@@ -176,7 +170,7 @@ export function exportDataToCSV<T = Record<string, unknown>>(
 
   // Generate CSV content
   const csvContent = exportToCSV(exportData, columns, csvOptions);
-  
+
   // Download the file
   downloadCSV(csvContent, filename);
 }

@@ -1,8 +1,22 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { DataGridWithSelection as DataGrid, Column } from './DataGridWithSelection';
+import { Column, DataGridWithSelection as DataGrid } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
+
+// Mock @tanstack/react-virtual
+jest.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: jest.fn(() => ({
+    getVirtualItems: () => [
+      { index: 0, start: 0, size: 52, key: 0 },
+      { index: 1, start: 52, size: 52, key: 1 },
+      { index: 2, start: 104, size: 52, key: 2 },
+    ],
+    getTotalSize: () => 156,
+    scrollToIndex: jest.fn(),
+    scrollToOffset: jest.fn(),
+  })),
+}));
 
 // Mock ResizeObserver
 class ResizeObserverMock {
@@ -11,7 +25,7 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-global.ResizeObserver = ResizeObserverMock as any;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // Mock DnD Kit
 jest.mock('@dnd-kit/core', () => ({
@@ -24,7 +38,7 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn((array: any[], from: number, to: number) => {
+  arrayMove: jest.fn((array: unknown[], from: number, to: number) => {
     const result = [...array];
     const [removed] = result.splice(from, 1);
     result.splice(to, 0, removed);
@@ -67,11 +81,7 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should render without selection features when selectable is false', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
-          columns={testColumns}
-          selectable={false}
-        />
+        <DataGrid data={testData} columns={testColumns} selectable={false} />
       </ThemeProvider>
     );
 
@@ -83,11 +93,7 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should render with checkbox column when selectable is true', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
-          columns={testColumns}
-          selectable={true}
-        />
+        <DataGrid data={testData} columns={testColumns} selectable={true} />
       </ThemeProvider>
     );
 
@@ -98,14 +104,14 @@ describe('DataGrid - Basic Selection Features', () => {
 
   it('should render with single selection mode', () => {
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
+        <DataGrid
+          data={testData}
           columns={testColumns}
           selectable={true}
-          selectionMode="single"
+          selectionMode='single'
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -118,14 +124,14 @@ describe('DataGrid - Basic Selection Features', () => {
 
   it('should render with multiple selection mode', () => {
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
+        <DataGrid
+          data={testData}
           columns={testColumns}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -139,11 +145,11 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should accept controlled selection state', () => {
     const selectedRows = new Set([0, 1]);
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
+        <DataGrid
+          data={testData}
           columns={testColumns}
           selectable={true}
           selectedRows={selectedRows}
@@ -158,14 +164,14 @@ describe('DataGrid - Basic Selection Features', () => {
 
   it('should work with custom rowKey function', () => {
     const onSelectionChange = jest.fn();
-    
+
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
+        <DataGrid
+          data={testData}
           columns={testColumns}
           selectable={true}
-          rowKey={(row) => `row-${row.id}`}
+          rowKey={row => `row-${row.id}`}
           onSelectionChange={onSelectionChange}
         />
       </ThemeProvider>
@@ -178,12 +184,7 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should work with selection and sorting enabled', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
-          columns={testColumns}
-          selectable={true}
-          sortable={true}
-        />
+        <DataGrid data={testData} columns={testColumns} selectable={true} sortable={true} />
       </ThemeProvider>
     );
 
@@ -194,12 +195,7 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should work with selection and filtering enabled', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
-          columns={testColumns}
-          selectable={true}
-          filterable={true}
-        />
+        <DataGrid data={testData} columns={testColumns} selectable={true} filterable={true} />
       </ThemeProvider>
     );
 
@@ -210,12 +206,7 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should work with selection and resizing enabled', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
-          columns={testColumns}
-          selectable={true}
-          resizable={true}
-        />
+        <DataGrid data={testData} columns={testColumns} selectable={true} resizable={true} />
       </ThemeProvider>
     );
 
@@ -226,15 +217,15 @@ describe('DataGrid - Basic Selection Features', () => {
   it('should work with all features enabled', () => {
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid 
-          data={testData} 
+        <DataGrid
+          data={testData}
           columns={testColumns}
           selectable={true}
           sortable={true}
           filterable={true}
           resizable={true}
           reorderable={true}
-          persistLayoutKey="test-grid"
+          persistLayoutKey='test-grid'
         />
       </ThemeProvider>
     );
