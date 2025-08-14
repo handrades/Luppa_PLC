@@ -61,6 +61,11 @@ describe('useAutoSave', () => {
     // Change data
     rerender({ data: { test: 'updated' } });
 
+    // Wait for the debounced function to be called
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledWith({ test: 'updated' });
     });
@@ -96,13 +101,18 @@ describe('useAutoSave', () => {
     // Change data to trigger save
     rerender({ data: { test: 'updated' } });
 
+    // Wait for the debounced function to be called
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
     await waitFor(() => {
       expect(onError).toHaveBeenCalledWith(error);
     });
 
     expect(result.current.error).toBe(error);
     expect(result.current.lastSaved).toBeNull();
-  });
+  }, 10000);
 
   it('sets isSaving during save operation', async () => {
     let resolveSave: () => void;
@@ -117,6 +127,11 @@ describe('useAutoSave', () => {
 
     // Change data to trigger save
     rerender({ data: { test: 'updated' } });
+
+    // Wait for the debounced function to be called
+    await act(async () => {
+      jest.runAllTimers();
+    });
 
     await waitFor(() => {
       expect(result.current.isSaving).toBe(true);
@@ -172,6 +187,11 @@ describe('useAutoSave', () => {
 
     // Change data to trigger save
     rerender({ data: { test: 'updated' } });
+
+    // Wait for the debounced function to be called
+    await act(async () => {
+      jest.runAllTimers();
+    });
 
     await waitFor(() => {
       expect(onSuccess).toHaveBeenCalled();

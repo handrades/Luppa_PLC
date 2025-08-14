@@ -41,7 +41,8 @@ export const useAutoSave = (
   const { showSuccess, showError: showErrorToast } = useToast();
 
   const saveInProgressRef = useRef(false);
-  const previousDataRef = useRef<Record<string, unknown> | null>(null);
+  const previousDataRef = useRef<string | null>(null);
+  const dataRef = useRef(data);
 
   const performSave = useCallback(async () => {
     if (saveInProgressRef.current) return;
@@ -51,10 +52,10 @@ export const useAutoSave = (
       setIsSaving(true);
       setError(null);
 
-      await onSave(data);
+      await onSave(dataRef.current);
 
       setLastSaved(new Date());
-      previousDataRef.current = JSON.stringify(data);
+      previousDataRef.current = JSON.stringify(dataRef.current);
 
       if (showNotifications) {
         showSuccess('Changes saved automatically', {
@@ -78,7 +79,7 @@ export const useAutoSave = (
       setIsSaving(false);
       saveInProgressRef.current = false;
     }
-  }, [data, onSave, onSuccess, onError, showNotifications, showSuccess, showErrorToast]);
+  }, [onSave, onSuccess, onError, showNotifications, showSuccess, showErrorToast]);
 
   // Create debounced save function
   const debouncedSave = useRef(
@@ -86,6 +87,11 @@ export const useAutoSave = (
       performSave();
     }, delay)
   ).current;
+
+  // Update data ref whenever data changes
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   // Trigger save when data changes
   useEffect(() => {

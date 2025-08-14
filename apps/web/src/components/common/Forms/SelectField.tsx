@@ -36,20 +36,20 @@ export const SelectField: React.FC<SelectFieldProps> = ({
 }) => {
   const hasError = !!error;
 
-  const defaultRenderValue = (selected: string | string[]) => {
+  const defaultRenderValue = (selected: unknown): React.ReactNode => {
     if (multiple && Array.isArray(selected)) {
       if (selected.length === 0) return <em>Select options...</em>;
       return (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
           {selected.map(val => {
             const option = options.find(opt => opt.value === val);
-            return <Chip key={val} label={option?.label || val} size='small' />;
+            return <Chip key={String(val)} label={option?.label || String(val)} size='small' />;
           })}
         </Box>
       );
     }
     const option = options.find(opt => opt.value === selected);
-    return option?.label || selected || <em>Select an option...</em>;
+    return option?.label || String(selected || '') || <em>Select an option...</em>;
   };
 
   return (

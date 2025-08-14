@@ -3,7 +3,7 @@ import { Alert, AlertTitle, Box, List, ListItem, ListItemText } from '@mui/mater
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 export interface ValidationErrorProps {
-  errors?: string | string[] | Record<string, string[]>;
+  errors?: string | string[] | Record<string, unknown>;
   title?: string;
   severity?: 'error' | 'warning';
   compact?: boolean;
@@ -35,7 +35,12 @@ export const ValidationError: React.FC<ValidationErrorProps> = ({
     Object.entries(errors).forEach(([field, error]) => {
       if (typeof error === 'string') {
         errorList.push(`${field}: ${error}`);
-      } else if (error?.message) {
+      } else if (
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof error.message === 'string'
+      ) {
         errorList.push(`${field}: ${error.message}`);
       } else if (Array.isArray(error)) {
         error.forEach(e => {

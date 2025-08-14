@@ -64,7 +64,7 @@ describe('ValidationError', () => {
 
     expect(screen.getByText('Compact error')).toBeInTheDocument();
     // In compact mode, it should not use Alert component
-    expect(screen.queryByRole('alert').className).not.toContain('MuiAlert');
+    expect(screen.queryByRole('alert')?.className).not.toContain('MuiAlert');
   });
 
   it('handles nested error objects with message property', () => {

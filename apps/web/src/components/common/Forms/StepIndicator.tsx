@@ -92,12 +92,12 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   const effectiveOrientation = isMobile ? 'vertical' : orientation;
 
   const StepIconComponent = (props: {
-    active: boolean;
-    completed: boolean;
-    className: string;
-    icon: React.ReactNode;
+    active?: boolean;
+    completed?: boolean;
+    className?: string;
+    icon?: React.ReactNode;
   }) => {
-    const { active, completed, className, icon } = props;
+    const { active = false, completed = false, className = '', icon } = props;
 
     return (
       <CustomStepIcon ownerState={{ completed, active }} className={className}>
