@@ -10,7 +10,7 @@ npx lint-staged
 # Then run additional psake checks if PowerShell is available
 if command -v pwsh >/dev/null 2>&1; then
   echo "🔍 Running additional psake checks..."
-  pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CheckFormatting"
+  pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
 fi
 
 echo "✅ Pre-commit checks completed"

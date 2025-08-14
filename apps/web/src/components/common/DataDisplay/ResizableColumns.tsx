@@ -150,14 +150,10 @@ export function ResizableColumns({
             onColumnReorder(parsed);
           } else {
             // Invalid column configuration - remove malformed data and use defaults
-            console.warn(
-              'Invalid column configuration found in localStorage, falling back to defaults'
-            );
             localStorage.removeItem(`grid-columns-${persistKey}`);
           }
         } catch {
           // Failed to parse column configuration - use defaults
-          console.warn('Failed to parse column configuration from localStorage');
         }
       }
     }
