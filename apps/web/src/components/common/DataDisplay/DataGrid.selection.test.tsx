@@ -262,7 +262,9 @@ describe('DataGrid - Multiple Selection Mode', () => {
 
     // Click first row checkbox specifically
     const rows = screen.getAllByRole('row');
-    const headerCheckbox = screen.getByRole('checkbox', { name: /select all/i });
+    const headerCheckbox = screen.getByRole('checkbox', {
+      name: /select all/i,
+    });
     expect(headerCheckbox).toBeInTheDocument();
 
     const firstRowCheckbox = within(rows[1]).getByRole('checkbox');

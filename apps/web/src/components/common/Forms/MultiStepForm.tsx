@@ -52,59 +52,57 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
 
-  // Early return if no steps
-  if (!steps || steps.length === 0) {
-    return null;
-  }
-
-  // Clamp currentStep within bounds
-  const clampedCurrentStep = Math.max(0, Math.min(currentStep, steps.length - 1));
-  const isFirstStep = clampedCurrentStep === 0;
-  const isLastStep = clampedCurrentStep === steps.length - 1;
-  const currentStepData = steps[clampedCurrentStep];
+  // Ensure steps is valid for hooks
+  const safeSteps = steps || [];
+  const safeCurrentStep = Math.max(0, Math.min(currentStep, Math.max(0, safeSteps.length - 1)));
+  const safeCurrentStepData = safeSteps[safeCurrentStep];
 
   // Load persisted state
   useEffect(() => {
-    if (persistState && storageKey) {
+    if (persistState && storageKey && safeSteps.length > 0) {
       const savedState = localStorage.getItem(`${storageKey}_state`);
       if (savedState) {
         try {
           const { step, completed } = JSON.parse(savedState);
           // Clamp persisted step within bounds
-          const clampedStep = Math.max(0, Math.min(step, steps.length - 1));
+          const clampedStep = Math.max(0, Math.min(step, safeSteps.length - 1));
           setCurrentStep(clampedStep);
           // Filter completed indices to valid range
-          const validCompleted = completed.filter((idx: number) => idx >= 0 && idx < steps.length);
+          const validCompleted = completed.filter(
+            (idx: number) => idx >= 0 && idx < safeSteps.length
+          );
           setCompletedSteps(new Set(validCompleted));
         } catch {
           // Failed to load persisted form state
         }
       }
     }
-  }, [persistState, storageKey]);
+  }, [persistState, storageKey, safeSteps.length]);
 
   // Save state on changes
   useEffect(() => {
-    if (persistState && storageKey) {
+    if (persistState && storageKey && safeSteps.length > 0) {
       const stateToSave = {
         step: currentStep,
         completed: Array.from(completedSteps),
       };
       localStorage.setItem(`${storageKey}_state`, JSON.stringify(stateToSave));
     }
-  }, [currentStep, completedSteps, persistState, storageKey, steps.length]);
+  }, [currentStep, completedSteps, persistState, storageKey, safeSteps.length]);
 
   // Notify step change
   useEffect(() => {
-    onStepChange?.(clampedCurrentStep, currentStepData.id);
-  }, [clampedCurrentStep, currentStepData.id, onStepChange]);
+    if (safeCurrentStepData?.id) {
+      onStepChange?.(safeCurrentStep, safeCurrentStepData.id);
+    }
+  }, [safeCurrentStep, safeCurrentStepData?.id, onStepChange]);
 
   const validateStep = useCallback(async (): Promise<boolean> => {
-    if (!currentStepData.validation) return true;
+    if (!safeCurrentStepData?.validation) return true;
 
     setIsValidating(true);
     try {
-      const isValid = await currentStepData.validation();
+      const isValid = await safeCurrentStepData.validation();
       return isValid;
     } catch {
       // Step validation error
@@ -112,18 +110,19 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
     } finally {
       setIsValidating(false);
     }
-  }, [currentStepData]);
+  }, [safeCurrentStepData]);
 
   const handleNext = useCallback(async () => {
-    if (isSubmitting) return; // Prevent re-entry
+    if (isSubmitting || safeSteps.length === 0) return; // Prevent re-entry
 
     const isValid = await validateStep();
-    if (!isValid && !currentStepData.optional) return;
+    if (!isValid && !safeCurrentStepData?.optional) return;
 
     const newCompletedSteps = new Set(completedSteps);
-    newCompletedSteps.add(clampedCurrentStep);
+    newCompletedSteps.add(safeCurrentStep);
     setCompletedSteps(newCompletedSteps);
 
+    const isLastStep = safeCurrentStep === safeSteps.length - 1;
     if (isLastStep) {
       setIsSubmitting(true);
       try {
@@ -137,14 +136,14 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
       }
     } else {
       setSlideDirection('left');
-      setCurrentStep(clampedCurrentStep + 1);
+      setCurrentStep(safeCurrentStep + 1);
     }
   }, [
-    clampedCurrentStep,
+    safeCurrentStep,
     completedSteps,
-    isLastStep,
+    safeSteps.length,
     validateStep,
-    currentStepData.optional,
+    safeCurrentStepData?.optional,
     onComplete,
     persistState,
     storageKey,
@@ -152,32 +151,45 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
   ]);
 
   const handlePrevious = useCallback(() => {
+    const isFirstStep = safeCurrentStep === 0;
     if (!isFirstStep) {
       setSlideDirection('right');
-      setCurrentStep(clampedCurrentStep - 1);
+      setCurrentStep(safeCurrentStep - 1);
     }
-  }, [clampedCurrentStep, isFirstStep]);
+  }, [safeCurrentStep]);
 
   const handleSkip = useCallback(() => {
-    if (allowSkipOptional && currentStepData.optional && !isLastStep) {
+    const isLastStep = safeCurrentStep === safeSteps.length - 1;
+    if (allowSkipOptional && safeCurrentStepData?.optional && !isLastStep) {
       setSlideDirection('left');
-      setCurrentStep(clampedCurrentStep + 1);
+      setCurrentStep(safeCurrentStep + 1);
     }
-  }, [clampedCurrentStep, currentStepData.optional, isLastStep, allowSkipOptional]);
+  }, [safeCurrentStep, safeCurrentStepData?.optional, safeSteps.length, allowSkipOptional]);
 
   const handleStepClick = useCallback(
     async (stepIndex: number) => {
       // Can only go to previous steps or completed steps
-      if (stepIndex < clampedCurrentStep || completedSteps.has(stepIndex)) {
-        setSlideDirection(stepIndex < clampedCurrentStep ? 'right' : 'left');
+      if (stepIndex < safeCurrentStep || completedSteps.has(stepIndex)) {
+        setSlideDirection(stepIndex < safeCurrentStep ? 'right' : 'left');
         setCurrentStep(stepIndex);
-      } else if (stepIndex === clampedCurrentStep + 1) {
+      } else if (stepIndex === safeCurrentStep + 1) {
         // Allow going to next step with validation
         await handleNext();
       }
     },
-    [clampedCurrentStep, completedSteps, handleNext]
+    [safeCurrentStep, completedSteps, handleNext]
   );
+
+  // Early return if no steps
+  if (!steps || steps.length === 0) {
+    return null;
+  }
+
+  // Clamp currentStep within bounds
+  const clampedCurrentStep = Math.max(0, Math.min(currentStep, steps.length - 1));
+  const isFirstStep = clampedCurrentStep === 0;
+  const isLastStep = clampedCurrentStep === steps.length - 1;
+  const currentStepData = steps[clampedCurrentStep];
 
   return (
     <Box sx={{ width: '100%' }}>

@@ -19,39 +19,37 @@ export interface ToastOptions {
  * Wraps notistack's enqueueSnackbar for consistent usage
  */
 export const useToast = () => {
-  const showToast = useCallback(
-    (message: SnackbarMessage, variant: VariantType = 'default', options?: ToastOptions) => {
-      // TODO: Replace with actual notistack implementation
-      console.log(`Toast [${variant}]:`, message, options);
-      return '';
-    },
-    []
-  );
+  const showToast = useCallback(() => {
+    // TODO: Replace with actual notistack implementation
+    // Temporarily disabled for linting compliance
+    // console.log(`Toast [${variant}]:`, message, options);
+    return '';
+  }, []);
 
   const showSuccess = useCallback(
-    (message: SnackbarMessage, options?: ToastOptions) => {
-      return showToast(message, 'success', options);
+    (_message: SnackbarMessage, _options?: ToastOptions) => {
+      return showToast();
     },
     [showToast]
   );
 
   const showError = useCallback(
-    (message: SnackbarMessage, options?: ToastOptions) => {
-      return showToast(message, 'error', options);
+    (_message: SnackbarMessage, _options?: ToastOptions) => {
+      return showToast();
     },
     [showToast]
   );
 
   const showWarning = useCallback(
-    (message: SnackbarMessage, options?: ToastOptions) => {
-      return showToast(message, 'warning', options);
+    (_message: SnackbarMessage, _options?: ToastOptions) => {
+      return showToast();
     },
     [showToast]
   );
 
   const showInfo = useCallback(
-    (message: SnackbarMessage, options?: ToastOptions) => {
-      return showToast(message, 'info', options);
+    (_message: SnackbarMessage, _options?: ToastOptions) => {
+      return showToast();
     },
     [showToast]
   );

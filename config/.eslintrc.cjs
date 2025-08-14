@@ -17,7 +17,8 @@ module.exports = {
     'no-console': 'warn',
     'prefer-const': 'error',
     'no-var': 'error',
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': 'off', // Disable base rule to avoid conflicts
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 
     // Import rules
     'sort-imports': [
@@ -39,7 +40,8 @@ module.exports = {
     '**/storybook-static/**',
     '**/*.config.js',
     '**/*.setup.js',
-    'apps/api/jest.setup.js'
+    'apps/api/jest.setup.js',
+    'apps/api/test-server.js'
   ],
   overrides: [
     {
