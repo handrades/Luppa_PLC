@@ -170,7 +170,9 @@ describe('Header', () => {
       </TestWrapper>
     );
 
-    const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
+    const menuButton = screen.getByRole('button', {
+      name: /open navigation menu/i,
+    });
     expect(menuButton).toBeInTheDocument();
 
     fireEvent.click(menuButton);

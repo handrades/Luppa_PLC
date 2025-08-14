@@ -116,7 +116,9 @@ describe('AppLayout', () => {
         </TestWrapper>
       );
 
-      const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open navigation menu/i,
+      });
       expect(menuButton).toBeInTheDocument();
     });
 
@@ -129,7 +131,9 @@ describe('AppLayout', () => {
         </TestWrapper>
       );
 
-      const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open navigation menu/i,
+      });
       fireEvent.click(menuButton);
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -151,7 +155,9 @@ describe('AppLayout', () => {
         </TestWrapper>
       );
 
-      const menuButton = screen.queryByRole('button', { name: /open navigation menu/i });
+      const menuButton = screen.queryByRole('button', {
+        name: /open navigation menu/i,
+      });
       expect(menuButton).not.toBeInTheDocument();
     });
 

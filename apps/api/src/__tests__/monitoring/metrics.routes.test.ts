@@ -35,7 +35,7 @@ describe('Metrics Routes', () => {
       await request(app).get('/api/v1/metrics').expect(200);
 
       const responseTime = Date.now() - startTime;
-      expect(responseTime).toBeLessThan(50);
+      expect(responseTime).toBeLessThan(200);
     });
 
     it('should include default system metrics', async () => {

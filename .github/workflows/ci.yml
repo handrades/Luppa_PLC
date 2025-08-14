@@ -173,6 +173,7 @@ jobs:
           # Check required npm scripts exist using jq
           cd apps/api
           if [[ -f package.json ]]; then
+            echo "Checking required scripts in API package.json..."
             for script in "build" "type-check" "test" "dev"; do
               if jq -e ".scripts.\"$script\"" package.json > /dev/null; then
                 echo "✓ Script exists: $script"
@@ -180,6 +181,8 @@ jobs:
                 echo "⚠️ Missing required script: $script"
               fi
             done
+          else
+            echo "⚠️ API package.json not found"
           fi
           echo "✓ API health checks completed"
 
@@ -224,7 +227,8 @@ jobs:
 
       - name: Build shared types
         run: |
-          if [ -d "packages/shared-types" ]; then
+          if [ -d "packages/shared-types" ] && [ -f "packages/shared-types/package.json" ]; then
+            echo "Building shared types package..."
             pnpm --filter ./packages/shared-types run build
           else
             echo "No shared-types package found - skipping"
@@ -236,6 +240,7 @@ jobs:
       - name: Type check Web
         run: |
           if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            echo "Type checking web application..."
             pnpm --filter ./apps/web run type-check
           else
             echo "No web package found - skipping type check"
@@ -317,6 +322,7 @@ jobs:
 
       - name: Create test environment file
         run: |
+          echo "Creating test environment configuration..."
           cat > apps/api/.env.test << EOF
           NODE_ENV=test
           PORT=3010
@@ -330,18 +336,27 @@ jobs:
           JWT_SECRET=test-secret-key-for-ci
           BCRYPT_ROUNDS=4
           LOG_LEVEL=error
+          CORS_ORIGIN=http://localhost:3000
           EOF
+          echo "✓ Test environment file created"
 
       - name: Run API tests with coverage
         run: |
+          echo "Running API tests with coverage..."
           cd apps/api
           pnpm test:coverage --passWithNoTests
         env:
           NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: testuser
+          DB_PASSWORD: testpass
+          DB_DATABASE: luppa_test
 
       - name: Run Web tests with coverage
         run: |
           if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            echo "Running web tests with coverage..."
             cd apps/web
             pnpm test:coverage --passWithNoTests
           else
@@ -399,7 +414,8 @@ jobs:
 
       - name: Build shared types
         run: |
-          if [ -d "packages/shared-types" ]; then
+          if [ -d "packages/shared-types" ] && [ -f "packages/shared-types/package.json" ]; then
+            echo "Building shared types package..."
             pnpm --filter ./packages/shared-types run build
           else
             echo "No shared-types package found - skipping"
@@ -411,6 +427,7 @@ jobs:
       - name: Build Web
         run: |
           if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            echo "Building web application..."
             pnpm --filter ./apps/web run build
           else
             echo "No web package found - skipping web build"

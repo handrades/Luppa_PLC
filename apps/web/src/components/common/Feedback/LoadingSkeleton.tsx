@@ -26,7 +26,13 @@ export function LoadingSkeleton({
       {[...Array(rows)].map((_, i) => (
         <Box
           key={i}
-          sx={{ display: 'flex', gap: 2, p: 2, borderBottom: '1px solid', borderColor: 'divider' }}
+          sx={{
+            display: 'flex',
+            gap: 2,
+            p: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
         >
           {[...Array(4)].map((_, j) => (
             <Skeleton key={j} variant='text' width='25%' height={20} {...skeletonProps} />
@@ -37,7 +43,14 @@ export function LoadingSkeleton({
   );
 
   const renderCardSkeleton = () => (
-    <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+    <Box
+      sx={{
+        p: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
       <Skeleton variant='rectangular' height={200} sx={{ mb: 2 }} {...skeletonProps} />
       <Skeleton variant='text' width='60%' height={32} sx={{ mb: 1 }} {...skeletonProps} />
       <Skeleton variant='text' width='100%' height={20} sx={{ mb: 0.5 }} {...skeletonProps} />

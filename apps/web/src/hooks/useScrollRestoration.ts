@@ -63,7 +63,9 @@ export function useScrollRestoration() {
     });
 
     // Add scroll listener
-    window.addEventListener('scroll', throttledScrollHandler.current, { passive: true });
+    window.addEventListener('scroll', throttledScrollHandler.current, {
+      passive: true,
+    });
 
     // Cleanup function
     return () => {
