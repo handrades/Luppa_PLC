@@ -17,7 +17,8 @@ module.exports = {
     'no-console': 'warn',
     'prefer-const': 'error',
     'no-var': 'error',
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': 'off', // Disable base rule to avoid conflicts
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 
     // Import rules
     'sort-imports': [
@@ -39,7 +40,8 @@ module.exports = {
     '**/storybook-static/**',
     '**/*.config.js',
     '**/*.setup.js',
-    'apps/api/jest.setup.js'
+    'apps/api/jest.setup.js',
+    'apps/api/test-server.js'
   ],
   overrides: [
     {
@@ -64,6 +66,22 @@ module.exports = {
         browser: true,
       },
       rules: {},
+    },
+    {
+      files: ['apps/api/minimal-server.js'],
+      parser: 'espree',
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+      },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        'no-undef': 'off',
+        'no-console': 'off',
+      },
+      env: {
+        node: true,
+      },
     },
     {
       files: ['**/*.js'],
