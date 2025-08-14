@@ -54,13 +54,17 @@ export const TextInput: React.FC<TextInputProps> = ({
               borderWidth: 2,
             },
           },
-          ...textFieldProps.sx,
+          ...(textFieldProps.sx || {}),
         }}
         inputProps={{
           'aria-label': textFieldProps['aria-label'] || (label as string),
           'aria-required': required,
           'aria-invalid': hasError,
-          'aria-describedby': error ? `${id}-helper-text` : undefined,
+          'aria-describedby': (() => {
+            if (!id) return undefined;
+            const hasHelperText = error || helperText;
+            return hasHelperText ? `${id}-helper-text` : undefined;
+          })(),
           ...textFieldProps.inputProps,
         }}
       />

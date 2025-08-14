@@ -24,7 +24,7 @@ describe('DatePicker', () => {
       <DatePicker id='test-date' label='Date' value={testDate} onChange={() => {}} />
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
     // The value will be displayed based on locale
     expect(input.value).toContain('15');
     expect(input.value).toContain('2024');
@@ -81,7 +81,7 @@ describe('DatePicker', () => {
   });
 
   it('can be read-only', () => {
-    const testDate = new Date('2024-01-15');
+    const testDate = new Date(2024, 0, 15); // January 15, 2024
     renderWithTheme(
       <DatePicker
         id='test-date'
@@ -167,7 +167,7 @@ describe('DatePicker', () => {
       />
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
     expect(input.value).toContain('15');
     expect(input.value).toContain('2024');
   });
@@ -186,7 +186,7 @@ describe('DatePicker', () => {
       />
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
     expect(input.value).toContain('15');
     expect(input.value).toContain('2024');
   });

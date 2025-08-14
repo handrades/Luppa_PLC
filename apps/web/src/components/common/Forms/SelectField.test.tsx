@@ -166,12 +166,12 @@ describe('SelectField', () => {
   });
 
   it('has minimum height for touch-friendly size', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <SelectField id='test-select' label='Touch Select' options={mockOptions} value='' />
     );
 
-    // const select = container.querySelector('.MuiSelect-select');
-    const selectRoot = container.querySelector('.MuiSelect-root');
+    const combobox = screen.getByRole('combobox');
+    const selectRoot = combobox.closest('.MuiInputBase-root');
     expect(selectRoot).toHaveStyle({ minHeight: '48px' });
   });
 

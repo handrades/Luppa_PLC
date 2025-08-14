@@ -63,7 +63,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
       <Select
         {...selectProps}
         id={id}
-        value={value || (multiple ? [] : '')}
+        value={value || (multiple ? [] : '__EMPTY_OPTION__')}
         error={hasError}
         fullWidth
         variant='outlined'
@@ -99,7 +99,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         }}
       >
         {showEmptyOption && !multiple && (
-          <MenuItem value=''>
+          <MenuItem value='__EMPTY_OPTION__'>
             <em>{emptyOptionLabel}</em>
           </MenuItem>
         )}

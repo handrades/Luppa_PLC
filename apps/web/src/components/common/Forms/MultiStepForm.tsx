@@ -49,11 +49,19 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isValidating, setIsValidating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
 
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === steps.length - 1;
-  const currentStepData = steps[currentStep];
+  // Early return if no steps
+  if (!steps || steps.length === 0) {
+    return null;
+  }
+
+  // Clamp currentStep within bounds
+  const clampedCurrentStep = Math.max(0, Math.min(currentStep, steps.length - 1));
+  const isFirstStep = clampedCurrentStep === 0;
+  const isLastStep = clampedCurrentStep === steps.length - 1;
+  const currentStepData = steps[clampedCurrentStep];
 
   // Load persisted state
   useEffect(() => {
@@ -62,8 +70,12 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
       if (savedState) {
         try {
           const { step, completed } = JSON.parse(savedState);
-          setCurrentStep(step);
-          setCompletedSteps(new Set(completed));
+          // Clamp persisted step within bounds
+          const clampedStep = Math.max(0, Math.min(step, steps.length - 1));
+          setCurrentStep(clampedStep);
+          // Filter completed indices to valid range
+          const validCompleted = completed.filter((idx: number) => idx >= 0 && idx < steps.length);
+          setCompletedSteps(new Set(validCompleted));
         } catch {
           // Failed to load persisted form state
         }
@@ -80,12 +92,12 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
       };
       localStorage.setItem(`${storageKey}_state`, JSON.stringify(stateToSave));
     }
-  }, [currentStep, completedSteps, persistState, storageKey]);
+  }, [currentStep, completedSteps, persistState, storageKey, steps.length]);
 
   // Notify step change
   useEffect(() => {
-    onStepChange?.(currentStep, currentStepData.id);
-  }, [currentStep, currentStepData.id, onStepChange]);
+    onStepChange?.(clampedCurrentStep, currentStepData.id);
+  }, [clampedCurrentStep, currentStepData.id, onStepChange]);
 
   const validateStep = useCallback(async (): Promise<boolean> => {
     if (!currentStepData.validation) return true;
@@ -103,25 +115,32 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
   }, [currentStepData]);
 
   const handleNext = useCallback(async () => {
+    if (isSubmitting) return; // Prevent re-entry
+
     const isValid = await validateStep();
     if (!isValid && !currentStepData.optional) return;
 
     const newCompletedSteps = new Set(completedSteps);
-    newCompletedSteps.add(currentStep);
+    newCompletedSteps.add(clampedCurrentStep);
     setCompletedSteps(newCompletedSteps);
 
     if (isLastStep) {
-      await onComplete();
-      // Clear persisted state after completion
-      if (persistState && storageKey) {
-        localStorage.removeItem(`${storageKey}_state`);
+      setIsSubmitting(true);
+      try {
+        await onComplete();
+        // Clear persisted state after completion
+        if (persistState && storageKey) {
+          localStorage.removeItem(`${storageKey}_state`);
+        }
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       setSlideDirection('left');
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(clampedCurrentStep + 1);
     }
   }, [
-    currentStep,
+    clampedCurrentStep,
     completedSteps,
     isLastStep,
     validateStep,
@@ -129,41 +148,42 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
     onComplete,
     persistState,
     storageKey,
+    isSubmitting,
   ]);
 
   const handlePrevious = useCallback(() => {
     if (!isFirstStep) {
       setSlideDirection('right');
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(clampedCurrentStep - 1);
     }
-  }, [currentStep, isFirstStep]);
+  }, [clampedCurrentStep, isFirstStep]);
 
   const handleSkip = useCallback(() => {
-    if (currentStepData.optional && !isLastStep) {
+    if (allowSkipOptional && currentStepData.optional && !isLastStep) {
       setSlideDirection('left');
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(clampedCurrentStep + 1);
     }
-  }, [currentStep, currentStepData.optional, isLastStep]);
+  }, [clampedCurrentStep, currentStepData.optional, isLastStep, allowSkipOptional]);
 
   const handleStepClick = useCallback(
     async (stepIndex: number) => {
       // Can only go to previous steps or completed steps
-      if (stepIndex < currentStep || completedSteps.has(stepIndex)) {
-        setSlideDirection(stepIndex < currentStep ? 'right' : 'left');
+      if (stepIndex < clampedCurrentStep || completedSteps.has(stepIndex)) {
+        setSlideDirection(stepIndex < clampedCurrentStep ? 'right' : 'left');
         setCurrentStep(stepIndex);
-      } else if (stepIndex === currentStep + 1) {
+      } else if (stepIndex === clampedCurrentStep + 1) {
         // Allow going to next step with validation
         await handleNext();
       }
     },
-    [currentStep, completedSteps, handleNext]
+    [clampedCurrentStep, completedSteps, handleNext]
   );
 
   return (
     <Box sx={{ width: '100%' }}>
       <StepIndicator
         steps={steps}
-        currentStep={currentStep}
+        currentStep={clampedCurrentStep}
         completedSteps={completedSteps}
         onStepClick={handleStepClick}
         showLabels={showStepLabels}
@@ -179,7 +199,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
           overflow: 'hidden',
         }}
       >
-        <Fade in key={currentStep} timeout={300}>
+        <Fade in key={clampedCurrentStep} timeout={300}>
           <Box>
             <Slide direction={slideDirection} in mountOnEnter unmountOnExit timeout={300}>
               <Box>
@@ -234,11 +254,17 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({
             <Button
               variant='contained'
               onClick={handleNext}
-              disabled={isValidating}
+              disabled={isValidating || isSubmitting}
               endIcon={isLastStep ? <CheckIcon /> : <ArrowForwardIcon />}
               sx={{ minWidth: '120px' }}
             >
-              {isValidating ? 'Validating...' : isLastStep ? submitButtonText : nextButtonText}
+              {isSubmitting
+                ? 'Submitting...'
+                : isValidating
+                  ? 'Validating...'
+                  : isLastStep
+                    ? submitButtonText
+                    : nextButtonText}
             </Button>
           </Box>
         </Box>

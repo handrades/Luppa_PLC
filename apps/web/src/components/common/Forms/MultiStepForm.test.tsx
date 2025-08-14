@@ -267,6 +267,7 @@ describe('MultiStepForm', () => {
         submitButtonText='Finish'
         skipButtonText='Skip This'
         initialStep={1}
+        allowSkipOptional={true}
       />
     );
 

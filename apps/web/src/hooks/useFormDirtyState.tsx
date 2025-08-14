@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import {
   Button,
   Dialog,
@@ -19,7 +20,7 @@ export interface UseFormDirtyStateOptions {
 export interface UseFormDirtyStateReturn {
   isDirty: boolean;
   setIsDirty: (_dirty: boolean) => void;
-  confirmDialog: React.ReactNode;
+  confirmDialog: ReactNode;
   resetDirtyState: () => void;
 }
 
@@ -41,16 +42,9 @@ export const useFormDirtyState = (
   const [isDirty, setIsDirty] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<string | null>(null);
-  const initialDataRef = useRef<string | null>(null);
+  const initialDataRef = useRef<string | null>(JSON.stringify(formData));
   // const location = useLocation();
   const navigate = useNavigate();
-
-  // Initialize initial data
-  useEffect(() => {
-    if (initialDataRef.current === null) {
-      initialDataRef.current = JSON.stringify(formData);
-    }
-  }, []);
 
   // Track dirty state based on form data changes
   useEffect(() => {
@@ -95,7 +89,13 @@ export const useFormDirtyState = (
   useEffect(() => {
     if (blocker.state === 'blocked') {
       onNavigationBlocked?.();
-      setPendingLocation(blocker.location?.pathname || null);
+      const location = blocker.location;
+      if (location) {
+        const fullUrl = location.pathname + (location.search || '') + (location.hash || '');
+        setPendingLocation(fullUrl);
+      } else {
+        setPendingLocation(null);
+      }
       setShowConfirmDialog(true);
     }
   }, [blocker.state, blocker.location, onNavigationBlocked]);
