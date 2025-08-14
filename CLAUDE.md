@@ -204,3 +204,4 @@ The framework is designed to support additional industrial apps:
 - **NEVER push to master ALWAYS push to a branch. NOTIFY me if no branch has been created**
 
 - never disable pre-push or pre-commit hooks
+
