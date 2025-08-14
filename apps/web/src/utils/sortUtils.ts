@@ -12,9 +12,11 @@ export function sortData<T = Record<string, unknown>>(
   if (sortState.length === 0) return data;
 
   const sortedData = [...data];
+  // Precompute sorted criteria to avoid mutation and re-sorting on each comparison
+  const criteria = [...sortState].sort((a, b) => a.priority - b.priority);
 
   sortedData.sort((a, b) => {
-    for (const sort of sortState.sort((a, b) => a.priority - b.priority)) {
+    for (const sort of criteria) {
       const aValue = getValueFn
         ? getValueFn(a, sort.columnId)
         : (a as Record<string, unknown>)[sort.columnId];
@@ -85,8 +87,12 @@ export function updateSortState(
           s.columnId === columnId ? { ...s, direction: 'desc' as const } : s
         );
       } else {
-        // Remove this sort
-        return currentSort.filter(s => s.columnId !== columnId);
+        // Remove this sort and re-sequence priorities to avoid gaps
+        const filtered = currentSort.filter(s => s.columnId !== columnId);
+        // Re-sequence priorities to be consecutive starting at 0
+        return filtered
+          .sort((a, b) => a.priority - b.priority)
+          .map((s, index) => ({ ...s, priority: index }));
       }
     } else {
       // Add new sort

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Column, DataGridWithSelection as DataGrid } from './DataGridWithSelection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
@@ -260,11 +260,13 @@ describe('DataGrid - Multiple Selection Mode', () => {
       </ThemeProvider>
     );
 
-    // Click first checkbox
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes.length).toBeGreaterThan(2); // Should have header + at least 2 row checkboxes
+    // Click first row checkbox specifically
+    const rows = screen.getAllByRole('row');
+    const headerCheckbox = screen.getByRole('checkbox', { name: /select all/i });
+    expect(headerCheckbox).toBeInTheDocument();
 
-    fireEvent.click(checkboxes[1]); // First row checkbox (0 is header)
+    const firstRowCheckbox = within(rows[1]).getByRole('checkbox');
+    fireEvent.click(firstRowCheckbox);
 
     expect(onSelectionChange).toHaveBeenCalled();
     expect(currentSelection.size).toBe(1);
@@ -451,9 +453,11 @@ describe('DataGrid - Selection with Other Features', () => {
     );
 
     // Verify initial selection
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect((checkboxes[1] as HTMLInputElement).checked).toBe(true); // First row
-    expect((checkboxes[3] as HTMLInputElement).checked).toBe(true); // Third row
+    const rows = screen.getAllByRole('row');
+    const firstRowCheckbox = within(rows[1]).getByRole('checkbox') as HTMLInputElement;
+    const thirdRowCheckbox = within(rows[3]).getByRole('checkbox') as HTMLInputElement;
+    expect(firstRowCheckbox.checked).toBe(true); // First row
+    expect(thirdRowCheckbox.checked).toBe(true); // Third row
 
     // Click to sort by name
     const nameHeader = screen.getByText('Name');

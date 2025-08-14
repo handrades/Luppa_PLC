@@ -63,6 +63,7 @@ export function filterData<T = Record<string, unknown>>(
         }
 
         case 'date': {
+          // Validate date creation from untrusted inputs - invalid dates return false for non-matching behavior
           const dateValue = new Date(value as string);
           const filterDate = new Date(filter.value as string);
 
@@ -81,6 +82,7 @@ export function filterData<T = Record<string, unknown>>(
               return dateValue <= filterDate;
             case 'between': {
               const filterDate2 = new Date(filter.value2 as string);
+              // Short-circuit on invalid second date value
               if (isNaN(filterDate2.getTime())) return false;
               return dateValue >= filterDate && dateValue <= filterDate2;
             }

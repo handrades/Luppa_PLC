@@ -80,6 +80,7 @@ auto-generated/
 
 # AI and debug logs
 .ai/
+.claude/
 debug.log
 *storybook.log
 storybook-static

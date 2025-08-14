@@ -12,19 +12,29 @@ export function getDefaultColumnConfig(columns: { id: string; width?: number }[]
   }));
 }
 
-export function applyColumnConfig(columns: unknown[], config: ColumnConfig[]): unknown[] {
+// Type guard function for filtering out null values
+function isConfiguredColumn<T extends { id: string }>(
+  item: (T & { width: number; order: number }) | null
+): item is T & { width: number; order: number } {
+  return item !== null;
+}
+
+export function applyColumnConfig<T extends { id: string }>(
+  columns: T[],
+  config: ColumnConfig[]
+): Array<T & { width: number; order: number }> {
   const configMap = new Map(config.map(c => [c.id, c]));
 
   return columns
-    .map(col => {
-      const cfg = configMap.get((col as { id: string }).id);
+    .map((col): (T & { width: number; order: number }) | null => {
+      const cfg = configMap.get(col.id);
       if (!cfg) return null;
       return {
-        ...(col as Record<string, unknown>),
+        ...col,
         width: cfg.width,
         order: cfg.order,
       };
     })
-    .filter(Boolean)
-    .sort((a, b) => (a as { order: number }).order - (b as { order: number }).order);
+    .filter(isConfiguredColumn)
+    .sort((a, b) => a.order - b.order);
 }

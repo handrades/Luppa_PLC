@@ -882,9 +882,21 @@ export function DataGridWithSelection<T = Record<string, unknown>>({
               columnVirtualizer.getVirtualItems().map(virtualColumn => {
                 const column = columns[virtualColumn.index];
                 const left = selectable ? virtualColumn.start + 48 : virtualColumn.start;
+                // Determine sort state for accessibility attributes
+                const columnSort = sortState.find(s => s.columnId === column.id);
+                const sortDirection = columnSort?.direction || null;
+                const ariaSortValue =
+                  sortDirection === 'asc'
+                    ? 'ascending'
+                    : sortDirection === 'desc'
+                      ? 'descending'
+                      : 'none';
+
                 return (
                   <GridHeaderCell
                     key={column.id}
+                    role='columnheader'
+                    aria-sort={ariaSortValue}
                     sx={{
                       width: virtualColumn.size,
                       position: 'absolute',

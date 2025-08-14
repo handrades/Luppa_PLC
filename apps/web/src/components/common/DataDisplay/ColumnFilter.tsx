@@ -276,7 +276,16 @@ export function ColumnFilter({
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label={operator === 'between' ? 'From' : 'Date'}
-              value={value instanceof Date ? value : value ? new Date(value as string) : null}
+              value={
+                value instanceof Date
+                  ? value
+                  : value
+                    ? (() => {
+                        const date = new Date(value as string);
+                        return isNaN(date.getTime()) ? null : date;
+                      })()
+                    : null
+              }
               onChange={newValue => handleValueChange(newValue)}
               slotProps={{
                 textField: {
@@ -289,7 +298,16 @@ export function ColumnFilter({
             {operator === 'between' && (
               <DatePicker
                 label='To'
-                value={value2 instanceof Date ? value2 : value2 ? new Date(value2 as string) : null}
+                value={
+                  value2 instanceof Date
+                    ? value2
+                    : value2
+                      ? (() => {
+                          const date = new Date(value2 as string);
+                          return isNaN(date.getTime()) ? null : date;
+                        })()
+                      : null
+                }
                 onChange={newValue => handleValueChange(newValue, true)}
                 slotProps={{
                   textField: {

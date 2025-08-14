@@ -202,13 +202,13 @@ describe('DataGrid - Column Resizing', () => {
 
     // Simulate resize
     const resizeHandle = container.querySelector('div[style*="cursor: col-resize"]');
-    if (resizeHandle) {
-      fireEvent.mouseDown(resizeHandle, { clientX: 100 });
-      fireEvent.mouseMove(document, { clientX: 150 });
-      fireEvent.mouseUp(document);
+    expect(resizeHandle).not.toBeNull();
 
-      expect(onColumnResize).toHaveBeenCalled();
-    }
+    fireEvent.mouseDown(resizeHandle, { clientX: 100 });
+    fireEvent.mouseMove(document, { clientX: 150 });
+    fireEvent.mouseUp(document);
+
+    expect(onColumnResize).toHaveBeenCalled();
   });
 
   it('should respect minWidth when resizing', () => {
@@ -227,18 +227,17 @@ describe('DataGrid - Column Resizing', () => {
     );
 
     const resizeHandle = container.querySelector('div[style*="cursor: col-resize"]');
-    if (resizeHandle) {
-      // Try to resize below minWidth
-      fireEvent.mouseDown(resizeHandle, { clientX: 100 });
-      fireEvent.mouseMove(document, { clientX: 20 }); // Try to make it very small
-      fireEvent.mouseUp(document);
+    expect(resizeHandle).not.toBeNull();
 
-      if (onColumnResize.mock.calls.length > 0) {
-        const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
-        const column = testColumns.find(c => c.id === columnId);
-        expect(width).toBeGreaterThanOrEqual(column?.minWidth || 50);
-      }
-    }
+    // Try to resize below minWidth
+    fireEvent.mouseDown(resizeHandle, { clientX: 100 });
+    fireEvent.mouseMove(document, { clientX: 20 }); // Try to make it very small
+    fireEvent.mouseUp(document);
+
+    expect(onColumnResize).toHaveBeenCalled();
+    const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
+    const column = testColumns.find(c => c.id === columnId);
+    expect(width).toBeGreaterThanOrEqual(column?.minWidth || 50);
   });
 
   it('should respect maxWidth when resizing', () => {
@@ -257,18 +256,17 @@ describe('DataGrid - Column Resizing', () => {
     );
 
     const resizeHandle = container.querySelector('div[style*="cursor: col-resize"]');
-    if (resizeHandle) {
-      // Try to resize above maxWidth
-      fireEvent.mouseDown(resizeHandle, { clientX: 100 });
-      fireEvent.mouseMove(document, { clientX: 500 }); // Try to make it very large
-      fireEvent.mouseUp(document);
+    expect(resizeHandle).not.toBeNull();
 
-      if (onColumnResize.mock.calls.length > 0) {
-        const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
-        const column = testColumns.find(c => c.id === columnId);
-        expect(width).toBeLessThanOrEqual(column?.maxWidth || 1000);
-      }
-    }
+    // Try to resize above maxWidth
+    fireEvent.mouseDown(resizeHandle, { clientX: 100 });
+    fireEvent.mouseMove(document, { clientX: 500 }); // Try to make it very large
+    fireEvent.mouseUp(document);
+
+    expect(onColumnResize).toHaveBeenCalled();
+    const [columnId, width] = onColumnResize.mock.calls[onColumnResize.mock.calls.length - 1];
+    const column = testColumns.find(c => c.id === columnId);
+    expect(width).toBeLessThanOrEqual(column?.maxWidth || 1000);
   });
 });
 

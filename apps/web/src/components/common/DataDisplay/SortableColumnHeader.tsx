@@ -4,14 +4,9 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { styled } from '@mui/material/styles';
+import { SortState, sortData, updateSortState } from '../../../utils/sortUtils';
 
 export type SortDirection = 'asc' | 'desc' | null;
-
-export interface SortState {
-  columnId: string;
-  direction: SortDirection;
-  priority: number;
-}
 
 export interface SortableColumnHeaderProps {
   columnId: string;
@@ -131,90 +126,5 @@ export function SortableColumnHeader({
   );
 }
 
-// Sort utility functions
-export function sortData<T>(
-  data: T[],
-  sortState: SortState[],
-  getValueFn?: (_item: T, _columnId: string) => unknown
-): T[] {
-  if (sortState.length === 0) return data;
-
-  const sorted = [...data];
-
-  sorted.sort((a, b) => {
-    for (const sort of sortState) {
-      const getValue = getValueFn || ((item: Record<string, unknown>, col: string) => item[col]);
-      const aValue = getValue(a as T & Record<string, unknown>, sort.columnId);
-      const bValue = getValue(b as T & Record<string, unknown>, sort.columnId);
-
-      // Handle null/undefined values
-      if (aValue == null && bValue == null) continue;
-      if (aValue == null) return sort.direction === 'asc' ? 1 : -1;
-      if (bValue == null) return sort.direction === 'asc' ? -1 : 1;
-
-      // Compare values
-      let comparison = 0;
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        comparison = aValue.localeCompare(bValue);
-      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-        comparison = aValue - bValue;
-      } else {
-        comparison = String(aValue).localeCompare(String(bValue));
-      }
-
-      if (comparison !== 0) {
-        return sort.direction === 'asc' ? comparison : -comparison;
-      }
-    }
-    return 0;
-  });
-
-  return sorted;
-}
-
-export function updateSortState(
-  currentState: SortState[],
-  columnId: string,
-  multiSort: boolean = false
-): SortState[] {
-  const existingIndex = currentState.findIndex(s => s.columnId === columnId);
-
-  if (!multiSort) {
-    // Single column sort
-    if (existingIndex >= 0) {
-      const current = currentState[existingIndex];
-      if (current.direction === 'asc') {
-        return [{ columnId, direction: 'desc', priority: 0 }];
-      } else if (current.direction === 'desc') {
-        return [];
-      }
-    }
-    return [{ columnId, direction: 'asc', priority: 0 }];
-  }
-
-  // Multi-column sort
-  const newState = [...currentState];
-
-  if (existingIndex >= 0) {
-    const current = newState[existingIndex];
-    if (current.direction === 'asc') {
-      newState[existingIndex] = { ...current, direction: 'desc' };
-    } else {
-      // Remove from sort
-      newState.splice(existingIndex, 1);
-      // Update priorities
-      newState.forEach((s, i) => {
-        s.priority = i;
-      });
-    }
-  } else {
-    // Add new sort
-    newState.push({
-      columnId,
-      direction: 'asc',
-      priority: newState.length,
-    });
-  }
-
-  return newState;
-}
+// Re-export sort utilities for external consumers
+export { sortData, updateSortState };

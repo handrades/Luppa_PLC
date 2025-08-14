@@ -286,19 +286,22 @@ export function getDefaultColumnConfig(columns: { id: string; width?: number }[]
   }));
 }
 
-export function applyColumnConfig(columns: unknown[], config: ColumnConfig[]): unknown[] {
+export function applyColumnConfig<T extends { id: string }>(
+  columns: T[],
+  config: ColumnConfig[]
+): Array<T & { width: number; order: number }> {
   const configMap = new Map(config.map(c => [c.id, c]));
 
   return columns
     .map(col => {
-      const cfg = configMap.get((col as { id: string }).id);
+      const cfg = configMap.get(col.id);
       if (!cfg) return null;
       return {
-        ...(col as Record<string, unknown>),
+        ...col,
         width: cfg.width,
         order: cfg.order,
       };
     })
-    .filter(Boolean)
-    .sort((a, b) => (a as { order: number }).order - (b as { order: number }).order);
+    .filter((c): c is T & { width: number; order: number } => !!c)
+    .sort((a, b) => a.order - b.order);
 }

@@ -81,7 +81,7 @@ jobs:
             exit 0
           fi
           
-          for package_json in packages/*/package.json; do
+          while IFS= read -r -d '' package_json; do
             if [ -f "$package_json" ]; then
               package_name=$(jq -r '.name' "$package_json")
               echo "Checking $package_name..."
@@ -120,7 +120,7 @@ jobs:
                 echo "  ✓ All publish-hygiene checks passed"
               fi
             fi
-          done
+          done < <(find packages -name "package.json" -type f -print0)
           
           if [[ ${#failed_packages[@]} -gt 0 ]]; then
             echo ""
