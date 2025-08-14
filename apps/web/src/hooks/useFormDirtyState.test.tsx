@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
-import { useFormDirtyState } from './useFormDirtyState';
+import { UseFormDirtyStateOptions, useFormDirtyState } from './useFormDirtyState';
 import React from 'react';
 
 // Simple mock component to test the hook
@@ -9,7 +9,7 @@ const TestComponent = ({
   options = {},
 }: {
   initialFormData?: Record<string, unknown>;
-  options?: Record<string, unknown>;
+  options?: UseFormDirtyStateOptions;
 }) => {
   const [formData, setFormData] = React.useState(initialFormData);
   const { isDirty, setIsDirty, confirmDialog, resetDirtyState } = useFormDirtyState(
@@ -48,7 +48,7 @@ const TestApp = ({
   options = {},
 }: {
   initialFormData?: Record<string, unknown>;
-  options?: Record<string, unknown>;
+  options?: UseFormDirtyStateOptions;
 }) => {
   const router = createMemoryRouter(
     [
@@ -69,21 +69,25 @@ const TestApp = ({
 const mockAddEventListener = jest.fn();
 const mockRemoveEventListener = jest.fn();
 
-// Store original methods
-const originalAddEventListener = window.addEventListener;
-const originalRemoveEventListener = window.removeEventListener;
+// Jest spies for window event listeners
+let addEventListenerSpy: jest.SpyInstance;
+let removeEventListenerSpy: jest.SpyInstance;
 
 beforeEach(() => {
-  // Mock event listeners
-  window.addEventListener = mockAddEventListener;
-  window.removeEventListener = mockRemoveEventListener;
+  // Create spies and mock their implementations
+  addEventListenerSpy = jest
+    .spyOn(window, 'addEventListener')
+    .mockImplementation(mockAddEventListener);
+  removeEventListenerSpy = jest
+    .spyOn(window, 'removeEventListener')
+    .mockImplementation(mockRemoveEventListener);
   jest.clearAllMocks();
 });
 
 afterEach(() => {
   // Restore original methods
-  window.addEventListener = originalAddEventListener;
-  window.removeEventListener = originalRemoveEventListener;
+  addEventListenerSpy.mockRestore();
+  removeEventListenerSpy.mockRestore();
 });
 
 describe('useFormDirtyState', () => {
@@ -144,7 +148,7 @@ describe('useFormDirtyState', () => {
       fireEvent.click(screen.getByTestId('make-dirty'));
 
       // Check if beforeunload was added (filter out other listeners)
-      const beforeunloadCalls = mockAddEventListener.mock.calls.filter(
+      const beforeunloadCalls = addEventListenerSpy.mock.calls.filter(
         call => call[0] === 'beforeunload'
       );
       expect(beforeunloadCalls.length).toBeGreaterThan(0);
@@ -163,7 +167,7 @@ describe('useFormDirtyState', () => {
       fireEvent.click(screen.getByTestId('make-clean'));
 
       // Check if beforeunload was removed
-      const beforeunloadCalls = mockRemoveEventListener.mock.calls.filter(
+      const beforeunloadCalls = removeEventListenerSpy.mock.calls.filter(
         call => call[0] === 'beforeunload'
       );
       expect(beforeunloadCalls.length).toBeGreaterThan(0);
@@ -175,7 +179,7 @@ describe('useFormDirtyState', () => {
       fireEvent.click(screen.getByTestId('make-dirty'));
 
       // Check if beforeunload was NOT added
-      const beforeunloadCalls = mockAddEventListener.mock.calls.filter(
+      const beforeunloadCalls = addEventListenerSpy.mock.calls.filter(
         call => call[0] === 'beforeunload'
       );
       expect(beforeunloadCalls.length).toBe(0);
@@ -206,7 +210,7 @@ describe('useFormDirtyState', () => {
       unmount();
 
       // Check if beforeunload was removed during cleanup
-      const beforeunloadCalls = mockRemoveEventListener.mock.calls.filter(
+      const beforeunloadCalls = removeEventListenerSpy.mock.calls.filter(
         call => call[0] === 'beforeunload'
       );
       expect(beforeunloadCalls.length).toBeGreaterThan(0);

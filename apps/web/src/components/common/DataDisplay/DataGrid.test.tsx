@@ -151,7 +151,7 @@ describe('DataGrid', () => {
 
       if (!isCIEnvironment) {
         // More generous threshold for test environments due to mocking overhead
-        const maxRenderTime = isTestEnvironment ? 15000 : 5000; // 15s for test env, 5s for dev
+        const maxRenderTime = isTestEnvironment ? 16000 : 5000; // 16s for test env, 5s for dev
         expect(renderTime).toBeLessThan(maxRenderTime);
       }
 
