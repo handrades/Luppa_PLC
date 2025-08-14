@@ -96,7 +96,7 @@
       "eslint --config config/.eslintrc.cjs --fix",
       "prettier --config config/.prettierrc --write"
     ],
-    "*.{json}": [
+    "*.json": [
       "jsonlint",
       "prettier --config config/.prettierrc --write"
     ],

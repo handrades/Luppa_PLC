@@ -1,8 +1,13 @@
 #!/usr/bin/env sh
 
-# Run fast lint checks on staged files only
+# First, run lint-staged to auto-fix and format staged files
+echo "🔧 Auto-fixing and formatting staged files..."
+npx lint-staged
+
+# Then run additional psake checks if PowerShell is available
 if command -v pwsh &> /dev/null; then
-  pwsh -command "Invoke-Psake CI"
-else
-  npx lint-staged
+  echo "🔍 Running additional psake checks..."
+  pwsh -command "Invoke-Psake CheckFormatting"
 fi
+
+echo "✅ Pre-commit checks completed"

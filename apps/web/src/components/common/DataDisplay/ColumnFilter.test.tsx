@@ -1,5 +1,5 @@
 // React import removed - not needed for this test file
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -98,7 +98,9 @@ describe('ColumnFilter', () => {
       expect(onFilterChange).not.toHaveBeenCalled();
 
       // Fast-forward debounce timer
-      jest.advanceTimersByTime(300);
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
 
       await waitFor(() => {
         expect(onFilterChange).toHaveBeenCalledWith(
