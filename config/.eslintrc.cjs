@@ -41,8 +41,7 @@ module.exports = {
     '**/*.config.js',
     '**/*.setup.js',
     'apps/api/jest.setup.js',
-    'apps/api/test-server.js',
-    'apps/api/minimal-server.js'
+    'apps/api/test-server.js'
   ],
   overrides: [
     {
@@ -67,6 +66,22 @@ module.exports = {
         browser: true,
       },
       rules: {},
+    },
+    {
+      files: ['apps/api/minimal-server.js'],
+      parser: 'espree',
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+      },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        'no-undef': 'off',
+        'no-console': 'off',
+      },
+      env: {
+        node: true,
+      },
     },
     {
       files: ['**/*.js'],

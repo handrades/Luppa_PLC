@@ -39,21 +39,31 @@ export const useFormDirtyState = (
     ignoreRoutes = [],
   } = options;
 
-  const [isDirty, setIsDirty] = useState(false);
+  const [isDirtyInternal, setIsDirtyInternal] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<string | null>(null);
+  const [manualOverride, setManualOverride] = useState<boolean | null>(null);
   const initialDataRef = useRef<string | null>(JSON.stringify(formData));
   // const location = useLocation();
   const navigate = useNavigate();
 
   // Track dirty state based on form data changes
   useEffect(() => {
-    if (!enabled || initialDataRef.current === null) return;
+    if (!enabled || initialDataRef.current === null || manualOverride !== null) return;
 
     const currentData = JSON.stringify(formData);
     const hasChanges = currentData !== initialDataRef.current;
-    setIsDirty(hasChanges);
-  }, [formData, enabled]);
+    setIsDirtyInternal(hasChanges);
+  }, [formData, enabled, manualOverride]);
+
+  // Manual dirty state control
+  const setIsDirty = useCallback((dirty: boolean) => {
+    setManualOverride(dirty);
+    setIsDirtyInternal(dirty);
+  }, []);
+
+  // Use manual override if set, otherwise use internal state
+  const isDirty = manualOverride !== null ? manualOverride : isDirtyInternal;
 
   // Browser navigation blocking (beforeunload)
   useEffect(() => {
@@ -103,7 +113,8 @@ export const useFormDirtyState = (
   // Handle confirmation dialog actions
   const handleConfirm = useCallback(() => {
     setShowConfirmDialog(false);
-    setIsDirty(false);
+    setManualOverride(null);
+    setIsDirtyInternal(false);
 
     if (blocker.state === 'blocked') {
       blocker.proceed?.();
@@ -126,7 +137,8 @@ export const useFormDirtyState = (
   // Reset dirty state
   const resetDirtyState = useCallback(() => {
     initialDataRef.current = JSON.stringify(formData);
-    setIsDirty(false);
+    setManualOverride(null);
+    setIsDirtyInternal(false);
   }, [formData]);
 
   // Confirmation dialog component
