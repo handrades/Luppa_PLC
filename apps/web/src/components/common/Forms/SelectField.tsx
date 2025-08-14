@@ -48,6 +48,10 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         </Box>
       );
     }
+    // Handle the sentinel empty value
+    if (selected === '__EMPTY_OPTION__') {
+      return <em>Select an option...</em>;
+    }
     const option = options.find(opt => opt.value === selected);
     return option?.label || String(selected || '') || <em>Select an option...</em>;
   };
