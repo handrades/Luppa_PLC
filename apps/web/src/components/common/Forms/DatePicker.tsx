@@ -52,6 +52,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           onChange={onChange}
           disabled={disabled}
           readOnly={readOnly}
+          // TODO: Remove in future version for better accessibility
+          enableAccessibleFieldDOMStructure={false}
           slots={{
             textField: TextField,
           }}
