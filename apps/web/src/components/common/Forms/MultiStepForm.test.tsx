@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormStep, MultiStepForm } from './MultiStepForm';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { BrowserRouter } from 'react-router-dom';
@@ -41,27 +41,33 @@ describe('MultiStepForm', () => {
   it('renders first step initially', () => {
     renderWithProviders(<MultiStepForm steps={mockSteps} onComplete={jest.fn()} />);
 
-    expect(screen.getByText('Step 1')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Step 1' })).toBeInTheDocument();
     expect(screen.getByText('Step 1 Content')).toBeInTheDocument();
   });
 
-  it('navigates to next step', () => {
+  it('navigates to next step', async () => {
     renderWithProviders(<MultiStepForm steps={mockSteps} onComplete={jest.fn()} />);
 
     const nextButton = screen.getByRole('button', { name: /next/i });
-    fireEvent.click(nextButton);
 
-    expect(screen.getByText('Step 2')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(nextButton);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Step 2' })).toBeInTheDocument();
     expect(screen.getByText('Step 2 Content')).toBeInTheDocument();
   });
 
-  it('navigates to previous step', () => {
+  it('navigates to previous step', async () => {
     renderWithProviders(<MultiStepForm steps={mockSteps} onComplete={jest.fn()} initialStep={1} />);
 
     const previousButton = screen.getByRole('button', { name: /previous/i });
-    fireEvent.click(previousButton);
 
-    expect(screen.getByText('Step 1')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(previousButton);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Step 1' })).toBeInTheDocument();
     expect(screen.getByText('Step 1 Content')).toBeInTheDocument();
   });
 
@@ -79,14 +85,17 @@ describe('MultiStepForm', () => {
     expect(completeButton).toBeInTheDocument();
   });
 
-  it('calls onComplete when finishing last step', () => {
+  it('calls onComplete when finishing last step', async () => {
     const onComplete = jest.fn();
     renderWithProviders(
       <MultiStepForm steps={mockSteps} onComplete={onComplete} initialStep={2} />
     );
 
     const completeButton = screen.getByRole('button', { name: /complete/i });
-    fireEvent.click(completeButton);
+
+    await act(async () => {
+      fireEvent.click(completeButton);
+    });
 
     expect(onComplete).toHaveBeenCalled();
   });
@@ -111,7 +120,7 @@ describe('MultiStepForm', () => {
     expect(skipButton).toBeInTheDocument();
   });
 
-  it('skips optional step when skip is clicked', () => {
+  it('skips optional step when skip is clicked', async () => {
     renderWithProviders(
       <MultiStepForm
         steps={mockSteps}
@@ -122,9 +131,12 @@ describe('MultiStepForm', () => {
     );
 
     const skipButton = screen.getByRole('button', { name: /skip/i });
-    fireEvent.click(skipButton);
 
-    expect(screen.getByText('Step 3')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(skipButton);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Step 3' })).toBeInTheDocument();
     expect(screen.getByText('Step 3 Content')).toBeInTheDocument();
   });
 
@@ -183,7 +195,7 @@ describe('MultiStepForm', () => {
     });
   });
 
-  it('persists state to localStorage', () => {
+  it('persists state to localStorage', async () => {
     renderWithProviders(
       <MultiStepForm
         steps={mockSteps}
@@ -194,7 +206,10 @@ describe('MultiStepForm', () => {
     );
 
     const nextButton = screen.getByRole('button', { name: /next/i });
-    fireEvent.click(nextButton);
+
+    await act(async () => {
+      fireEvent.click(nextButton);
+    });
 
     const savedState = localStorage.getItem('testForm_state');
     expect(savedState).toBeTruthy();
@@ -221,11 +236,11 @@ describe('MultiStepForm', () => {
     );
 
     // Should start at step 2 (index 1)
-    expect(screen.getByText('Step 2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Step 2' })).toBeInTheDocument();
     expect(screen.getByText('Step 2 Content')).toBeInTheDocument();
   });
 
-  it('calls onStepChange when step changes', () => {
+  it('calls onStepChange when step changes', async () => {
     const onStepChange = jest.fn();
     renderWithProviders(
       <MultiStepForm steps={mockSteps} onComplete={jest.fn()} onStepChange={onStepChange} />
@@ -234,7 +249,10 @@ describe('MultiStepForm', () => {
     expect(onStepChange).toHaveBeenCalledWith(0, 'step1');
 
     const nextButton = screen.getByRole('button', { name: /next/i });
-    fireEvent.click(nextButton);
+
+    await act(async () => {
+      fireEvent.click(nextButton);
+    });
 
     expect(onStepChange).toHaveBeenCalledWith(1, 'step2');
   });
