@@ -26,14 +26,14 @@ export function sortData<T = Record<string, unknown>>(
 
       let comparison = 0;
 
-      // Handle null/undefined values
+      // Handle null/undefined values - nulls sort last in ascending
       if (aValue == null && bValue == null) {
         continue;
       }
       if (aValue == null) {
-        comparison = -1;
+        comparison = 1; // null values sort last
       } else if (bValue == null) {
-        comparison = 1;
+        comparison = -1; // non-null values sort first
       } else {
         // Try numeric comparison first
         const aNum = Number(aValue);
