@@ -108,10 +108,16 @@ export function ResizableColumns({
 }: ResizableColumnsProps) {
   const [localColumns, setLocalColumns] = useState<ColumnConfig[]>(columns);
   const [resizing, setResizing] = useState<string | null>(null);
+  const columnsRef = useRef<ColumnConfig[]>(localColumns);
   const resizeRef = useRef<{ startX: number; startWidth: number }>({
     startX: 0,
     startWidth: 0,
   });
+
+  // Update columnsRef when localColumns changes
+  useEffect(() => {
+    columnsRef.current = localColumns;
+  }, [localColumns]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -152,14 +158,14 @@ export function ResizableColumns({
       e.preventDefault();
       e.stopPropagation();
 
-      const column = localColumns.find(c => c.id === columnId);
+      const column = columnsRef.current.find(c => c.id === columnId);
       if (!column) return;
 
       const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       resizeRef.current = { startX, startWidth: column.width };
       setResizing(columnId);
     },
-    [localColumns]
+    []
   );
 
   // Handle resize move
@@ -174,18 +180,19 @@ export function ResizableColumns({
         Math.min(maxColumnWidth, resizeRef.current.startWidth + diff)
       );
 
-      const updatedColumns = localColumns.map(col =>
+      setLocalColumns(prev => prev.map(col =>
         col.id === resizing ? { ...col, width: newWidth } : col
-      );
-      setLocalColumns(updatedColumns);
+      ));
       onColumnResize(resizing, newWidth);
     };
 
     const handleMouseUp = () => {
       if (resizing) {
-        const column = localColumns.find(c => c.id === resizing);
+        // Use the latest columns from the ref
+        const latestColumns = columnsRef.current;
+        const column = latestColumns.find(c => c.id === resizing);
         if (column) {
-          saveColumns(localColumns);
+          saveColumns(latestColumns);
         }
         setResizing(null);
       }
@@ -202,7 +209,7 @@ export function ResizableColumns({
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchend', handleMouseUp);
     };
-  }, [resizing, localColumns, minColumnWidth, maxColumnWidth, onColumnResize, saveColumns]);
+  }, [resizing, minColumnWidth, maxColumnWidth, onColumnResize, saveColumns]);
 
   // Handle drag end
   const handleDragEnd = useCallback(
@@ -210,10 +217,11 @@ export function ResizableColumns({
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
-        const oldIndex = localColumns.findIndex(col => col.id === active.id);
-        const newIndex = localColumns.findIndex(col => col.id === over.id);
+        const currentColumns = columnsRef.current;
+        const oldIndex = currentColumns.findIndex(col => col.id === active.id);
+        const newIndex = currentColumns.findIndex(col => col.id === over.id);
 
-        const newColumns = arrayMove(localColumns, oldIndex, newIndex).map((col, index) => ({
+        const newColumns = arrayMove(currentColumns, oldIndex, newIndex).map((col, index) => ({
           ...col,
           order: index,
         }));
@@ -223,7 +231,7 @@ export function ResizableColumns({
         saveColumns(newColumns);
       }
     },
-    [localColumns, onColumnReorder, saveColumns]
+    [onColumnReorder, saveColumns]
   );
 
   // Handle reset
@@ -277,31 +285,5 @@ export function ResizableColumns({
   );
 }
 
-// Utility functions for column management
-export function getDefaultColumnConfig(columns: { id: string; width?: number }[]): ColumnConfig[] {
-  return columns.map((col, index) => ({
-    id: col.id,
-    width: col.width || 150,
-    order: index,
-  }));
-}
-
-export function applyColumnConfig<T extends { id: string }>(
-  columns: T[],
-  config: ColumnConfig[]
-): Array<T & { width: number; order: number }> {
-  const configMap = new Map(config.map(c => [c.id, c]));
-
-  return columns
-    .map(col => {
-      const cfg = configMap.get(col.id);
-      if (!cfg) return null;
-      return {
-        ...col,
-        width: cfg.width,
-        order: cfg.order,
-      };
-    })
-    .filter((c): c is T & { width: number; order: number } => !!c)
-    .sort((a, b) => a.order - b.order);
-}
+// Re-export column utilities from shared utils
+export { getDefaultColumnConfig, applyColumnConfig } from '../../../utils/columnUtils';

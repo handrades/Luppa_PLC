@@ -128,3 +128,4 @@ export function SortableColumnHeader({
 
 // Re-export sort utilities for external consumers
 export { sortData, updateSortState };
+export type { SortState };

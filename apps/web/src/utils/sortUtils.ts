@@ -4,6 +4,34 @@ export interface SortState {
   priority: number;
 }
 
+/**
+ * Safely coerces values to finite numbers, returning null for non-numeric-like inputs.
+ * Handles number, string, and bigint types while avoiding throwing errors on Symbol or other types.
+ */
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed === '') return null;
+    const num = Number(trimmed);
+    return Number.isFinite(num) ? num : null;
+  }
+  
+  if (typeof value === 'bigint') {
+    try {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : null;
+    } catch {
+      return null;
+    }
+  }
+  
+  return null;
+}
+
 export function sortData<T = Record<string, unknown>>(
   data: T[],
   sortState: SortState[],
@@ -35,11 +63,11 @@ export function sortData<T = Record<string, unknown>>(
       } else if (bValue == null) {
         comparison = -1; // non-null values sort first
       } else {
-        // Try numeric comparison first
-        const aNum = Number(aValue);
-        const bNum = Number(bValue);
+        // Try numeric comparison first using safe helper
+        const aNum = toFiniteNumber(aValue);
+        const bNum = toFiniteNumber(bValue);
 
-        if (!isNaN(aNum) && !isNaN(bNum)) {
+        if (aNum !== null && bNum !== null) {
           comparison = aNum - bNum;
         } else {
           // Fallback to string comparison
