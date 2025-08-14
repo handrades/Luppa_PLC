@@ -12,14 +12,14 @@ function toFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
   }
-  
+
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (trimmed === '') return null;
     const num = Number(trimmed);
     return Number.isFinite(num) ? num : null;
   }
-  
+
   if (typeof value === 'bigint') {
     try {
       const num = Number(value);
@@ -28,7 +28,7 @@ function toFiniteNumber(value: unknown): number | null {
       return null;
     }
   }
-  
+
   return null;
 }
 

@@ -180,9 +180,9 @@ export function ResizableColumns({
         Math.min(maxColumnWidth, resizeRef.current.startWidth + diff)
       );
 
-      setLocalColumns(prev => prev.map(col =>
-        col.id === resizing ? { ...col, width: newWidth } : col
-      ));
+      setLocalColumns(prev =>
+        prev.map(col => (col.id === resizing ? { ...col, width: newWidth } : col))
+      );
       onColumnResize(resizing, newWidth);
     };
 
