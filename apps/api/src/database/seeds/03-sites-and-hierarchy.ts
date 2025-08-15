@@ -23,8 +23,6 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
   console.log('🌱 Seeding sites and equipment hierarchy...');
 
   const siteRepository = dataSource.getRepository(Site);
-  const cellRepository = dataSource.getRepository(Cell);
-  const equipmentRepository = dataSource.getRepository(Equipment);
   const userRepository = dataSource.getRepository(User);
 
   // Get admin user for created_by/updated_by tracking
@@ -36,111 +34,107 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
     throw new Error('Admin user not found. Please run user seeding first.');
   }
 
+  // Define sample sites based on typical industrial facilities
+  const sitesData = [
+    {
+      name: 'Detroit Manufacturing Plant',
+      cells: [
+        {
+          name: 'Assembly Line Alpha',
+          lineNumber: 'AL-001',
+          equipment: [
+            { name: 'Hydraulic Press Station', type: EquipmentType.PRESS },
+            { name: 'Assembly Robot Arm', type: EquipmentType.ROBOT },
+            { name: 'Quality Inspection Table', type: EquipmentType.ASSEMBLY_TABLE },
+          ],
+        },
+        {
+          name: 'Assembly Line Beta',
+          lineNumber: 'AL-002',
+          equipment: [
+            { name: 'Pneumatic Press Unit', type: EquipmentType.PRESS },
+            { name: 'Parts Conveyor System', type: EquipmentType.CONVEYOR },
+            { name: 'Welding Robot Station', type: EquipmentType.ROBOT },
+          ],
+        },
+        {
+          name: 'Heat Treatment Cell',
+          lineNumber: 'HT-001',
+          equipment: [
+            { name: 'Industrial Curing Oven', type: EquipmentType.OVEN },
+            { name: 'Temperature Control System', type: EquipmentType.OTHER },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Chicago Distribution Center',
+      cells: [
+        {
+          name: 'Packaging Line 1',
+          lineNumber: 'PL-001',
+          equipment: [
+            { name: 'Main Conveyor Belt', type: EquipmentType.CONVEYOR },
+            { name: 'Packaging Robot', type: EquipmentType.ROBOT },
+            { name: 'Final Assembly Station', type: EquipmentType.ASSEMBLY_TABLE },
+          ],
+        },
+        {
+          name: 'Packaging Line 2',
+          lineNumber: 'PL-002',
+          equipment: [
+            { name: 'Secondary Conveyor', type: EquipmentType.CONVEYOR },
+            { name: 'Labeling Station', type: EquipmentType.OTHER },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Milwaukee Quality Control',
+      cells: [
+        {
+          name: 'Testing Cell A',
+          lineNumber: 'TC-A01',
+          equipment: [
+            { name: 'Stress Test Press', type: EquipmentType.PRESS },
+            { name: 'Automated Testing Robot', type: EquipmentType.ROBOT },
+            { name: 'Quality Control Workstation', type: EquipmentType.ASSEMBLY_TABLE },
+            { name: 'Environmental Test Chamber', type: EquipmentType.OVEN },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Columbus Prototype Lab',
+      cells: [
+        {
+          name: 'R&D Development Cell',
+          lineNumber: 'RD-001',
+          equipment: [
+            { name: 'Prototype Assembly Table', type: EquipmentType.ASSEMBLY_TABLE },
+            { name: 'Precision Robot Arm', type: EquipmentType.ROBOT },
+            { name: 'Test Equipment Rack', type: EquipmentType.OTHER },
+          ],
+        },
+      ],
+    },
+  ];
+
+  // Check if sites already exist BEFORE starting any transaction
+  const existingSites = await siteRepository.find({
+    where: sitesData.map(site => ({ name: site.name })),
+  });
+
+  const existingSiteNames = existingSites.map(site => site.name);
+  const sitesToCreate = sitesData.filter(site => !existingSiteNames.includes(site.name));
+
+  if (sitesToCreate.length === 0) {
+    console.log('✅ Site hierarchy already exists, skipping seed');
+    return;
+  }
+
   // Use database transaction for atomic operations
-  const queryRunner = dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
-
-  try {
-    // Define sample sites based on typical industrial facilities
-    const sitesData = [
-      {
-        name: 'Detroit Manufacturing Plant',
-        cells: [
-          {
-            name: 'Assembly Line Alpha',
-            lineNumber: 'AL-001',
-            equipment: [
-              { name: 'Hydraulic Press Station', type: EquipmentType.PRESS },
-              { name: 'Assembly Robot Arm', type: EquipmentType.ROBOT },
-              { name: 'Quality Inspection Table', type: EquipmentType.ASSEMBLY_TABLE },
-            ],
-          },
-          {
-            name: 'Assembly Line Beta',
-            lineNumber: 'AL-002',
-            equipment: [
-              { name: 'Pneumatic Press Unit', type: EquipmentType.PRESS },
-              { name: 'Parts Conveyor System', type: EquipmentType.CONVEYOR },
-              { name: 'Welding Robot Station', type: EquipmentType.ROBOT },
-            ],
-          },
-          {
-            name: 'Heat Treatment Cell',
-            lineNumber: 'HT-001',
-            equipment: [
-              { name: 'Industrial Curing Oven', type: EquipmentType.OVEN },
-              { name: 'Temperature Control System', type: EquipmentType.OTHER },
-            ],
-          },
-        ],
-      },
-      {
-        name: 'Chicago Distribution Center',
-        cells: [
-          {
-            name: 'Packaging Line 1',
-            lineNumber: 'PL-001',
-            equipment: [
-              { name: 'Main Conveyor Belt', type: EquipmentType.CONVEYOR },
-              { name: 'Packaging Robot', type: EquipmentType.ROBOT },
-              { name: 'Final Assembly Station', type: EquipmentType.ASSEMBLY_TABLE },
-            ],
-          },
-          {
-            name: 'Packaging Line 2',
-            lineNumber: 'PL-002',
-            equipment: [
-              { name: 'Secondary Conveyor', type: EquipmentType.CONVEYOR },
-              { name: 'Labeling Station', type: EquipmentType.OTHER },
-            ],
-          },
-        ],
-      },
-      {
-        name: 'Milwaukee Quality Control',
-        cells: [
-          {
-            name: 'Testing Cell A',
-            lineNumber: 'TC-A01',
-            equipment: [
-              { name: 'Stress Test Press', type: EquipmentType.PRESS },
-              { name: 'Automated Testing Robot', type: EquipmentType.ROBOT },
-              { name: 'Quality Control Workstation', type: EquipmentType.ASSEMBLY_TABLE },
-              { name: 'Environmental Test Chamber', type: EquipmentType.OVEN },
-            ],
-          },
-        ],
-      },
-      {
-        name: 'Columbus Prototype Lab',
-        cells: [
-          {
-            name: 'R&D Development Cell',
-            lineNumber: 'RD-001',
-            equipment: [
-              { name: 'Prototype Assembly Table', type: EquipmentType.ASSEMBLY_TABLE },
-              { name: 'Precision Robot Arm', type: EquipmentType.ROBOT },
-              { name: 'Test Equipment Rack', type: EquipmentType.OTHER },
-            ],
-          },
-        ],
-      },
-    ];
-
-    // Check if sites already exist
-    const existingSites = await siteRepository.find({
-      where: sitesData.map(site => ({ name: site.name })),
-    });
-
-    const existingSiteNames = existingSites.map(site => site.name);
-    const sitesToCreate = sitesData.filter(site => !existingSiteNames.includes(site.name));
-
-    if (sitesToCreate.length === 0) {
-      console.log('✅ Site hierarchy already exists, skipping seed');
-      return;
-    }
-
+  await dataSource.transaction(async manager => {
     let createdSitesCount = 0;
     let createdCellsCount = 0;
     let createdEquipmentCount = 0;
@@ -153,7 +147,7 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
       site.createdBy = adminUser.id;
       site.updatedBy = adminUser.id;
 
-      const savedSite = await siteRepository.save(site);
+      const savedSite = await manager.save(site);
       createdSitesCount++;
 
       // Create cells for this site
@@ -165,7 +159,7 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
         cell.createdBy = adminUser.id;
         cell.updatedBy = adminUser.id;
 
-        const savedCell = await cellRepository.save(cell);
+        const savedCell = await manager.save(cell);
         createdCellsCount++;
 
         // Create equipment for this cell
@@ -177,7 +171,7 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
           equipment.createdBy = adminUser.id;
           equipment.updatedBy = adminUser.id;
 
-          await equipmentRepository.save(equipment);
+          await manager.save(equipment);
           createdEquipmentCount++;
         }
       }
@@ -198,13 +192,5 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
         });
       });
     });
-  } catch (error) {
-    // Rollback transaction on error
-    await queryRunner.rollbackTransaction();
-    console.error('❌ Error creating site hierarchy:', error);
-    throw error;
-  } finally {
-    // Clean up query runner
-    await queryRunner.release();
-  }
+  });
 };
