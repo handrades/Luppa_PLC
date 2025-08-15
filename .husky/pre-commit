@@ -10,7 +10,10 @@ npx lint-staged
 # Then run additional psake checks if PowerShell is available
 if command -v pwsh >/dev/null 2>&1; then
   echo "🔍 Running additional psake checks..."
-  pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
+  timeout 600 pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI" || {
+    echo "⚠️  Pre-commit checks timed out after 10 minutes"
+    exit 1
+  }
 fi
 
 echo "✅ Pre-commit checks completed"

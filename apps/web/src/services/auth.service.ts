@@ -1,7 +1,8 @@
 import { api } from './api.client';
+import { env } from '../utils/env';
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -40,8 +41,8 @@ export const authService = {
 
     // Store token in sessionStorage
     if (response.data.accessToken) {
-      sessionStorage.setItem('authToken', response.data.accessToken);
-      sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      sessionStorage.setItem(env.AUTH_TOKEN_KEY, response.data.accessToken);
+      sessionStorage.setItem(env.AUTH_USER_KEY, JSON.stringify(response.data.user));
     }
 
     return response.data;
@@ -55,8 +56,8 @@ export const authService = {
       console.error('Logout API call failed:', error);
     } finally {
       // Always clear session storage
-      sessionStorage.removeItem('authToken');
-      sessionStorage.removeItem('user');
+      sessionStorage.removeItem(env.AUTH_TOKEN_KEY);
+      sessionStorage.removeItem(env.AUTH_USER_KEY);
     }
   },
 
@@ -64,15 +65,15 @@ export const authService = {
     const response = await api.auth.refresh();
 
     if (response.data.accessToken) {
-      sessionStorage.setItem('authToken', response.data.accessToken);
-      sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      sessionStorage.setItem(env.AUTH_TOKEN_KEY, response.data.accessToken);
+      sessionStorage.setItem(env.AUTH_USER_KEY, JSON.stringify(response.data.user));
     }
 
     return response.data;
   },
 
   getCurrentUser(): User | null {
-    const userStr = sessionStorage.getItem('user');
+    const userStr = sessionStorage.getItem(env.AUTH_USER_KEY);
     if (!userStr) return null;
 
     try {
@@ -83,7 +84,7 @@ export const authService = {
   },
 
   getToken(): string | null {
-    return sessionStorage.getItem('authToken');
+    return sessionStorage.getItem(env.AUTH_TOKEN_KEY);
   },
 
   isAuthenticated(): boolean {

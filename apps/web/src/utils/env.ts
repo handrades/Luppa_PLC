@@ -52,6 +52,7 @@ export const env = {
 
   // Authentication
   AUTH_TOKEN_KEY: getEnvVar('VITE_AUTH_TOKEN_KEY', 'authToken'),
+  AUTH_USER_KEY: getEnvVar('VITE_AUTH_USER_KEY', 'user'),
   AUTH_SESSION_TIMEOUT: getNumberEnvVar('VITE_AUTH_SESSION_TIMEOUT', 3600000),
 
   // Logging

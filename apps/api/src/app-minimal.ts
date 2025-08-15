@@ -1,8 +1,15 @@
 import express, { Application } from 'express';
 import { logger } from './config/logger';
+import { corsMiddleware } from './middleware/corsMiddleware';
 
 export function createApp(): Application {
   const app = express();
+
+  // Add CORS middleware to handle preflight requests
+  app.use(corsMiddleware);
+
+  // Add JSON body parsing middleware
+  app.use(express.json());
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });

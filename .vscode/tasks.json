@@ -2,32 +2,277 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build All",
+      "label": "Lint",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["build"],
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake Lint"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
       "group": {
         "kind": "build",
         "isDefault": true
-      }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
     },
     {
-      "label": "Test All",
+      "label": "Test",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["test"],
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake Test"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
       "group": {
         "kind": "test",
         "isDefault": true
-      }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
     },
     {
-      "label": "Start Development",
+      "label": "Run (Docker)",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["dev"],
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake Run"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
       "group": "build",
-      "isBackground": true
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop (Docker)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerDown"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run API",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake RunApi"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Web",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake RunWeb"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run PostgreSQL",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake RunPostgres"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Redis",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake RunRedis"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Nginx",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake RunNginx"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerStatus"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Logs",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerLogs"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Down",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerDown"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Health",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerHealth"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
     }
   ]
 }

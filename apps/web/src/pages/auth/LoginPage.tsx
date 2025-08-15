@@ -28,7 +28,7 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      await authService.login({ username: email, password });
+      await authService.login({ email, password });
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
