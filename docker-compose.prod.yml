@@ -193,7 +193,7 @@ services:
       POSTGRES_SSL: ${POSTGRES_SSL:-false}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://localhost}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://localhost}
       SESSION_SECRET_FILE: /run/secrets/jwt-secret
       METRICS_PORT: 9090
       METRICS_PATH: /metrics
@@ -244,8 +244,9 @@ services:
       - luppa-prod
     environment:
       NODE_ENV: production
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://localhost/api}
+      VITE_API_URL: ${VITE_API_URL:-https://localhost/api/v1}
       VITE_APP_VERSION: ${VITE_APP_VERSION:-latest}
+      VITE_AUTH_USER_KEY: ${VITE_AUTH_USER_KEY:-user}
       VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-warn}
     healthcheck:
       test:

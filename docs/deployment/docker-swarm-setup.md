@@ -82,7 +82,7 @@ Edit `.env.production` with your specific values:
 GRAFANA_ADMIN_PASSWORD=your_secure_admin_password
 GRAFANA_SECRET_KEY=your_grafana_secret_key_32_chars
 CORS_ORIGIN=https://your-production-domain.com
-VITE_API_BASE_URL=https://your-production-domain.com/api
+VITE_API_URL=https://your-production-domain.com/api/v1
 
 # SSL configuration
 SSL_COMMON_NAME=your-production-domain.com

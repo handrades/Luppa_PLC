@@ -128,8 +128,8 @@ apiClient.interceptors.response.use(
 
 // API client wrapper with common methods
 export const api = {
-  // Health check
-  health: () => apiClient.get('/health'),
+  // Health check (uses absolute URL since health is mounted at root)
+  health: () => axios.get(`${env.API_URL.replace('/api/v1', '')}/health`),
 
   // Authentication
   auth: {

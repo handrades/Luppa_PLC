@@ -315,7 +315,7 @@ services:
       - luppa-prod
     environment:
       NODE_ENV: production
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://localhost/api}
+      VITE_API_URL: ${VITE_API_URL:-https://localhost/api/v1}
       VITE_APP_VERSION: ${VITE_APP_VERSION:-latest}
       VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-warn}
     healthcheck:
