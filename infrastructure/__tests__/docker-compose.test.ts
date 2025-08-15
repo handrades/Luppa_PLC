@@ -224,7 +224,7 @@ describe('Docker Compose Configuration', () => {
 
     test('should have development environment variables', () => {
       expect(webService.environment?.NODE_ENV).toBe('development');
-      expect(webService.environment?.VITE_API_BASE_URL).toBeDefined();
+      expect(webService.environment?.VITE_API_URL).toBeDefined();
     });
 
     test('should have volume mounts for development', () => {
@@ -358,6 +358,6 @@ describe('Environment Configuration', () => {
 
   test('should contain web configuration variables', () => {
     expect(envExample).toContain('WEB_PORT');
-    expect(envExample).toContain('VITE_API_BASE_URL');
+    expect(envExample).toContain('VITE_API_URL');
   });
 });

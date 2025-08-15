@@ -267,7 +267,7 @@ docker service update --force luppa_nginx
 **Solutions**:
 
 1. Ensure all resources use HTTPS
-2. Update `VITE_API_BASE_URL` to use HTTPS
+2. Update `VITE_API_URL` to use HTTPS
 3. Check CSP headers in Nginx configuration
 
 ### 5. Database Issues

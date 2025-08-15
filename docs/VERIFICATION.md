@@ -28,7 +28,7 @@ Invoke-psake CI
 
 Press `Ctrl+Shift+P` and type "Tasks: Run Task", then select:
 
-- **Start API Server** - Starts backend on port 3101
+- **Start API Server** - Starts backend on port 3010
 - **Start Web Application** - Starts frontend on port 3100 (with API proxy)
 - **Build All Applications** - Production build
 - **Psake: CI** - Full validation pipeline
@@ -71,7 +71,7 @@ pnpm build
 
 ### ✅ API Integration
 
-1. **Health Check**: `http://localhost:3101/health` should return JSON status
+1. **Health Check**: `http://localhost:3010/health` should return JSON status
 2. **Proxy Working**: Frontend API calls route through `/api/*` to backend
 3. **Error Handling**: API errors are caught and logged properly
 
@@ -113,8 +113,8 @@ pnpm build
 ### Port Conflicts
 
 - Frontend defaults to port 3100, will auto-increment if busy
-- Backend runs on port 3101
-- Check for conflicts with `lsof -i :3100` or `lsof -i :3101`
+- Backend runs on port 3010
+- Check for conflicts with `lsof -i :3100` or `lsof -i :3010`
 
 ### Build Issues
 
@@ -124,7 +124,7 @@ pnpm build
 
 ### Proxy Issues
 
-- Ensure backend is running on port 3101 before starting frontend
+- Ensure backend is running on port 3010 before starting frontend
 - Check browser network tab for failed `/api/*` requests
 - Verify Vite proxy configuration in `apps/web/vite.config.ts`
 
@@ -169,7 +169,7 @@ apps/web/
 
 ✅ All applications build without errors
 ✅ Frontend loads on <http://localhost:3100>
-✅ Backend API responds on <http://localhost:3101/health>
+✅ Backend API responds on <http://localhost:3010/health>
 ✅ All routes work (dashboard, login, equipment, 404)
 ✅ Navigation and UI components function properly
 ✅ Tests pass
