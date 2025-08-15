@@ -129,6 +129,16 @@ export const errorHandler = (
     code = error.code;
     message = error.message;
     details = error.details;
+  } else if (
+    'code' in error &&
+    'statusCode' in error &&
+    typeof error.code === 'string' &&
+    typeof error.statusCode === 'number'
+  ) {
+    // Handle custom domain errors (like EquipmentError) that have code and statusCode properties
+    statusCode = error.statusCode;
+    code = error.code;
+    message = error.message;
   } else if (error instanceof ValidationError) {
     statusCode = error.statusCode;
     code = 'VALIDATION_ERROR';

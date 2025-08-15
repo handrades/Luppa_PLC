@@ -35,11 +35,17 @@ export const auditContextMiddleware = async (
         await queryRunner.connect();
 
         // Always set session variables to prevent stale context from pooled connections
-        // Use empty string instead of NULL to avoid PostgreSQL GUC warnings
-        await queryRunner.query('SET app.current_user_id = $1', [userId || '']);
-        await queryRunner.query('SET app.client_ip = $1', [ipAddress || '']);
-        await queryRunner.query('SET app.user_agent = $1', [userAgent || '']);
-        await queryRunner.query('SET app.session_id = $1', [sessionId || '']);
+        // Use 'null' string instead of empty string for PostgreSQL session variables
+        // Note: SET commands don't support parameterized queries, so we need to escape values manually
+        const escapedUserId = queryRunner.manager.connection.driver.escape(userId || 'null');
+        const escapedIpAddress = queryRunner.manager.connection.driver.escape(ipAddress || 'null');
+        const escapedUserAgent = queryRunner.manager.connection.driver.escape(userAgent || 'null');
+        const escapedSessionId = queryRunner.manager.connection.driver.escape(sessionId || 'null');
+
+        await queryRunner.query(`SET app.current_user_id = ${escapedUserId}`);
+        await queryRunner.query(`SET app.client_ip = ${escapedIpAddress}`);
+        await queryRunner.query(`SET app.user_agent = ${escapedUserAgent}`);
+        await queryRunner.query(`SET app.session_id = ${escapedSessionId}`);
 
         // Store query runner and manager on request for use in downstream operations
         req.auditQueryRunner = queryRunner;

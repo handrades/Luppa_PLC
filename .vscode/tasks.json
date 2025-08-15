@@ -7,10 +7,7 @@
       "command": "pwsh",
       "args": ["-Command", "Invoke-psake Lint"],
       "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
-        }
+        "cwd": "${workspaceFolder}"
       },
       "windows": {
         "options": {
