@@ -10,6 +10,8 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { seedRoles } from './01-roles.js';
 import { seedUsers } from './02-users.js';
+import { seedSitesAndHierarchy } from './03-sites-and-hierarchy.js';
+import { seedPLCInventory } from './04-plc-inventory.js';
 
 /**
  * Create DataSource for seeding operations
@@ -67,6 +69,8 @@ const runSeeds = async (): Promise<void> => {
     const seedFunctions = [
       { name: 'Roles', fn: seedRoles },
       { name: 'Users', fn: seedUsers },
+      { name: 'Sites and Hierarchy', fn: seedSitesAndHierarchy },
+      { name: 'PLC Inventory', fn: seedPLCInventory },
     ];
 
     for (const seed of seedFunctions) {
