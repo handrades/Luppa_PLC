@@ -1,9 +1,9 @@
 import 'reflect-metadata';
-import { createApp } from './app';
+import { createApp } from './app-minimal';
 import { logger } from './config/logger';
 import { config, validateEnvironment } from './config/env';
-import { closeDatabase, initializeDatabase } from './config/database';
-import { closeRedis, initializeRedis } from './config/redis';
+import { closeDatabase } from './config/database';
+import { closeRedis } from './config/redis';
 import { Server } from 'http';
 
 // Validate environment variables early
@@ -33,13 +33,13 @@ let server: Server;
 // Start server
 const startServer = async (): Promise<void> => {
   try {
-    // Initialize database connection
-    await initializeDatabase();
-    logger.info('Database initialized successfully');
+    logger.info('Starting server without database/Redis for debugging...');
 
-    // Initialize Redis connection
-    await initializeRedis();
-    logger.info('Redis initialized successfully');
+    // TODO: Re-enable after basic server works
+    // await initializeDatabase();
+    // logger.info('Database initialized successfully');
+    // await initializeRedis();
+    // logger.info('Redis initialized successfully');
 
     server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {

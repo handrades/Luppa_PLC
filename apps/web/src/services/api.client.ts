@@ -134,7 +134,10 @@ export const api = {
   // Authentication
   auth: {
     login: (credentials: { username: string; password: string }) =>
-      apiClient.post('/auth/login', credentials),
+      apiClient.post('/auth/login', {
+        email: credentials.username,
+        password: credentials.password,
+      }),
     logout: () => apiClient.post('/auth/logout'),
     refresh: () => apiClient.post('/auth/refresh'),
   },

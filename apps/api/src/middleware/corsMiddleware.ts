@@ -22,6 +22,13 @@ import { logger } from '../config/logger';
  * Get allowed origins based on current environment
  */
 const getAllowedOrigins = (): string[] => {
+  // Use ALLOWED_ORIGINS environment variable if set
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (envOrigins) {
+    return envOrigins.split(',').map(origin => origin.trim());
+  }
+
+  // Fallback to defaults based on environment
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   if (isDevelopment) {

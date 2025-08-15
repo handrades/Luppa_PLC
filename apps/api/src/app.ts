@@ -1,6 +1,6 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { config } from 'dotenv';
+import { config as dotenvConfig } from 'dotenv';
 
 // Import middleware and configuration
 import { initializeSecurityMiddleware, securityMiddleware } from './middleware/securityMiddleware';
@@ -27,7 +27,7 @@ import usersRouter from './routes/users';
 import metricsRouter from './routes/metrics';
 
 // Load environment variables
-config();
+dotenvConfig();
 
 // Extend Express Request interface for raw body support
 // Express Request interface augmented in types/express.d.ts
