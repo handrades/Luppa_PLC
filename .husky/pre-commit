@@ -10,10 +10,40 @@ npx lint-staged
 # Then run additional psake checks if PowerShell is available
 if command -v pwsh >/dev/null 2>&1; then
   echo "🔍 Running additional psake checks..."
-  timeout 600 pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI" || {
-    echo "⚠️  Pre-commit checks timed out after 10 minutes"
-    exit 1
-  }
+  
+  # Detect available timeout command
+  TIMEOUT_CMD=""
+  if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD="gtimeout"
+  fi
+  
+  # Execute with or without timeout
+  if [ -n "$TIMEOUT_CMD" ]; then
+    # Run with timeout (10 minutes = 600 seconds)
+    $TIMEOUT_CMD 600 pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
+    EXIT_CODE=$?
+    
+    # Handle exit codes
+    if [ $EXIT_CODE -eq 124 ]; then
+      echo "⚠️  Pre-commit checks timed out after 10 minutes"
+      exit 1
+    elif [ $EXIT_CODE -ne 0 ]; then
+      echo "❌ Pre-commit checks failed with exit code $EXIT_CODE"
+      exit $EXIT_CODE
+    fi
+  else
+    # Run without timeout if timeout command is not available
+    echo "⚠️  No timeout command found (timeout/gtimeout), running without timeout limit..."
+    pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
+    EXIT_CODE=$?
+    
+    if [ $EXIT_CODE -ne 0 ]; then
+      echo "❌ Pre-commit checks failed with exit code $EXIT_CODE"
+      exit $EXIT_CODE
+    fi
+  fi
 fi
 
 echo "✅ Pre-commit checks completed"

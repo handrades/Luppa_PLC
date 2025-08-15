@@ -12,6 +12,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": {
         "kind": "build",
         "isDefault": true
@@ -33,6 +57,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": {
@@ -58,6 +106,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "isBackground": false,
       "presentation": {
@@ -77,6 +149,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": "build",
@@ -100,6 +196,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "isBackground": false,
       "presentation": {
@@ -119,6 +239,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": "build",
@@ -142,6 +286,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "isBackground": false,
       "presentation": {
@@ -161,6 +329,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": "build",
@@ -184,6 +376,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "isBackground": false,
       "presentation": {
@@ -203,6 +419,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": "build",
@@ -225,6 +465,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "presentation": {
         "echo": true,
@@ -245,6 +509,30 @@
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
         }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
       "group": "build",
       "presentation": {
         "echo": true,
@@ -263,6 +551,30 @@
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
         }
       },
       "group": "build",
