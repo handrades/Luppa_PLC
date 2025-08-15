@@ -22,24 +22,23 @@ if command -v pwsh >/dev/null 2>&1; then
   # Execute with or without timeout
   if [ -n "$TIMEOUT_CMD" ]; then
     # Run with timeout (10 minutes = 600 seconds)
-    $TIMEOUT_CMD 600 pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
-    EXIT_CODE=$?
-    
-    # Handle exit codes
-    if [ $EXIT_CODE -eq 124 ]; then
-      echo "⚠️  Pre-commit checks timed out after 10 minutes"
-      exit 1
-    elif [ $EXIT_CODE -ne 0 ]; then
-      echo "❌ Pre-commit checks failed with exit code $EXIT_CODE"
-      exit $EXIT_CODE
+    if ! $TIMEOUT_CMD 600 pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"; then
+      EXIT_CODE=$?
+      
+      # Handle exit codes
+      if [ $EXIT_CODE -eq 124 ]; then
+        echo "⚠️  Pre-commit checks timed out after 10 minutes"
+        exit 1
+      else
+        echo "❌ Pre-commit checks failed with exit code $EXIT_CODE"
+        exit $EXIT_CODE
+      fi
     fi
   else
     # Run without timeout if timeout command is not available
     echo "⚠️  No timeout command found (timeout/gtimeout), running without timeout limit..."
-    pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"
-    EXIT_CODE=$?
-    
-    if [ $EXIT_CODE -ne 0 ]; then
+    if ! pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Invoke-Psake CI"; then
+      EXIT_CODE=$?
       echo "❌ Pre-commit checks failed with exit code $EXIT_CODE"
       exit $EXIT_CODE
     fi
