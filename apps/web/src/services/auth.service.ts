@@ -1,36 +1,48 @@
 import { api } from './api.client';
+import { env } from '../utils/env';
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: {
     id: string;
-    username: string;
-    email?: string;
-    roles: string[];
+    email: string;
+    firstName: string;
+    lastName: string;
+    roleId: string;
+    roleName: string;
+    permissions: string[];
+    isActive: boolean;
+    lastLogin: string | null;
   };
-  expiresIn: number;
+  message?: string;
 }
 
 export interface User {
   id: string;
-  username: string;
-  email?: string;
-  roles: string[];
+  email: string;
+  firstName: string;
+  lastName: string;
+  roleId: string;
+  roleName: string;
+  permissions: string[];
+  isActive: boolean;
+  lastLogin: string | null;
 }
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.auth.login(credentials);
 
-    // Store token in localStorage
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    // Store token in sessionStorage
+    if (response.data.accessToken) {
+      sessionStorage.setItem(env.AUTH_TOKEN_KEY, response.data.accessToken);
+      sessionStorage.setItem(env.AUTH_USER_KEY, JSON.stringify(response.data.user));
     }
 
     return response.data;
@@ -43,25 +55,25 @@ export const authService = {
       // eslint-disable-next-line no-console
       console.error('Logout API call failed:', error);
     } finally {
-      // Always clear local storage
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+      // Always clear session storage
+      sessionStorage.removeItem(env.AUTH_TOKEN_KEY);
+      sessionStorage.removeItem(env.AUTH_USER_KEY);
     }
   },
 
   async refreshToken(): Promise<AuthResponse> {
     const response = await api.auth.refresh();
 
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    if (response.data.accessToken) {
+      sessionStorage.setItem(env.AUTH_TOKEN_KEY, response.data.accessToken);
+      sessionStorage.setItem(env.AUTH_USER_KEY, JSON.stringify(response.data.user));
     }
 
     return response.data;
   },
 
   getCurrentUser(): User | null {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem(env.AUTH_USER_KEY);
     if (!userStr) return null;
 
     try {
@@ -72,7 +84,7 @@ export const authService = {
   },
 
   getToken(): string | null {
-    return localStorage.getItem('authToken');
+    return sessionStorage.getItem(env.AUTH_TOKEN_KEY);
   },
 
   isAuthenticated(): boolean {
@@ -81,6 +93,6 @@ export const authService = {
 
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
-    return user?.roles.includes(role) ?? false;
+    return user?.roleName === role ?? false;
   },
 };

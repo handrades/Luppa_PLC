@@ -1433,6 +1433,57 @@ Task DockerEnvCheck -Alias env-check -Description "Check environment configurati
   }
 }
 
+# Run application using Docker (alias for DockerUp)
+Task Run -Alias docker-run -Description "Start all development services with Docker" {
+  Invoke-Task DockerUp
+}
+
+# Run individual services
+Task RunApi -Alias run-api -Description "Start only the API service" {
+  Write-Host "`nStarting API service..." -ForegroundColor Cyan
+  
+  Invoke-DockerCompose -Arguments @("up", "-d", "postgres", "redis", "api")
+  
+  Write-Host "API service started!" -ForegroundColor Green
+  Write-Host "API health check: http://localhost:3010/health" -ForegroundColor Yellow
+}
+
+Task RunWeb -Alias run-web -Description "Start only the web service" {
+  Write-Host "`nStarting web service..." -ForegroundColor Cyan
+  
+  Invoke-DockerCompose -Arguments @("up", "-d", "web")
+  
+  Write-Host "Web service started!" -ForegroundColor Green
+  Write-Host "Web service available at: http://localhost:5174" -ForegroundColor Yellow
+}
+
+Task RunPostgres -Alias run-postgres -Description "Start only PostgreSQL service" {
+  Write-Host "`nStarting PostgreSQL service..." -ForegroundColor Cyan
+  
+  Invoke-DockerCompose -Arguments @("up", "-d", "postgres")
+  
+  Write-Host "PostgreSQL service started!" -ForegroundColor Green
+  Write-Host "PostgreSQL available at: localhost:5433" -ForegroundColor Yellow
+}
+
+Task RunRedis -Alias run-redis -Description "Start only Redis service" {
+  Write-Host "`nStarting Redis service..." -ForegroundColor Cyan
+  
+  Invoke-DockerCompose -Arguments @("up", "-d", "redis")
+  
+  Write-Host "Redis service started!" -ForegroundColor Green
+  Write-Host "Redis available at: localhost:6380" -ForegroundColor Yellow
+}
+
+Task RunNginx -Alias run-nginx -Description "Start only Nginx service" {
+  Write-Host "`nStarting Nginx service..." -ForegroundColor Cyan
+  
+  Invoke-DockerCompose -Arguments @("up", "-d", "nginx")
+  
+  Write-Host "Nginx service started!" -ForegroundColor Green
+  Write-Host "Nginx available at: http://localhost:3011" -ForegroundColor Yellow
+}
+
 # Docker help - show available Docker commands
 Task DockerHelp -Alias docker-help -Description "Show available Docker commands" {
   Write-Host "`nLuppa Inventory System - Docker Management" -ForegroundColor Cyan
@@ -1441,9 +1492,15 @@ Task DockerHelp -Alias docker-help -Description "Show available Docker commands"
   Write-Host ""
     
   $dockerTasks = @(
+    @{Name = "Run (docker-run)"; Description = "Start all development services with Docker" },
     @{Name = "DockerUp (up)"; Description = "Start all development services" },
     @{Name = "DockerDown (down)"; Description = "Stop and remove all containers" },
     @{Name = "DockerRestart (restart)"; Description = "Restart all services" },
+    @{Name = "RunApi (run-api)"; Description = "Start only the API service" },
+    @{Name = "RunWeb (run-web)"; Description = "Start only the web service" },
+    @{Name = "RunPostgres (run-postgres)"; Description = "Start only PostgreSQL service" },
+    @{Name = "RunRedis (run-redis)"; Description = "Start only Redis service" },
+    @{Name = "RunNginx (run-nginx)"; Description = "Start only Nginx service" },
     @{Name = "DockerBuild (docker-build)"; Description = "Build or rebuild all services" },
     @{Name = "DockerLogs (logs)"; Description = "View logs from all services" },
     @{Name = "DockerLogsApi (logs-api)"; Description = "View API service logs only" },

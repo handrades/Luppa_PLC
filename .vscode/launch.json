@@ -63,7 +63,10 @@
       },
       "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/jest.cmd"
+      }
     },
     {
       "name": "Debug Tests (Web)",
@@ -76,7 +79,10 @@
         "NODE_ENV": "test"
       },
       "console": "integratedTerminal",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/jest.cmd"
+      }
     },
     {
       "name": "Debug Current Test File",
@@ -90,7 +96,10 @@
       },
       "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/jest.cmd"
+      }
     }
   ],
   "compounds": [
