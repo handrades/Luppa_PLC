@@ -78,7 +78,9 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
   const deleteEquipment = useDeleteEquipment();
 
   // Search functionality
-  const { searchTerm, setSearchTerm, isSearching, clearSearch } = useEquipmentSearch();
+  const { searchTerm, setSearchTerm, isSearching, clearSearch } = useEquipmentSearch(
+    initialFilters?.search
+  );
 
   // Equipment data hook for React Query integration
   const { refetch } = useEquipment(initialFilters);
@@ -212,6 +214,10 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
     try {
       await deleteEquipment(selectedIds);
 
+      // Refresh the equipment list and clear selection to avoid stale UI
+      await fetchEquipment();
+      clearSelection();
+
       const itemText = selectedIds.length === 1 ? 'item' : 'items';
       showSuccess(`Successfully deleted ${selectedIds.length} ${itemText}`);
 
@@ -222,7 +228,14 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
     } finally {
       setIsDeleting(false);
     }
-  }, [selection.selectedIds, deleteEquipment, showSuccess, showError]);
+  }, [
+    selection.selectedIds,
+    deleteEquipment,
+    fetchEquipment,
+    clearSelection,
+    showSuccess,
+    showError,
+  ]);
 
   // Cancel delete handler
   const handleCancelDelete = useCallback(() => {
