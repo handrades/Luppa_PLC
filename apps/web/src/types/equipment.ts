@@ -100,10 +100,11 @@ export interface EquipmentListState {
 export interface EquipmentActions {
   fetchEquipment: (filters?: EquipmentSearchFilters) => Promise<void>;
   searchEquipment: (searchTerm: string) => Promise<void>;
-  setFilters: (filters: Partial<EquipmentSearchFilters>) => void;
+  setFilters: (filters: Partial<EquipmentSearchFilters>) => Promise<void>;
   setSelection: (selectedIds: Set<string>) => void;
   selectAll: () => void;
   clearSelection: () => void;
+  deleteEquipment: (ids: string[]) => Promise<void>;
   clearError: () => void;
   reset: () => void;
 }

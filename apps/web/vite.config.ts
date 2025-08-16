@@ -20,7 +20,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: `http://localhost:${process.env.API_PORT || '3010'}`,
+        target: `http://localhost:${process.env.API_PORT || '3011'}`,
         changeOrigin: true,
         secure: false,
       },

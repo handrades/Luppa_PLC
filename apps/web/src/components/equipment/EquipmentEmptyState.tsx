@@ -42,8 +42,9 @@ export const EquipmentEmptyState = React.memo<EquipmentEmptyStateProps>(
         sx={{
           p: 6,
           textAlign: 'center',
-          backgroundColor: theme.palette.grey[50],
-          border: `1px dashed ${theme.palette.grey[300]}`,
+          backgroundColor:
+            theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[50],
+          border: `1px dashed ${theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[300]}`,
           borderRadius: 2,
           minHeight: 400,
           display: 'flex',
@@ -58,7 +59,8 @@ export const EquipmentEmptyState = React.memo<EquipmentEmptyStateProps>(
               width: 80,
               height: 80,
               borderRadius: '50%',
-              backgroundColor: theme.palette.grey[200],
+              backgroundColor:
+                theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -68,7 +70,8 @@ export const EquipmentEmptyState = React.memo<EquipmentEmptyStateProps>(
             {React.createElement(icon, {
               sx: {
                 fontSize: 40,
-                color: theme.palette.grey[500],
+                color:
+                  theme.palette.mode === 'dark' ? theme.palette.grey[400] : theme.palette.grey[500],
               },
             })}
           </Box>
@@ -132,7 +135,8 @@ export const EquipmentEmptyState = React.memo<EquipmentEmptyStateProps>(
               sx={{
                 mt: 4,
                 p: 3,
-                backgroundColor: theme.palette.grey[100],
+                backgroundColor:
+                  theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
                 borderRadius: 1,
               }}
             >

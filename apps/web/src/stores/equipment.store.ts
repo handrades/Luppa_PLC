@@ -70,14 +70,33 @@ export const useEquipmentStore = create<EquipmentStore>()(
             error: null,
           });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch equipment';
+          // Check if it's a 404 error (endpoint not implemented yet)
+          // The error is already processed by equipment service and has status property
+          const is404Error =
+            error &&
+            typeof error === 'object' &&
+            'status' in error &&
+            (error as { status: number }).status === 404;
 
-          set({
-            equipment: [],
-            pagination: initialPagination,
-            isLoading: false,
-            error: errorMessage,
-          });
+          if (is404Error) {
+            // Treat 404 as "no data" rather than an error to show empty state
+            set({
+              equipment: [],
+              pagination: initialPagination,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            // Handle other errors normally
+            const errorMessage =
+              error instanceof Error ? error.message : 'Failed to fetch equipment';
+            set({
+              equipment: [],
+              pagination: initialPagination,
+              isLoading: false,
+              error: errorMessage,
+            });
+          }
         }
       },
 
@@ -101,26 +120,44 @@ export const useEquipmentStore = create<EquipmentStore>()(
             error: null,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to search equipment';
+          // Check if it's a 404 error (endpoint not implemented yet)
+          // The error is already processed by equipment service and has status property
+          const is404Error =
+            error &&
+            typeof error === 'object' &&
+            'status' in error &&
+            (error as { status: number }).status === 404;
 
-          set({
-            equipment: [],
-            pagination: initialPagination,
-            isSearching: false,
-            error: errorMessage,
-          });
+          if (is404Error) {
+            // Treat 404 as "no data" rather than an error to show empty state
+            set({
+              equipment: [],
+              pagination: initialPagination,
+              isSearching: false,
+              error: null,
+            });
+          } else {
+            // Handle other errors normally
+            const errorMessage =
+              error instanceof Error ? error.message : 'Failed to search equipment';
+            set({
+              equipment: [],
+              pagination: initialPagination,
+              isSearching: false,
+              error: errorMessage,
+            });
+          }
         }
       },
 
-      setFilters: (newFilters: Partial<EquipmentSearchFilters>) => {
+      setFilters: async (newFilters: Partial<EquipmentSearchFilters>) => {
         const currentState = get();
         const updatedFilters = { ...currentState.filters, ...newFilters };
 
         set({ filters: updatedFilters });
 
         // Auto-fetch with new filters
-        get().fetchEquipment(updatedFilters);
+        await get().fetchEquipment(updatedFilters);
       },
 
       setSelection: (selectedIds: Set<string>) => {
@@ -162,6 +199,45 @@ export const useEquipmentStore = create<EquipmentStore>()(
         set({
           selection: initialSelection,
         });
+      },
+
+      deleteEquipment: async (ids: string[]) => {
+        if (ids.length === 0) return;
+
+        set({ isLoading: true, error: null });
+
+        try {
+          await equipmentService.deleteMultipleEquipment(ids);
+
+          const currentState = get();
+
+          // Remove deleted items from the current equipment list
+          const updatedEquipment = currentState.equipment.filter(
+            equipment => !ids.includes(equipment.id)
+          );
+
+          // Clear selection and update equipment list
+          set({
+            equipment: updatedEquipment,
+            isLoading: false,
+            error: null,
+            selection: initialSelection,
+            pagination: {
+              ...currentState.pagination,
+              totalItems: Math.max(0, currentState.pagination.totalItems - ids.length),
+            },
+          });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to delete equipment';
+
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+
+          throw error; // Re-throw for component error handling
+        }
       },
 
       clearError: () => {
@@ -224,7 +300,18 @@ export const useSelectedEquipmentCount = () =>
 export const useIsAllEquipmentSelected = () =>
   useEquipmentStore(state => state.selection.isAllSelected);
 
-// Action selectors
+// Action selectors - individual selectors for stability
+export const useFetchEquipment = () => useEquipmentStore(state => state.fetchEquipment);
+export const useSearchEquipment = () => useEquipmentStore(state => state.searchEquipment);
+export const useSetFilters = () => useEquipmentStore(state => state.setFilters);
+export const useSetSelection = () => useEquipmentStore(state => state.setSelection);
+export const useSelectAll = () => useEquipmentStore(state => state.selectAll);
+export const useClearSelection = () => useEquipmentStore(state => state.clearSelection);
+export const useDeleteEquipment = () => useEquipmentStore(state => state.deleteEquipment);
+export const useClearError = () => useEquipmentStore(state => state.clearError);
+export const useResetEquipment = () => useEquipmentStore(state => state.reset);
+
+// Legacy combined action selector (deprecated - use individual selectors above)
 export const useEquipmentActions = () =>
   useEquipmentStore(state => ({
     fetchEquipment: state.fetchEquipment,
@@ -233,6 +320,7 @@ export const useEquipmentActions = () =>
     setSelection: state.setSelection,
     selectAll: state.selectAll,
     clearSelection: state.clearSelection,
+    deleteEquipment: state.deleteEquipment,
     clearError: state.clearError,
     reset: state.reset,
   }));

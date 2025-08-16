@@ -18,7 +18,7 @@ import type {
  * Equipment Service class providing API integration methods
  */
 export class EquipmentService {
-  private readonly baseUrl = '/api/v1/equipment';
+  private readonly baseUrl = '/equipment';
 
   /**
    * Fetch equipment list with optional filters and pagination
@@ -142,6 +142,35 @@ export class EquipmentService {
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to fetch equipment statistics');
+    }
+  }
+
+  /**
+   * Delete equipment by ID
+   *
+   * @param id - Equipment ID to delete
+   * @returns Promise resolving when deletion is complete
+   */
+  async deleteEquipment(id: string): Promise<void> {
+    try {
+      await apiClient.delete(`${this.baseUrl}/${id}`);
+    } catch (error) {
+      throw this.handleError(error, `Failed to delete equipment with ID: ${id}`);
+    }
+  }
+
+  /**
+   * Delete multiple equipment items by IDs
+   *
+   * @param ids - Array of equipment IDs to delete
+   * @returns Promise resolving when all deletions are complete
+   */
+  async deleteMultipleEquipment(ids: string[]): Promise<void> {
+    try {
+      // Delete all items in parallel for better performance
+      await Promise.all(ids.map(id => this.deleteEquipment(id)));
+    } catch (error) {
+      throw this.handleError(error, `Failed to delete ${ids.length} equipment items`);
     }
   }
 

@@ -6,11 +6,17 @@
  * Implements all acceptance criteria for the equipment list functionality
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   InputAdornment,
   Skeleton,
   Stack,
@@ -24,14 +30,20 @@ import { EquipmentEmptyState } from '../../components/equipment/EquipmentEmptySt
 import { EquipmentActions } from '../../components/equipment/EquipmentActions';
 import { useEquipmentSearch } from '../../hooks/useEquipmentSearch';
 import { useEquipment } from '../../hooks/useEquipment';
+import { useToast } from '../../hooks/useToast';
 import {
-  useEquipmentActions,
+  useClearError,
+  useClearSelection,
+  useDeleteEquipment,
   useEquipmentData,
   useEquipmentError,
   useEquipmentLoading,
   useEquipmentSelection,
+  useFetchEquipment,
   useHasActiveFilters,
   useHasEquipmentData,
+  useSetFilters,
+  useSetSelection,
 } from '../../stores/equipment.store';
 import type { EquipmentListPageProps, EquipmentWithDetails } from '../../types/equipment';
 
@@ -43,8 +55,13 @@ import type { EquipmentListPageProps, EquipmentWithDetails } from '../../types/e
  */
 export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFilters }) => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
-  // Store selectors
+  // Local state for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Store selectors - using individual selectors to prevent infinite loops
   const equipment = useEquipmentData();
   const isLoading = useEquipmentLoading();
   const error = useEquipmentError();
@@ -52,9 +69,13 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
   const hasData = useHasEquipmentData();
   const hasActiveFilters = useHasActiveFilters();
 
-  // Store actions
-  const { fetchEquipment, setSelection, clearSelection, clearError, setFilters } =
-    useEquipmentActions();
+  // Store actions - using individual action selectors to prevent object recreation
+  const fetchEquipment = useFetchEquipment();
+  const setSelection = useSetSelection();
+  const clearSelection = useClearSelection();
+  const clearError = useClearError();
+  const setFilters = useSetFilters();
+  const deleteEquipment = useDeleteEquipment();
 
   // Search functionality
   const { searchTerm, setSearchTerm, isSearching, clearSearch } = useEquipmentSearch();
@@ -69,7 +90,8 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
     } else {
       fetchEquipment();
     }
-  }, [initialFilters, setFilters, fetchEquipment]);
+    // ESLint disable is intentional - actions from Zustand are stable
+  }, [initialFilters]);
 
   // Column definitions for DataGrid - memoized to prevent recreation
   const columns = useMemo(
@@ -169,16 +191,42 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
     // Export service call would go here
   }, [selection.selectedIds]);
 
-  // Delete handler (placeholder for future functionality)
+  // Delete handler with confirmation dialog
   const handleDelete = useCallback(() => {
-    // TODO: Implement delete functionality
-    // Future implementation will show confirmation dialog and call delete API
     if (selection.selectedIds.size === 0) return;
-
-    // Placeholder for delete logic
-    // Future implementation will show confirmation dialog and call delete API with selected IDs
-    // Delete service call with confirmation would go here
+    setDeleteDialogOpen(true);
   }, [selection.selectedIds]);
+
+  // Confirm delete handler
+  const handleConfirmDelete = useCallback(async () => {
+    const selectedIds = Array.from(selection.selectedIds);
+
+    if (selectedIds.length === 0) {
+      setDeleteDialogOpen(false);
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await deleteEquipment(selectedIds);
+
+      const itemText = selectedIds.length === 1 ? 'item' : 'items';
+      showSuccess(`Successfully deleted ${selectedIds.length} ${itemText}`);
+
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete equipment';
+      showError(`Delete failed: ${errorMessage}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [selection.selectedIds, deleteEquipment, showSuccess, showError]);
+
+  // Cancel delete handler
+  const handleCancelDelete = useCallback(() => {
+    setDeleteDialogOpen(false);
+  }, []);
 
   // Clear search handler
   const handleClearSearch = useCallback(() => {
@@ -209,7 +257,7 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, position: 'relative' }}>
       {/* Page Header */}
       <Stack direction='row' alignItems='center' justifyContent='space-between' sx={{ mb: 3 }}>
         <Typography variant='h4' component='h1'>
@@ -344,6 +392,36 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
           </Stack>
         </Box>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        aria-labelledby='delete-dialog-title'
+        aria-describedby='delete-dialog-description'
+      >
+        <DialogTitle id='delete-dialog-title'>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText id='delete-dialog-description'>
+            Are you sure you want to delete {selection.selectedIds.size} equipment{' '}
+            {selection.selectedIds.size === 1 ? 'item' : 'items'}? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete} color='primary' disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color='error'
+            variant='contained'
+            disabled={isDeleting}
+            startIcon={isDeleting ? <CircularProgress size={16} /> : undefined}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

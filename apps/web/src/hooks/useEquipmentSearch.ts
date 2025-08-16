@@ -54,7 +54,8 @@ export function useEquipmentSearch(
         setFilters(filtersWithoutSearch);
       }
     }
-  }, [debouncedSearchTerm, currentFilters, searchEquipment, setFilters]);
+    // ESLint disable is intentional - Zustand actions are stable
+  }, [debouncedSearchTerm, currentFilters.search]);
 
   // Clear search function
   const clearSearch = useCallback(() => {
@@ -209,8 +210,12 @@ export function useEquipmentSearchSuggestions(searchTerm: string, enabled = true
 
   // Fetch suggestions when debounced term changes
   useEffect(() => {
-    if (!enabled || !debouncedTerm.trim() || debouncedTerm.length < 2) {
+    // Derive trimmed term at the top of the effect
+    const trimmed = debouncedTerm.trim();
+
+    if (!enabled || trimmed.length < 2) {
       setSuggestions([]);
+      setIsLoading(false);
       return;
     }
 
@@ -223,7 +228,7 @@ export function useEquipmentSearchSuggestions(searchTerm: string, enabled = true
       'Schneider Modicon',
       'Omron CJ2M',
       'Mitsubishi FX3U',
-    ].filter(suggestion => suggestion.toLowerCase().includes(debouncedTerm.toLowerCase()));
+    ].filter(suggestion => suggestion.toLowerCase().includes(trimmed.toLowerCase()));
 
     // Simulate API delay
     const timer = setTimeout(() => {
@@ -231,7 +236,10 @@ export function useEquipmentSearchSuggestions(searchTerm: string, enabled = true
       setIsLoading(false);
     }, 100);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setIsLoading(false);
+    };
   }, [debouncedTerm, enabled]);
 
   const clearSuggestions = useCallback(() => {

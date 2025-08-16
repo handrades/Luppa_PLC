@@ -131,8 +131,8 @@ describe('useEquipmentStore', () => {
       const { result } = renderHook(() => useEquipmentStore());
 
       // Set initial filters
-      act(() => {
-        result.current.setFilters({ siteName: 'Site A' });
+      await act(async () => {
+        await result.current.setFilters({ siteName: 'Site A' });
       });
 
       await act(async () => {
@@ -161,8 +161,8 @@ describe('useEquipmentStore', () => {
       const { result } = renderHook(() => useEquipmentStore());
 
       // Set page to 3 initially
-      act(() => {
-        result.current.setFilters({ page: 3 });
+      await act(async () => {
+        await result.current.setFilters({ page: 3 });
       });
 
       await act(async () => {
@@ -303,16 +303,20 @@ describe('useEquipmentStore', () => {
   });
 
   describe('clearError', () => {
-    it('should clear error state', () => {
+    it('should clear error state', async () => {
       const { result } = renderHook(() => useEquipmentStore());
 
       // Set error first by calling a fetch that fails
-      act(() => {
-        // Simulate error state by calling fetchEquipment with a mocked failure
-        const mockError = new Error('Test error');
-        mockedService.getEquipment.mockRejectedValueOnce(mockError);
-        result.current.fetchEquipment();
+      const mockError = new Error('Test error');
+      mockedService.getEquipment.mockRejectedValueOnce(mockError);
+
+      // Wait for the failing fetch to settle before calling clearError
+      await act(async () => {
+        await result.current.fetchEquipment();
       });
+
+      // Verify error was set
+      expect(result.current.error).toBe('Test error');
 
       act(() => {
         result.current.clearError();
