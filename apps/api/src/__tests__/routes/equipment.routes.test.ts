@@ -546,7 +546,10 @@ describe('Equipment Routes Integration Tests', () => {
     jest.clearAllMocks();
   };
 
-  const createTestEquipment = async (): Promise<{ equipment: Equipment; plc: PLC }> => {
+  const createTestEquipment = async (): Promise<{
+    equipment: Equipment;
+    plc: PLC;
+  }> => {
     // Create mock equipment and PLC for testing with proper UUIDs
     const equipment = {
       id: '123e4567-e89b-12d3-a456-426614174005',

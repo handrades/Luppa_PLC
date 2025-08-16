@@ -38,7 +38,11 @@ export class ValidationError extends Error {
    * Create ValidationError from Joi validation error
    */
   static fromJoi(joiError: {
-    details: Array<{ path?: (string | number)[]; message: string; context?: { value?: unknown } }>;
+    details: Array<{
+      path?: (string | number)[];
+      message: string;
+      context?: { value?: unknown };
+    }>;
   }): ValidationError {
     const errors: ValidationErrorDetail[] = joiError.details.map(detail => ({
       field: detail.path?.map(String).join('.') || undefined,

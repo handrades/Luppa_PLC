@@ -34,14 +34,14 @@ module.exports = {
   },
   ignorePatterns: [
     '**/dist/**',
-    '**/build/**', 
+    '**/build/**',
     '**/node_modules/**',
     '**/coverage/**',
     '**/storybook-static/**',
     '**/*.config.js',
     '**/*.setup.js',
     'apps/api/jest.setup.js',
-    'apps/api/test-server.js'
+    'apps/api/test-server.js',
   ],
   overrides: [
     {
@@ -65,6 +65,8 @@ module.exports = {
       env: {
         browser: true,
       },
+      extends: ['plugin:react-hooks/recommended'],
+      plugins: ['react-hooks'],
       rules: {},
     },
     {

@@ -202,14 +202,24 @@ describe('MetricsService', () => {
           totalConnections: 3,
           idleConnections: 1,
           runningConnections: 2,
-          poolConfig: { max: 10, min: 2, connectionTimeoutMillis: 60000, idleTimeoutMillis: 30000 },
+          poolConfig: {
+            max: 10,
+            min: 2,
+            connectionTimeoutMillis: 60000,
+            idleTimeoutMillis: 30000,
+          },
         },
       };
 
       const mockRedisHealth = {
         isHealthy: true,
         metrics: {
-          memoryUsage: { used: 1048576, peak: 2097152, rss: 3145728, overhead: 524288 },
+          memoryUsage: {
+            used: 1048576,
+            peak: 2097152,
+            rss: 3145728,
+            overhead: 524288,
+          },
         },
       };
 

@@ -147,11 +147,15 @@ describe('EquipmentService', () => {
       mockEquipmentRepository.findWithDetails.mockResolvedValue(mockEquipmentWithDetails);
 
       // Execute
-      const result = await service.createEquipment(createInput, { userId: mockUserId });
+      const result = await service.createEquipment(createInput, {
+        userId: mockUserId,
+      });
 
       // Assert
       expect(result).toEqual(mockEquipmentWithDetails);
-      expect(mockCellRepository.findOne).toHaveBeenCalledWith({ where: { id: mockCellId } });
+      expect(mockCellRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockCellId },
+      });
       expect(mockEquipmentRepository.nameExistsInCell).toHaveBeenCalledWith(
         'Test Press',
         mockCellId
@@ -180,7 +184,9 @@ describe('EquipmentService', () => {
       await expect(service.createEquipment(createInput, { userId: mockUserId })).rejects.toThrow(
         "Cell with ID '987fcdeb-51a2-43d1-b678-123456789abc' not found"
       );
-      expect(mockCellRepository.findOne).toHaveBeenCalledWith({ where: { id: mockCellId } });
+      expect(mockCellRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockCellId },
+      });
     });
 
     it('should throw error when equipment name already exists in cell', async () => {
@@ -293,7 +299,9 @@ describe('EquipmentService', () => {
       mockPLCRepository.create.mockReturnValue(mockPLC);
 
       // Simulate non-constraint database error
-      const dbError = new Error('Connection timeout') as Error & { code: string };
+      const dbError = new Error('Connection timeout') as Error & {
+        code: string;
+      };
       dbError.code = '08000';
       mockPLCRepository.save.mockRejectedValue(dbError);
 

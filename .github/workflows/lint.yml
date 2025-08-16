@@ -68,19 +68,19 @@ jobs:
         run: |
           echo "Validating package publish-hygiene fields..."
           failed_packages=()
-          
+
           # Check if packages directory exists and has any package.json files
           if [ ! -d "packages" ]; then
             echo "No packages directory found - skipping package validation"
             exit 0
           fi
-          
+
           package_count=$(find packages -name "package.json" -type f 2>/dev/null | wc -l)
           if [ "$package_count" -eq 0 ]; then
             echo "No packages found in packages/ directory - skipping package validation"
             exit 0
           fi
-          
+
           while IFS= read -r -d '' package_json; do
             if [ -f "$package_json" ]; then
               package_name=$(jq -r '.name' "$package_json")
@@ -121,7 +121,7 @@ jobs:
               fi
             fi
           done < <(find packages -name "package.json" -type f -print0)
-          
+
           if [[ ${#failed_packages[@]} -gt 0 ]]; then
             echo ""
             echo "❌ Package validation failed for:"

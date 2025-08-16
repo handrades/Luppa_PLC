@@ -121,7 +121,11 @@ describe('Validation Middleware', () => {
 
       app.put(
         '/test/:id',
-        validate({ body: bodySchema, query: querySchema, params: paramsSchema }),
+        validate({
+          body: bodySchema,
+          query: querySchema,
+          params: paramsSchema,
+        }),
         (req, res) => {
           res.json({ success: true });
         }

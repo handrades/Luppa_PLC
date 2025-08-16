@@ -48,7 +48,12 @@ jest.mock('../../validation/userSchemas', () => ({
       throw new Error(
         JSON.stringify({
           message: 'Validation failed',
-          errors: [{ field: 'password', message: 'Password must be at least 8 characters long' }],
+          errors: [
+            {
+              field: 'password',
+              message: 'Password must be at least 8 characters long',
+            },
+          ],
         })
       );
     }
@@ -104,7 +109,12 @@ jest.mock('../../validation/userSchemas', () => ({
       throw new Error(
         JSON.stringify({
           message: 'Validation failed',
-          errors: [{ field: '', message: 'At least one field must be provided for update' }],
+          errors: [
+            {
+              field: '',
+              message: 'At least one field must be provided for update',
+            },
+          ],
         })
       );
     }
@@ -177,7 +187,9 @@ const mockUser = {
 const mockRole = {
   id: 'role-789',
   name: 'Admin',
-  permissions: { users: { read: true, create: true, update: true, delete: true } },
+  permissions: {
+    users: { read: true, create: true, update: true, delete: true },
+  },
   description: 'Admin role',
   isSystem: false,
   createdAt: new Date(),
@@ -577,7 +589,11 @@ describe('User Management Routes', () => {
     };
 
     it('should assign role successfully', async () => {
-      const updatedUser = { ...mockUser, roleId: roleAssignmentData.roleId, role: mockRole };
+      const updatedUser = {
+        ...mockUser,
+        roleId: roleAssignmentData.roleId,
+        role: mockRole,
+      };
       mockUserService.assignRole.mockResolvedValue(updatedUser);
 
       const response = await request(app)
