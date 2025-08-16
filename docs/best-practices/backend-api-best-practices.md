@@ -8,9 +8,10 @@ Implement clean repository patterns:
 interface IPlcRepository {
   findById(id: string): Promise<PLCRecord | null>;
   findByFilters(filters: PlcQueryOptions): Promise<PLCRecord[]>;
+  findByIp(ip: string): Promise<PLCRecord | null>;
   create(data: PlcCreateInput): Promise<PLCRecord>;
   update(id: string, data: Partial<PlcCreateInput>): Promise<PLCRecord>;
-  delete(id: string): Promise<void>;
+  softDelete(id: string): Promise<void>;
   countByFilters(filters: PlcQueryOptions): Promise<number>;
 }
 
@@ -19,13 +20,24 @@ class PlcRepository implements IPlcRepository {
 
   async findById(id: string): Promise<PLCRecord | null> {
     const query = `
-      SELECT p.*, l.site_name, l.cell_type, l.cell_id, l.equipment_id
+      SELECT p.*
       FROM plc_records p
-      LEFT JOIN plc_locations l ON p.id = l.plc_id
+      LEFT JOIN plc_locations l ON p.id = l.plc_id AND l.deleted_at IS NULL
       WHERE p.id = $1 AND p.deleted_at IS NULL
     `;
 
     const result = await this.db.query<PLCRecord>(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  async findByIp(ip: string): Promise<PLCRecord | null> {
+    const query = `
+      SELECT p.*
+      FROM plc_records p
+      WHERE p.ip_address = $1 AND p.deleted_at IS NULL
+    `;
+
+    const result = await this.db.query<PLCRecord>(query, [ip]);
     return result.rows[0] || null;
   }
 

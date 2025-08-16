@@ -18,7 +18,6 @@ export class PLC extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 100,
-    unique: true,
     name: 'tag_id',
   })
   tagId!: string;

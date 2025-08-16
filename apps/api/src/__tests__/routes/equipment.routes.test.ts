@@ -142,10 +142,10 @@ describe('Equipment Routes Integration Tests', () => {
     // Use the mocked AppDataSource which doesn't require actual database connection
     dataSource = AppDataSource;
 
-    // Set up mock repositories for the entities
-    const mockRepository = {
-      create: jest.fn(),
-      save: jest.fn(),
+    // Set up per-entity mock repositories to prevent cross-entity contamination
+    const mockEquipmentRepository = {
+      create: jest.fn().mockImplementation(data => ({ ...data })),
+      save: jest.fn().mockImplementation(equipment => Promise.resolve({ ...equipment })),
       findOne: jest.fn(),
       find: jest.fn(),
       createQueryBuilder: jest.fn(() => ({
@@ -163,7 +163,75 @@ describe('Equipment Routes Integration Tests', () => {
       })),
     };
 
-    (dataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
+    const mockRoleRepository = {
+      create: jest.fn().mockImplementation(data => ({
+        ...data,
+        id: data.name === 'Engineer' ? testRole.id : 'mock-role-id',
+      })),
+      save: jest.fn().mockResolvedValue(testRole),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      })),
+    };
+
+    const mockUserRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      })),
+    };
+
+    const mockSiteRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      })),
+    };
+
+    const mockCellRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      })),
+    };
+
+    const mockPlcRepository = {
+      create: jest.fn().mockImplementation(data => ({ ...data })),
+      save: jest.fn().mockImplementation(plc => Promise.resolve({ ...plc })),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      })),
+    };
+
+    // Return appropriate repository based on entity type
+    (dataSource.getRepository as jest.Mock).mockImplementation(entity => {
+      if (entity === Equipment) return mockEquipmentRepository;
+      if (entity === Role) return mockRoleRepository;
+      if (entity === User) return mockUserRepository;
+      if (entity === Site) return mockSiteRepository;
+      if (entity === Cell) return mockCellRepository;
+      if (entity === PLC) return mockPlcRepository;
+      return mockEquipmentRepository; // fallback
+    });
 
     // Create test app
     app = createApp();
@@ -454,12 +522,7 @@ describe('Equipment Routes Integration Tests', () => {
     } as Cell;
 
     // Configure mocked repositories to return our test data
-    const mockRepository = dataSource.getRepository(Role);
-    (mockRepository.create as jest.Mock).mockImplementation(data => ({
-      ...data,
-      id: data.name === 'Engineer' ? testRole.id : 'mock-id',
-    }));
-    (mockRepository.save as jest.Mock).mockResolvedValue(testRole);
+    // Role repository is already configured in beforeAll with per-entity implementations
 
     // Generate auth token
     authToken = jwt.sign(

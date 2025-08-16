@@ -5,7 +5,7 @@
  * PLC management, and comprehensive equipment search functionality with audit integration.
  */
 
-import { EntityManager } from 'typeorm';
+import { EntityManager, IsNull } from 'typeorm';
 import { Equipment, EquipmentType } from '../entities/Equipment';
 import { PLC } from '../entities/PLC';
 import { Cell } from '../entities/Cell';
@@ -101,19 +101,19 @@ export class EquipmentService {
         throw new EquipmentConflictError(`Equipment name '${name}' already exists in this cell`);
       }
 
-      // Check if PLC tag ID is unique
+      // Check if PLC tag ID is unique (only consider active PLCs)
       const existingPLC = await plcRepository.findOne({
-        where: { tagId: plcData.tagId },
+        where: { tagId: plcData.tagId, deletedAt: IsNull() },
       });
 
       if (existingPLC) {
         throw new EquipmentConflictError(`PLC with tag ID '${plcData.tagId}' already exists`);
       }
 
-      // Check IP address uniqueness if provided
+      // Check IP address uniqueness if provided (only consider active PLCs)
       if (plcData.ipAddress) {
         const existingIPPLC = await plcRepository.findOne({
-          where: { ipAddress: plcData.ipAddress },
+          where: { ipAddress: plcData.ipAddress, deletedAt: IsNull() },
         });
 
         if (existingIPPLC) {
@@ -299,10 +299,10 @@ export class EquipmentService {
         };
 
         if (updateData.plcData.tagId !== undefined) {
-          // Check tag ID uniqueness if being changed
+          // Check tag ID uniqueness if being changed (only consider active PLCs)
           if (updateData.plcData.tagId !== plc.tagId) {
             const existingPLC = await plcRepository.findOne({
-              where: { tagId: updateData.plcData.tagId },
+              where: { tagId: updateData.plcData.tagId, deletedAt: IsNull() },
             });
 
             if (existingPLC && existingPLC.id !== plc.id) {
@@ -327,10 +327,10 @@ export class EquipmentService {
         }
 
         if (updateData.plcData.ipAddress !== undefined) {
-          // Check IP address uniqueness if being changed
+          // Check IP address uniqueness if being changed (only consider active PLCs)
           if (updateData.plcData.ipAddress && updateData.plcData.ipAddress !== plc.ipAddress) {
             const existingIPPLC = await plcRepository.findOne({
-              where: { ipAddress: updateData.plcData.ipAddress },
+              where: { ipAddress: updateData.plcData.ipAddress, deletedAt: IsNull() },
             });
 
             if (existingIPPLC && existingIPPLC.id !== plc.id) {

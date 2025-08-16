@@ -156,9 +156,11 @@ describe('EquipmentService', () => {
         'Test Press',
         mockCellId
       );
-      expect(mockPLCRepository.findOne).toHaveBeenCalledWith({ where: { tagId: 'PRESS_001' } });
       expect(mockPLCRepository.findOne).toHaveBeenCalledWith({
-        where: { ipAddress: '192.168.1.100' },
+        where: { tagId: 'PRESS_001', deletedAt: expect.anything() },
+      });
+      expect(mockPLCRepository.findOne).toHaveBeenCalledWith({
+        where: { ipAddress: '192.168.1.100', deletedAt: expect.anything() },
       });
       expect(mockEquipmentRepository.createEquipment).toHaveBeenCalledWith({
         name: 'Test Press',
