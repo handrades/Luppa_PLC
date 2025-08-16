@@ -78,8 +78,7 @@
         }
       },
       "group": {
-        "kind": "build",
-        "isDefault": true
+        "kind": "build"
       },
       "presentation": {
         "echo": true,

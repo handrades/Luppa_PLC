@@ -163,11 +163,9 @@ export class EquipmentRepository {
     const sortColumn = this.getSortColumn(sortBy);
     queryBuilder = queryBuilder.orderBy(sortColumn, sortOrder);
 
-    // Get total count before applying pagination
-    const total = await queryBuilder.getCount();
-
-    // Apply pagination
-    const equipment = await queryBuilder.skip(skip).take(actualPageSize).getMany();
+    // Get total count and entities together, applying pagination
+    // This ensures accurate counting when LEFT JOINs are present
+    const [equipment, total] = await queryBuilder.skip(skip).take(actualPageSize).getManyAndCount();
 
     return {
       data: equipment as EquipmentWithDetails[],
@@ -258,15 +256,32 @@ export class EquipmentRepository {
   }
 
   /**
-   * Soft delete equipment (add deletedAt timestamp)
+   * Soft delete equipment and cascade to related PLCs (add deletedAt timestamp)
    */
   async softDeleteEquipment(id: string): Promise<void> {
-    const deleteResult = await this.repository.softDelete(id);
+    await this.repository.manager.transaction(async transactionManager => {
+      const equipmentRepository = transactionManager.getRepository(Equipment);
+      const plcRepository = transactionManager.getRepository(PLC);
 
-    // Throw error if equipment doesn't exist
-    if (deleteResult.affected === 0) {
-      throw new EquipmentNotFoundError(id);
-    }
+      // First verify equipment exists
+      const equipment = await equipmentRepository.findOne({
+        where: { id },
+      });
+
+      if (!equipment) {
+        throw new EquipmentNotFoundError(id);
+      }
+
+      // Soft delete the equipment
+      const deleteResult = await equipmentRepository.softDelete(id);
+
+      if (deleteResult.affected === 0) {
+        throw new EquipmentNotFoundError(id);
+      }
+
+      // Cascade soft-delete to related PLCs
+      await plcRepository.update({ equipmentId: id }, { deletedAt: new Date() });
+    });
   }
 
   /**

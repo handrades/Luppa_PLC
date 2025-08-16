@@ -75,7 +75,7 @@ class PlcService {
       this.logger.error('Error creating PLC', { error, data, userId });
       return { success: false, error: 'Failed to create PLC' };
     }
-  }`
+  }
 }
 ```
 

@@ -228,6 +228,78 @@ describe('EquipmentService', () => {
         "PLC with IP address '192.168.1.100' already exists"
       );
     });
+
+    it('should handle database constraint violation for tag ID', async () => {
+      // Setup mocks
+      mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
+      mockCellRepository.findOne.mockResolvedValue(mockCell);
+      mockEquipmentRepository.nameExistsInCell.mockResolvedValue(false);
+      mockPLCRepository.findOne.mockResolvedValue(null); // Pre-check passes
+      mockEquipmentRepository.createEquipment.mockResolvedValue(mockEquipment);
+      mockPLCRepository.create.mockReturnValue(mockPLC);
+
+      // Simulate database constraint violation for tag_id
+      const constraintError = new Error('Database constraint violation') as Error & {
+        code: string;
+        constraint: string;
+        detail: string;
+      };
+      constraintError.code = '23505';
+      constraintError.constraint = 'idx_plcs_tag_id_unique';
+      constraintError.detail = 'Key (tag_id)=(PRESS_001) already exists.';
+      mockPLCRepository.save.mockRejectedValue(constraintError);
+
+      // Execute & Assert
+      await expect(service.createEquipment(createInput, { userId: mockUserId })).rejects.toThrow(
+        "PLC with tag ID 'PRESS_001' already exists"
+      );
+    });
+
+    it('should handle database constraint violation for IP address', async () => {
+      // Setup mocks
+      mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
+      mockCellRepository.findOne.mockResolvedValue(mockCell);
+      mockEquipmentRepository.nameExistsInCell.mockResolvedValue(false);
+      mockPLCRepository.findOne.mockResolvedValue(null); // Pre-check passes
+      mockEquipmentRepository.createEquipment.mockResolvedValue(mockEquipment);
+      mockPLCRepository.create.mockReturnValue(mockPLC);
+
+      // Simulate database constraint violation for ip_address
+      const constraintError = new Error('Database constraint violation') as Error & {
+        code: string;
+        constraint: string;
+        detail: string;
+      };
+      constraintError.code = '23505';
+      constraintError.constraint = 'idx_plcs_ip_address_unique';
+      constraintError.detail = 'Key (ip_address)=(192.168.1.100) already exists.';
+      mockPLCRepository.save.mockRejectedValue(constraintError);
+
+      // Execute & Assert
+      await expect(service.createEquipment(createInput, { userId: mockUserId })).rejects.toThrow(
+        "PLC with IP address '192.168.1.100' already exists"
+      );
+    });
+
+    it('should re-throw non-constraint database errors', async () => {
+      // Setup mocks
+      mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
+      mockCellRepository.findOne.mockResolvedValue(mockCell);
+      mockEquipmentRepository.nameExistsInCell.mockResolvedValue(false);
+      mockPLCRepository.findOne.mockResolvedValue(null);
+      mockEquipmentRepository.createEquipment.mockResolvedValue(mockEquipment);
+      mockPLCRepository.create.mockReturnValue(mockPLC);
+
+      // Simulate non-constraint database error
+      const dbError = new Error('Connection timeout') as Error & { code: string };
+      dbError.code = '08000';
+      mockPLCRepository.save.mockRejectedValue(dbError);
+
+      // Execute & Assert
+      await expect(service.createEquipment(createInput, { userId: mockUserId })).rejects.toThrow(
+        'Connection timeout'
+      );
+    });
   });
 
   describe('getEquipmentById', () => {

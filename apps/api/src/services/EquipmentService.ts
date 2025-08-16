@@ -145,7 +145,29 @@ export class EquipmentService {
         updatedBy: userId,
       });
 
-      await plcRepository.save(plc);
+      try {
+        await plcRepository.save(plc);
+      } catch (error: unknown) {
+        const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+        // Handle database constraint violations (PostgreSQL error code 23505)
+        if (dbError.code === '23505') {
+          // Parse the constraint name to determine which field caused the conflict
+          const constraintName = dbError.constraint;
+          if (constraintName?.includes('tag_id') || dbError.detail?.includes('tag_id')) {
+            throw new EquipmentConflictError(`PLC with tag ID '${plcData.tagId}' already exists`);
+          } else if (
+            constraintName?.includes('ip_address') ||
+            dbError.detail?.includes('ip_address')
+          ) {
+            throw new EquipmentConflictError(
+              `PLC with IP address '${plcData.ipAddress}' already exists`
+            );
+          } else {
+            throw new EquipmentConflictError('PLC data conflicts with existing record');
+          }
+        }
+        throw error;
+      }
 
       logger.info('Equipment created successfully', {
         equipmentId: equipment.id,
@@ -324,7 +346,31 @@ export class EquipmentService {
           plcUpdateData.firmwareVersion = updateData.plcData.firmwareVersion || null;
         }
 
-        await plcRepository.update(plc.id, plcUpdateData);
+        try {
+          await plcRepository.update(plc.id, plcUpdateData);
+        } catch (error: unknown) {
+          const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+          // Handle database constraint violations (PostgreSQL error code 23505)
+          if (dbError.code === '23505') {
+            // Parse the constraint name to determine which field caused the conflict
+            const constraintName = dbError.constraint;
+            if (constraintName?.includes('tag_id') || dbError.detail?.includes('tag_id')) {
+              throw new EquipmentConflictError(
+                `PLC with tag ID '${updateData.plcData.tagId}' already exists`
+              );
+            } else if (
+              constraintName?.includes('ip_address') ||
+              dbError.detail?.includes('ip_address')
+            ) {
+              throw new EquipmentConflictError(
+                `PLC with IP address '${updateData.plcData.ipAddress}' already exists`
+              );
+            } else {
+              throw new EquipmentConflictError('PLC data conflicts with existing record');
+            }
+          }
+          throw error;
+        }
       }
 
       logger.info('Equipment updated successfully', {

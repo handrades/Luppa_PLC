@@ -5,8 +5,8 @@ import { Equipment } from './Equipment';
 import { Tag } from './Tag';
 
 @Entity('plcs')
-@Index(['tagId'], { unique: true })
-@Index(['ipAddress'], { unique: true, where: 'ip_address IS NOT NULL' })
+@Index(['tagId'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['ipAddress'], { unique: true, where: 'ip_address IS NOT NULL AND deleted_at IS NULL' })
 @Index(['make', 'model'])
 export class PLC extends BaseEntity {
   @Column({

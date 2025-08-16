@@ -14,6 +14,7 @@ describe('PlcService', () => {
   beforeEach(() => {
     mockRepository = {
       findById: jest.fn(),
+      findByIp: jest.fn(),
       create: jest.fn(),
       // ... other methods
     } as jest.Mocked<IPlcRepository>;
@@ -21,6 +22,13 @@ describe('PlcService', () => {
     mockAuditService = {
       log: jest.fn(),
     } as jest.Mocked<IAuditService>;
+
+    const mockLogger: jest.Mocked<ILogger> = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    } as jest.Mocked<ILogger>;
 
     service = new PlcService(mockRepository, mockAuditService, mockLogger);
   });

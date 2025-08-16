@@ -205,4 +205,4 @@ The framework is designed to support additional industrial apps:
 
 - never disable pre-push or pre-commit hooks
 
-- ALWAYS refer to @docs/best-practices/index.md when writting code
+- ALWAYS refer to [docs/best-practices/index.md](docs/best-practices/index.md) when writing code

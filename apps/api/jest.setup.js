@@ -1,3 +1,6 @@
+// CRITICAL: Set NODE_ENV first to ensure test database configuration is used
+process.env.NODE_ENV = 'test';
+
 // CRITICAL: Set JWT secrets FIRST before any modules load to prevent validation failures
 if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET =
@@ -7,9 +10,6 @@ if (!process.env.JWT_REFRESH_SECRET) {
   process.env.JWT_REFRESH_SECRET =
     'test-jwt-refresh-secret-that-is-at-least-32-characters-long-for-testing-purposes';
 }
-
-// Set test environment variables early
-process.env.NODE_ENV = 'test';
 process.env.PORT = '3002';
 process.env.LOG_LEVEL = 'error'; // Suppress logs during testing
 
