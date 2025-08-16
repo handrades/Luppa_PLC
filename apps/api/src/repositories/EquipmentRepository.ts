@@ -295,7 +295,8 @@ export class EquipmentRepository {
     let queryBuilder = this.repository
       .createQueryBuilder('equipment')
       .where('LOWER(equipment.name) = LOWER(:name)', { name: name.trim() })
-      .andWhere('equipment.cellId = :cellId', { cellId });
+      .andWhere('equipment.cellId = :cellId', { cellId })
+      .andWhere('equipment.deletedAt IS NULL');
 
     if (excludeEquipmentId) {
       queryBuilder = queryBuilder.andWhere('equipment.id != :equipmentId', {

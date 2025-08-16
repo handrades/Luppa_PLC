@@ -67,14 +67,23 @@ class PlcService {
       // Create the PLC
       const plc = await this.repository.create(data);
 
-      // Audit logging for compliance
-      await this.auditService.log({
-        action: 'plc.created',
-        entityType: 'plc',
-        entityId: plc.id,
-        userId,
-        details: { description: plc.description, make: plc.make },
-      });
+      // Best-effort audit logging for compliance (does not fail the operation)
+      try {
+        await this.auditService.log({
+          action: 'plc.created',
+          entityType: 'plc',
+          entityId: plc.id,
+          userId,
+          details: { description: plc.description, make: plc.make },
+        });
+      } catch (auditError) {
+        // Log audit failure but continue with successful operation
+        this.logger.warn('Audit logging failed for PLC creation', {
+          plcId: plc.id,
+          userId,
+          auditError: auditError.message,
+        });
+      }
 
       this.logger.info('PLC created successfully', {
         plcId: plc.id,

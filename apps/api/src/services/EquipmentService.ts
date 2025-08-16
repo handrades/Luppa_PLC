@@ -123,14 +123,41 @@ export class EquipmentService {
         }
       }
 
-      // Create equipment record
-      const equipment = await equipmentRepository.createEquipment({
-        name,
-        equipmentType,
-        cellId,
-        createdBy: userId,
-        updatedBy: userId,
-      });
+      // Create equipment record with database-level conflict handling
+      let equipment: Equipment;
+      try {
+        equipment = await equipmentRepository.createEquipment({
+          name,
+          equipmentType,
+          cellId,
+          createdBy: userId,
+          updatedBy: userId,
+        });
+      } catch (error: unknown) {
+        const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+        // Handle database constraint violations for equipment name uniqueness
+        if (
+          dbError.code === '23505' ||
+          dbError.code === 'SQLITE_CONSTRAINT' ||
+          dbError.message?.includes('UNIQUE constraint failed')
+        ) {
+          // Check if it's the equipment name constraint (cell_id, lower(name))
+          const constraintName = dbError.constraint;
+          if (
+            constraintName?.includes('equipment') ||
+            constraintName?.includes('name') ||
+            dbError.detail?.includes('name') ||
+            dbError.message?.includes('name')
+          ) {
+            throw new EquipmentConflictError(
+              `Equipment name '${name}' already exists in this cell`
+            );
+          } else {
+            throw new EquipmentConflictError('Equipment data conflicts with existing record');
+          }
+        }
+        throw error;
+      }
 
       // Create associated PLC record
       const plc = plcRepository.create({
@@ -149,15 +176,27 @@ export class EquipmentService {
         await plcRepository.save(plc);
       } catch (error: unknown) {
         const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
-        // Handle database constraint violations (PostgreSQL error code 23505)
-        if (dbError.code === '23505') {
-          // Parse the constraint name to determine which field caused the conflict
+        // Handle database constraint violations (PostgreSQL 23505, SQLite SQLITE_CONSTRAINT)
+        if (
+          dbError.code === '23505' ||
+          dbError.code === 'SQLITE_CONSTRAINT' ||
+          dbError.message?.includes('UNIQUE constraint failed')
+        ) {
+          // Parse the constraint name, detail, and message to determine which field caused the conflict
           const constraintName = dbError.constraint;
-          if (constraintName?.includes('tag_id') || dbError.detail?.includes('tag_id')) {
+          const detail = dbError.detail;
+          const message = dbError.message;
+
+          if (
+            constraintName?.includes('tag_id') ||
+            detail?.includes('tag_id') ||
+            message?.includes('tag_id')
+          ) {
             throw new EquipmentConflictError(`PLC with tag ID '${plcData.tagId}' already exists`);
           } else if (
             constraintName?.includes('ip_address') ||
-            dbError.detail?.includes('ip_address')
+            detail?.includes('ip_address') ||
+            message?.includes('ip_address')
           ) {
             throw new EquipmentConflictError(
               `PLC with IP address '${plcData.ipAddress}' already exists`
@@ -350,17 +389,29 @@ export class EquipmentService {
           await plcRepository.update(plc.id, plcUpdateData);
         } catch (error: unknown) {
           const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
-          // Handle database constraint violations (PostgreSQL error code 23505)
-          if (dbError.code === '23505') {
-            // Parse the constraint name to determine which field caused the conflict
+          // Handle database constraint violations (PostgreSQL 23505, SQLite SQLITE_CONSTRAINT)
+          if (
+            dbError.code === '23505' ||
+            dbError.code?.startsWith('SQLITE_CONSTRAINT') ||
+            dbError.message?.includes('UNIQUE constraint failed')
+          ) {
+            // Parse the constraint name, detail, and message to determine which field caused the conflict
             const constraintName = dbError.constraint;
-            if (constraintName?.includes('tag_id') || dbError.detail?.includes('tag_id')) {
+            const detail = dbError.detail;
+            const message = dbError.message;
+
+            if (
+              constraintName?.includes('tag_id') ||
+              detail?.includes('tag_id') ||
+              message?.includes('tag_id')
+            ) {
               throw new EquipmentConflictError(
                 `PLC with tag ID '${updateData.plcData.tagId}' already exists`
               );
             } else if (
               constraintName?.includes('ip_address') ||
-              dbError.detail?.includes('ip_address')
+              detail?.includes('ip_address') ||
+              message?.includes('ip_address')
             ) {
               throw new EquipmentConflictError(
                 `PLC with IP address '${updateData.plcData.ipAddress}' already exists`

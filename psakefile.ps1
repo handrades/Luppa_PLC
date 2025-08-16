@@ -1494,6 +1494,9 @@ Task Newlines -Description "Check that all files end with newlines" -Depends Che
 Task Security -Description "Run only security checks" -Depends CheckSecurity
 Task ApiHealth -Description "Run only API health checks" -Depends CheckApiHealth
 
+# Test-only task equivalent to 'pnpm -r test --if-present'
+Task TestWorkspaces -Alias test-all -Description "Run tests in all workspaces (equivalent to 'pnpm -r test --if-present')" -Depends TestStrict
+
 # Fix task for markdown
 Task FixMarkdown -Alias fix-md -Description "Run markdown linting with auto-fix" {
   $script:MarkdownFixMode = $true
@@ -1524,6 +1527,7 @@ Task ? -Alias help -Description "Show available tasks" {
   Write-Host "  Invoke-psake CI                 # Run CI checks (stops on first error)" -ForegroundColor Gray
   Write-Host "  Invoke-psake Test               # Run tests (with --silent for CI collect mode)" -ForegroundColor Gray
   Write-Host "  Invoke-psake TestStrict         # Run tests exactly like GitHub Actions (no --silent)" -ForegroundColor Yellow
+  Write-Host "  Invoke-psake TestWorkspaces     # Run tests in all workspaces (pnpm -r test --if-present)" -ForegroundColor Yellow
   Write-Host "  Invoke-psake Markdown           # Run only markdown linting" -ForegroundColor Gray
   Write-Host "  Invoke-psake FixMarkdown        # Run markdown linting with auto-fix" -ForegroundColor Gray
   Write-Host "  Invoke-psake ?                  # Show this help" -ForegroundColor Gray
