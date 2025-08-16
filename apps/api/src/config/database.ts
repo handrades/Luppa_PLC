@@ -28,8 +28,8 @@ const createDatabaseConfig = () => {
   const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME || 'luppa_plc',
-    username: process.env.DB_USER || 'postgres',
+    database: process.env.DB_DATABASE || process.env.DB_NAME || 'luppa_plc',
+    username: process.env.DB_USERNAME || process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     ssl:
       process.env.DB_SSL_MODE === 'require'

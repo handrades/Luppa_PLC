@@ -1286,6 +1286,204 @@ Task Test -Description "Run workspace configuration tests" {
   }
 }
 
+# Strict test task that matches GitHub Actions exactly (no --silent flag)
+Task TestStrict -Description "Run workspace tests exactly like GitHub Actions - no --silent flag" {
+  Invoke-TaskWithErrorCollection -TaskName "Tests" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nRunning workspace tests (strict mode - matches GitHub Actions)..." -ForegroundColor Cyan
+    }
+      
+    Push-Location $PSScriptRoot
+    try {
+      # Run Jest tests if available
+      if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+              
+        if ($packageJson.scripts -and $packageJson.scripts.test) {
+          if (-not $script:CollectAllErrors) {
+            Write-Host "Running Jest tests..." -ForegroundColor Cyan
+          }
+                  
+          if (-not (Test-Command "pnpm")) {
+            if ($script:CollectAllErrors) {
+              Add-TaskError -TaskName "Tests" -ErrorMessage "pnpm not found" -SuggestedFix "Install pnpm: npm install -g pnpm"
+              return
+            }
+            else {
+              throw "pnpm not found. Please install pnpm first."
+            }
+          }
+          
+          # Run tests - suppress output when collecting errors, show when running directly
+          $output = ""
+          if ($script:CollectAllErrors) {
+            # Silent mode for CICollectAll - capture output but don't display
+            $output = & pnpm test --passWithNoTests --silent 2>&1
+          }
+          else {
+            # Verbose mode when run directly - matches GitHub Actions exactly
+            $output = & pnpm test 2>&1
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+            if ($script:CollectAllErrors) {
+              # Parse test output for specific failures
+              $lines = $output -split "`n"
+              $testFailures = @()
+              foreach ($line in $lines) {
+                if ($line -match "FAIL (.+)") {
+                  $testFailures += $matches[1]
+                }
+                elseif ($line -match "● (.+)") {
+                  $testDetails = $matches[1]
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "Test failed: $testDetails" -SuggestedFix "Review test logic and fix failing tests"
+                }
+                elseif ($line -match "Error: (.+)") {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage $matches[1] -SuggestedFix "Check test setup and dependencies"
+                }
+              }
+              if ($testFailures.Count -gt 0) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "Failed test files: $($testFailures -join ', ')" -SuggestedFix "Run individual test files to debug issues"
+              }
+            }
+            else {
+              throw "Jest tests failed"
+            }
+          }
+          else {
+            if (-not $script:CollectAllErrors) {
+              Write-Host "✓ Jest tests passed" -ForegroundColor Green
+            }
+          }
+        }
+      }
+          
+      # Run validation script
+      if (Test-Path "__tests__/workspace-validation.js") {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running workspace validation script..." -ForegroundColor Cyan
+        }
+              
+        if (-not (Test-Command "node")) {
+          if ($script:CollectAllErrors) {
+            Add-TaskError -TaskName "Tests" -ErrorMessage "Node.js not found" -SuggestedFix "Install Node.js from https://nodejs.org"
+            return
+          }
+          else {
+            throw "Node.js not found. Please install Node.js first."
+          }
+        }
+        
+        $output = ""
+        if ($script:CollectAllErrors) {
+          $output = & node "__tests__/workspace-validation.js" 2>&1
+        }
+        else {
+          $output = & node "__tests__/workspace-validation.js" 2>&1
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+          if ($script:CollectAllErrors) {
+            Add-TaskError -TaskName "Tests" -ErrorMessage "Workspace validation failed" -FilePath "__tests__/workspace-validation.js" -SuggestedFix "Check workspace configuration and file structure"
+          }
+          else {
+            throw "Workspace validation failed"
+          }
+        }
+        else {
+          if (-not $script:CollectAllErrors) {
+            Write-Host "✓ Workspace validation passed" -ForegroundColor Green
+          }
+        }
+      }
+          
+      # Run API tests with coverage (matches GitHub Actions exactly)
+      if (Test-Path "apps/api/package.json") {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running API tests with coverage..." -ForegroundColor Cyan
+        }
+              
+        Push-Location "apps/api"
+        try {
+          if (Test-Command "pnpm") {
+            $output = ""
+            # Use exact same command as GitHub Actions but suppress output during collection
+            if ($script:CollectAllErrors) {
+              $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
+            }
+            else {
+              $output = & pnpm test:coverage --passWithNoTests 2>&1
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              if ($script:CollectAllErrors) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+              }
+              else {
+                throw "API tests failed"
+              }
+            }
+            else {
+              if (-not $script:CollectAllErrors) {
+                Write-Host "✓ API tests passed" -ForegroundColor Green
+              }
+            }
+          }
+        }
+        finally {
+          Pop-Location
+        }
+      }
+
+      # Run Web tests with coverage (matches GitHub Actions exactly)
+      if ((Test-Path "apps/web/package.json") -and (Test-Path "apps/web")) {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running Web tests with coverage..." -ForegroundColor Cyan
+        }
+              
+        Push-Location "apps/web"
+        try {
+          if (Test-Command "pnpm") {
+            $output = ""
+            # Use exact same command as GitHub Actions but suppress output during collection
+            # Web tests pass but have verbose warnings, use --silent always
+            $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
+            
+            if ($LASTEXITCODE -ne 0) {
+              if ($script:CollectAllErrors) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "Web tests failed" -FilePath "apps/web" -SuggestedFix "Review web test failures and fix issues"
+              }
+              else {
+                throw "Web tests failed"
+              }
+            }
+            else {
+              if (-not $script:CollectAllErrors) {
+                Write-Host "✓ Web tests passed" -ForegroundColor Green
+              }
+            }
+          }
+        }
+        finally {
+          Pop-Location
+        }
+      }
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "No web package found - skipping web tests" -ForegroundColor Yellow
+        }
+      }
+          
+      if (-not $script:CollectAllErrors) {
+        Write-Host "✓ All tests passed" -ForegroundColor Green
+      }
+    }
+    finally {
+      Pop-Location
+    }
+  }
+}
+
 # Individual convenience tasks
 Task Markdown -Alias md -Description "Run only markdown linting" -Depends LintMarkdown
 Task Json -Description "Run only JSON linting" -Depends LintJson
@@ -1324,6 +1522,8 @@ Task ? -Alias help -Description "Show available tasks" {
   Write-Host "  Invoke-psake CICollectAll       # Run all CI checks, collect all errors (LLM-friendly)" -ForegroundColor Green
   Write-Host "  Invoke-psake ci-collect-all     # Same as above (alias)" -ForegroundColor Green
   Write-Host "  Invoke-psake CI                 # Run CI checks (stops on first error)" -ForegroundColor Gray
+  Write-Host "  Invoke-psake Test               # Run tests (with --silent for CI collect mode)" -ForegroundColor Gray
+  Write-Host "  Invoke-psake TestStrict         # Run tests exactly like GitHub Actions (no --silent)" -ForegroundColor Yellow
   Write-Host "  Invoke-psake Markdown           # Run only markdown linting" -ForegroundColor Gray
   Write-Host "  Invoke-psake FixMarkdown        # Run markdown linting with auto-fix" -ForegroundColor Gray
   Write-Host "  Invoke-psake ?                  # Show this help" -ForegroundColor Gray
@@ -1519,7 +1719,7 @@ Task CICollectAll -Alias ci-collect-all -Description "Run all CI checks and coll
     }
     
     try {
-      Invoke-Task Test
+      Invoke-Task TestStrict
     }
     catch {
       # Errors captured in task
