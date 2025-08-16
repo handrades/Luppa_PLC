@@ -79,7 +79,7 @@ describe('EquipmentService', () => {
       const result = await equipmentService.getEquipment(filters);
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test&siteName=Test+Site&page=2&limit=25&sortBy=name&sortOrder=desc'
+        '/api/v1/equipment?search=test&siteName=Test+Site&page=2&pageSize=25&sortBy=name&sortOrder=DESC'
       );
       expect(result).toEqual(mockResponse);
     });
@@ -156,7 +156,7 @@ describe('EquipmentService', () => {
       });
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test&siteName=Site+A&limit=25'
+        '/api/v1/equipment?search=test&siteName=Site+A&pageSize=25'
       );
       expect(result).toEqual(mockResponse);
     });

@@ -20,7 +20,8 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: `http://localhost:${process.env.API_PORT || '3011'}`,
+        // Default to 3010 (repo default) - set API_PORT env var for non-default ports
+        target: `http://localhost:${process.env.API_PORT || '3010'}`,
         changeOrigin: true,
         secure: false,
       },

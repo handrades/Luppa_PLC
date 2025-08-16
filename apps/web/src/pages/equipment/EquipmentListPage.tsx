@@ -91,6 +91,7 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
       fetchEquipment();
     }
     // ESLint disable is intentional - actions from Zustand are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFilters]);
 
   // Column definitions for DataGrid - memoized to prevent recreation

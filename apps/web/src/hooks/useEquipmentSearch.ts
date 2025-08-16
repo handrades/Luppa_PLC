@@ -55,6 +55,7 @@ export function useEquipmentSearch(
       }
     }
     // ESLint disable is intentional - Zustand actions are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm, currentFilters.search]);
 
   // Clear search function

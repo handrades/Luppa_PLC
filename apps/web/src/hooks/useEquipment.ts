@@ -35,12 +35,14 @@ export function useEquipment(
       setFilters(initialFilters);
     }
     // ESLint disable is intentional - setFilters from Zustand is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFilters, enabled]);
 
   // Utility functions
   const refetchEquipment = useCallback(async () => {
     await fetchEquipment();
     // ESLint disable is intentional - fetchEquipment from Zustand is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMore = useCallback(async () => {
@@ -48,6 +50,7 @@ export function useEquipment(
       await setFilters({ page: pagination.page + 1 });
     }
     // ESLint disable is intentional - setFilters from Zustand is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, pagination.totalPages]);
 
   const hasNextPage = pagination.page < pagination.totalPages;

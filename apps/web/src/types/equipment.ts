@@ -50,10 +50,11 @@ export interface EquipmentSearchFilters {
   equipmentType?: string; // Filter by equipment type
   make?: string; // Filter by PLC make
   model?: string; // Filter by PLC model
+  hasIpAddress?: boolean; // Filter by IP address presence
   page?: number; // Page number (1-based)
-  limit?: number; // Page size (max 100)
-  sortBy?: string; // Sort field name
-  sortOrder?: 'asc' | 'desc'; // Sort direction
+  limit?: number; // Page size (max 100) - mapped to pageSize on server
+  sortBy?: 'name' | 'description' | 'make' | 'model' | 'ip' | 'siteName' | 'cellType'; // Sort field name
+  sortOrder?: 'asc' | 'desc'; // Sort direction - mapped to ASC/DESC on server
 }
 
 // Pagination metadata from API responses

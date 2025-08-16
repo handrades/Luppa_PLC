@@ -18,7 +18,7 @@ import type {
  * Equipment Service class providing API integration methods
  */
 export class EquipmentService {
-  private readonly baseUrl = '/equipment';
+  private readonly baseUrl = '/api/v1/equipment';
 
   /**
    * Fetch equipment list with optional filters and pagination
@@ -57,13 +57,18 @@ export class EquipmentService {
         queryParams.append('model', filters.model);
       }
 
+      // Add hasIpAddress filter
+      if (filters.hasIpAddress !== undefined) {
+        queryParams.append('hasIpAddress', filters.hasIpAddress.toString());
+      }
+
       // Add pagination parameters
       if (filters.page) {
         queryParams.append('page', filters.page.toString());
       }
 
       if (filters.limit) {
-        queryParams.append('limit', filters.limit.toString());
+        queryParams.append('pageSize', filters.limit.toString());
       }
 
       // Add sorting parameters
@@ -72,7 +77,9 @@ export class EquipmentService {
       }
 
       if (filters.sortOrder) {
-        queryParams.append('sortOrder', filters.sortOrder);
+        // Normalize sort direction to API-expected uppercase values
+        const normalizedOrder = filters.sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+        queryParams.append('sortOrder', normalizedOrder);
       }
 
       // Construct URL with query parameters
@@ -186,13 +193,55 @@ export class EquipmentService {
     format: 'csv' | 'xlsx' = 'csv'
   ): Promise<Blob> {
     try {
-      // Build query parameters
+      // Build query parameters with explicit mapping
       const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, value.toString());
-        }
-      });
+
+      // Map client parameters to server parameters
+      if (filters.search?.trim()) {
+        queryParams.append('search', filters.search.trim());
+      }
+
+      if (filters.siteName) {
+        queryParams.append('siteName', filters.siteName);
+      }
+
+      if (filters.cellName) {
+        queryParams.append('cellName', filters.cellName);
+      }
+
+      if (filters.equipmentType) {
+        queryParams.append('equipmentType', filters.equipmentType);
+      }
+
+      if (filters.make) {
+        queryParams.append('make', filters.make);
+      }
+
+      if (filters.model) {
+        queryParams.append('model', filters.model);
+      }
+
+      if (filters.hasIpAddress !== undefined) {
+        queryParams.append('hasIpAddress', filters.hasIpAddress.toString());
+      }
+
+      if (filters.page) {
+        queryParams.append('page', filters.page.toString());
+      }
+
+      if (filters.limit) {
+        queryParams.append('pageSize', filters.limit.toString()); // Map limit to pageSize
+      }
+
+      if (filters.sortBy) {
+        queryParams.append('sortBy', filters.sortBy);
+      }
+
+      if (filters.sortOrder) {
+        // Transform sortOrder to uppercase
+        const normalizedOrder = filters.sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+        queryParams.append('sortOrder', normalizedOrder);
+      }
 
       queryParams.append('format', format);
 
