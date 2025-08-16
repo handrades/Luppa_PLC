@@ -8,6 +8,9 @@ Properties {
 
 # Parameters that can be passed between tasks
 $script:MarkdownFixMode = $false
+$script:CollectAllErrors = $false
+$script:CollectedErrors = @()
+$script:CollectedWarnings = @()
 
 # Helper functions
 function Test-Command {
@@ -19,6 +22,289 @@ function Test-Command {
   }
   catch {
     return $false
+  }
+}
+
+# Error collection helper functions
+function Add-TaskError {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TaskName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$ErrorMessage,
+    
+    [string]$FilePath = "",
+    [string]$LineNumber = "",
+    [string]$ColumnNumber = "",
+    [string]$ErrorCode = "",
+    [string]$SuggestedFix = ""
+  )
+  
+  $errorObject = @{
+    TaskName = $TaskName
+    ErrorMessage = $ErrorMessage
+    FilePath = $FilePath
+    LineNumber = $LineNumber
+    ColumnNumber = $ColumnNumber
+    ErrorCode = $ErrorCode
+    SuggestedFix = $SuggestedFix
+    Timestamp = Get-Date
+  }
+  
+  $script:CollectedErrors += $errorObject
+}
+
+function Add-TaskWarning {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TaskName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$WarningMessage,
+    
+    [string]$FilePath = "",
+    [string]$LineNumber = "",
+    [string]$ColumnNumber = "",
+    [string]$WarningCode = "",
+    [string]$SuggestedFix = ""
+  )
+  
+  $warningObject = @{
+    TaskName = $TaskName
+    WarningMessage = $WarningMessage
+    FilePath = $FilePath
+    LineNumber = $LineNumber
+    ColumnNumber = $ColumnNumber
+    WarningCode = $WarningCode
+    SuggestedFix = $SuggestedFix
+    Timestamp = Get-Date
+  }
+  
+  $script:CollectedWarnings += $warningObject
+}
+
+function Invoke-TaskWithErrorCollection {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TaskName,
+    
+    [Parameter(Mandatory = $true)]
+    [scriptblock]$ScriptBlock
+  )
+  
+  if ($script:CollectAllErrors) {
+    try {
+      Write-Host "Running $TaskName... " -ForegroundColor Cyan -NoNewline
+      & $ScriptBlock
+      Write-Host "✅ $TaskName" -ForegroundColor Green
+      return $true
+    }
+    catch {
+      Write-Host "❌ $TaskName (errors collected)" -ForegroundColor Red
+      Add-TaskError -TaskName $TaskName -ErrorMessage $_.Exception.Message
+      return $false
+    }
+  }
+  else {
+    # Normal execution - throw errors
+    & $ScriptBlock
+  }
+}
+
+function Format-LintError {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TaskName,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$RawOutput
+  )
+  
+  # Parse different linter output formats and extract structured error information
+  $lines = $RawOutput -split "`n"
+  
+  foreach ($line in $lines) {
+    if ($line -match "ERROR|WARN|FAIL") {
+      # Try to extract file:line:column pattern
+      if ($line -match "([^:\s]+):(\d+):(\d+)\s*(.*)") {
+        $filePath = $matches[1]
+        $lineNum = $matches[2]
+        $colNum = $matches[3]
+        $message = $matches[4]
+        
+        if ($line -match "ERROR|FAIL") {
+          Add-TaskError -TaskName $TaskName -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum
+        }
+        else {
+          Add-TaskWarning -TaskName $TaskName -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum
+        }
+      }
+      else {
+        # Generic error without specific location
+        if ($line -match "ERROR|FAIL") {
+          Add-TaskError -TaskName $TaskName -ErrorMessage $line
+        }
+        else {
+          Add-TaskWarning -TaskName $TaskName -WarningMessage $line
+        }
+      }
+    }
+  }
+}
+
+function Write-ComprehensiveErrorReport {
+  if ($script:CollectedErrors.Count -eq 0 -and $script:CollectedWarnings.Count -eq 0) {
+    Write-Host "`n🎉 ALL CHECKS PASSED! No errors or warnings found." -ForegroundColor Green
+    return
+  }
+
+  Write-Host "`n=== COMPREHENSIVE ERROR REPORT ===" -ForegroundColor Cyan
+  Write-Host ""
+
+  # Group errors by task
+  $errorsByTask = $script:CollectedErrors | Group-Object TaskName
+  $warningsByTask = $script:CollectedWarnings | Group-Object TaskName
+
+  # Display errors by category
+  foreach ($taskGroup in $errorsByTask) {
+    $taskName = $taskGroup.Name
+    $errors = $taskGroup.Group
+    
+    Write-Host "🔴 $($taskName.ToUpper()) ERRORS ($($errors.Count)):" -ForegroundColor Red
+    
+    foreach ($error in $errors) {
+      Write-Host "  ERROR: " -ForegroundColor Red -NoNewline
+      
+      if ($error.FilePath -and $error.LineNumber) {
+        Write-Host "$($error.FilePath):$($error.LineNumber)" -ForegroundColor Yellow -NoNewline
+        if ($error.ColumnNumber) {
+          Write-Host ":$($error.ColumnNumber)" -ForegroundColor Yellow -NoNewline
+        }
+        if ($error.ErrorCode) {
+          Write-Host " [$($error.ErrorCode)]" -ForegroundColor Magenta -NoNewline
+        }
+        Write-Host ""
+        Write-Host "    $($error.ErrorMessage)" -ForegroundColor White
+      }
+      else {
+        Write-Host "$($error.ErrorMessage)" -ForegroundColor White
+      }
+      
+      if ($error.SuggestedFix) {
+        Write-Host "    Fix: $($error.SuggestedFix)" -ForegroundColor Green
+      }
+      Write-Host ""
+    }
+  }
+
+  # Display warnings by category
+  foreach ($taskGroup in $warningsByTask) {
+    $taskName = $taskGroup.Name
+    $warnings = $taskGroup.Group
+    
+    Write-Host "⚠️ $($taskName.ToUpper()) WARNINGS ($($warnings.Count)):" -ForegroundColor Yellow
+    
+    foreach ($warning in $warnings) {
+      Write-Host "  WARNING: " -ForegroundColor Yellow -NoNewline
+      
+      if ($warning.FilePath -and $warning.LineNumber) {
+        Write-Host "$($warning.FilePath):$($warning.LineNumber)" -ForegroundColor Yellow -NoNewline
+        if ($warning.ColumnNumber) {
+          Write-Host ":$($warning.ColumnNumber)" -ForegroundColor Yellow -NoNewline
+        }
+        if ($warning.WarningCode) {
+          Write-Host " [$($warning.WarningCode)]" -ForegroundColor Magenta -NoNewline
+        }
+        Write-Host ""
+        Write-Host "    $($warning.WarningMessage)" -ForegroundColor White
+      }
+      else {
+        Write-Host "$($warning.WarningMessage)" -ForegroundColor White
+      }
+      
+      if ($warning.SuggestedFix) {
+        Write-Host "    Fix: $($warning.SuggestedFix)" -ForegroundColor Green
+      }
+      Write-Host ""
+    }
+  }
+
+  # Generate batch fix commands
+  Write-Host "=== BATCH FIX COMMANDS ===" -ForegroundColor Cyan
+  Write-Host ""
+
+  $autoFixableCommands = @()
+  $manualFixes = @()
+
+  # Analyze errors for auto-fixable issues
+  $markdownErrors = $script:CollectedErrors | Where-Object { $_.TaskName -eq "Markdown" }
+  if ($markdownErrors.Count -gt 0) {
+    $autoFixableCommands += "# Fix markdown issues"
+    $autoFixableCommands += "markdownlint --fix **/*.md"
+  }
+
+  $formattingErrors = $script:CollectedErrors | Where-Object { $_.TaskName -eq "Formatting" }
+  if ($formattingErrors.Count -gt 0) {
+    $autoFixableCommands += "# Fix formatting issues"
+    $autoFixableCommands += "pnpm format:fix"
+  }
+
+  $securityWarnings = $script:CollectedWarnings | Where-Object { $_.TaskName -eq "Security" -and $_.WarningMessage -match "vulnerabilit" }
+  if ($securityWarnings.Count -gt 0) {
+    $autoFixableCommands += "# Fix security vulnerabilities"
+    $autoFixableCommands += "pnpm audit fix"
+  }
+
+  if ($autoFixableCommands.Count -gt 0) {
+    Write-Host "📝 IMMEDIATE FIXES:" -ForegroundColor Green
+    foreach ($cmd in $autoFixableCommands) {
+      Write-Host "$cmd" -ForegroundColor Gray
+    }
+    Write-Host ""
+  }
+
+  # List manual fixes needed
+  $codeErrors = $script:CollectedErrors | Where-Object { $_.FilePath -and $_.TaskName -in @("TypeScript", "Type Check", "Tests") }
+  if ($codeErrors.Count -gt 0) {
+    Write-Host "🔧 CODE FIXES NEEDED:" -ForegroundColor Yellow
+    $fixNumber = 1
+    foreach ($error in $codeErrors) {
+      if ($error.FilePath -and $error.LineNumber) {
+        Write-Host "$fixNumber. $($error.FilePath):$($error.LineNumber)" -ForegroundColor Yellow -NoNewline
+        if ($error.ColumnNumber) {
+          Write-Host ":$($error.ColumnNumber)" -ForegroundColor Yellow -NoNewline
+        }
+        Write-Host " - $($error.ErrorMessage)" -ForegroundColor White
+        $fixNumber++
+      }
+    }
+    Write-Host ""
+  }
+
+  # Summary
+  Write-Host "=== SUMMARY ===" -ForegroundColor Cyan
+  $totalErrors = $script:CollectedErrors.Count
+  $totalWarnings = $script:CollectedWarnings.Count
+  $autoFixable = $autoFixableCommands.Count
+  $manualFixes = $codeErrors.Count
+
+  Write-Host "Total Issues: $totalErrors errors, $totalWarnings warnings" -ForegroundColor White
+  if ($autoFixable -gt 0) {
+    Write-Host "Auto-fixable: $autoFixable categories (formatting, markdown, vulnerabilities)" -ForegroundColor Green
+  }
+  if ($manualFixes -gt 0) {
+    Write-Host "Manual fixes: $manualFixes (code changes, test fixes)" -ForegroundColor Yellow
+  }
+  Write-Host ""
+
+  if ($totalErrors -gt 0) {
+    Write-Host "Status: ❌ FAILED - $totalErrors errors need fixes" -ForegroundColor Red
+    Write-Host "Next: Run batch fix commands above, then fix code issues manually" -ForegroundColor Yellow
+  }
+  elseif ($totalWarnings -gt 0) {
+    Write-Host "Status: ⚠️ WARNINGS - $totalWarnings warnings to review" -ForegroundColor Yellow
+    Write-Host "Next: Review warnings and apply fixes as needed" -ForegroundColor Cyan
   }
 }
 
@@ -103,227 +389,440 @@ Task Build -Alias apps-build -Depends Lint, TypeCheck {
 
 # Markdown linting task
 Task LintMarkdown {
-  Write-Host "`nChecking Markdown files..." -ForegroundColor Cyan
-    
-  # Check if markdownlint is available via npx or globally
-  $markdownLintAvailable = $false
-  try {
-    $null = & npx markdownlint-cli --version 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      $markdownLintAvailable = $true
+  Invoke-TaskWithErrorCollection -TaskName "Markdown" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nChecking Markdown files..." -ForegroundColor Cyan
     }
-  }
-  catch {
-    if (Test-Command "markdownlint") {
-      $markdownLintAvailable = $true
+      
+    # Check if markdownlint is available via npx or globally
+    $markdownLintAvailable = $false
+    try {
+      $null = & npx markdownlint-cli --version 2>$null
+      if ($LASTEXITCODE -eq 0) {
+        $markdownLintAvailable = $true
+      }
     }
-  }
-    
-  if (-not $markdownLintAvailable) {
-    throw "markdownlint not found. Install with: npm install -g markdownlint-cli"
-  }
-    
-  $mdFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.md" -Recurse | 
-  Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
-    
-  if ($mdFiles.Count -eq 0) {
-    Write-Host "No markdown files found to lint" -ForegroundColor Cyan
-    return
-  }
-    
-  Write-Host "Found $($mdFiles.Count) markdown files" -ForegroundColor Cyan
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Use the appropriate command (global or npx)
-    if (Test-Command "markdownlint") {
-      if ($script:MarkdownFixMode -or $MarkdownFix) {
-        exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+    catch {
+      if (Test-Command "markdownlint") {
+        $markdownLintAvailable = $true
+      }
+    }
+      
+    if (-not $markdownLintAvailable) {
+      if ($script:CollectAllErrors) {
+        Add-TaskError -TaskName "Markdown" -ErrorMessage "markdownlint not found" -SuggestedFix "npm install -g markdownlint-cli"
+        return
       }
       else {
-        exec { markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
+        throw "markdownlint not found. Install with: npm install -g markdownlint-cli"
       }
     }
-    else {
-      if ($script:MarkdownFixMode -or $MarkdownFix) {
-        exec { npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix } "Markdown linting with fixes failed"
+      
+    $mdFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.md" -Recurse | 
+    Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
+      
+    if ($mdFiles.Count -eq 0) {
+      if (-not $script:CollectAllErrors) {
+        Write-Host "No markdown files found to lint" -ForegroundColor Cyan
+      }
+      return
+    }
+      
+    if (-not $script:CollectAllErrors) {
+      Write-Host "Found $($mdFiles.Count) markdown files" -ForegroundColor Cyan
+    }
+      
+    Push-Location $PSScriptRoot
+    try {
+      $output = ""
+      $errorOutput = ""
+      
+      # Use the appropriate command (global or npx)
+      if (Test-Command "markdownlint") {
+        if ($script:MarkdownFixMode -or $MarkdownFix) {
+          $output = & markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix 2>&1
+        }
+        else {
+          $output = & markdownlint "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json 2>&1
+        }
       }
       else {
-        exec { npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json } "Markdown linting failed"
+        if ($script:MarkdownFixMode -or $MarkdownFix) {
+          $output = & npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json --fix 2>&1
+        }
+        else {
+          $output = & npx markdownlint-cli "**/*.md" --ignore "**/node_modules/**" --ignore "**/.bmad-core/**" --ignore "infrastructure/__tests__/node_modules/**" --config config/.markdownlint.json 2>&1
+        }
+      }
+      
+      if ($LASTEXITCODE -ne 0) {
+        if ($script:CollectAllErrors) {
+          # Parse markdownlint output for structured errors
+          $lines = $output -split "`n"
+          foreach ($line in $lines) {
+            if ($line -match "^([^:]+):(\d+):?(\d+)?\s+(.+?)\s+(.+)$") {
+              $filePath = $matches[1]
+              $lineNum = $matches[2]
+              $colNum = if ($matches[3]) { $matches[3] } else { "1" }
+              $errorCode = $matches[4]
+              $message = $matches[5]
+              
+              Add-TaskError -TaskName "Markdown" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $errorCode -SuggestedFix "markdownlint --fix $filePath"
+            }
+            elseif ($line -match "^([^:]+):(\d+)\s+(.+)$") {
+              $filePath = $matches[1]
+              $lineNum = $matches[2]
+              $message = $matches[3]
+              
+              Add-TaskError -TaskName "Markdown" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -SuggestedFix "markdownlint --fix $filePath"
+            }
+            elseif ($line.Trim() -and -not ($line -match "^npm")) {
+              Add-TaskError -TaskName "Markdown" -ErrorMessage $line.Trim()
+            }
+          }
+        }
+        else {
+          throw "Markdown linting failed"
+        }
+      }
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "✓ Markdown linting passed" -ForegroundColor Green
+        }
       }
     }
-    Write-Host "✓ Markdown linting passed" -ForegroundColor Green
-  }
-  finally {
-    Pop-Location
+    finally {
+      Pop-Location
+    }
   }
 }
 
 # JSON linting task
 Task LintJson {
-  Write-Host "`nChecking JSON files..." -ForegroundColor Cyan
-    
-  # Check if jsonlint is available via npx or globally
-  $jsonlintAvailable = $false
-  try {
-    $null = & npx jsonlint --version 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      $jsonlintAvailable = $true
+  Invoke-TaskWithErrorCollection -TaskName "JSON" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nChecking JSON files..." -ForegroundColor Cyan
     }
-  }
-  catch {
-    if (Test-Command "jsonlint") {
-      $jsonlintAvailable = $true
-    }
-  }
-    
-  if (-not $jsonlintAvailable) {
-    throw "jsonlint not found. Install with: npm install -g jsonlint"
-  }
-    
-  $jsonFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.json" -Recurse -File | 
-  Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
-    
-  if ($jsonFiles.Count -eq 0) {
-    Write-Host "No JSON files found to lint" -ForegroundColor Cyan
-    return
-  }
-    
-  Write-Host "Found $($jsonFiles.Count) JSON files" -ForegroundColor Cyan
-    
-  $hasErrors = $false
-  foreach ($file in $jsonFiles) {
+      
+    # Check if jsonlint is available via npx or globally
+    $jsonlintAvailable = $false
     try {
-      if (Test-Command "jsonlint") {
-        exec { jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
+      $null = & npx jsonlint --version 2>$null
+      if ($LASTEXITCODE -eq 0) {
+        $jsonlintAvailable = $true
       }
-      else {
-        exec { npx jsonlint $file.FullName -q } "JSON linting failed for $($file.Name)"
-      }
-      Write-Host "✓ $($file.Name)" -ForegroundColor DarkGreen
     }
     catch {
-      Write-Host "✗ $($file.Name)" -ForegroundColor Red
-      $hasErrors = $true
+      if (Test-Command "jsonlint") {
+        $jsonlintAvailable = $true
+      }
+    }
+      
+    if (-not $jsonlintAvailable) {
+      if ($script:CollectAllErrors) {
+        Add-TaskError -TaskName "JSON" -ErrorMessage "jsonlint not found" -SuggestedFix "npm install -g jsonlint"
+        return
+      }
+      else {
+        throw "jsonlint not found. Install with: npm install -g jsonlint"
+      }
+    }
+      
+    $jsonFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.json" -Recurse -File | 
+    Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
+      
+    if ($jsonFiles.Count -eq 0) {
+      if (-not $script:CollectAllErrors) {
+        Write-Host "No JSON files found to lint" -ForegroundColor Cyan
+      }
+      return
+    }
+      
+    if (-not $script:CollectAllErrors) {
+      Write-Host "Found $($jsonFiles.Count) JSON files" -ForegroundColor Cyan
+    }
+      
+    $hasErrors = $false
+    foreach ($file in $jsonFiles) {
+      try {
+        $output = ""
+        if (Test-Command "jsonlint") {
+          $output = & jsonlint $file.FullName -q 2>&1
+        }
+        else {
+          $output = & npx jsonlint $file.FullName -q 2>&1
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+          $hasErrors = $true
+          if ($script:CollectAllErrors) {
+            Add-TaskError -TaskName "JSON" -ErrorMessage "Invalid JSON syntax" -FilePath $file.FullName -SuggestedFix "Check JSON syntax in $($file.Name)"
+          }
+          else {
+            Write-Host "✗ $($file.Name)" -ForegroundColor Red
+          }
+        }
+        else {
+          if (-not $script:CollectAllErrors) {
+            Write-Host "✓ $($file.Name)" -ForegroundColor DarkGreen
+          }
+        }
+      }
+      catch {
+        $hasErrors = $true
+        if ($script:CollectAllErrors) {
+          Add-TaskError -TaskName "JSON" -ErrorMessage $_.Exception.Message -FilePath $file.FullName
+        }
+        else {
+          Write-Host "✗ $($file.Name)" -ForegroundColor Red
+        }
+      }
+    }
+      
+    if ($hasErrors -and -not $script:CollectAllErrors) {
+      throw "JSON linting failed for one or more files"
+    }
+      
+    if (-not $hasErrors -and -not $script:CollectAllErrors) {
+      Write-Host "✓ JSON linting passed" -ForegroundColor Green
     }
   }
-    
-  if ($hasErrors) {
-    throw "JSON linting failed for one or more files"
-  }
-    
-  Write-Host "✓ JSON linting passed" -ForegroundColor Green
 }
 
 # YAML linting task
 Task LintYaml {
-  Write-Host "`nChecking YAML files..." -ForegroundColor Cyan
-    
-  # yaml-lint uses npx, no need to check for pnpm
-    
-  # Use a more robust approach to find YAML files including hidden directories
-  $yamlFiles = @()
-  $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yml" -Recurse -Force
-  $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yaml" -Recurse -Force
-  $yamlFiles = $yamlFiles | Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
-    
-  if ($yamlFiles.Count -eq 0) {
-    Write-Host "No YAML files found to lint" -ForegroundColor Cyan
-    return
-  }
-    
-  Write-Host "Found $($yamlFiles.Count) YAML files" -ForegroundColor Cyan
-  Write-Host "Files found:" -ForegroundColor Cyan
-  $yamlFiles | ForEach-Object { Write-Host "  $($_.FullName)" -ForegroundColor Gray }
-    
-  $fileList = $yamlFiles | ForEach-Object { $_.FullName }
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Run yaml-lint with config file to catch all issues
-    # Use npx directly instead of pnpm exec for better compatibility
-    $arguments = @("yaml-lint", "--config-file", "config/.yaml-lint.json") + $fileList
-    exec { & npx $arguments } "YAML linting failed"
-    Write-Host "✓ YAML linting passed" -ForegroundColor Green
-  }
-  finally {
-    Pop-Location
+  Invoke-TaskWithErrorCollection -TaskName "YAML" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nChecking YAML files..." -ForegroundColor Cyan
+    }
+      
+    # Use a more robust approach to find YAML files including hidden directories
+    $yamlFiles = @()
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yml" -Recurse -Force
+    $yamlFiles += Get-ChildItem -Path $PSScriptRoot -Filter "*.yaml" -Recurse -Force
+    $yamlFiles = $yamlFiles | Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" }
+      
+    if ($yamlFiles.Count -eq 0) {
+      if (-not $script:CollectAllErrors) {
+        Write-Host "No YAML files found to lint" -ForegroundColor Cyan
+      }
+      return
+    }
+      
+    if (-not $script:CollectAllErrors) {
+      Write-Host "Found $($yamlFiles.Count) YAML files" -ForegroundColor Cyan
+      Write-Host "Files found:" -ForegroundColor Cyan
+      $yamlFiles | ForEach-Object { Write-Host "  $($_.FullName)" -ForegroundColor Gray }
+    }
+      
+    $fileList = $yamlFiles | ForEach-Object { $_.FullName }
+      
+    Push-Location $PSScriptRoot
+    try {
+      # Run yaml-lint with config file to catch all issues
+      $arguments = @("yaml-lint", "--config-file", "config/.yaml-lint.json") + $fileList
+      $output = & npx $arguments 2>&1
+      
+      if ($LASTEXITCODE -ne 0) {
+        if ($script:CollectAllErrors) {
+          # Parse yaml-lint output for structured errors
+          $lines = $output -split "`n"
+          foreach ($line in $lines) {
+            if ($line -match "^([^:]+):(\d+):(\d+)\s+(.+)$") {
+              $filePath = $matches[1]
+              $lineNum = $matches[2]
+              $colNum = $matches[3]
+              $message = $matches[4]
+              
+              if ($message -match "error") {
+                Add-TaskError -TaskName "YAML" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -SuggestedFix "Check YAML syntax in $filePath"
+              }
+              else {
+                Add-TaskWarning -TaskName "YAML" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -SuggestedFix "Review YAML formatting in $filePath"
+              }
+            }
+            elseif ($line.Trim() -and -not ($line -match "^npm|^>")) {
+              Add-TaskError -TaskName "YAML" -ErrorMessage $line.Trim()
+            }
+          }
+        }
+        else {
+          throw "YAML linting failed"
+        }
+      }
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "✓ YAML linting passed" -ForegroundColor Green
+        }
+      }
+    }
+    finally {
+      Pop-Location
+    }
   }
 }
 
 # TypeScript/JavaScript linting task
 Task LintTypeScript {
-  Write-Host "`nChecking TypeScript/JavaScript files..." -ForegroundColor Cyan
-    
-  # Check if we have a package.json and pnpm workspace
-  if (Test-Path "package.json") {
-    $packageJson = Get-Content "package.json" | ConvertFrom-Json
-        
-    # Check if lint script exists in package.json
-    if ($packageJson.scripts -and $packageJson.scripts.lint) {
-      Write-Host "Using pnpm workspace lint script..." -ForegroundColor Cyan
-            
-      # Use npm run lint as fallback if pnpm is not available
-      $lintCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
-            
-      Push-Location $PSScriptRoot
-      try {
-        if ($lintCommand -eq "pnpm") {
-          exec { pnpm lint } "TypeScript/JavaScript linting failed"
+  Invoke-TaskWithErrorCollection -TaskName "TypeScript" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nChecking TypeScript/JavaScript files..." -ForegroundColor Cyan
+    }
+      
+    # Check if we have a package.json and pnpm workspace
+    if (Test-Path "package.json") {
+      $packageJson = Get-Content "package.json" | ConvertFrom-Json
+          
+      # Check if lint script exists in package.json
+      if ($packageJson.scripts -and $packageJson.scripts.lint) {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Using pnpm workspace lint script..." -ForegroundColor Cyan
         }
-        else {
-          exec { npm run lint } "TypeScript/JavaScript linting failed"
+              
+        # Use npm run lint as fallback if pnpm is not available
+        $lintCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
+              
+        Push-Location $PSScriptRoot
+        try {
+          $output = ""
+          if ($lintCommand -eq "pnpm") {
+            $output = & pnpm lint 2>&1
+          }
+          else {
+            $output = & npm run lint 2>&1
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+            if ($script:CollectAllErrors) {
+              # Parse ESLint/TypeScript output for structured errors
+              $lines = $output -split "`n"
+              foreach ($line in $lines) {
+                if ($line -match "^([^:]+):(\d+):(\d+):\s+(error|warning)\s+(.+?)\s+(.+)$") {
+                  $filePath = $matches[1]
+                  $lineNum = $matches[2]
+                  $colNum = $matches[3]
+                  $severity = $matches[4]
+                  $message = $matches[5]
+                  $ruleCode = $matches[6]
+                  
+                  if ($severity -eq "error") {
+                    Add-TaskError -TaskName "TypeScript" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                  else {
+                    Add-TaskWarning -TaskName "TypeScript" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -WarningCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                }
+                elseif ($line -match "error TS\d+") {
+                  Add-TaskError -TaskName "TypeScript" -ErrorMessage $line.Trim()
+                }
+                elseif ($line.Trim() -and -not ($line -match "^>|^npm|^\s*$|found \d+ error")) {
+                  if ($line -match "error|failed") {
+                    Add-TaskError -TaskName "TypeScript" -ErrorMessage $line.Trim()
+                  }
+                }
+              }
+            }
+            else {
+              throw "TypeScript/JavaScript linting failed"
+            }
+          }
+          else {
+            if (-not $script:CollectAllErrors) {
+              Write-Host "✓ TypeScript/JavaScript linting passed" -ForegroundColor Green
+            }
+          }
         }
-        Write-Host "✓ TypeScript/JavaScript linting passed" -ForegroundColor Green
+        finally {
+          Pop-Location
+        }
       }
-      finally {
-        Pop-Location
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "No lint script found in package.json - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+        }
       }
     }
     else {
-      Write-Host "No lint script found in package.json - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+      if (-not $script:CollectAllErrors) {
+        Write-Host "No package.json found - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
+      }
     }
-  }
-  else {
-    Write-Host "No package.json found - skipping TypeScript/JavaScript linting" -ForegroundColor Yellow
   }
 }
 
 # Prettier formatting check task (matches GitHub Actions exactly)
 Task CheckFormatting {
-  Write-Host "`nChecking code formatting with Prettier..." -ForegroundColor Cyan
-    
-  # Check if we have a package.json and pnpm workspace
-  if (Test-Path "package.json") {
-    $packageJson = Get-Content "package.json" | ConvertFrom-Json
-        
-    # Check if format:check script exists in package.json
-    if ($packageJson.scripts -and $packageJson.scripts."format:check") {
-      Write-Host "Running Prettier format check..." -ForegroundColor Cyan
-            
-      # Use npm run format:check as fallback if pnpm is not available
-      $formatCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
-            
-      Push-Location $PSScriptRoot
-      try {
-        if ($formatCommand -eq "pnpm") {
-          exec { pnpm format:check } "Prettier format check failed"
+  Invoke-TaskWithErrorCollection -TaskName "Formatting" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nChecking code formatting with Prettier..." -ForegroundColor Cyan
+    }
+      
+    # Check if we have a package.json and pnpm workspace
+    if (Test-Path "package.json") {
+      $packageJson = Get-Content "package.json" | ConvertFrom-Json
+          
+      # Check if format:check script exists in package.json
+      if ($packageJson.scripts -and $packageJson.scripts."format:check") {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running Prettier format check..." -ForegroundColor Cyan
         }
-        else {
-          exec { npm run format:check } "Prettier format check failed"
+              
+        # Use npm run format:check as fallback if pnpm is not available
+        $formatCommand = if (Test-Command "pnpm") { "pnpm" } else { "npm run" }
+              
+        Push-Location $PSScriptRoot
+        try {
+          $output = ""
+          if ($formatCommand -eq "pnpm") {
+            $output = & pnpm format:check 2>&1
+          }
+          else {
+            $output = & npm run format:check 2>&1
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+            if ($script:CollectAllErrors) {
+              # Parse Prettier output for files that need formatting
+              $lines = $output -split "`n"
+              $needsFormatting = @()
+              foreach ($line in $lines) {
+                if ($line -match "\.(ts|js|tsx|jsx|json|md)$" -and -not ($line -match "node_modules")) {
+                  $needsFormatting += $line.Trim()
+                }
+              }
+              
+              if ($needsFormatting.Count -gt 0) {
+                Add-TaskError -TaskName "Formatting" -ErrorMessage "Files need formatting: $($needsFormatting -join ', ')" -SuggestedFix "pnpm format:fix"
+              }
+              else {
+                Add-TaskError -TaskName "Formatting" -ErrorMessage "Prettier format check failed" -SuggestedFix "pnpm format:fix"
+              }
+            }
+            else {
+              throw "Prettier format check failed"
+            }
+          }
+          else {
+            if (-not $script:CollectAllErrors) {
+              Write-Host "✓ Code formatting check passed" -ForegroundColor Green
+            }
+          }
         }
-        Write-Host "✓ Code formatting check passed" -ForegroundColor Green
+        finally {
+          Pop-Location
+        }
       }
-      finally {
-        Pop-Location
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "No format:check script found in package.json - skipping formatting check" -ForegroundColor Yellow
+        }
       }
     }
     else {
-      Write-Host "No format:check script found in package.json - skipping formatting check" -ForegroundColor Yellow
+      if (-not $script:CollectAllErrors) {
+        Write-Host "No package.json found - skipping formatting check" -ForegroundColor Yellow
+      }
     }
-  }
-  else {
-    Write-Host "No package.json found - skipping formatting check" -ForegroundColor Yellow
   }
 }
 
@@ -377,65 +876,109 @@ Task CheckNewlines {
 
 # Security checks for dependencies and code
 Task CheckSecurity {
-  Write-Host "`nRunning security checks..." -ForegroundColor Cyan
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Check for npm audit if pnpm is available
-    if ((Test-Path "package.json") -and (Test-Command "pnpm")) {
-      Write-Host "Checking for security vulnerabilities in dependencies..." -ForegroundColor Cyan
-            
-      try {
-        exec { pnpm audit --audit-level moderate } "Dependency security audit found issues"
-        Write-Host "✓ No security vulnerabilities found in dependencies" -ForegroundColor Green
-      }
-      catch {
-        Write-Host "⚠️  Security vulnerabilities found. Run 'pnpm audit' for details." -ForegroundColor Yellow
-        # Don't fail the build for security issues, just warn
-      }
+  Invoke-TaskWithErrorCollection -TaskName "Security" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nRunning security checks..." -ForegroundColor Cyan
     }
-        
-    # Check for common security anti-patterns in code
-    Write-Host "Scanning for security anti-patterns..." -ForegroundColor Cyan
-    $securityIssues = @()
-        
-    # Look for hardcoded secrets patterns
-    $secretPatterns = @(
-      "password\s*[:=]\s*[`"'].*[`"']",
-      "secret\s*[:=]\s*[`"'].*[`"']",
-      "api_key\s*[:=]\s*[`"'].*[`"']",
-      "apikey\s*[:=]\s*[`"'].*[`"']",
-      "private_key\s*[:=]\s*[`"'].*[`"']",
-      "access_token\s*[:=]\s*[`"'].*[`"']"
-    )
-        
-    $codeFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.ts", "*.js", "*.tsx", "*.jsx" -Recurse |
-    Where-Object { $_.FullName -notlike "*node_modules*" -and $_.FullName -notlike "*.bmad-core*" -and $_.FullName -notlike "*\dist\*" }
-        
-    foreach ($file in $codeFiles) {
-      $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
-      if ($content) {
-        foreach ($pattern in $secretPatterns) {
-          if ($content -match $pattern) {
-            $securityIssues += "Potential hardcoded secret in $($file.FullName): matches pattern '$pattern'"
+      
+    Push-Location $PSScriptRoot
+    try {
+      # Check for npm audit if pnpm is available
+      if ((Test-Path "package.json") -and (Test-Command "pnpm")) {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Checking for security vulnerabilities in dependencies..." -ForegroundColor Cyan
+        }
+              
+        try {
+          $auditOutput = & pnpm audit --audit-level moderate 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            if ($script:CollectAllErrors) {
+              Add-TaskWarning -TaskName "Security" -WarningMessage "Security vulnerabilities found in dependencies" -SuggestedFix "pnpm audit fix"
+            }
+            else {
+              Write-Host "⚠️  Security vulnerabilities found. Run 'pnpm audit' for details." -ForegroundColor Yellow
+            }
+          }
+          else {
+            if (-not $script:CollectAllErrors) {
+              Write-Host "✓ No security vulnerabilities found in dependencies" -ForegroundColor Green
+            }
+          }
+        }
+        catch {
+          if ($script:CollectAllErrors) {
+            Add-TaskWarning -TaskName "Security" -WarningMessage "Could not run security audit" -SuggestedFix "Check pnpm installation and try manual audit"
+          }
+          else {
+            Write-Host "⚠️  Security vulnerabilities found. Run 'pnpm audit' for details." -ForegroundColor Yellow
           }
         }
       }
-    }
-        
-    if ($securityIssues.Count -gt 0) {
-      Write-Host "⚠️  Security issues found:" -ForegroundColor Yellow
-      foreach ($issue in $securityIssues) {
-        Write-Host "  $issue" -ForegroundColor Yellow
+          
+      # Check for common security anti-patterns in code
+      if (-not $script:CollectAllErrors) {
+        Write-Host "Scanning for security anti-patterns..." -ForegroundColor Cyan
       }
-      Write-Host "Please review and ensure no real secrets are hardcoded" -ForegroundColor Yellow
+      
+      $securityIssues = @()
+          
+      # Look for hardcoded secrets patterns (exclude test and dist files)
+      $secretPatterns = @(
+        "password\s*[:=]\s*[`"'].*[`"']",
+        "secret\s*[:=]\s*[`"'].*[`"']",
+        "api_key\s*[:=]\s*[`"'].*[`"']",
+        "apikey\s*[:=]\s*[`"'].*[`"']",
+        "private_key\s*[:=]\s*[`"'].*[`"']",
+        "access_token\s*[:=]\s*[`"'].*[`"']"
+      )
+          
+      $codeFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.ts", "*.js", "*.tsx", "*.jsx" -Recurse |
+      Where-Object { 
+        $_.FullName -notlike "*node_modules*" -and 
+        $_.FullName -notlike "*.bmad-core*" -and 
+        $_.FullName -notlike "*\dist\*" -and
+        $_.FullName -notlike "*\build\*" -and
+        $_.FullName -notlike "*test*" -and
+        $_.FullName -notlike "*\.test\.*" -and
+        $_.FullName -notlike "*\.spec\.*" -and
+        $_.FullName -notlike "*storybook*"
+      }
+          
+      foreach ($file in $codeFiles) {
+        $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+        if ($content) {
+          foreach ($pattern in $secretPatterns) {
+            if ($content -match $pattern) {
+              $relativePath = $file.FullName.Replace($PSScriptRoot, "").TrimStart("\", "/")
+              if ($script:CollectAllErrors) {
+                Add-TaskWarning -TaskName "Security" -WarningMessage "Potential hardcoded secret detected" -FilePath $relativePath -WarningCode "hardcoded-secret" -SuggestedFix "Move sensitive data to environment variables or config files"
+              }
+              else {
+                $securityIssues += "Potential hardcoded secret in $relativePath matches pattern '$pattern'"
+              }
+            }
+          }
+        }
+      }
+          
+      if (-not $script:CollectAllErrors) {
+        if ($securityIssues.Count -gt 0) {
+          Write-Host "⚠️  Security issues found:" -ForegroundColor Yellow
+          # Only show first 5 to avoid spam
+          $displayIssues = if ($securityIssues.Count -gt 5) { $securityIssues[0..4] + "... and $($securityIssues.Count - 5) more" } else { $securityIssues }
+          foreach ($issue in $displayIssues) {
+            Write-Host "  $issue" -ForegroundColor Yellow
+          }
+          Write-Host "Please review and ensure no real secrets are hardcoded" -ForegroundColor Yellow
+        }
+        else {
+          Write-Host "✓ No security anti-patterns detected" -ForegroundColor Green
+        }
+      }
     }
-    else {
-      Write-Host "✓ No security anti-patterns detected" -ForegroundColor Green
+    finally {
+      Pop-Location
     }
-  }
-  finally {
-    Pop-Location
   }
 }
 
@@ -546,77 +1089,200 @@ Task CheckApiHealth {
 
 # Test task
 Task Test -Description "Run workspace configuration tests" {
-  Write-Host "`nRunning workspace configuration tests..." -ForegroundColor Cyan
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Run Jest tests if available
-    if (Test-Path "package.json") {
-      $packageJson = Get-Content "package.json" | ConvertFrom-Json
-            
-      if ($packageJson.scripts -and $packageJson.scripts.test) {
-        Write-Host "Running Jest tests..." -ForegroundColor Cyan
-                
-        if (-not (Test-Command "pnpm")) {
-          throw "pnpm not found. Please install pnpm first."
+  Invoke-TaskWithErrorCollection -TaskName "Tests" -ScriptBlock {
+    if (-not $script:CollectAllErrors) {
+      Write-Host "`nRunning workspace configuration tests..." -ForegroundColor Cyan
+    }
+      
+    Push-Location $PSScriptRoot
+    try {
+      # Run Jest tests if available
+      if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+              
+        if ($packageJson.scripts -and $packageJson.scripts.test) {
+          if (-not $script:CollectAllErrors) {
+            Write-Host "Running Jest tests..." -ForegroundColor Cyan
+          }
+                  
+          if (-not (Test-Command "pnpm")) {
+            if ($script:CollectAllErrors) {
+              Add-TaskError -TaskName "Tests" -ErrorMessage "pnpm not found" -SuggestedFix "Install pnpm: npm install -g pnpm"
+              return
+            }
+            else {
+              throw "pnpm not found. Please install pnpm first."
+            }
+          }
+          
+          # Run tests with suppressed output when in collect mode
+          $output = ""
+          if ($script:CollectAllErrors) {
+            # Run tests silently and capture output
+            $output = & pnpm test --passWithNoTests --silent 2>&1
+          }
+          else {
+            $output = & pnpm test 2>&1
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+            if ($script:CollectAllErrors) {
+              # Parse test output for specific failures
+              $lines = $output -split "`n"
+              $testFailures = @()
+              foreach ($line in $lines) {
+                if ($line -match "FAIL (.+)") {
+                  $testFailures += $matches[1]
+                }
+                elseif ($line -match "● (.+)") {
+                  $testDetails = $matches[1]
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "Test failed: $testDetails" -SuggestedFix "Review test logic and fix failing tests"
+                }
+                elseif ($line -match "Error: (.+)") {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage $matches[1] -SuggestedFix "Check test setup and dependencies"
+                }
+              }
+              if ($testFailures.Count -gt 0) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "Failed test files: $($testFailures -join ', ')" -SuggestedFix "Run individual test files to debug issues"
+              }
+            }
+            else {
+              throw "Jest tests failed"
+            }
+          }
+          else {
+            if (-not $script:CollectAllErrors) {
+              Write-Host "✓ Jest tests passed" -ForegroundColor Green
+            }
+          }
         }
-                
-        exec { pnpm test } "Jest tests failed"
-        Write-Host "✓ Jest tests passed" -ForegroundColor Green
       }
-    }
+          
+      # Run validation script
+      if (Test-Path "__tests__/workspace-validation.js") {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running workspace validation script..." -ForegroundColor Cyan
+        }
+              
+        if (-not (Test-Command "node")) {
+          if ($script:CollectAllErrors) {
+            Add-TaskError -TaskName "Tests" -ErrorMessage "Node.js not found" -SuggestedFix "Install Node.js from https://nodejs.org"
+            return
+          }
+          else {
+            throw "Node.js not found. Please install Node.js first."
+          }
+        }
         
-    # Run validation script
-    if (Test-Path "__tests__/workspace-validation.js") {
-      Write-Host "Running workspace validation script..." -ForegroundColor Cyan
-            
-      if (-not (Test-Command "node")) {
-        throw "Node.js not found. Please install Node.js first."
-      }
-            
-      exec { node "__tests__/workspace-validation.js" } "Workspace validation failed"
-      Write-Host "✓ Workspace validation passed" -ForegroundColor Green
-    }
+        $output = ""
+        if ($script:CollectAllErrors) {
+          $output = & node "__tests__/workspace-validation.js" 2>&1
+        }
+        else {
+          $output = & node "__tests__/workspace-validation.js" 2>&1
+        }
         
-    # Run API tests with coverage (matches GitHub Actions)
-    if (Test-Path "apps/api/package.json") {
-      Write-Host "Running API tests with coverage..." -ForegroundColor Cyan
-            
-      Push-Location "apps/api"
-      try {
-        if (Test-Command "pnpm") {
-          exec { pnpm test:coverage --passWithNoTests } "API tests failed"
-          Write-Host "✓ API tests passed" -ForegroundColor Green
+        if ($LASTEXITCODE -ne 0) {
+          if ($script:CollectAllErrors) {
+            Add-TaskError -TaskName "Tests" -ErrorMessage "Workspace validation failed" -FilePath "__tests__/workspace-validation.js" -SuggestedFix "Check workspace configuration and file structure"
+          }
+          else {
+            throw "Workspace validation failed"
+          }
+        }
+        else {
+          if (-not $script:CollectAllErrors) {
+            Write-Host "✓ Workspace validation passed" -ForegroundColor Green
+          }
         }
       }
-      finally {
-        Pop-Location
+          
+      # Run API tests with coverage (matches GitHub Actions)
+      if (Test-Path "apps/api/package.json") {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running API tests with coverage..." -ForegroundColor Cyan
+        }
+              
+        Push-Location "apps/api"
+        try {
+          if (Test-Command "pnpm") {
+            $output = ""
+            if ($script:CollectAllErrors) {
+              $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
+            }
+            else {
+              $output = & pnpm test:coverage --passWithNoTests 2>&1
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              if ($script:CollectAllErrors) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+              }
+              else {
+                throw "API tests failed"
+              }
+            }
+            else {
+              if (-not $script:CollectAllErrors) {
+                Write-Host "✓ API tests passed" -ForegroundColor Green
+              }
+            }
+          }
+        }
+        finally {
+          Pop-Location
+        }
       }
-    }
 
-    # Run Web tests with coverage (matches GitHub Actions)
-    if ((Test-Path "apps/web/package.json") -and (Test-Path "apps/web")) {
-      Write-Host "Running Web tests with coverage..." -ForegroundColor Cyan
+      # Run Web tests with coverage (matches GitHub Actions)
+      if ((Test-Path "apps/web/package.json") -and (Test-Path "apps/web")) {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "Running Web tests with coverage..." -ForegroundColor Cyan
+        }
+              
+        Push-Location "apps/web"
+        try {
+          if (Test-Command "pnpm") {
+            $output = ""
+            if ($script:CollectAllErrors) {
+              $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
+            }
+            else {
+              $output = & pnpm test:coverage --passWithNoTests 2>&1
+            }
             
-      Push-Location "apps/web"
-      try {
-        if (Test-Command "pnpm") {
-          exec { pnpm test:coverage --passWithNoTests } "Web tests failed"
-          Write-Host "✓ Web tests passed" -ForegroundColor Green
+            if ($LASTEXITCODE -ne 0) {
+              if ($script:CollectAllErrors) {
+                Add-TaskError -TaskName "Tests" -ErrorMessage "Web tests failed" -FilePath "apps/web" -SuggestedFix "Review web test failures and fix issues"
+              }
+              else {
+                throw "Web tests failed"
+              }
+            }
+            else {
+              if (-not $script:CollectAllErrors) {
+                Write-Host "✓ Web tests passed" -ForegroundColor Green
+              }
+            }
+          }
+        }
+        finally {
+          Pop-Location
         }
       }
-      finally {
-        Pop-Location
+      else {
+        if (-not $script:CollectAllErrors) {
+          Write-Host "No web package found - skipping web tests" -ForegroundColor Yellow
+        }
+      }
+          
+      if (-not $script:CollectAllErrors) {
+        Write-Host "✓ All tests passed" -ForegroundColor Green
       }
     }
-    else {
-      Write-Host "No web package found - skipping web tests" -ForegroundColor Yellow
+    finally {
+      Pop-Location
     }
-        
-    Write-Host "✓ All tests passed" -ForegroundColor Green
-  }
-  finally {
-    Pop-Location
   }
 }
 
@@ -655,6 +1321,9 @@ Task ? -Alias help -Description "Show available tasks" {
     
   Write-Host "`nUsage examples:" -ForegroundColor Cyan
   Write-Host "  Invoke-psake                    # Run default task (all linting)" -ForegroundColor Gray
+  Write-Host "  Invoke-psake CICollectAll       # Run all CI checks, collect all errors (LLM-friendly)" -ForegroundColor Green
+  Write-Host "  Invoke-psake ci-collect-all     # Same as above (alias)" -ForegroundColor Green
+  Write-Host "  Invoke-psake CI                 # Run CI checks (stops on first error)" -ForegroundColor Gray
   Write-Host "  Invoke-psake Markdown           # Run only markdown linting" -ForegroundColor Gray
   Write-Host "  Invoke-psake FixMarkdown        # Run markdown linting with auto-fix" -ForegroundColor Gray
   Write-Host "  Invoke-psake ?                  # Show this help" -ForegroundColor Gray
@@ -762,6 +1431,108 @@ Task CheckDependencies -Description "Check if all linting tools are installed" {
 Task CI -Depends CheckDependencies, Lint, TypeCheck, Build -Description "Run all CI checks exactly like GitHub Actions" {
   Write-Host "`nCI checks completed successfully! ✓" -ForegroundColor Green
   Write-Host "All GitHub Actions workflow steps passed locally." -ForegroundColor Green
+}
+
+# CI task that collects all errors without stopping (LLM-friendly output)
+Task CICollectAll -Alias ci-collect-all -Description "Run all CI checks and collect all errors/warnings without stopping" {
+  Write-Host "=== RUNNING ALL CI CHECKS ===" -ForegroundColor Cyan
+  Write-Host "Running all checks and collecting errors..." -ForegroundColor Yellow
+  Write-Host ""
+  
+  # Enable error collection mode
+  $script:CollectAllErrors = $true
+  $script:CollectedErrors = @()
+  $script:CollectedWarnings = @()
+  
+  # Run all checks, collecting errors instead of stopping
+  try {
+    # Dependencies check
+    try {
+      Invoke-Task CheckDependencies
+    }
+    catch {
+      # Dependencies failure is captured in the task
+    }
+    
+    # Linting tasks
+    try {
+      Invoke-Task LintMarkdown
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task LintJson
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task LintYaml
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task LintTypeScript
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task CheckFormatting
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task CheckNewlines
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task CheckSecurity
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task CheckApiHealth
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task TypeCheck
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    try {
+      Invoke-Task Test
+    }
+    catch {
+      # Errors captured in task
+    }
+    
+    # Generate comprehensive report
+    Write-ComprehensiveErrorReport
+    
+  }
+  finally {
+    # Reset error collection mode
+    $script:CollectAllErrors = $false
+  }
 }
 
 # ==================================================================
