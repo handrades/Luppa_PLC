@@ -1732,6 +1732,12 @@ Task CICollectAll -Alias ci-collect-all -Description "Run all CI checks and coll
     # Generate comprehensive report
     Write-ComprehensiveErrorReport
     
+    # Exit with non-zero code if errors were collected
+    if ($script:CollectedErrors.Count -gt 0) {
+      Write-Host "❌ CICollectAll found $($script:CollectedErrors.Count) errors." -ForegroundColor Red
+      exit 1
+    }
+    
   }
   finally {
     # Reset error collection mode
