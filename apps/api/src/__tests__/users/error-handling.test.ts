@@ -300,11 +300,9 @@ describe('User Management Error Handling', () => {
       it('should return 400 for missing required fields', async () => {
         const response = await request(app).post('/users').send({}).expect(400);
 
-        expect(response.body).toEqual({
-          error: 'Validation error',
-          message: expect.any(String),
-          errors: expect.any(Array),
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.message).toBe('Validation failed');
+        expect(response.body.error.details).toEqual(expect.any(Object));
 
         expect(logger.error).not.toHaveBeenCalled(); // Should not log as server error
       });
@@ -320,9 +318,7 @@ describe('User Management Error Handling', () => {
           })
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
 
       it('should return 400 for weak password', async () => {
@@ -336,9 +332,7 @@ describe('User Management Error Handling', () => {
           })
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
 
       it('should return 400 for names that are too long', async () => {
@@ -354,9 +348,7 @@ describe('User Management Error Handling', () => {
           })
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
 
       it('should return 400 for invalid UUID in roleId', async () => {
@@ -371,9 +363,7 @@ describe('User Management Error Handling', () => {
           })
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
     });
 
@@ -384,9 +374,7 @@ describe('User Management Error Handling', () => {
           .send({ firstName: 'Updated' })
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
 
       it('should return 400 for empty update data', async () => {
@@ -395,9 +383,7 @@ describe('User Management Error Handling', () => {
           .send({})
           .expect(400);
 
-        expect(response.body).toMatchObject({
-          error: 'Validation error',
-        });
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
       });
     });
 
@@ -851,7 +837,7 @@ describe('User Management Error Handling', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Validation error',
+        error: { code: 'VALIDATION_ERROR' },
         message: expect.any(String),
         errors: expect.any(Array),
       });

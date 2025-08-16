@@ -2,15 +2,12 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Lint",
+      "label": "CI",
       "type": "shell",
       "command": "pwsh",
-      "args": ["-Command", "Invoke-psake Lint"],
+      "args": ["-Command", "Invoke-psake CI"],
       "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
-        }
+        "cwd": "${workspaceFolder}"
       },
       "windows": {
         "options": {
@@ -39,6 +36,49 @@
       "group": {
         "kind": "build",
         "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake Lint"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "group": {
+        "kind": "build"
       },
       "presentation": {
         "echo": true,

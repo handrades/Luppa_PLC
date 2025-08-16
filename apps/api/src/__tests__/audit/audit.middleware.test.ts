@@ -74,11 +74,28 @@ describe('Audit Context Middleware', () => {
 
     mockNext = jest.fn();
 
+    // Mock driver escape method
+    const mockDriver = {
+      escape: jest.fn().mockImplementation((value: unknown) => {
+        if (value === null || value === undefined) return "'null'";
+        if (typeof value === 'string') {
+          // Escape single quotes by doubling them (PostgreSQL style)
+          const escaped = value.replace(/'/g, "''");
+          return `'${escaped}'`;
+        }
+        return `'${String(value)}'`;
+      }),
+    };
+
     mockQueryRunner = {
       query: jest.fn().mockResolvedValue(undefined),
       release: jest.fn().mockResolvedValue(undefined),
       connect: jest.fn().mockResolvedValue(undefined),
-      manager: {} as unknown,
+      manager: {
+        connection: {
+          driver: mockDriver,
+        },
+      } as unknown,
     };
 
     // Reset AppDataSource mock
@@ -91,6 +108,7 @@ describe('Audit Context Middleware', () => {
       if (event === 'finish') {
         mockResponse._finishCallback = callback;
       }
+      return mockResponse; // Return for chaining
     });
 
     (mockResponse.once as jest.Mock).mockImplementation((event, callback) => {
@@ -98,6 +116,7 @@ describe('Audit Context Middleware', () => {
       if (event === 'finish') {
         mockResponse._finishCallback = callback;
       }
+      return mockResponse; // Return for chaining
     });
   });
 
@@ -109,16 +128,12 @@ describe('Audit Context Middleware', () => {
     it('should set PostgreSQL session variables for authenticated user', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.current_user_id = $1', [
-        'test-user-id',
-      ]);
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.client_ip = $1', ['10.0.0.1']);
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.user_agent = $1', [
-        'Test User Agent',
-      ]);
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', [
-        'test-session-id',
-      ]);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        "SET app.current_user_id = 'test-user-id'"
+      );
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.client_ip = '10.0.0.1'");
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.user_agent = 'Test User Agent'");
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.session_id = 'test-session-id'");
       expect(mockNext).toHaveBeenCalledWith();
     });
 
@@ -127,16 +142,16 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Should set user ID to empty string when not authenticated to avoid stale context
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.current_user_id = $1', ['']);
+      // Should set user ID to null when not authenticated to avoid stale context
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.current_user_id = 'null'");
       expect(mockNext).toHaveBeenCalledWith();
     });
 
     it('should extract IP address from X-Forwarded-For header', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Should use first IP from X-Forwarded-For
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.client_ip = $1', ['10.0.0.1']);
+      // Should use IP from Express's built-in req.ip (which handles X-Forwarded-For)
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.client_ip = '10.0.0.1'");
     });
 
     it('should extract IP from X-Real-IP when X-Forwarded-For is not present', async () => {
@@ -152,7 +167,7 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.client_ip = $1', ['172.16.0.1']);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.client_ip = '172.16.0.1'");
     });
 
     it('should escape single quotes in user agent', async () => {
@@ -165,9 +180,9 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.user_agent = $1', [
-        "Mozilla/5.0 (compatible; Bot/1.0; 'test')",
-      ]);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        "SET app.user_agent = 'Mozilla/5.0 (compatible; Bot/1.0; ''test'')'"
+      );
     });
   });
 
@@ -175,13 +190,16 @@ describe('Audit Context Middleware', () => {
     it('should not log performance warning for normal execution', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Get and call the finish callback to trigger performance check
-      const finishCallback = (mockResponse.once as jest.Mock).mock.calls.find(
-        call => call[0] === 'finish'
-      )[1];
-      await finishCallback();
+      // Verify the finish callback was registered
+      expect(mockResponse.once).toHaveBeenCalledWith('finish', expect.any(Function));
+      expect(mockResponse.once).toHaveBeenCalledWith('close', expect.any(Function));
 
-      // Verify no performance warning was logged
+      // Call the finish callback that was stored
+      if (mockResponse._finishCallback) {
+        await mockResponse._finishCallback();
+      }
+
+      // Verify no performance warning was logged (normal execution time < 10ms)
       expect(logger.warn).not.toHaveBeenCalledWith(
         'Audit middleware exceeded 10ms threshold',
         expect.any(Object)
@@ -261,12 +279,10 @@ describe('Audit Context Middleware', () => {
       // Ensure the finish callback is properly captured
       expect(mockResponse.once).toHaveBeenCalledWith('finish', expect.any(Function));
 
-      // Get and call the finish callback that was registered
-      const finishCallback = (mockResponse.once as jest.Mock).mock.calls.find(
-        call => call[0] === 'finish'
-      )[1];
-
-      await finishCallback();
+      // Call the finish callback that was stored
+      if (mockResponse._finishCallback) {
+        await mockResponse._finishCallback();
+      }
 
       // Check cleanup was performed
       expect(mockQueryRunner.release).toHaveBeenCalled();
@@ -277,9 +293,7 @@ describe('Audit Context Middleware', () => {
     it('should extract session ID from JWT token', async () => {
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', [
-        'test-session-id',
-      ]);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.session_id = 'test-session-id'");
     });
 
     it('should extract session ID from X-Session-ID header', async () => {
@@ -298,9 +312,9 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', [
-        'header-session-id',
-      ]);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        "SET app.session_id = 'header-session-id'"
+      );
     });
 
     it('should handle missing session ID gracefully', async () => {
@@ -311,8 +325,8 @@ describe('Audit Context Middleware', () => {
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 
-      // Should set session ID to empty string when not available to avoid stale context
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET app.session_id = $1', ['']);
+      // Should set session ID to null when not available to avoid stale context
+      expect(mockQueryRunner.query).toHaveBeenCalledWith("SET app.session_id = 'null'");
       expect(mockNext).toHaveBeenCalledWith();
     });
   });

@@ -130,7 +130,7 @@ graph TD
     L --> N[Return to search results]
 ```
 
-#### Edge Cases & Error Handling:
+#### Edge Cases & Error Handling
 
 - No search results found → Suggest similar terms, check spelling
 - Network timeout in air-gapped environment → Show cached results, retry option

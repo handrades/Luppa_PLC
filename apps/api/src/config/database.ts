@@ -3,6 +3,7 @@
  *
  * This file configures the TypeORM DataSource with environment-based settings,
  * connection pooling, and proper SSL/authentication configuration.
+ * In test environment, uses SQLite in-memory database for isolation.
  */
 
 import 'reflect-metadata';
@@ -27,8 +28,8 @@ const createDatabaseConfig = () => {
   const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME || 'luppa_plc',
-    username: process.env.DB_USER || 'postgres',
+    database: process.env.DB_DATABASE || process.env.DB_NAME || 'luppa_plc',
+    username: process.env.DB_USERNAME || process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     ssl:
       process.env.DB_SSL_MODE === 'require'
@@ -86,8 +87,38 @@ const createDatabaseConfig = () => {
 
 /**
  * Create TypeORM DataSource configuration
+ * @param customConfig Optional custom configuration for testing
  */
-const createDataSource = () => {
+const createDataSource = (customConfig?: {
+  type?: 'postgres' | 'better-sqlite3';
+  database?: string;
+  synchronize?: boolean;
+}) => {
+  // Use test configuration if NODE_ENV is 'test' or custom config provided
+  const isTestEnvironment = process.env.NODE_ENV === 'test' || customConfig;
+
+  if (isTestEnvironment) {
+    // For tests, override PostgreSQL-specific types for SQLite compatibility
+    return new DataSource({
+      type: customConfig?.type || 'better-sqlite3',
+      database: customConfig?.database || ':memory:',
+
+      // Entity configuration - same entities but with type override
+      entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],
+
+      // Test settings - enable synchronize for schema creation
+      synchronize: customConfig?.synchronize ?? true,
+      logging: false, // Disable logging in tests
+
+      // Disable migrations in test mode since we use synchronize
+      migrationsRun: false,
+
+      // SQLite-specific settings
+      dropSchema: true, // Ensure clean state for each test
+    });
+  }
+
+  // Production/Development PostgreSQL configuration
   const dbConfig = createDatabaseConfig();
 
   return new DataSource({
@@ -223,6 +254,22 @@ export const getConnectionPoolStats = async (): Promise<{
     idleTimeoutMillis: number;
   };
 }> => {
+  // Handle SQLite/test environment - no connection pooling
+  if (process.env.NODE_ENV === 'test' || AppDataSource.options.type === 'better-sqlite3') {
+    return {
+      isConnected: AppDataSource.isInitialized,
+      totalConnections: AppDataSource.isInitialized ? 1 : 0,
+      idleConnections: AppDataSource.isInitialized ? 1 : 0,
+      runningConnections: 0,
+      poolConfig: {
+        min: 1,
+        max: 1,
+        connectionTimeoutMillis: 1000,
+        idleTimeoutMillis: 1000,
+      },
+    };
+  }
+
   const dbConfig = createDatabaseConfig();
 
   try {
@@ -330,6 +377,11 @@ export const getDatabaseHealth = async (): Promise<{
     };
   }
 };
+
+/**
+ * Export createDataSource factory function for testing
+ */
+export { createDataSource };
 
 /**
  * Export database configuration for testing and debugging

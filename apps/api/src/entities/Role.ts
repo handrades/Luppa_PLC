@@ -44,6 +44,7 @@ export class Role extends BaseEntity {
   @Column({
     type: 'boolean',
     default: false,
+    name: 'is_system',
   })
   isSystem!: boolean;
 

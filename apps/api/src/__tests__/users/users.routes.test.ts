@@ -271,7 +271,8 @@ describe('User Management Routes', () => {
 
       const response = await request(app).post('/users').send(invalidUserData).expect(400);
 
-      expect(response.body.error).toBe('Validation error');
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toBe('Validation failed');
     });
 
     it.skip('should return 400 for invalid role', async () => {
@@ -437,7 +438,8 @@ describe('User Management Routes', () => {
     it('should return 400 for invalid user ID format', async () => {
       const response = await request(app).get('/users/invalid-uuid').expect(400);
 
-      expect(response.body.error).toBe('Validation error');
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toBe('Validation failed');
     });
   });
 
@@ -728,7 +730,8 @@ describe('User Management Routes', () => {
     it('should validate request parameters', async () => {
       const response = await request(app).get('/users/invalid-uuid-format').expect(400);
 
-      expect(response.body.error).toBe('Validation error');
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toBe('Validation failed');
     });
   });
 

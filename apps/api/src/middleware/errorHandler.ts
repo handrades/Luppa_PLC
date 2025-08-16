@@ -16,6 +16,39 @@ export interface ErrorResponse {
 }
 
 /**
+ * Interface for domain errors that provide structured error information
+ */
+export interface DomainError {
+  code: string;
+  statusCode: number;
+  message: string;
+  details?: unknown;
+}
+
+/**
+ * Type guard to safely check if an error is a DomainError
+ *
+ * @param error - The error to check
+ * @returns true if the error conforms to the DomainError interface
+ */
+export function isDomainError(error: unknown): error is DomainError {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const errorObj = error as Record<string, unknown>;
+
+  return (
+    'code' in errorObj &&
+    'statusCode' in errorObj &&
+    'message' in errorObj &&
+    typeof errorObj.code === 'string' &&
+    typeof errorObj.statusCode === 'number' &&
+    typeof errorObj.message === 'string'
+  );
+}
+
+/**
  * Base application error class for handling operational errors
  *
  * This class extends the native Error class to provide additional context
@@ -129,6 +162,12 @@ export const errorHandler = (
     code = error.code;
     message = error.message;
     details = error.details;
+  } else if (isDomainError(error)) {
+    // Handle custom domain errors (like EquipmentError) that have code and statusCode properties
+    statusCode = error.statusCode;
+    code = error.code;
+    message = error.message;
+    details = error.details ?? details;
   } else if (error instanceof ValidationError) {
     statusCode = error.statusCode;
     code = 'VALIDATION_ERROR';

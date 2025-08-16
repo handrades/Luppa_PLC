@@ -6,7 +6,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
-import { ValidationError } from '../errors/ValidationError';
+import { ValidationError, ValidationErrorDetail } from '../errors/ValidationError';
 import { UserError } from '../errors/UserError';
 
 /**
@@ -48,16 +48,30 @@ export function handleRouteError(
         validationError = JSON.parse(message);
       }
 
+      // Convert validation errors to expected format with field details
+      const details: Record<string, string> = {};
+      if (validationError.errors && Array.isArray(validationError.errors)) {
+        validationError.errors.forEach((err: ValidationErrorDetail) => {
+          if (err.field) {
+            details[err.field] = err.message;
+          }
+        });
+      }
+
       res.status(400).json({
-        error: 'Validation error',
-        message: validationError.message,
-        errors: validationError.errors,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: validationError.message,
+          details,
+        },
       });
     } catch {
       // Handle plain string validation errors
       res.status(400).json({
-        error: 'Validation error',
-        message,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message,
+        },
       });
     }
     return;
@@ -90,6 +104,33 @@ export function handleRouteError(
       logger.error(defaultMessage, {
         error: sanitizeErrorMessage(message),
         code: error.code,
+        ...requestContext,
+      });
+    }
+    return;
+  }
+
+  // Handle custom domain errors (like EquipmentError) that have code and statusCode properties
+  if (
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'statusCode' in error &&
+    typeof (error as { code?: unknown }).code === 'string' &&
+    typeof (error as { statusCode?: unknown }).statusCode === 'number'
+  ) {
+    const customError = error as { code: string; statusCode: number; message: string };
+    res.status(customError.statusCode).json({
+      error: {
+        code: customError.code,
+        message: customError.message,
+      },
+    });
+
+    if (customError.statusCode >= 500) {
+      logger.error(defaultMessage, {
+        error: sanitizeErrorMessage(message),
+        code: customError.code,
         ...requestContext,
       });
     }
