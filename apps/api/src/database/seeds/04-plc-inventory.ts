@@ -58,27 +58,97 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   // Industrial PLC manufacturers and models
   const plcVariants = [
     // Allen-Bradley (Rockwell Automation)
-    { make: 'Allen-Bradley', model: 'CompactLogix 5370', firmware: '33.011', baseTag: 'AB_CL' },
-    { make: 'Allen-Bradley', model: 'ControlLogix 5580', firmware: '33.012', baseTag: 'AB_CLX' },
-    { make: 'Allen-Bradley', model: 'MicroLogix 1400', firmware: '21.003', baseTag: 'AB_ML' },
-    { make: 'Allen-Bradley', model: 'CompactLogix 5480', firmware: '33.011', baseTag: 'AB_CL48' },
-    { make: 'Allen-Bradley', model: 'GuardLogix 5580', firmware: '33.011', baseTag: 'AB_GL' },
+    {
+      make: 'Allen-Bradley',
+      model: 'CompactLogix 5370',
+      firmware: '33.011',
+      baseTag: 'AB_CL',
+    },
+    {
+      make: 'Allen-Bradley',
+      model: 'ControlLogix 5580',
+      firmware: '33.012',
+      baseTag: 'AB_CLX',
+    },
+    {
+      make: 'Allen-Bradley',
+      model: 'MicroLogix 1400',
+      firmware: '21.003',
+      baseTag: 'AB_ML',
+    },
+    {
+      make: 'Allen-Bradley',
+      model: 'CompactLogix 5480',
+      firmware: '33.011',
+      baseTag: 'AB_CL48',
+    },
+    {
+      make: 'Allen-Bradley',
+      model: 'GuardLogix 5580',
+      firmware: '33.011',
+      baseTag: 'AB_GL',
+    },
 
     // Siemens
-    { make: 'Siemens', model: 'S7-1500', firmware: 'V2.9.4', baseTag: 'SIE_S7' },
-    { make: 'Siemens', model: 'S7-1200', firmware: 'V4.5.0', baseTag: 'SIE_S12' },
-    { make: 'Siemens', model: 'S7-300', firmware: 'V3.3.17', baseTag: 'SIE_S3' },
+    {
+      make: 'Siemens',
+      model: 'S7-1500',
+      firmware: 'V2.9.4',
+      baseTag: 'SIE_S7',
+    },
+    {
+      make: 'Siemens',
+      model: 'S7-1200',
+      firmware: 'V4.5.0',
+      baseTag: 'SIE_S12',
+    },
+    {
+      make: 'Siemens',
+      model: 'S7-300',
+      firmware: 'V3.3.17',
+      baseTag: 'SIE_S3',
+    },
     { make: 'Siemens', model: 'S7-400', firmware: 'V6.0.7', baseTag: 'SIE_S4' },
 
     // Schneider Electric
-    { make: 'Schneider Electric', model: 'Modicon M580', firmware: '3.20', baseTag: 'SCH_M5' },
-    { make: 'Schneider Electric', model: 'Modicon M340', firmware: '2.70', baseTag: 'SCH_M3' },
-    { make: 'Schneider Electric', model: 'Modicon M221', firmware: '1.6.2.0', baseTag: 'SCH_M2' },
+    {
+      make: 'Schneider Electric',
+      model: 'Modicon M580',
+      firmware: '3.20',
+      baseTag: 'SCH_M5',
+    },
+    {
+      make: 'Schneider Electric',
+      model: 'Modicon M340',
+      firmware: '2.70',
+      baseTag: 'SCH_M3',
+    },
+    {
+      make: 'Schneider Electric',
+      model: 'Modicon M221',
+      firmware: '1.6.2.0',
+      baseTag: 'SCH_M2',
+    },
 
     // Mitsubishi
-    { make: 'Mitsubishi', model: 'FX5U', firmware: '1.280', baseTag: 'MIT_FX5' },
-    { make: 'Mitsubishi', model: 'Q03UDE', firmware: '1.250', baseTag: 'MIT_Q03' },
-    { make: 'Mitsubishi', model: 'iQ-R', firmware: '1.043', baseTag: 'MIT_IQR' },
+    {
+      make: 'Mitsubishi',
+      model: 'FX5U',
+      firmware: '1.280',
+      baseTag: 'MIT_FX5',
+    },
+    {
+      make: 'Mitsubishi',
+      model: 'Q03UDE',
+      firmware: '1.250',
+      baseTag: 'MIT_Q03',
+    },
+    {
+      make: 'Mitsubishi',
+      model: 'iQ-R',
+      firmware: '1.043',
+      baseTag: 'MIT_IQR',
+    },
 
     // Omron
     { make: 'Omron', model: 'CJ2M', firmware: '4.0', baseTag: 'OMR_CJ2' },
@@ -88,21 +158,73 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
 
   // Common industrial tag patterns
   const tagPatterns = [
-    { name: 'START_BTN', type: TagDataType.BOOL, description: 'Start Button Input' },
-    { name: 'STOP_BTN', type: TagDataType.BOOL, description: 'Stop Button Input' },
+    {
+      name: 'START_BTN',
+      type: TagDataType.BOOL,
+      description: 'Start Button Input',
+    },
+    {
+      name: 'STOP_BTN',
+      type: TagDataType.BOOL,
+      description: 'Stop Button Input',
+    },
     { name: 'ESTOP', type: TagDataType.BOOL, description: 'Emergency Stop' },
-    { name: 'RUNNING', type: TagDataType.BOOL, description: 'System Running Status' },
-    { name: 'FAULT', type: TagDataType.BOOL, description: 'System Fault Indicator' },
+    {
+      name: 'RUNNING',
+      type: TagDataType.BOOL,
+      description: 'System Running Status',
+    },
+    {
+      name: 'FAULT',
+      type: TagDataType.BOOL,
+      description: 'System Fault Indicator',
+    },
     { name: 'SPEED_SP', type: TagDataType.REAL, description: 'Speed Setpoint' },
-    { name: 'SPEED_PV', type: TagDataType.REAL, description: 'Speed Process Value' },
-    { name: 'TEMP_PV', type: TagDataType.REAL, description: 'Temperature Reading' },
-    { name: 'PRESSURE', type: TagDataType.REAL, description: 'Pressure Sensor' },
-    { name: 'CYCLE_COUNT', type: TagDataType.DINT, description: 'Production Cycle Counter' },
-    { name: 'PART_COUNT', type: TagDataType.DINT, description: 'Parts Produced Counter' },
-    { name: 'ALARM_MSG', type: TagDataType.STRING, description: 'Current Alarm Message' },
-    { name: 'RECIPE_NAME', type: TagDataType.STRING, description: 'Active Recipe Name' },
-    { name: 'MOTOR_TIMER', type: TagDataType.TIMER, description: 'Motor Runtime Timer' },
-    { name: 'DELAY_TIMER', type: TagDataType.TIMER, description: 'Process Delay Timer' },
+    {
+      name: 'SPEED_PV',
+      type: TagDataType.REAL,
+      description: 'Speed Process Value',
+    },
+    {
+      name: 'TEMP_PV',
+      type: TagDataType.REAL,
+      description: 'Temperature Reading',
+    },
+    {
+      name: 'PRESSURE',
+      type: TagDataType.REAL,
+      description: 'Pressure Sensor',
+    },
+    {
+      name: 'CYCLE_COUNT',
+      type: TagDataType.DINT,
+      description: 'Production Cycle Counter',
+    },
+    {
+      name: 'PART_COUNT',
+      type: TagDataType.DINT,
+      description: 'Parts Produced Counter',
+    },
+    {
+      name: 'ALARM_MSG',
+      type: TagDataType.STRING,
+      description: 'Current Alarm Message',
+    },
+    {
+      name: 'RECIPE_NAME',
+      type: TagDataType.STRING,
+      description: 'Active Recipe Name',
+    },
+    {
+      name: 'MOTOR_TIMER',
+      type: TagDataType.TIMER,
+      description: 'Motor Runtime Timer',
+    },
+    {
+      name: 'DELAY_TIMER',
+      type: TagDataType.TIMER,
+      description: 'Process Delay Timer',
+    },
   ];
 
   // Generate IP addresses in industrial ranges

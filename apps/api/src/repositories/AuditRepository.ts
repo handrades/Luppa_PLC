@@ -113,7 +113,9 @@ export class AuditRepository {
 
     // Apply user filter
     if (userId) {
-      queryBuilder = queryBuilder.andWhere('audit.userId = :userId', { userId });
+      queryBuilder = queryBuilder.andWhere('audit.userId = :userId', {
+        userId,
+      });
     }
 
     // Get total count
@@ -249,7 +251,9 @@ export class AuditRepository {
     const { userId, startDate, endDate, action, tableName, riskLevel, search } = filters;
 
     if (userId) {
-      queryBuilder = queryBuilder.andWhere('audit.userId = :userId', { userId });
+      queryBuilder = queryBuilder.andWhere('audit.userId = :userId', {
+        userId,
+      });
     }
 
     if (startDate && endDate) {
@@ -268,7 +272,9 @@ export class AuditRepository {
     }
 
     if (action) {
-      queryBuilder = queryBuilder.andWhere('audit.action = :action', { action });
+      queryBuilder = queryBuilder.andWhere('audit.action = :action', {
+        action,
+      });
     }
 
     if (tableName) {

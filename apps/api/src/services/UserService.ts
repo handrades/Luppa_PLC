@@ -282,7 +282,9 @@ export class UserService {
     const originalRole = user.role;
 
     // Update user role
-    const updatedUser = await this.userRepository.updateUser(userId, { roleId });
+    const updatedUser = await this.userRepository.updateUser(userId, {
+      roleId,
+    });
     if (!updatedUser) {
       throw new Error('Failed to assign role');
     }
@@ -407,7 +409,9 @@ export class UserService {
     const newPasswordHash = await this.authService.hashPassword(newPassword);
 
     // Update password
-    await this.userRepository.updateUser(userId, { passwordHash: newPasswordHash });
+    await this.userRepository.updateUser(userId, {
+      passwordHash: newPasswordHash,
+    });
 
     // Send password change notification
     this.emailService
@@ -459,7 +463,10 @@ export class UserService {
     const roleMap = new Map<string, { roleName: string; count: number }>();
     allUsers.forEach(user => {
       if (user.role) {
-        const existing = roleMap.get(user.role.id) || { roleName: user.role.name, count: 0 };
+        const existing = roleMap.get(user.role.id) || {
+          roleName: user.role.name,
+          count: 0,
+        };
         existing.count++;
         roleMap.set(user.role.id, existing);
       }

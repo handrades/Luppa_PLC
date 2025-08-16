@@ -31,7 +31,9 @@ export class AuditService {
       if (error instanceof AuditError) {
         throw error;
       }
-      throw new AuditRepositoryError('Failed to retrieve audit logs', { cause: error });
+      throw new AuditRepositoryError('Failed to retrieve audit logs', {
+        cause: error,
+      });
     }
   }
 
@@ -46,7 +48,9 @@ export class AuditService {
       if (error instanceof AuditError) {
         throw error;
       }
-      throw new AuditRepositoryError('Failed to retrieve audit log', { cause: error });
+      throw new AuditRepositoryError('Failed to retrieve audit log', {
+        cause: error,
+      });
     }
   }
 
@@ -96,7 +100,9 @@ export class AuditService {
       if (error instanceof AuditError) {
         throw error;
       }
-      throw new AuditRepositoryError('Failed to generate compliance report', { cause: error });
+      throw new AuditRepositoryError('Failed to generate compliance report', {
+        cause: error,
+      });
     }
   }
 
@@ -163,7 +169,9 @@ export class AuditService {
       if (error instanceof AuditError) {
         throw error;
       }
-      throw new AuditRepositoryError('Failed to retrieve high-risk events', { cause: error });
+      throw new AuditRepositoryError('Failed to retrieve high-risk events', {
+        cause: error,
+      });
     }
   }
 

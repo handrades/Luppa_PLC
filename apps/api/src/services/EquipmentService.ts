@@ -134,7 +134,11 @@ export class EquipmentService {
           updatedBy: userId,
         });
       } catch (error: unknown) {
-        const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+        const dbError = error as Error & {
+          code?: string;
+          constraint?: string;
+          detail?: string;
+        };
         // Handle database constraint violations for equipment name uniqueness
         if (
           dbError.code === '23505' ||
@@ -175,7 +179,11 @@ export class EquipmentService {
       try {
         await plcRepository.save(plc);
       } catch (error: unknown) {
-        const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+        const dbError = error as Error & {
+          code?: string;
+          constraint?: string;
+          detail?: string;
+        };
         // Handle database constraint violations (PostgreSQL 23505, SQLite SQLITE_CONSTRAINT)
         if (
           dbError.code === '23505' ||
@@ -369,7 +377,10 @@ export class EquipmentService {
           // Check IP address uniqueness if being changed (only consider active PLCs)
           if (updateData.plcData.ipAddress && updateData.plcData.ipAddress !== plc.ipAddress) {
             const existingIPPLC = await plcRepository.findOne({
-              where: { ipAddress: updateData.plcData.ipAddress, deletedAt: IsNull() },
+              where: {
+                ipAddress: updateData.plcData.ipAddress,
+                deletedAt: IsNull(),
+              },
             });
 
             if (existingIPPLC && existingIPPLC.id !== plc.id) {
@@ -388,7 +399,11 @@ export class EquipmentService {
         try {
           await plcRepository.update(plc.id, plcUpdateData);
         } catch (error: unknown) {
-          const dbError = error as Error & { code?: string; constraint?: string; detail?: string };
+          const dbError = error as Error & {
+            code?: string;
+            constraint?: string;
+            detail?: string;
+          };
           // Handle database constraint violations (PostgreSQL 23505, SQLite SQLITE_CONSTRAINT)
           if (
             dbError.code === '23505' ||

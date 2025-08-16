@@ -79,7 +79,12 @@ jest.mock('../../validation/userSchemas', () => ({
       throw new Error(
         JSON.stringify({
           message: 'Validation failed',
-          errors: [{ field: 'password', message: 'Password must be at least 8 characters long' }],
+          errors: [
+            {
+              field: 'password',
+              message: 'Password must be at least 8 characters long',
+            },
+          ],
         })
       );
     }
@@ -93,7 +98,12 @@ jest.mock('../../validation/userSchemas', () => ({
       throw new Error(
         JSON.stringify({
           message: 'Validation failed',
-          errors: [{ field: 'firstName', message: 'Name cannot exceed 100 characters' }],
+          errors: [
+            {
+              field: 'firstName',
+              message: 'Name cannot exceed 100 characters',
+            },
+          ],
         })
       );
     }
@@ -132,7 +142,12 @@ jest.mock('../../validation/userSchemas', () => ({
       throw new Error(
         JSON.stringify({
           message: 'Validation failed',
-          errors: [{ field: '', message: 'At least one field must be provided for update' }],
+          errors: [
+            {
+              field: '',
+              message: 'At least one field must be provided for update',
+            },
+          ],
         })
       );
     }
@@ -909,7 +924,12 @@ describe('User Management Error Handling', () => {
 
   describe('HTTP Status Code Validation', () => {
     const statusCodeTests = [
-      { operation: 'create', method: 'POST', path: '/users', successStatus: 201 },
+      {
+        operation: 'create',
+        method: 'POST',
+        path: '/users',
+        successStatus: 201,
+      },
       { operation: 'list', method: 'GET', path: '/users', successStatus: 200 },
       {
         operation: 'get',
@@ -935,7 +955,12 @@ describe('User Management Error Handling', () => {
         path: '/users/123e4567-e89b-12d3-a456-426614174000/roles',
         successStatus: 200,
       },
-      { operation: 'stats', method: 'GET', path: '/users/stats', successStatus: 200 },
+      {
+        operation: 'stats',
+        method: 'GET',
+        path: '/users/stats',
+        successStatus: 200,
+      },
     ];
 
     statusCodeTests.forEach(({ operation, method, path, successStatus }) => {
@@ -947,7 +972,10 @@ describe('User Management Error Handling', () => {
             mockUserService.createUser.mockResolvedValue(validUser);
             break;
           case 'list':
-            mockUserService.searchUsers.mockResolvedValue({ data: [validUser], pagination: {} });
+            mockUserService.searchUsers.mockResolvedValue({
+              data: [validUser],
+              pagination: {},
+            });
             break;
           case 'get':
             mockUserService.getUserById.mockResolvedValue(validUser);

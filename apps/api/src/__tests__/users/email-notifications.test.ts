@@ -57,7 +57,9 @@ describe('Email Notification Service Integration', () => {
   const mockAdminRole: Role = {
     id: 'role-789',
     name: 'Admin',
-    permissions: { users: { read: true, create: true, update: true, delete: true } },
+    permissions: {
+      users: { read: true, create: true, update: true, delete: true },
+    },
     description: 'Admin role',
     isSystem: false,
     createdAt: new Date(),

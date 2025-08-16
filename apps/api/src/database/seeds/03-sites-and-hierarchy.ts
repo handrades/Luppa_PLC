@@ -45,7 +45,10 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
           equipment: [
             { name: 'Hydraulic Press Station', type: EquipmentType.PRESS },
             { name: 'Assembly Robot Arm', type: EquipmentType.ROBOT },
-            { name: 'Quality Inspection Table', type: EquipmentType.ASSEMBLY_TABLE },
+            {
+              name: 'Quality Inspection Table',
+              type: EquipmentType.ASSEMBLY_TABLE,
+            },
           ],
         },
         {
@@ -76,7 +79,10 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
           equipment: [
             { name: 'Main Conveyor Belt', type: EquipmentType.CONVEYOR },
             { name: 'Packaging Robot', type: EquipmentType.ROBOT },
-            { name: 'Final Assembly Station', type: EquipmentType.ASSEMBLY_TABLE },
+            {
+              name: 'Final Assembly Station',
+              type: EquipmentType.ASSEMBLY_TABLE,
+            },
           ],
         },
         {
@@ -98,7 +104,10 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
           equipment: [
             { name: 'Stress Test Press', type: EquipmentType.PRESS },
             { name: 'Automated Testing Robot', type: EquipmentType.ROBOT },
-            { name: 'Quality Control Workstation', type: EquipmentType.ASSEMBLY_TABLE },
+            {
+              name: 'Quality Control Workstation',
+              type: EquipmentType.ASSEMBLY_TABLE,
+            },
             { name: 'Environmental Test Chamber', type: EquipmentType.OVEN },
           ],
         },
@@ -111,7 +120,10 @@ export const seedSitesAndHierarchy = async (dataSource: DataSource): Promise<voi
           name: 'R&D Development Cell',
           lineNumber: 'RD-001',
           equipment: [
-            { name: 'Prototype Assembly Table', type: EquipmentType.ASSEMBLY_TABLE },
+            {
+              name: 'Prototype Assembly Table',
+              type: EquipmentType.ASSEMBLY_TABLE,
+            },
             { name: 'Precision Robot Arm', type: EquipmentType.ROBOT },
             { name: 'Test Equipment Rack', type: EquipmentType.OTHER },
           ],

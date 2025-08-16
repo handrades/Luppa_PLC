@@ -69,7 +69,9 @@ describe('UserService', () => {
   const mockRole: Role = {
     id: 'role-789',
     name: 'Admin',
-    permissions: { users: { read: true, create: true, update: true, delete: true } },
+    permissions: {
+      users: { read: true, create: true, update: true, delete: true },
+    },
     description: 'Admin role',
     isSystem: false,
     createdAt: new Date(),
@@ -203,8 +205,14 @@ describe('UserService', () => {
       mockUserRepository.emailExists.mockResolvedValue(false);
       mockRoleRepository.findOne.mockResolvedValue(engineerRole);
       mockAuthService.hashPassword.mockResolvedValue('hashed-password');
-      mockUserRepository.createUser.mockResolvedValue({ ...mockUser, roleId: 'engineer-role' });
-      mockUserRepository.findWithRole.mockResolvedValue({ ...mockUser, roleId: 'engineer-role' });
+      mockUserRepository.createUser.mockResolvedValue({
+        ...mockUser,
+        roleId: 'engineer-role',
+      });
+      mockUserRepository.findWithRole.mockResolvedValue({
+        ...mockUser,
+        roleId: 'engineer-role',
+      });
 
       await userService.createUser(userData);
 

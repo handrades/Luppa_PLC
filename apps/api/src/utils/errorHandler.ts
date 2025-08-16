@@ -119,7 +119,11 @@ export function handleRouteError(
     typeof (error as { code?: unknown }).code === 'string' &&
     typeof (error as { statusCode?: unknown }).statusCode === 'number'
   ) {
-    const customError = error as { code: string; statusCode: number; message: string };
+    const customError = error as {
+      code: string;
+      statusCode: number;
+      message: string;
+    };
     res.status(customError.statusCode).json({
       error: {
         code: customError.code,

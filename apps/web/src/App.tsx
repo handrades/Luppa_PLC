@@ -5,7 +5,7 @@ import { PublicLayout } from './components/common/Layout/PublicLayout';
 import { ProtectedRoute } from './components/common/Auth/ProtectedRoute';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
-import { EquipmentPage } from './pages/plcs/EquipmentPage';
+import { EquipmentListPage } from './pages/equipment/EquipmentListPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -39,7 +39,18 @@ function App() {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <EquipmentPage />
+                <EquipmentListPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path='/equipment/:id'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <EquipmentListPage />
               </AppLayout>
             </ProtectedRoute>
           }

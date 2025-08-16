@@ -142,7 +142,9 @@ export class EquipmentRepository {
 
     // Apply make filter
     if (make) {
-      queryBuilder = queryBuilder.andWhere('LOWER(plcs.make) = LOWER(:make)', { make });
+      queryBuilder = queryBuilder.andWhere('LOWER(plcs.make) = LOWER(:make)', {
+        make,
+      });
     }
 
     // Apply model filter

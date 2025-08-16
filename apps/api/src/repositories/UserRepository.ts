@@ -104,7 +104,9 @@ export class UserRepository {
 
     // Apply active status filter
     if (isActive !== undefined) {
-      queryBuilder = queryBuilder.andWhere('user.isActive = :isActive', { isActive });
+      queryBuilder = queryBuilder.andWhere('user.isActive = :isActive', {
+        isActive,
+      });
     }
 
     // Apply sorting
@@ -193,7 +195,9 @@ export class UserRepository {
       .where('LOWER(user.email) = LOWER(:email)', { email: email.trim() });
 
     if (excludeUserId) {
-      queryBuilder = queryBuilder.andWhere('user.id != :userId', { userId: excludeUserId });
+      queryBuilder = queryBuilder.andWhere('user.id != :userId', {
+        userId: excludeUserId,
+      });
     }
 
     const count = await queryBuilder.getCount();

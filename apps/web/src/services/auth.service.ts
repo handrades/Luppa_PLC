@@ -93,6 +93,6 @@ export const authService = {
 
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
-    return user?.roleName === role ?? false;
+    return user?.roleName === role || false;
   },
 };
