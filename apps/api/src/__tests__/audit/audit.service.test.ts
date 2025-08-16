@@ -479,7 +479,10 @@ describe('AuditService', () => {
       logger.warn.mockImplementation(jest.fn());
       logger.error.mockImplementation(jest.fn());
 
-      const criticalEvent = { ...mockSecurityEvent, severity: RiskLevel.CRITICAL };
+      const criticalEvent = {
+        ...mockSecurityEvent,
+        severity: RiskLevel.CRITICAL,
+      };
 
       await auditService.notifySecurityTeam(criticalEvent);
 

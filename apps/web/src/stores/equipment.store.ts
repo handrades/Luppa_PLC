@@ -1,7 +1,7 @@
 /**
  * Equipment Zustand Store for State Management
  * Story 4.3: Equipment List UI
- * 
+ *
  * Manages equipment list state, pagination, filters, selection, and loading states
  * Follows established Zustand patterns from the frontend architecture
  */
@@ -10,10 +10,10 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { equipmentService } from '../services/equipment.service';
 import type {
-  EquipmentStore,
   EquipmentSearchFilters,
-  PaginationMetadata,
   EquipmentSelectionState,
+  EquipmentStore,
+  PaginationMetadata,
 } from '../types/equipment';
 
 // Initial state values
@@ -57,12 +57,12 @@ export const useEquipmentStore = create<EquipmentStore>()(
       fetchEquipment: async (filters?: EquipmentSearchFilters) => {
         const currentState = get();
         const mergedFilters = { ...currentState.filters, ...filters };
-        
+
         set({ isLoading: true, error: null, filters: mergedFilters });
 
         try {
           const response = await equipmentService.getEquipment(mergedFilters);
-          
+
           set({
             equipment: response.data,
             pagination: response.pagination,
@@ -70,10 +70,8 @@ export const useEquipmentStore = create<EquipmentStore>()(
             error: null,
           });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to fetch equipment';
-          
+          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch equipment';
+
           set({
             equipment: [],
             pagination: initialPagination,
@@ -95,7 +93,7 @@ export const useEquipmentStore = create<EquipmentStore>()(
 
         try {
           const response = await equipmentService.searchEquipment(searchTerm, searchFilters);
-          
+
           set({
             equipment: response.data,
             pagination: response.pagination,
@@ -103,10 +101,9 @@ export const useEquipmentStore = create<EquipmentStore>()(
             error: null,
           });
         } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? error.message 
-            : 'Failed to search equipment';
-          
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to search equipment';
+
           set({
             equipment: [],
             pagination: initialPagination,
@@ -119,9 +116,9 @@ export const useEquipmentStore = create<EquipmentStore>()(
       setFilters: (newFilters: Partial<EquipmentSearchFilters>) => {
         const currentState = get();
         const updatedFilters = { ...currentState.filters, ...newFilters };
-        
+
         set({ filters: updatedFilters });
-        
+
         // Auto-fetch with new filters
         get().fetchEquipment(updatedFilters);
       },
@@ -129,15 +126,16 @@ export const useEquipmentStore = create<EquipmentStore>()(
       setSelection: (selectedIds: Set<string>) => {
         const currentState = get();
         const equipmentIds = new Set(currentState.equipment.map(eq => eq.id));
-        
+
         // Ensure all selected IDs exist in current equipment list
         const validSelectedIds = new Set(
           Array.from(selectedIds).filter(id => equipmentIds.has(id))
         );
-        
-        const isAllSelected = validSelectedIds.size === currentState.equipment.length && 
-                              currentState.equipment.length > 0;
-        
+
+        const isAllSelected =
+          validSelectedIds.size === currentState.equipment.length &&
+          currentState.equipment.length > 0;
+
         set({
           selection: {
             selectedIds: validSelectedIds,
@@ -150,7 +148,7 @@ export const useEquipmentStore = create<EquipmentStore>()(
       selectAll: () => {
         const currentState = get();
         const allIds = new Set(currentState.equipment.map(eq => eq.id));
-        
+
         set({
           selection: {
             selectedIds: allIds,
@@ -219,44 +217,46 @@ export const useEquipmentError = () => useEquipmentStore(state => state.error);
 
 // Selection state selectors
 export const useEquipmentSelection = () => useEquipmentStore(state => state.selection);
-export const useSelectedEquipmentIds = () => useEquipmentStore(state => state.selection.selectedIds);
-export const useSelectedEquipmentCount = () => useEquipmentStore(state => state.selection.selectedCount);
-export const useIsAllEquipmentSelected = () => useEquipmentStore(state => state.selection.isAllSelected);
+export const useSelectedEquipmentIds = () =>
+  useEquipmentStore(state => state.selection.selectedIds);
+export const useSelectedEquipmentCount = () =>
+  useEquipmentStore(state => state.selection.selectedCount);
+export const useIsAllEquipmentSelected = () =>
+  useEquipmentStore(state => state.selection.isAllSelected);
 
 // Action selectors
-export const useEquipmentActions = () => useEquipmentStore(state => ({
-  fetchEquipment: state.fetchEquipment,
-  searchEquipment: state.searchEquipment,
-  setFilters: state.setFilters,
-  setSelection: state.setSelection,
-  selectAll: state.selectAll,
-  clearSelection: state.clearSelection,
-  clearError: state.clearError,
-  reset: state.reset,
-}));
+export const useEquipmentActions = () =>
+  useEquipmentStore(state => ({
+    fetchEquipment: state.fetchEquipment,
+    searchEquipment: state.searchEquipment,
+    setFilters: state.setFilters,
+    setSelection: state.setSelection,
+    selectAll: state.selectAll,
+    clearSelection: state.clearSelection,
+    clearError: state.clearError,
+    reset: state.reset,
+  }));
 
 // Computed selectors
 export const useHasEquipmentData = () => useEquipmentStore(state => state.equipment.length > 0);
 export const useHasEquipmentError = () => useEquipmentStore(state => !!state.error);
-export const useHasActiveFilters = () => useEquipmentStore(state => {
-  const filters = state.filters;
-  return !!(
-    filters.search ||
-    filters.siteName ||
-    filters.cellName ||
-    filters.equipmentType ||
-    filters.make ||
-    filters.model
-  );
-});
+export const useHasActiveFilters = () =>
+  useEquipmentStore(state => {
+    const filters = state.filters;
+    return !!(
+      filters.search ||
+      filters.siteName ||
+      filters.cellName ||
+      filters.equipmentType ||
+      filters.make ||
+      filters.model
+    );
+  });
 
-export const useHasNextPage = () => useEquipmentStore(state => 
-  state.pagination.page < state.pagination.totalPages
-);
+export const useHasNextPage = () =>
+  useEquipmentStore(state => state.pagination.page < state.pagination.totalPages);
 
-export const useHasPreviousPage = () => useEquipmentStore(state => 
-  state.pagination.page > 1
-);
+export const useHasPreviousPage = () => useEquipmentStore(state => state.pagination.page > 1);
 
 /**
  * Helper function to get current store state

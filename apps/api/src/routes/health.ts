@@ -65,7 +65,10 @@ let cachedVersion: string | null = null;
 /**
  * Get version information from package.json (version is memoized, timestamp is dynamic)
  */
-const getVersionInfo = (): { version: string; deploymentTimestamp?: string } => {
+const getVersionInfo = (): {
+  version: string;
+  deploymentTimestamp?: string;
+} => {
   try {
     let version = cachedVersion;
 

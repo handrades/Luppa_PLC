@@ -30,38 +30,38 @@ export interface Equipment {
 // Extended equipment interface with PLC and hierarchy data for list view
 export interface EquipmentWithDetails extends Equipment {
   // PLC relationship data (optional if no PLC associated)
-  description?: string;  // From associated PLC
-  make?: string;         // From associated PLC
-  model?: string;        // From associated PLC
-  ip?: string;          // From associated PLC
-  tags?: string[];      // From associated PLC
-  
+  description?: string; // From associated PLC
+  make?: string; // From associated PLC
+  model?: string; // From associated PLC
+  ip?: string; // From associated PLC
+  tags?: string[]; // From associated PLC
+
   // Hierarchy data (always present from joins)
-  siteName: string;     // From site relationship
-  cellName: string;     // From cell relationship
-  cellType: string;     // From cell relationship
+  siteName: string; // From site relationship
+  cellName: string; // From cell relationship
+  cellType: string; // From cell relationship
 }
 
 // Search and filter parameters for API requests
 export interface EquipmentSearchFilters {
-  search?: string;        // Global text search across all fields
-  siteName?: string;      // Filter by specific site
-  cellName?: string;      // Filter by specific cell
+  search?: string; // Global text search across all fields
+  siteName?: string; // Filter by specific site
+  cellName?: string; // Filter by specific cell
   equipmentType?: string; // Filter by equipment type
-  make?: string;          // Filter by PLC make
-  model?: string;         // Filter by PLC model
-  page?: number;          // Page number (1-based)
-  limit?: number;         // Page size (max 100)
-  sortBy?: string;        // Sort field name
+  make?: string; // Filter by PLC make
+  model?: string; // Filter by PLC model
+  page?: number; // Page number (1-based)
+  limit?: number; // Page size (max 100)
+  sortBy?: string; // Sort field name
   sortOrder?: 'asc' | 'desc'; // Sort direction
 }
 
 // Pagination metadata from API responses
 export interface PaginationMetadata {
-  page: number;           // Current page (1-based)
-  pageSize: number;       // Items per page
-  totalItems: number;     // Total number of items
-  totalPages: number;     // Total number of pages
+  page: number; // Current page (1-based)
+  pageSize: number; // Items per page
+  totalItems: number; // Total number of items
+  totalPages: number; // Total number of pages
 }
 
 // Complete API response format for equipment list

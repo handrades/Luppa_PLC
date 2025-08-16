@@ -4,9 +4,13 @@
  */
 
 import { act, renderHook } from '@testing-library/react';
-import { useEquipmentStore, resetEquipmentStore } from '../equipment.store';
+import { resetEquipmentStore, useEquipmentStore } from '../equipment.store';
 import { equipmentService } from '../../services/equipment.service';
-import type { EquipmentListResponse } from '../../types/equipment';
+import type {
+  EquipmentListResponse,
+  EquipmentType,
+  EquipmentWithDetails,
+} from '../../types/equipment';
 
 // Mock equipment service
 jest.mock('../../services/equipment.service', () => ({
@@ -49,7 +53,7 @@ describe('useEquipmentStore', () => {
           id: '1',
           cellId: 'cell-1',
           name: 'Test Equipment',
-          equipmentType: 'PRESS' as any,
+          equipmentType: 'PRESS' as EquipmentType,
           createdBy: 'user-1',
           updatedBy: 'user-1',
           createdAt: '2024-01-01T00:00:00Z',
@@ -85,7 +89,7 @@ describe('useEquipmentStore', () => {
     it('should handle loading state', async () => {
       // Create a promise we can control
       let resolvePromise: (value: EquipmentListResponse) => void;
-      const promise = new Promise<EquipmentListResponse>((resolve) => {
+      const promise = new Promise<EquipmentListResponse>(resolve => {
         resolvePromise = resolve;
       });
       mockedService.getEquipment.mockReturnValue(promise);
@@ -172,15 +176,16 @@ describe('useEquipmentStore', () => {
         limit: 50,
         sortBy: 'name',
         sortOrder: 'asc',
+        search: 'test search',
       });
     });
   });
 
   describe('setSelection', () => {
     const mockEquipment = [
-      { id: '1', name: 'Equipment 1' } as any,
-      { id: '2', name: 'Equipment 2' } as any,
-      { id: '3', name: 'Equipment 3' } as any,
+      { id: '1', name: 'Equipment 1' } as EquipmentWithDetails,
+      { id: '2', name: 'Equipment 2' } as EquipmentWithDetails,
+      { id: '3', name: 'Equipment 3' } as EquipmentWithDetails,
     ];
 
     it('should set selection correctly', () => {
@@ -233,8 +238,8 @@ describe('useEquipmentStore', () => {
   describe('selectAll', () => {
     it('should select all equipment', () => {
       const mockEquipment = [
-        { id: '1', name: 'Equipment 1' } as any,
-        { id: '2', name: 'Equipment 2' } as any,
+        { id: '1', name: 'Equipment 1' } as EquipmentWithDetails,
+        { id: '2', name: 'Equipment 2' } as EquipmentWithDetails,
       ];
 
       const { result } = renderHook(() => useEquipmentStore());
@@ -323,12 +328,12 @@ describe('useEquipmentStore', () => {
 
       // Modify state through proper actions
       const mockResponse: EquipmentListResponse = {
-        data: [{ id: '1' } as any],
+        data: [{ id: '1' } as EquipmentWithDetails],
         pagination: { page: 1, pageSize: 50, totalItems: 1, totalPages: 1 },
       };
-      
+
       mockedService.getEquipment.mockResolvedValueOnce(mockResponse);
-      
+
       await act(async () => {
         await result.current.fetchEquipment();
         result.current.setSelection(new Set(['1']));

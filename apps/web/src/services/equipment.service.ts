@@ -1,7 +1,7 @@
 /**
  * Equipment Service for API integration
  * Story 4.3: Equipment List UI
- * 
+ *
  * Provides methods to interact with the equipment API endpoints
  * Integrates with existing api.client.ts for authentication and error handling
  */
@@ -9,9 +9,9 @@
 import apiClient from './api.client';
 import type {
   EquipmentListResponse,
-  EquipmentWithDetails,
   EquipmentSearchFilters,
   EquipmentServiceError,
+  EquipmentWithDetails,
 } from '../types/equipment';
 
 /**
@@ -22,7 +22,7 @@ export class EquipmentService {
 
   /**
    * Fetch equipment list with optional filters and pagination
-   * 
+   *
    * @param filters - Search and filter parameters
    * @returns Promise resolving to equipment list response
    */
@@ -30,59 +30,59 @@ export class EquipmentService {
     try {
       // Build query parameters from filters
       const queryParams = new URLSearchParams();
-      
+
       // Add search parameter
       if (filters.search?.trim()) {
         queryParams.append('search', filters.search.trim());
       }
-      
+
       // Add filter parameters
       if (filters.siteName) {
         queryParams.append('siteName', filters.siteName);
       }
-      
+
       if (filters.cellName) {
         queryParams.append('cellName', filters.cellName);
       }
-      
+
       if (filters.equipmentType) {
         queryParams.append('equipmentType', filters.equipmentType);
       }
-      
+
       if (filters.make) {
         queryParams.append('make', filters.make);
       }
-      
+
       if (filters.model) {
         queryParams.append('model', filters.model);
       }
-      
+
       // Add pagination parameters
       if (filters.page) {
         queryParams.append('page', filters.page.toString());
       }
-      
+
       if (filters.limit) {
         queryParams.append('limit', filters.limit.toString());
       }
-      
+
       // Add sorting parameters
       if (filters.sortBy) {
         queryParams.append('sortBy', filters.sortBy);
       }
-      
+
       if (filters.sortOrder) {
         queryParams.append('sortOrder', filters.sortOrder);
       }
-      
+
       // Construct URL with query parameters
-      const url = queryParams.toString() 
+      const url = queryParams.toString()
         ? `${this.baseUrl}?${queryParams.toString()}`
         : this.baseUrl;
-      
+
       // Make API request
       const response = await apiClient.get<EquipmentListResponse>(url);
-      
+
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to fetch equipment list');
@@ -92,7 +92,7 @@ export class EquipmentService {
   /**
    * Search equipment with a specific search term
    * Convenience method for text-based searching
-   * 
+   *
    * @param searchTerm - Text to search for across equipment fields
    * @param additionalFilters - Optional additional filters to apply
    * @returns Promise resolving to equipment list response
@@ -109,7 +109,7 @@ export class EquipmentService {
 
   /**
    * Get equipment by ID (for future use in detail views)
-   * 
+   *
    * @param id - Equipment ID
    * @returns Promise resolving to equipment details
    */
@@ -124,7 +124,7 @@ export class EquipmentService {
 
   /**
    * Get equipment statistics (for future dashboard use)
-   * 
+   *
    * @returns Promise resolving to equipment statistics
    */
   async getEquipmentStats(): Promise<{
@@ -138,7 +138,7 @@ export class EquipmentService {
         byType: Record<string, number>;
         bySite: Record<string, number>;
       }>(`${this.baseUrl}/stats`);
-      
+
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to fetch equipment statistics');
@@ -147,7 +147,7 @@ export class EquipmentService {
 
   /**
    * Export equipment data (for future CSV export functionality)
-   * 
+   *
    * @param filters - Filters to apply to export
    * @param format - Export format (csv, xlsx)
    * @returns Promise resolving to blob data
@@ -164,15 +164,15 @@ export class EquipmentService {
           queryParams.append(key, value.toString());
         }
       });
-      
+
       queryParams.append('format', format);
-      
+
       const url = `${this.baseUrl}/export?${queryParams.toString()}`;
-      
+
       const response = await apiClient.get(url, {
         responseType: 'blob',
       });
-      
+
       return response.data;
     } catch (error) {
       throw this.handleError(error, 'Failed to export equipment data');
@@ -181,7 +181,7 @@ export class EquipmentService {
 
   /**
    * Handle API errors and convert to standardized format
-   * 
+   *
    * @param error - The caught error
    * @param defaultMessage - Default error message
    * @returns Standardized error object
@@ -240,8 +240,7 @@ export default equipmentService;
 export const equipmentQueryKeys = {
   all: ['equipment'] as const,
   lists: () => [...equipmentQueryKeys.all, 'list'] as const,
-  list: (filters: EquipmentSearchFilters) => 
-    [...equipmentQueryKeys.lists(), filters] as const,
+  list: (filters: EquipmentSearchFilters) => [...equipmentQueryKeys.lists(), filters] as const,
   details: () => [...equipmentQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...equipmentQueryKeys.details(), id] as const,
   stats: () => [...equipmentQueryKeys.all, 'stats'] as const,

@@ -136,7 +136,10 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should successfully authenticate valid credentials', async () => {
       // Arrange
-      const credentials = { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password };
+      const credentials = {
+        email: TEST_CREDENTIALS.email,
+        password: TEST_CREDENTIALS.password,
+      };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -144,7 +147,10 @@ describe('AuthService', () => {
       mockBcrypt.compare.mockResolvedValue(true);
       mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       mockRedis.storeSession.mockResolvedValue();
-      mockUserRepository.save.mockResolvedValue({ ...mockUser, lastLogin: new Date() });
+      mockUserRepository.save.mockResolvedValue({
+        ...mockUser,
+        lastLogin: new Date(),
+      });
 
       // Act
       const result = await authService.login(credentials, ipAddress, userAgent);
@@ -181,7 +187,10 @@ describe('AuthService', () => {
 
     it('should throw error for non-existent user', async () => {
       // Arrange
-      const credentials = { email: 'nonexistent@example.com', password: TEST_CREDENTIALS.password };
+      const credentials = {
+        email: 'nonexistent@example.com',
+        password: TEST_CREDENTIALS.password,
+      };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -195,7 +204,10 @@ describe('AuthService', () => {
 
     it('should throw error for inactive user', async () => {
       // Arrange
-      const credentials = { email: TEST_CREDENTIALS.email, password: TEST_CREDENTIALS.password };
+      const credentials = {
+        email: TEST_CREDENTIALS.email,
+        password: TEST_CREDENTIALS.password,
+      };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
       const inactiveUser = { ...mockUser, isActive: false };
@@ -228,7 +240,10 @@ describe('AuthService', () => {
 
     it('should trim and lowercase email', async () => {
       // Arrange
-      const credentials = { email: '  TEST@EXAMPLE.COM  ', password: 'password123' };
+      const credentials = {
+        email: '  TEST@EXAMPLE.COM  ',
+        password: 'password123',
+      };
       const ipAddress = '192.168.1.1';
       const userAgent = 'test-agent';
 
@@ -236,7 +251,10 @@ describe('AuthService', () => {
       mockBcrypt.compare.mockResolvedValue(true);
       mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       mockRedis.storeSession.mockResolvedValue();
-      mockUserRepository.save.mockResolvedValue({ ...mockUser, lastLogin: new Date() });
+      mockUserRepository.save.mockResolvedValue({
+        ...mockUser,
+        lastLogin: new Date(),
+      });
 
       // Act
       await authService.login(credentials, ipAddress, userAgent);

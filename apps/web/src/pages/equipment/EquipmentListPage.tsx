@@ -1,55 +1,47 @@
 /**
  * EquipmentListPage Component
  * Story 4.3: Equipment List UI
- * 
+ *
  * Main equipment list page with search, sorting, selection, and DataGrid integration
  * Implements all acceptance criteria for the equipment list functionality
  */
 
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
-  Box,
-  TextField,
-  InputAdornment,
-  Typography,
-  Stack,
-  Skeleton,
-  CircularProgress,
   Alert,
+  Box,
+  CircularProgress,
+  InputAdornment,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+import { Clear as ClearIcon, Search as SearchIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { DataGrid, Column } from '../../components/common/DataDisplay/DataGrid';
+import { Column, DataGrid } from '../../components/common/DataDisplay/DataGrid';
 import { EquipmentEmptyState } from '../../components/equipment/EquipmentEmptyState';
 import { EquipmentActions } from '../../components/equipment/EquipmentActions';
 import { useEquipmentSearch } from '../../hooks/useEquipmentSearch';
 import { useEquipment } from '../../hooks/useEquipment';
 import {
-  useEquipmentData,
-  useEquipmentLoading,
-  useEquipmentError,
-  useEquipmentSelection,
   useEquipmentActions,
-  useHasEquipmentData,
+  useEquipmentData,
+  useEquipmentError,
+  useEquipmentLoading,
+  useEquipmentSelection,
   useHasActiveFilters,
+  useHasEquipmentData,
 } from '../../stores/equipment.store';
-import type {
-  EquipmentListPageProps,
-  EquipmentWithDetails,
-} from '../../types/equipment';
+import type { EquipmentListPageProps, EquipmentWithDetails } from '../../types/equipment';
 
 /**
  * Equipment List Page Component
- * 
+ *
  * @param props - Component props
  * @returns Equipment list page component
  */
-export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
-  initialFilters,
-}) => {
+export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFilters }) => {
   const navigate = useNavigate();
 
   // Store selectors
@@ -61,21 +53,11 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
   const hasActiveFilters = useHasActiveFilters();
 
   // Store actions
-  const {
-    fetchEquipment,
-    setSelection,
-    clearSelection,
-    clearError,
-    setFilters,
-  } = useEquipmentActions();
+  const { fetchEquipment, setSelection, clearSelection, clearError, setFilters } =
+    useEquipmentActions();
 
   // Search functionality
-  const {
-    searchTerm,
-    setSearchTerm,
-    isSearching,
-    clearSearch,
-  } = useEquipmentSearch();
+  const { searchTerm, setSearchTerm, isSearching, clearSearch } = useEquipmentSearch();
 
   // Equipment data hook for React Query integration
   const { refetch } = useEquipment(initialFilters);
@@ -90,65 +72,75 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
   }, [initialFilters, setFilters, fetchEquipment]);
 
   // Column definitions for DataGrid - memoized to prevent recreation
-  const columns = useMemo((): Column<EquipmentWithDetails>[] => [
-    {
-      id: 'description',
-      label: 'Description',
-      sortable: true,
-      filterable: true,
-      width: 300,
-      format: (value, row) => (value as string) || `${(row as EquipmentWithDetails).name} (No PLC)`,
-    },
-    {
-      id: 'make',
-      label: 'Make',
-      sortable: true,
-      filterable: true,
-      width: 150,
-      format: (value) => (value as string) || '-',
-    },
-    {
-      id: 'model',
-      label: 'Model',
-      sortable: true,
-      filterable: true,
-      width: 150,
-      format: (value) => (value as string) || '-',
-    },
-    {
-      id: 'ip',
-      label: 'IP Address',
-      sortable: true,
-      filterable: true,
-      width: 140,
-      format: (value) => (value as string) || '-',
-    },
-    {
-      id: 'siteName',
-      label: 'Site',
-      sortable: true,
-      filterable: true,
-      width: 120,
-    },
-    {
-      id: 'cellType',
-      label: 'Cell Type',
-      sortable: true,
-      filterable: true,
-      width: 120,
-    },
-  ], []);
+  const columns = useMemo(
+    (): Column<EquipmentWithDetails>[] => [
+      {
+        id: 'description',
+        label: 'Description',
+        sortable: true,
+        filterable: true,
+        width: 300,
+        format: (value, row) =>
+          (value as string) || `${(row as EquipmentWithDetails).name} (No PLC)`,
+      },
+      {
+        id: 'make',
+        label: 'Make',
+        sortable: true,
+        filterable: true,
+        width: 150,
+        format: value => (value as string) || '-',
+      },
+      {
+        id: 'model',
+        label: 'Model',
+        sortable: true,
+        filterable: true,
+        width: 150,
+        format: value => (value as string) || '-',
+      },
+      {
+        id: 'ip',
+        label: 'IP Address',
+        sortable: true,
+        filterable: true,
+        width: 140,
+        format: value => (value as string) || '-',
+      },
+      {
+        id: 'siteName',
+        label: 'Site',
+        sortable: true,
+        filterable: true,
+        width: 120,
+      },
+      {
+        id: 'cellType',
+        label: 'Cell Type',
+        sortable: true,
+        filterable: true,
+        width: 120,
+      },
+    ],
+    []
+  );
 
   // Row click handler - navigate to equipment detail
-  const handleRowClick = useCallback((equipment: EquipmentWithDetails) => {
-    navigate(`/equipment/${equipment.id}`);
-  }, [navigate]);
+  const handleRowClick = useCallback(
+    (equipment: EquipmentWithDetails) => {
+      navigate(`/equipment/${equipment.id}`);
+    },
+    [navigate]
+  );
 
   // Selection handlers
-  const handleSelectionChange = useCallback((selectedRows: Set<string | number>) => {
-    const selectedIds = new Set(Array.from(selectedRows).map(String));
-    setSelection(selectedIds);
-  }, [setSelection]);
+  const handleSelectionChange = useCallback(
+    (selectedRows: Set<string | number>) => {
+      const selectedIds = new Set(Array.from(selectedRows).map(String));
+      setSelection(selectedIds);
+    },
+    [setSelection]
+  );
 
   // Clear filters handler
   const handleClearFilters = useCallback(() => {
@@ -171,22 +163,22 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
     // TODO: Implement export functionality
     // Future implementation will call equipmentService.exportEquipment
     if (selection.selectedIds.size === 0) return;
-    
+
     // Placeholder for export logic
     // Future implementation will call equipmentService.exportEquipment with selected IDs
     // Export service call would go here
-  }, [selection.selectedIds, equipment]);
+  }, [selection.selectedIds]);
 
   // Delete handler (placeholder for future functionality)
   const handleDelete = useCallback(() => {
     // TODO: Implement delete functionality
     // Future implementation will show confirmation dialog and call delete API
     if (selection.selectedIds.size === 0) return;
-    
-    // Placeholder for delete logic  
+
+    // Placeholder for delete logic
     // Future implementation will show confirmation dialog and call delete API with selected IDs
     // Delete service call with confirmation would go here
-  }, [selection.selectedIds, equipment]);
+  }, [selection.selectedIds]);
 
   // Clear search handler
   const handleClearSearch = useCallback(() => {
@@ -198,9 +190,14 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
     return (
       <Box sx={{ p: 3 }}>
         <Alert
-          severity="error"
+          severity='error'
           action={
-            <button onClick={() => { clearError(); refetch(); }}>
+            <button
+              onClick={() => {
+                clearError();
+                refetch();
+              }}
+            >
               Retry
             </button>
           }
@@ -214,8 +211,8 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
   return (
     <Box sx={{ p: 3 }}>
       {/* Page Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1">
+      <Stack direction='row' alignItems='center' justifyContent='space-between' sx={{ mb: 3 }}>
+        <Typography variant='h4' component='h1'>
           Equipment
         </Typography>
       </Stack>
@@ -224,21 +221,21 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search equipment by description, make, model, IP address, site, or cell..."
+          placeholder='Search equipment by description, make, model, IP address, site, or cell...'
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          aria-label="Search equipment"
+          onChange={e => setSearchTerm(e.target.value)}
+          aria-label='Search equipment'
           InputProps={{
             startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
+              <InputAdornment position='start'>
+                <SearchIcon color='action' />
               </InputAdornment>
             ),
             endAdornment: searchTerm && (
-              <InputAdornment position="end">
+              <InputAdornment position='end'>
                 <button
                   onClick={handleClearSearch}
-                  aria-label="Clear search"
+                  aria-label='Clear search'
                   style={{
                     background: 'none',
                     border: 'none',
@@ -248,7 +245,7 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
                     alignItems: 'center',
                   }}
                 >
-                  <ClearIcon color="action" fontSize="small" />
+                  <ClearIcon color='action' fontSize='small' />
                 </button>
               </InputAdornment>
             ),
@@ -259,12 +256,12 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
             },
           }}
         />
-        
+
         {/* Search Loading Indicator */}
         {isSearching && (
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
             <CircularProgress size={16} sx={{ mr: 1 }} />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               Searching...
             </Typography>
           </Box>
@@ -286,7 +283,7 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
           {Array.from({ length: 10 }).map((_, index) => (
             <Skeleton
               key={index}
-              variant="rectangular"
+              variant='rectangular'
               height={52}
               sx={{ mb: 1, borderRadius: 1 }}
             />
@@ -308,18 +305,18 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
           height={600}
           overscanRowCount={10}
           onRowClick={handleRowClick}
-          rowKey={(row) => row.id}
+          rowKey={row => row.id}
           loading={isLoading}
-          emptyMessage="No equipment found matching your criteria"
+          emptyMessage='No equipment found matching your criteria'
           sortable={true}
           multiSort={false}
           selectable={true}
-          selectionMode="multiple"
+          selectionMode='multiple'
           selectedRows={selection.selectedIds}
           onSelectionChange={handleSelectionChange}
           resizable={true}
           reorderable={false}
-          persistLayoutKey="equipmentList"
+          persistLayoutKey='equipmentList'
         />
       )}
 
@@ -339,9 +336,9 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({
             zIndex: 1000,
           }}
         >
-          <Stack alignItems="center" spacing={2}>
+          <Stack alignItems='center' spacing={2}>
             <CircularProgress />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {isSearching ? 'Searching equipment...' : 'Loading equipment...'}
             </Typography>
           </Stack>

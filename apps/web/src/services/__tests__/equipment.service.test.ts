@@ -3,12 +3,17 @@
  * Story 4.3: Equipment List UI
  */
 
-import { equipmentService, equipmentQueryKeys } from '../equipment.service';
+import { equipmentQueryKeys, equipmentService } from '../equipment.service';
 import apiClient from '../api.client';
-import type { EquipmentSearchFilters, EquipmentListResponse } from '../../types/equipment';
+import type {
+  EquipmentListResponse,
+  EquipmentSearchFilters,
+  EquipmentType,
+} from '../../types/equipment';
 
 // Mock api.client
 jest.mock('../api.client', () => ({
+  __esModule: true,
   default: {
     get: jest.fn(),
   },
@@ -28,7 +33,7 @@ describe('EquipmentService', () => {
           id: '1',
           cellId: 'cell-1',
           name: 'Test Equipment',
-          equipmentType: 'PRESS' as any,
+          equipmentType: 'PRESS' as EquipmentType,
           createdBy: 'user-1',
           updatedBy: 'user-1',
           createdAt: '2024-01-01T00:00:00Z',
@@ -74,7 +79,7 @@ describe('EquipmentService', () => {
       const result = await equipmentService.getEquipment(filters);
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test&siteName=Test%20Site&page=2&limit=25&sortBy=name&sortOrder=desc'
+        '/api/v1/equipment?search=test&siteName=Test+Site&page=2&limit=25&sortBy=name&sortOrder=desc'
       );
       expect(result).toEqual(mockResponse);
     });
@@ -89,16 +94,17 @@ describe('EquipmentService', () => {
 
       await equipmentService.getEquipment(filters);
 
-      expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?siteName=Test%20Site'
-      );
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/api/v1/equipment?siteName=Test+Site');
     });
 
     it('should handle API errors', async () => {
       const error = new Error('API Error');
       mockedApiClient.get.mockRejectedValue(error);
 
-      await expect(equipmentService.getEquipment()).rejects.toThrow('API Error');
+      await expect(equipmentService.getEquipment()).rejects.toMatchObject({
+        message: 'API Error',
+        status: 500,
+      });
     });
 
     it('should handle Axios errors with response data', async () => {
@@ -132,9 +138,7 @@ describe('EquipmentService', () => {
 
       const result = await equipmentService.searchEquipment('test search');
 
-      expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test%20search'
-      );
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/api/v1/equipment?search=test+search');
       expect(result).toEqual(mockResponse);
     });
 
@@ -152,7 +156,7 @@ describe('EquipmentService', () => {
       });
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?siteName=Site%20A&limit=25&search=test'
+        '/api/v1/equipment?search=test&siteName=Site+A&limit=25'
       );
       expect(result).toEqual(mockResponse);
     });
@@ -163,7 +167,7 @@ describe('EquipmentService', () => {
       const mockEquipment = {
         id: '1',
         name: 'Test Equipment',
-        equipmentType: 'PRESS' as any,
+        equipmentType: 'PRESS' as EquipmentType,
       };
 
       mockedApiClient.get.mockResolvedValue({ data: mockEquipment });
@@ -197,12 +201,15 @@ describe('EquipmentService', () => {
       const mockBlob = new Blob(['csv,data'], { type: 'text/csv' });
       mockedApiClient.get.mockResolvedValue({ data: mockBlob });
 
-      const result = await equipmentService.exportEquipment({
-        siteName: 'Test Site',
-      }, 'csv');
+      const result = await equipmentService.exportEquipment(
+        {
+          siteName: 'Test Site',
+        },
+        'csv'
+      );
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment/export?siteName=Test%20Site&format=csv',
+        '/api/v1/equipment/export?siteName=Test+Site&format=csv',
         { responseType: 'blob' }
       );
       expect(result).toEqual(mockBlob);
@@ -219,11 +226,7 @@ describe('equipmentQueryKeys', () => {
       'list',
       { search: 'test' },
     ]);
-    expect(equipmentQueryKeys.detail('123')).toEqual([
-      'equipment',
-      'detail',
-      '123',
-    ]);
+    expect(equipmentQueryKeys.detail('123')).toEqual(['equipment', 'detail', '123']);
     expect(equipmentQueryKeys.stats()).toEqual(['equipment', 'stats']);
   });
 });

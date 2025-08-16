@@ -309,7 +309,11 @@ describe('User Management Audit Integration', () => {
     });
 
     it('should track field-level changes in audit logs', async () => {
-      const updatedUser = { ...mockUser, firstName: 'Jane', roleId: 'role-789' };
+      const updatedUser = {
+        ...mockUser,
+        firstName: 'Jane',
+        roleId: 'role-789',
+      };
       mockUserService.updateUser.mockResolvedValue(updatedUser);
 
       const updateData = { firstName: 'Jane', roleId: 'role-789' };

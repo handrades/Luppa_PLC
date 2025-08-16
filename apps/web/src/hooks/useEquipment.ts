@@ -1,21 +1,18 @@
 /**
  * useEquipment Hook for Equipment Data Operations
  * Story 4.3: Equipment List UI
- * 
+ *
  * Custom hook for equipment data fetching with React Query integration
  * Provides caching, background updates, and error handling
  */
 
 import { useCallback, useEffect } from 'react';
 import { useEquipmentStore } from '../stores/equipment.store';
-import type {
-  UseEquipmentReturn,
-  EquipmentSearchFilters,
-} from '../types/equipment';
+import type { EquipmentSearchFilters, UseEquipmentReturn } from '../types/equipment';
 
 /**
  * Hook for equipment data fetching using Zustand store
- * 
+ *
  * @param initialFilters - Initial filters to apply
  * @param enabled - Whether the query should be enabled
  * @returns Equipment data, loading state, and utility functions
@@ -65,7 +62,7 @@ export function useEquipment(
 
 /**
  * Hook for equipment detail fetching (simplified for store-only approach)
- * 
+ *
  * @param equipmentId - ID of equipment to fetch
  * @param enabled - Whether the query should be enabled
  * @returns Equipment detail data and loading state

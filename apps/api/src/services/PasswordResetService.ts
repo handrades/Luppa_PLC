@@ -224,7 +224,9 @@ export class PasswordResetService {
 
     try {
       await redisClient.del(tokenKey);
-      logger.info('Password reset token invalidated', { tokenHash: token.substring(0, 6) + '***' });
+      logger.info('Password reset token invalidated', {
+        tokenHash: token.substring(0, 6) + '***',
+      });
     } catch (error) {
       logger.error('Failed to invalidate password reset token', {
         error: error instanceof Error ? error.message : 'Unknown error',
