@@ -15,7 +15,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { Check, ContentCopy, Error, Router, Warning } from '@mui/icons-material';
+import { Check, ContentCopy, Error as ErrorIcon, Router, Warning } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { debounce } from 'lodash';
 
@@ -107,7 +107,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
       return {
         status: 'error' as const,
         message: error,
-        icon: <Error color='error' />,
+        icon: <ErrorIcon color='error' />,
       };
     }
 
@@ -117,7 +117,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
         return {
           status: 'error' as const,
           message: 'IP address is required',
-          icon: <Error color='error' />,
+          icon: <ErrorIcon color='error' />,
         };
       }
       return {
@@ -132,7 +132,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
       return {
         status: 'error' as const,
         message: formatValidation.error || 'Invalid IP address format',
-        icon: <Error color='error' />,
+        icon: <ErrorIcon color='error' />,
       };
     }
 
@@ -157,7 +157,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
       return {
         status: 'error' as const,
         message: 'This IP address is already in use',
-        icon: <Error color='error' />,
+        icon: <ErrorIcon color='error' />,
       };
     }
 
@@ -200,6 +200,18 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
       // Failed to copy to clipboard - error handled by user feedback
     }
   }, [value]);
+
+  // Create sanitized base ID for stable aria-describedby
+  const baseId = useMemo(() => {
+    return (
+      label
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-+/g, '-') + '-validation-message'
+    );
+  }, [label]);
 
   // Format helper text
   const helperText = useMemo(() => {
@@ -264,7 +276,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
       }}
       inputProps={{
         'aria-label': `${label}${required ? ' (required)' : ''}`,
-        'aria-describedby': validationState.message ? `${label}-validation-message` : undefined,
+        'aria-describedby': validationState.message ? baseId : undefined,
         'aria-invalid': validationState.status === 'error',
         maxLength: 15, // Maximum length for IPv4 (xxx.xxx.xxx.xxx)
         pattern:
@@ -273,7 +285,7 @@ const IpAddressInput: React.FC<IpAddressInputProps> = ({
         spellCheck: false,
       }}
       FormHelperTextProps={{
-        id: validationState.message ? `${label}-validation-message` : undefined,
+        id: validationState.message ? baseId : undefined,
         sx: {
           display: 'flex',
           alignItems: 'center',

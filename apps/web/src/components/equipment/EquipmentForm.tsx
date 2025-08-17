@@ -12,6 +12,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Collapse,
   FormControl,
   FormHelperText,
@@ -72,7 +73,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
         name: initialData.name || '',
         equipmentType: initialData.equipmentType || EquipmentType.OTHER,
         cellId: initialData.cellId || '',
-        tagId: initialData.description || '', // Using description as tagId for now
+        tagId: initialData.description || '', // Using description as tagId since tagId doesn't exist on type
         description: initialData.description || '',
         make: initialData.make || '',
         model: initialData.model || '',
@@ -536,8 +537,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
           type='submit'
           variant='contained'
           disabled={!isFormValid || isLoading}
-          loading={submissionState.isSubmitting}
-          startIcon={<Save />}
+          startIcon={submissionState.isSubmitting ? <CircularProgress size={16} /> : <Save />}
         >
           {mode === EquipmentFormMode.EDIT ? 'Update Equipment' : 'Create Equipment'}
         </Button>

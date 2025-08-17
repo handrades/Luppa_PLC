@@ -341,7 +341,13 @@ export class EquipmentService {
         model: data.model.trim(),
         ipAddress: data.ipAddress?.trim() || undefined,
         firmwareVersion: data.firmwareVersion?.trim() || undefined,
-        tags: data.tags.length > 0 ? data.tags.map(tag => tag.trim()) : undefined,
+        tags:
+          data.tags.length > 0
+            ? (() => {
+                const trimmedTags = data.tags.map(tag => tag.trim()).filter(tag => tag !== '');
+                return trimmedTags.length > 0 ? trimmedTags : undefined;
+              })()
+            : undefined,
       };
 
       const response = await apiClient.post<Equipment>(this.baseUrl, apiData);
@@ -370,7 +376,13 @@ export class EquipmentService {
         model: data.model.trim(),
         ipAddress: data.ipAddress?.trim() || undefined,
         firmwareVersion: data.firmwareVersion?.trim() || undefined,
-        tags: data.tags.length > 0 ? data.tags.map(tag => tag.trim()) : undefined,
+        tags:
+          data.tags?.length > 0
+            ? (() => {
+                const trimmedTags = data.tags.map(tag => tag.trim()).filter(tag => tag !== '');
+                return trimmedTags.length > 0 ? trimmedTags : undefined;
+              })()
+            : undefined,
         updatedAt: data.updatedAt, // For optimistic locking
       };
 

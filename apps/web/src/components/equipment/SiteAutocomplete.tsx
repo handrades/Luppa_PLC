@@ -6,7 +6,7 @@
  * loading states, and proper accessibility support.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -56,6 +56,13 @@ const SiteAutocomplete: React.FC<SiteAutocompleteProps> = ({
     []
   );
 
+  // Cancel debounced work on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   // Query for site suggestions
   const {
     data: suggestions = [],
@@ -97,19 +104,21 @@ const SiteAutocomplete: React.FC<SiteAutocompleteProps> = ({
         setInputValue(newValue.siteName);
       } else {
         // Cleared
+        debouncedSearch.cancel(); // Cancel any pending debounced search
         onChange('');
         setInputValue('');
       }
     },
-    [onChange]
+    [onChange, debouncedSearch]
   );
 
   // Handle clear button
   const handleClear = useCallback(() => {
+    debouncedSearch.cancel(); // Cancel any pending debounced search
     onChange('');
     setInputValue('');
     setSearchTerm('');
-  }, [onChange]);
+  }, [onChange, debouncedSearch]);
 
   // Custom option rendering
   const renderOption = useCallback(

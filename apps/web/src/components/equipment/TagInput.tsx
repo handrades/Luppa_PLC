@@ -263,10 +263,16 @@ const TagInput: React.FC<TagInputProps> = ({
     (event: DragEndEvent) => {
       const { active, over } = event;
 
-      if (active.id !== over?.id) {
-        const oldIndex = value.indexOf(active.id as string);
-        const newIndex = value.indexOf(over?.id as string);
+      // Early return if over is null or active.id equals over.id
+      if (!over || active.id === over.id) {
+        return;
+      }
 
+      const oldIndex = value.indexOf(active.id as string);
+      const newIndex = value.indexOf(over.id as string);
+
+      // Only call arrayMove if both indices are valid (>= 0)
+      if (oldIndex >= 0 && newIndex >= 0) {
         onChange(arrayMove(value, oldIndex, newIndex));
       }
     },
@@ -278,7 +284,7 @@ const TagInput: React.FC<TagInputProps> = ({
   const isAtMaxTags = remainingSlots <= 0;
 
   return (
-    <FormControl fullWidth error={!!error} disabled={disabled}>
+    <FormControl fullWidth error={!!error || !!inputError} disabled={disabled}>
       <FormLabel component='legend' sx={{ mb: 1 }}>
         {label}
         {remainingSlots > 0 && (

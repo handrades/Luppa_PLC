@@ -17,7 +17,7 @@ describe('TagInput', () => {
     test.todo('should add tags on comma input');
     test.todo('should prevent duplicate tags');
     test.todo('should validate tag format (alphanumeric only)');
-    test.todo('should limit to maximum 10 tags');
+    test.todo('should limit to maximum 20 tags');
     test.todo('should remove tags via delete icons');
   });
 

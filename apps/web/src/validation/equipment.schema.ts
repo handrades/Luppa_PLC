@@ -259,19 +259,21 @@ export const createIpUniquenessValidator = (
   checkUniqueness: (ip: string, excludeId?: string) => Promise<boolean>
 ) => {
   return async (ip: string, excludeEquipmentId?: string): Promise<string | undefined> => {
-    if (!ip || ip.trim() === '') {
+    const ipTrimmed = ip.trim();
+
+    if (!ip || ipTrimmed === '') {
       return undefined; // IP is optional
     }
 
     // First validate format
-    const formatResult = equipmentFieldSchema.ipAddress.safeParse(ip);
+    const formatResult = equipmentFieldSchema.ipAddress.safeParse(ipTrimmed);
     if (!formatResult.success) {
       return formatResult.error.issues[0]?.message || 'Invalid IP address format';
     }
 
     // Then check uniqueness
     try {
-      const isUnique = await checkUniqueness(ip, excludeEquipmentId);
+      const isUnique = await checkUniqueness(ipTrimmed, excludeEquipmentId);
       if (!isUnique) {
         return 'This IP address is already in use by another equipment';
       }
