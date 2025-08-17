@@ -5,6 +5,7 @@
  * CRITICAL: These tests need to be implemented for production readiness
  */
 
+import React, { useState } from 'react';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import IpAddressInput from '../IpAddressInput';
@@ -16,22 +17,33 @@ describe('IpAddressInput', () => {
       const user = userEvent.setup();
       const mockOnChange = jest.fn();
 
-      renderWithProviders(<IpAddressInput value='' onChange={mockOnChange} label='IP Address' />);
+      // Controlled wrapper component to maintain state
+      const ControlledWrapper: React.FC = () => {
+        const [value, setValue] = useState('');
+
+        const handleChange = (newValue: string) => {
+          setValue(newValue);
+          mockOnChange(newValue);
+        };
+
+        return <IpAddressInput value={value} onChange={handleChange} label='IP Address' />;
+      };
+
+      renderWithProviders(<ControlledWrapper />);
 
       const input = screen.getByRole('textbox', { name: /ip address/i });
 
       // Type IP address
       await user.type(input, '192.168.1.100');
 
-      // Verify the onChange was called (it gets called for each character)
+      // Verify the onChange was called with accumulating values
       expect(mockOnChange).toHaveBeenCalled();
 
-      // Verify that onChange was called with the last character
-      expect(mockOnChange).toHaveBeenLastCalledWith('0');
+      // Verify that onChange was called with the full IP address
+      expect(mockOnChange).toHaveBeenLastCalledWith('192.168.1.100');
 
-      // The component should have received the characters and built up the IP
-      // (Note: The test setup doesn't maintain state between onChange calls,
-      // so we can't test the full accumulated value in this simple test)
+      // Verify the input displays the complete IP value
+      expect(input).toHaveValue('192.168.1.100');
     });
 
     test.todo('should reject invalid IP formats');

@@ -398,9 +398,9 @@ const TagInput: React.FC<TagInputProps> = ({
       {/* Helper Text */}
       <FormHelperText id='tag-input-help'>
         {inputError && (
-          <span id='tag-input-error' style={{ color: 'error.main' }}>
+          <Box component='span' id='tag-input-error' sx={{ color: 'error.main' }}>
             {inputError}
-          </span>
+          </Box>
         )}
         {!inputError && error && error}
         {!inputError && !error && (
