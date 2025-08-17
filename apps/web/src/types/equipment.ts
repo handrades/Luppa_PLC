@@ -110,8 +110,55 @@ export interface EquipmentActions {
   reset: () => void;
 }
 
+// Form-specific state for equipment store
+export interface EquipmentFormState {
+  // Current equipment being edited
+  currentEquipment: EquipmentWithDetails | null;
+
+  // Form draft for auto-save
+  formDraft: unknown | null; // Form draft data - using unknown to avoid circular dependency
+  draftTimestamp: string | null;
+
+  // Form operation states
+  isCreating: boolean;
+  isUpdating: boolean;
+  isLoadingForEdit: boolean;
+
+  // Form-specific errors
+  formErrors: Record<string, string> | null;
+  validationErrors: Record<string, string[]> | null;
+
+  // Field-level validation cache
+  fieldValidationCache: Record<string, boolean>;
+}
+
+// Form-specific actions for equipment store
+export interface EquipmentFormActions {
+  // CRUD operations
+  createEquipment: (data: unknown) => Promise<Equipment>; // Form data
+  updateEquipment: (id: string, data: unknown) => Promise<Equipment>; // Form data
+  loadEquipmentForEdit: (id: string) => Promise<void>;
+
+  // Form state management
+  saveFormDraft: (draft: unknown) => void; // Form draft
+  loadFormDraft: () => unknown | null; // Form draft
+  clearFormDraft: () => void;
+
+  // Validation helpers
+  validateIpUniqueness: (ip: string, excludeId?: string) => Promise<boolean>;
+  getSiteSuggestions: (query: string) => Promise<unknown[]>; // Site options
+
+  // Error handling
+  setFormErrors: (errors: Record<string, string>) => void;
+  clearFormErrors: () => void;
+}
+
 // Complete equipment store interface
-export interface EquipmentStore extends EquipmentListState, EquipmentActions {}
+export interface EquipmentStore
+  extends EquipmentListState,
+    EquipmentActions,
+    EquipmentFormState,
+    EquipmentFormActions {}
 
 // Props for equipment list page component
 export interface EquipmentListPageProps {

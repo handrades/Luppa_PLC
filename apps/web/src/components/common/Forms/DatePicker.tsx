@@ -8,8 +8,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { TextField } from '@mui/material';
 import { FormField, FormFieldProps } from './FormField';
 
-// @ts-expect-error - MUI DatePicker generic constraint
-export interface DatePickerProps extends Omit<MuiDatePickerProps<Date>, 'renderInput'> {
+export interface DatePickerProps extends Omit<MuiDatePickerProps, 'renderInput'> {
   error?: string;
   helperText?: string;
   required?: boolean;

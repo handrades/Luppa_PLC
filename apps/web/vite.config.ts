@@ -72,6 +72,11 @@ export default defineConfig({
       '@mui/material',
       '@emotion/react',
       '@emotion/styled',
+      '@tanstack/react-query',
+      'zod',
+      'react-hook-form',
+      '@hookform/resolvers',
+      'lodash',
     ],
   },
 });
