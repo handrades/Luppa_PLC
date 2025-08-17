@@ -181,6 +181,51 @@
       "problemMatcher": []
     },
     {
+      "label": "Build (Docker)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerBuild"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "osx": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          }
+        }
+      },
+      "group": "build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Stop (Docker)",
       "type": "shell",
       "command": "pwsh",

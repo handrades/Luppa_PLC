@@ -6,6 +6,8 @@ import { ProtectedRoute } from './components/common/Auth/ProtectedRoute';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { EquipmentListPage } from './pages/equipment/EquipmentListPage';
+import EquipmentCreatePage from './pages/equipment/EquipmentCreatePage';
+import EquipmentEditPage from './pages/equipment/EquipmentEditPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -41,6 +43,24 @@ function App() {
               <AppLayout>
                 <EquipmentListPage />
               </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path='/equipment/new'
+          element={
+            <ProtectedRoute>
+              <EquipmentCreatePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path='/equipment/:id/edit'
+          element={
+            <ProtectedRoute>
+              <EquipmentEditPage />
             </ProtectedRoute>
           }
         />
