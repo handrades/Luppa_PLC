@@ -2,43 +2,236 @@
  * Test App Helper
  *
  * Creates a test Express application for integration testing
+ * Uses real routes with mock authentication and services
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-import { Express, NextFunction, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
+import { EntityManager } from 'typeorm';
+import { jwtConfig } from '../../config/jwt';
 
-const express = require('express');
-
-// Type definitions for test data
-interface TestSite {
-  id: string;
-  name: string;
-  cellCount: number;
-  equipmentCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface TestCell {
-  id: string;
-  siteId: string;
-  name: string;
-  lineNumber: string;
-  equipmentCount: number;
-  siteName: string;
-  createdAt: string;
-  updatedAt: string;
+// Mock authentication helper
+interface MockUser {
+  sub: string;
+  email: string;
+  roleId: string;
+  permissions: string[];
 }
 
 // In-memory storage for test data
 const testData = {
-  sites: new Map<string, TestSite>(),
-  cells: new Map<string, TestCell>(),
+  sites: new Map<string, Record<string, unknown>>(),
+  cells: new Map<string, Record<string, unknown>>(),
+};
+
+// Mock SiteService
+jest.mock('../../services/SiteService', () => {
+  return {
+    SiteService: jest.fn().mockImplementation(() => ({
+      createSite: jest.fn().mockImplementation(async (data: { name: string }) => {
+        const siteId = randomUUID();
+        const site = {
+          id: siteId,
+          name: data.name,
+          cellCount: 0,
+          equipmentCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        testData.sites.set(siteId, site);
+        return site;
+      }),
+      searchSites: jest.fn().mockImplementation(async () => ({
+        data: Array.from(testData.sites.values()),
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          totalItems: testData.sites.size,
+          totalPages: 1,
+        },
+      })),
+      getSiteById: jest.fn().mockImplementation(async (id: string) => {
+        const site = testData.sites.get(id);
+        if (!site) {
+          throw new Error(`Site with ID '${id}' not found`);
+        }
+        return site;
+      }),
+    })),
+  };
+});
+
+// Mock CellService
+jest.mock('../../services/CellService', () => {
+  return {
+    CellService: jest.fn().mockImplementation(() => ({
+      createCell: jest
+        .fn()
+        .mockImplementation(async (data: { siteId: string; name: string; lineNumber: string }) => {
+          // Check if site exists
+          const site = testData.sites.get(data.siteId);
+          if (!site) {
+            throw new Error(`Site with ID '${data.siteId}' not found`);
+          }
+
+          // Check for duplicate line numbers
+          const existingCells = Array.from(testData.cells.values());
+          const duplicate = existingCells.find(
+            (cell: Record<string, unknown>) =>
+              cell.siteId === data.siteId && cell.lineNumber === data.lineNumber.toUpperCase()
+          );
+          if (duplicate) {
+            throw new Error(`Line number '${data.lineNumber}' already exists in this site`);
+          }
+
+          const cellId = randomUUID();
+          const cell = {
+            id: cellId,
+            siteId: data.siteId,
+            name: data.name,
+            lineNumber: data.lineNumber.toUpperCase(),
+            equipmentCount: 0,
+            siteName: site.name,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          testData.cells.set(cellId, cell);
+          return cell;
+        }),
+      searchCells: jest.fn().mockImplementation(async () => ({
+        data: Array.from(testData.cells.values()),
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          totalItems: testData.cells.size,
+          totalPages: 1,
+        },
+      })),
+      getCellById: jest.fn().mockImplementation(async (id: string) => {
+        const cell = testData.cells.get(id);
+        if (!cell) {
+          throw new Error(`Cell with ID '${id}' not found`);
+        }
+        return cell;
+      }),
+      deleteCell: jest.fn().mockImplementation(async (id: string) => {
+        const cell = testData.cells.get(id);
+        if (!cell) {
+          throw new Error(`Cell with ID '${id}' not found`);
+        }
+        testData.cells.delete(id);
+      }),
+      getCellsBySite: jest.fn().mockImplementation(async (siteId: string) => {
+        const site = testData.sites.get(siteId);
+        if (!site) {
+          throw new Error(`Site with ID '${siteId}' not found`);
+        }
+        return Array.from(testData.cells.values()).filter(
+          (cell: Record<string, unknown>) => cell.siteId === siteId
+        );
+      }),
+      getCellStatistics: jest.fn().mockImplementation(async () => ({
+        totalCells: testData.cells.size,
+        totalEquipment: 0,
+        averageEquipmentPerCell: 0,
+        cellsWithoutEquipment: 0,
+        cellsPerSite: {},
+      })),
+      getCellSuggestions: jest.fn().mockImplementation(async () => []),
+      validateCellUniqueness: jest
+        .fn()
+        .mockImplementation(async (siteId: string, lineNumber: string, excludeId?: string) => {
+          const existingCells = Array.from(testData.cells.values());
+          const duplicate = existingCells.find(
+            (cell: Record<string, unknown>) =>
+              cell.siteId === siteId &&
+              cell.lineNumber === lineNumber.toUpperCase() &&
+              cell.id !== excludeId
+          );
+          return !duplicate;
+        }),
+      validateHierarchyIntegrity: jest.fn().mockImplementation(async () => ({
+        isValid: true,
+        errors: [],
+        warnings: [],
+      })),
+    })),
+  };
+});
+
+/**
+ * Mock authentication middleware that decodes test tokens
+ */
+const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      message: 'Missing or invalid Authorization header',
+    });
+  }
+
+  const token = authHeader.substring(7);
+
+  if (!token) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      message: 'Missing access token',
+    });
+  }
+
+  try {
+    // Handle test tokens (base64 encoded mock data)
+    if (token.startsWith('Bearer.')) {
+      const base64Data = token.split('.')[1];
+      const decoded = JSON.parse(Buffer.from(base64Data, 'base64').toString());
+
+      // Convert to expected JWT payload format
+      req.user = {
+        sub: decoded.userId || decoded.id,
+        email: decoded.email,
+        roleId: 'test-role',
+        permissions: decoded.permissions || [],
+        type: 'access',
+      };
+    } else {
+      // Try to decode as real JWT for other tests
+      const decoded = jwt.verify(token, jwtConfig.secret) as MockUser;
+      req.user = decoded;
+    }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      error: 'Authentication failed',
+      message: 'Invalid token',
+    });
+  }
 };
 
 /**
- * Creates a minimal test Express app with basic middleware
- * This is a mock implementation for testing purposes
+ * Mock audit context middleware
+ */
+const mockAuditMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Mock the audit entity manager that the routes expect
+  req.auditEntityManager = {
+    // Add minimal mock methods that services might need
+    getRepository: jest.fn(),
+    findOne: jest.fn(),
+    save: jest.fn(),
+    create: jest.fn(),
+    delete: jest.fn(),
+    query: jest.fn(),
+    transaction: jest.fn(),
+  } as unknown as EntityManager;
+
+  next();
+};
+
+/**
+ * Creates a test Express app with real routes and mock authentication
  */
 export async function createTestApp(): Promise<Express> {
   const app = express();
@@ -47,113 +240,25 @@ export async function createTestApp(): Promise<Express> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Mock authentication middleware
-  app.use('/api/v1', (req: Request, res: Response, next: NextFunction) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith('Bearer')) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    next();
-  });
+  // Mock middleware
+  app.use(mockAuditMiddleware);
+  app.use('/api/v1', mockAuthMiddleware);
 
-  // Sites routes
-  app.post('/api/v1/sites', (req: Request, res: Response) => {
-    const { name } = req.body;
+  // Import and use real routes
+  const sitesRouter = (await import('../../routes/sites')).default;
+  const cellsRouter = (await import('../../routes/cells')).default;
 
-    if (!name) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: { name: ['Site name is required'] },
-      });
-    }
+  app.use('/api/v1/sites', sitesRouter);
+  app.use('/api/v1/cells', cellsRouter);
 
-    // Check for duplicates
-    const existingSites = Array.from(testData.sites.values());
-    for (const site of existingSites) {
-      if (site.name === name) {
-        return res.status(409).json({ error: `Site name '${name}' already exists` });
-      }
-    }
-
-    const siteId = `550e8400-e29b-41d4-a716-${String(Math.random()).slice(2, 14).padStart(12, '0')}`;
-    const site = {
-      id: siteId,
-      name,
-      cellCount: 0,
-      equipmentCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    testData.sites.set(siteId, site);
-
-    return res.status(201).json({
-      message: 'Site created successfully',
-      site,
+  // Error handling middleware
+  app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
+    // eslint-disable-next-line no-console
+    console.error('Test app error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
     });
-  });
-
-  // Cells routes
-  app.post('/api/v1/cells', (req: Request, res: Response) => {
-    const { siteId, name, lineNumber } = req.body;
-
-    if (!siteId || !name || !lineNumber) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: {
-          siteId: !siteId ? ['Site ID is required'] : undefined,
-          name: !name ? ['Cell name is required'] : undefined,
-          lineNumber: !lineNumber ? ['Line number is required'] : undefined,
-        },
-      });
-    }
-
-    // Check if site exists
-    const site = testData.sites.get(siteId);
-    if (!site) {
-      return res.status(404).json({ error: `Site with ID '${siteId}' not found` });
-    }
-
-    const cellId = `550e8400-e29b-41d4-a716-${String(Math.random()).slice(2, 14).padStart(12, '0')}`;
-    const cell = {
-      id: cellId,
-      siteId,
-      name,
-      lineNumber: lineNumber.toUpperCase(),
-      equipmentCount: 0,
-      siteName: site.name,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    testData.cells.set(cellId, cell);
-
-    return res.status(201).json({
-      message: 'Cell created successfully',
-      cell,
-    });
-  });
-
-  // Handle other endpoints with basic responses
-  app.use('/api/v1', (req: Request, res: Response) => {
-    // For any other endpoint, return a basic success response
-    const method = req.method;
-
-    if (method === 'GET') {
-      return res.status(200).json({
-        message: 'Mock response',
-        data: [],
-        pagination: {
-          page: 1,
-          pageSize: 20,
-          totalItems: 0,
-          totalPages: 0,
-        },
-      });
-    }
-
-    // Default response for unsupported operations
-    res.status(200).json({ message: 'Mock response', data: [] });
   });
 
   return app;

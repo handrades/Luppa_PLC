@@ -7,7 +7,7 @@
 
 import { Request, Response, Router } from 'express';
 import { CellService } from '../services/CellService';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, authorizeAll } from '../middleware/auth';
 import { writeOpsRateLimit } from '../middleware/rateLimiter';
 import {
   cellBulkOperationSchema,
@@ -171,7 +171,7 @@ router.post(
 router.post(
   '/validate-hierarchy',
   authenticate,
-  authorize(['cells.read', 'hierarchy.manage']),
+  authorizeAll(['cells.read', 'hierarchy.manage']),
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
     validateSchema(hierarchyIntegritySchema)(req.body);
