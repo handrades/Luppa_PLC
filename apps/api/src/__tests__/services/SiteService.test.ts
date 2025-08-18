@@ -106,6 +106,16 @@ describe('SiteService', () => {
       createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
     } as jest.Mocked<Repository<Equipment>>;
 
+    // Create mock transaction manager with same repository mocking
+    const mockTransactionManager = {
+      getRepository: jest.fn(entity => {
+        if (entity === Site) return mockSiteRepository;
+        if (entity === Cell) return mockCellRepository;
+        if (entity === Equipment) return mockEquipmentRepository;
+        throw new Error(`Unexpected entity: ${entity}`);
+      }),
+    } as jest.Mocked<EntityManager>;
+
     // Create mock entity manager
     mockEntityManager = {
       getRepository: jest.fn(entity => {
@@ -114,7 +124,7 @@ describe('SiteService', () => {
         if (entity === Equipment) return mockEquipmentRepository;
         throw new Error(`Unexpected entity: ${entity}`);
       }),
-      transaction: jest.fn().mockImplementation(callback => callback(mockEntityManager)),
+      transaction: jest.fn().mockImplementation(callback => callback(mockTransactionManager)),
     } as jest.Mocked<EntityManager>;
 
     siteService = new SiteService(mockEntityManager);
@@ -365,14 +375,25 @@ describe('SiteService', () => {
     };
 
     beforeEach(() => {
+      // Clear mocks for clean test state
+      jest.clearAllMocks();
+    });
+
+    it('should update site successfully', async () => {
       mockSiteRepository.findOne
         .mockResolvedValueOnce(mockCurrentSite) // First call for current site
         .mockResolvedValueOnce(null); // Second call for uniqueness check
-      mockSiteRepository.update.mockResolvedValue({
-        affected: 1,
-        raw: [],
-        generatedMaps: [],
-      });
+
+      // Mock the query builder for successful update
+      const mockUpdateQueryBuilder = {
+        ...mockQueryBuilder,
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      };
+      mockSiteRepository.createQueryBuilder.mockReturnValue(mockUpdateQueryBuilder);
+
       // Mock getSiteById for return value
       jest.spyOn(siteService, 'getSiteById').mockResolvedValue({
         ...mockCurrentSite,
@@ -380,14 +401,13 @@ describe('SiteService', () => {
         cellCount: 0,
         equipmentCount: 0,
       });
-    });
 
-    it('should update site successfully', async () => {
       const result = await siteService.updateSite(siteId, updateData, expectedUpdatedAt, {
         userId: mockUserId,
       });
 
-      expect(mockSiteRepository.update).toHaveBeenCalledWith(siteId, {
+      expect(mockUpdateQueryBuilder.update).toHaveBeenCalledWith(Site);
+      expect(mockUpdateQueryBuilder.set).toHaveBeenCalledWith({
         name: 'Updated Site',
         updatedBy: mockUserId,
       });
@@ -395,6 +415,7 @@ describe('SiteService', () => {
     });
 
     it('should throw error if site not found', async () => {
+      mockSiteRepository.findOne.mockReset();
       mockSiteRepository.findOne.mockResolvedValue(null);
 
       await expect(
@@ -406,6 +427,20 @@ describe('SiteService', () => {
 
     it('should handle optimistic locking conflict', async () => {
       const differentTimestamp = new Date(Date.now() + 1000);
+      mockSiteRepository.findOne
+        .mockResolvedValueOnce(mockCurrentSite) // First call for current site
+        .mockResolvedValueOnce(null) // Second call for uniqueness check (no conflict)
+        .mockResolvedValueOnce(mockCurrentSite); // Third call to check if site still exists after failed update
+
+      // Mock the query builder update to simulate optimistic locking failure
+      const mockUpdateQueryBuilder = {
+        ...mockQueryBuilder,
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 0 }),
+      };
+      mockSiteRepository.createQueryBuilder.mockReturnValue(mockUpdateQueryBuilder);
 
       await expect(
         siteService.updateSite(siteId, updateData, differentTimestamp, {
@@ -416,6 +451,7 @@ describe('SiteService', () => {
 
     it('should validate updated name uniqueness', async () => {
       const existingSite = { ...mockCurrentSite, id: 'different-id' };
+      mockSiteRepository.findOne.mockReset();
       mockSiteRepository.findOne
         .mockResolvedValueOnce(mockCurrentSite) // First call for current site
         .mockResolvedValueOnce(existingSite); // Second call for uniqueness check

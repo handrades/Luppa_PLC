@@ -102,6 +102,16 @@ describe('CellService', () => {
       createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
     } as jest.Mocked<Repository<Equipment>>;
 
+    // Create mock transaction manager with same repository mocking
+    const mockTransactionManager = {
+      getRepository: jest.fn(entity => {
+        if (entity === Cell) return mockCellRepository;
+        if (entity === Site) return mockSiteRepository;
+        if (entity === Equipment) return mockEquipmentRepository;
+        throw new Error(`Unexpected entity: ${entity}`);
+      }),
+    } as jest.Mocked<EntityManager>;
+
     // Create mock entity manager
     mockEntityManager = {
       getRepository: jest.fn(entity => {
@@ -110,7 +120,7 @@ describe('CellService', () => {
         if (entity === Equipment) return mockEquipmentRepository;
         throw new Error(`Unexpected entity: ${entity}`);
       }),
-      transaction: jest.fn().mockImplementation(callback => callback(mockEntityManager)),
+      transaction: jest.fn().mockImplementation(callback => callback(mockTransactionManager)),
     } as jest.Mocked<EntityManager>;
 
     cellService = new CellService(mockEntityManager);
@@ -520,6 +530,11 @@ describe('CellService', () => {
     };
 
     beforeEach(() => {
+      // Clear mocks for clean test state
+      jest.clearAllMocks();
+    });
+
+    it('should update cell successfully', async () => {
       mockCellRepository.findOne
         .mockResolvedValueOnce(mockCurrentCell) // First call for current cell
         .mockResolvedValueOnce(null); // Second call for uniqueness check
@@ -532,9 +547,7 @@ describe('CellService', () => {
         equipmentCount: 0,
         siteName: 'Test Site',
       });
-    });
 
-    it('should update cell successfully', async () => {
       const result = await cellService.updateCell(cellId, updateData, expectedUpdatedAt, {
         userId: mockUserId,
       });
@@ -549,6 +562,8 @@ describe('CellService', () => {
     });
 
     it('should throw error if cell not found', async () => {
+      // Clear any previous mocks and set up for this specific test
+      mockCellRepository.findOne.mockReset();
       mockCellRepository.findOne.mockResolvedValue(null);
 
       await expect(
@@ -560,6 +575,7 @@ describe('CellService', () => {
 
     it('should handle optimistic locking conflict', async () => {
       const differentTimestamp = new Date(Date.now() + 1000);
+      mockCellRepository.findOne.mockResolvedValue(mockCurrentCell);
 
       await expect(
         cellService.updateCell(cellId, updateData, differentTimestamp, {
@@ -574,6 +590,7 @@ describe('CellService', () => {
         id: 'different-id',
         lineNumber: 'LINE-02',
       };
+      mockCellRepository.findOne.mockReset();
       mockCellRepository.findOne
         .mockResolvedValueOnce(mockCurrentCell) // First call for current cell
         .mockResolvedValueOnce(existingCell); // Second call for uniqueness check
@@ -587,6 +604,7 @@ describe('CellService', () => {
 
     it('should validate cell name format', async () => {
       const invalidUpdateData = { name: 'Invalid@Name#' };
+      mockCellRepository.findOne.mockResolvedValue(mockCurrentCell);
 
       await expect(
         cellService.updateCell(cellId, invalidUpdateData, expectedUpdatedAt, {
@@ -597,6 +615,7 @@ describe('CellService', () => {
 
     it('should validate line number format', async () => {
       const invalidUpdateData = { lineNumber: 'invalid@line' };
+      mockCellRepository.findOne.mockResolvedValue(mockCurrentCell);
 
       await expect(
         cellService.updateCell(cellId, invalidUpdateData, expectedUpdatedAt, {
@@ -607,6 +626,17 @@ describe('CellService', () => {
 
     it('should convert line number to uppercase', async () => {
       const lowerCaseUpdate = { lineNumber: 'line-02' };
+      mockCellRepository.findOne
+        .mockResolvedValueOnce(mockCurrentCell) // First call for current cell
+        .mockResolvedValueOnce(null); // Second call for uniqueness check
+      mockCellRepository.update.mockResolvedValue(null as unknown);
+      // Mock getCellById for return value
+      jest.spyOn(cellService, 'getCellById').mockResolvedValue({
+        ...mockCurrentCell,
+        lineNumber: 'LINE-02',
+        equipmentCount: 0,
+        siteName: 'Test Site',
+      });
 
       await cellService.updateCell(cellId, lowerCaseUpdate, expectedUpdatedAt, {
         userId: mockUserId,
