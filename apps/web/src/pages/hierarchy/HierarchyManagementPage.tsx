@@ -40,12 +40,13 @@ import {
   NavigateNext as NavigateNextIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { Fab } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentLocation, useHierarchyStore } from '../../stores/hierarchy.store';
 import { HierarchyTree } from '../../components/hierarchy/HierarchyTree';
 import { HierarchyFilterPanel } from '../../components/hierarchy/HierarchyFilterPanel';
 import { AppLayout } from '../../components/common/Layout/AppLayout';
-import { Cell, HierarchyLocation, HierarchyNode, Site } from '../../types/hierarchy';
+import { Cell, HierarchyNode, Site } from '../../types/hierarchy';
 import { Equipment } from '../../types/equipment';
 
 /**
@@ -90,11 +91,10 @@ const StatisticsCard: React.FC<{
  */
 const DetailsPanel: React.FC<{
   selectedNode: HierarchyNode | null;
-  currentLocation: HierarchyLocation | null;
   onEdit: (node: HierarchyNode) => void;
   onDelete: (node: HierarchyNode) => void;
   onAddChild: (node: HierarchyNode) => void;
-}> = ({ selectedNode, _currentLocation, onEdit, onDelete, onAddChild }) => {
+}> = ({ selectedNode, onEdit, onDelete, onAddChild }) => {
   if (!selectedNode) {
     return (
       <Paper
@@ -165,7 +165,7 @@ const DetailsPanel: React.FC<{
       <Box sx={{ flex: 1, p: 2, overflow: 'auto' }}>
         {nodeType === 'site' && <SiteDetails site={metadata as Site} />}
         {nodeType === 'cell' && <CellDetails cell={metadata as Cell} />}
-        {nodeType === 'equipment' && <EquipmentDetails equipment={metadata as EquipmentType} />}
+        {nodeType === 'equipment' && <EquipmentDetails equipment={metadata as Equipment} />}
       </Box>
     </Paper>
   );
@@ -300,7 +300,7 @@ export const HierarchyManagementPage: React.FC = () => {
 
   // Local state
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
-  // const [_selectedNodes, _setSelectedNodes] = useState<string[]>([]); // Unused
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   // const [_viewMode, _setViewMode] = useState<'tree' | 'list'>('tree'); // Unused
   const [actionMenu, setActionMenu] = useState<null | HTMLElement>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -337,23 +337,23 @@ export const HierarchyManagementPage: React.FC = () => {
     }
   }, [hierarchyTree.length, hierarchyStatistics, loadHierarchyTree, loadHierarchyStatistics]);
 
-  // Get selected node (unused but may be needed for future features)
-  // const selectedNode = useMemo(() => {
-  //   if (selectedNodes.length !== 1) return null;
-  //
-  //   const findNode = (nodes: HierarchyNode[], id: string): HierarchyNode | null => {
-  //     for (const node of nodes) {
-  //       if (node.id === id) return node;
-  //       if (node.children) {
-  //         const found = findNode(node.children, id);
-  //         if (found) return found;
-  //       }
-  //     }
-  //     return null;
-  //   };
-  //
-  //   return findNode(hierarchyTree, selectedNodes[0]);
-  // }, [hierarchyTree, selectedNodes]);
+  // Get selected node
+  const selectedNode = useMemo(() => {
+    if (selectedNodes.length !== 1) return null;
+
+    const findNode = (nodes: HierarchyNode[], id: string): HierarchyNode | null => {
+      for (const node of nodes) {
+        if (node.id === id) return node;
+        if (node.children) {
+          const found = findNode(node.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    return findNode(hierarchyTree, selectedNodes[0]);
+  }, [hierarchyTree, selectedNodes]);
 
   // Generate breadcrumbs
   const breadcrumbs = useMemo(() => {
@@ -394,27 +394,6 @@ export const HierarchyManagementPage: React.FC = () => {
     [navigate]
   );
 
-  // Handle node context actions
-  const handleContextAction = useCallback(
-    (action: string, node: HierarchyNode) => {
-      switch (action) {
-        case 'view':
-          handleNodeDoubleClick(node);
-          break;
-        case 'edit':
-          handleEdit(node);
-          break;
-        case 'delete':
-          setDeleteDialog({ open: true, node });
-          break;
-        case 'add-child':
-          handleAddChild(node);
-          break;
-      }
-    },
-    [handleNodeDoubleClick, handleAddChild, handleEdit]
-  );
-
   // Handle edit
   const handleEdit = useCallback(
     (node: HierarchyNode) => {
@@ -448,6 +427,27 @@ export const HierarchyManagementPage: React.FC = () => {
     [navigate]
   );
 
+  // Handle node context actions
+  const handleContextAction = useCallback(
+    (action: string, node: HierarchyNode) => {
+      switch (action) {
+        case 'view':
+          handleNodeDoubleClick(node);
+          break;
+        case 'edit':
+          handleEdit(node);
+          break;
+        case 'delete':
+          setDeleteDialog({ open: true, node });
+          break;
+        case 'add-child':
+          handleAddChild(node);
+          break;
+      }
+    },
+    [handleNodeDoubleClick, handleAddChild, handleEdit]
+  );
+
   // Handle delete confirmation
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteDialog.node) return;
@@ -472,23 +472,23 @@ export const HierarchyManagementPage: React.FC = () => {
     }
   }, [deleteDialog.node, deleteSite, deleteCell, clearSelection]);
 
-  // Handle bulk operations (unused but may be needed for future features)
-  // const handleBulkAction = useCallback(async (action: string) => {
-  //   if (selectedNodes.length === 0) return;
-  //
-  //   try {
-  //     await performBulkOperation({
-  //       operation: action as 'delete' | 'export' | 'update',
-  //       entityType: 'site', // This would need to be determined based on selection
-  //       entityIds: selectedNodes,
-  //     });
-  //     clearSelection();
-  //   } catch (error) {
-  //     // Bulk operation failed
-  //   }
-  //
-  //   setActionMenu(null);
-  // }, [selectedNodes, performBulkOperation, clearSelection]);
+  // Handle bulk operations
+  const handleBulkAction = useCallback(
+    async (_action: string) => {
+      if (selectedNodes.length === 0) return;
+
+      try {
+        // Bulk operation logic would go here
+        // console.log('Bulk action:', action, 'on nodes:', selectedNodes);
+        clearSelection();
+      } catch (error) {
+        // Bulk operation failed
+      }
+
+      setActionMenu(null);
+    },
+    [selectedNodes, clearSelection]
+  );
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
@@ -630,7 +630,6 @@ export const HierarchyManagementPage: React.FC = () => {
           <Box sx={{ flex: 1, p: 2 }}>
             <DetailsPanel
               selectedNode={selectedNode}
-              currentLocation={currentLocation}
               onEdit={handleEdit}
               onDelete={node => setDeleteDialog({ open: true, node })}
               onAddChild={handleAddChild}

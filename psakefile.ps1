@@ -318,33 +318,115 @@ Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckFormat
 
 # Type checking task (matches GitHub Actions type-check job)
 Task TypeCheck {
-  Write-Host "`nRunning TypeScript type checking..." -ForegroundColor Cyan
-    
-  if (-not (Test-Command "pnpm")) {
-    throw "pnpm not found. Please install pnpm first."
-  }
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Type check API (matches GitHub Actions)
-    Write-Host "Type checking API..." -ForegroundColor Cyan
-    exec { pnpm --filter ./apps/api run type-check } "API type check failed"
-    Write-Host "✓ API type check passed" -ForegroundColor Green
-        
-    # Type check Web (matches GitHub Actions)
-    if (Test-Path "apps/web/package.json") {
-      Write-Host "Type checking Web..." -ForegroundColor Cyan
-      exec { pnpm --filter ./apps/web run type-check } "Web type check failed"
-      Write-Host "✓ Web type check passed" -ForegroundColor Green
+  function Invoke-TypeCheckWithDetails {
+    Write-Host "`nRunning TypeScript type checking..." -ForegroundColor Cyan
+      
+    if (-not (Test-Command "pnpm")) {
+      throw "pnpm not found. Please install pnpm first."
     }
-    else {
-      Write-Host "No web package found - skipping web type check" -ForegroundColor Yellow
-    }
+      
+    Push-Location $PSScriptRoot
+    try {
+      $hasErrors = $false
+      
+      # Type check API (matches GitHub Actions)
+      Write-Host "Type checking API..." -ForegroundColor Cyan
+      $apiResult = Start-Process -FilePath "pnpm" -ArgumentList @("--filter", "./apps/api", "run", "type-check") -Wait -PassThru -NoNewWindow -RedirectStandardOutput "api-typecheck.log" -RedirectStandardError "api-typecheck-err.log"
+      
+      if ($apiResult.ExitCode -ne 0) {
+        $hasErrors = $true
+        if (Test-Path "api-typecheck-err.log") {
+          $apiErrors = Get-Content "api-typecheck-err.log" -Raw
+          if ($apiErrors -and $apiErrors.Trim()) {
+            $lines = $apiErrors -split "`n"
+            foreach ($line in $lines) {
+              if ($line -match "^(.+?)\((\d+),(\d+)\): error (.+): (.+)$") {
+                if ($script:CollectAllErrors) {
+                  Add-TaskError -TaskName "TypeCheck" -ErrorMessage $Matches[5] -FilePath $Matches[1] -LineNumber $Matches[2] -ColumnNumber $Matches[3] -ErrorCode $Matches[4]
+                } else {
+                  Write-Host "❌ $($Matches[1]):$($Matches[2]):$($Matches[3]) - $($Matches[5])" -ForegroundColor Red
+                }
+              }
+              elseif ($line.Trim() -and $line -notmatch "^$" -and $line -notmatch "Found \d+ error") {
+                if ($script:CollectAllErrors) {
+                  Add-TaskError -TaskName "TypeCheck" -ErrorMessage $line.Trim() -FilePath "API"
+                } else {
+                  Write-Host "❌ API: $($line.Trim())" -ForegroundColor Red
+                }
+              }
+            }
+          }
+        }
+        Write-Host "❌ API type check failed with exit code $($apiResult.ExitCode)" -ForegroundColor Red
+      } else {
+        Write-Host "✓ API type check passed" -ForegroundColor Green
+      }
+      
+      # Clean up temp files
+      if (Test-Path "api-typecheck.log") { Remove-Item "api-typecheck.log" -Force }
+      if (Test-Path "api-typecheck-err.log") { Remove-Item "api-typecheck-err.log" -Force }
+          
+      # Type check Web (matches GitHub Actions)
+      if (Test-Path "apps/web/package.json") {
+        Write-Host "Type checking Web..." -ForegroundColor Cyan
+        $webResult = Start-Process -FilePath "pnpm" -ArgumentList @("--filter", "./apps/web", "run", "type-check") -Wait -PassThru -NoNewWindow -RedirectStandardOutput "web-typecheck.log" -RedirectStandardError "web-typecheck-err.log"
         
-    Write-Host "✓ All type checks passed" -ForegroundColor Green
+        if ($webResult.ExitCode -ne 0) {
+          $hasErrors = $true
+          if (Test-Path "web-typecheck-err.log") {
+            $webErrors = Get-Content "web-typecheck-err.log" -Raw
+            if ($webErrors -and $webErrors.Trim()) {
+              $lines = $webErrors -split "`n"
+              foreach ($line in $lines) {
+                if ($line -match "^(.+?)\((\d+),(\d+)\): error (.+): (.+)$") {
+                  if ($script:CollectAllErrors) {
+                    Add-TaskError -TaskName "TypeCheck" -ErrorMessage $Matches[5] -FilePath $Matches[1] -LineNumber $Matches[2] -ColumnNumber $Matches[3] -ErrorCode $Matches[4]
+                  } else {
+                    Write-Host "❌ $($Matches[1]):$($Matches[2]):$($Matches[3]) - $($Matches[5])" -ForegroundColor Red
+                  }
+                }
+                elseif ($line.Trim() -and $line -notmatch "^$" -and $line -notmatch "Found \d+ error") {
+                  if ($script:CollectAllErrors) {
+                    Add-TaskError -TaskName "TypeCheck" -ErrorMessage $line.Trim() -FilePath "Web"
+                  } else {
+                    Write-Host "❌ Web: $($line.Trim())" -ForegroundColor Red
+                  }
+                }
+              }
+            }
+          }
+          Write-Host "❌ Web type check failed with exit code $($webResult.ExitCode)" -ForegroundColor Red
+        } else {
+          Write-Host "✓ Web type check passed" -ForegroundColor Green
+        }
+        
+        # Clean up temp files
+        if (Test-Path "web-typecheck.log") { Remove-Item "web-typecheck.log" -Force }
+        if (Test-Path "web-typecheck-err.log") { Remove-Item "web-typecheck-err.log" -Force }
+      }
+      else {
+        Write-Host "No web package found - skipping web type check" -ForegroundColor Yellow
+      }
+      
+      if (-not $hasErrors) {
+        Write-Host "✓ All type checks passed" -ForegroundColor Green
+      } else {
+        if (-not $script:CollectAllErrors) {
+          throw "Type check failed - see errors above"
+        }
+      }
+    }
+    finally {
+      Pop-Location
+    }
   }
-  finally {
-    Pop-Location
+
+  if ($script:CollectAllErrors) {
+    Invoke-TaskWithErrorCollection -TaskName "TypeCheck" -ScriptBlock {
+      Invoke-TypeCheckWithDetails
+    }
+  } else {
+    Invoke-TypeCheckWithDetails
   }
 }
 

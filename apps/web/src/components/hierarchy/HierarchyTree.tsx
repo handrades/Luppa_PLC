@@ -21,10 +21,10 @@ import {
   Skeleton,
   TextField,
   Tooltip,
-  TreeItem,
-  TreeView,
   Typography,
 } from '@mui/material';
+import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
+import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import {
   Add as AddIcon,
   GridView as CellIcon,
@@ -38,6 +38,7 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Visibility as ViewIcon,
+  VisibilityOff,
 } from '@mui/icons-material';
 import { useHierarchyStore } from '../../stores/hierarchy.store';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -205,7 +206,7 @@ const TreeNodeComponent: React.FC<{
 
   return (
     <TreeItem
-      nodeId={node.id}
+      itemId={node.id}
       label={
         <Box
           sx={{
@@ -630,15 +631,16 @@ export const HierarchyTree: React.FC<HierarchyTreeProps> = ({
             </Typography>
           </Box>
         ) : (
-          <TreeView
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-            expanded={Array.from(expandedNodes)}
-            selected={Array.from(selectedNodeIds)}
-            onNodeToggle={(_event, _nodeIds) => {
-              // TreeView handles expansion internally, we just sync with store
+          <SimpleTreeView
+            expandedItems={Array.from(expandedNodes)}
+            selectedItems={Array.from(selectedNodeIds)}
+            onExpandedItemsChange={(_event: React.SyntheticEvent | null, _itemIds: string[]) => {
+              // SimpleTreeView handles expansion internally, we just sync with store
             }}
-            onNodeSelect={(_event, _nodeIds) => {
+            onSelectedItemsChange={(
+              _event: React.SyntheticEvent | null,
+              _itemIds: string[] | string | null
+            ) => {
               // We handle selection manually to support multi-select
             }}
             multiSelect={multiSelect}
@@ -659,7 +661,7 @@ export const HierarchyTree: React.FC<HierarchyTreeProps> = ({
                 searchQuery={debouncedSearchQuery}
               />
             ))}
-          </TreeView>
+          </SimpleTreeView>
         )}
       </Box>
 

@@ -346,9 +346,11 @@ export async function validateHierarchyIntegrity(): Promise<{
     };
   } catch (error) {
     // Hierarchy integrity validation failed
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Hierarchy validation failed:', error);
     return {
       isValid: false,
-      errors: ['Failed to validate hierarchy integrity'],
+      errors: [`Failed to validate hierarchy integrity: ${errorMessage}`],
       warnings: [],
     };
   }
@@ -358,7 +360,7 @@ export async function validateHierarchyIntegrity(): Promise<{
  * Check for orphaned records
  */
 export async function checkForOrphanedRecords(): Promise<{
-  hasOrphans: boolean;
+  hasOrphans: boolean | null;
   orphanedCells: string[];
   orphanedEquipment: string[];
 }> {
@@ -380,8 +382,9 @@ export async function checkForOrphanedRecords(): Promise<{
     };
   } catch (error) {
     // Orphaned records check failed
+    console.error('Orphaned records check failed:', error);
     return {
-      hasOrphans: false,
+      hasOrphans: null,
       orphanedCells: [],
       orphanedEquipment: [],
     };

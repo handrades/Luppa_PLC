@@ -611,7 +611,7 @@ class HierarchyService {
   static createTestInstance(mockApiClient: typeof apiClient): HierarchyService {
     const service = new HierarchyService();
     // Replace the apiClient with mock for testing
-    (service as { apiClient: typeof apiClient }).apiClient = mockApiClient;
+    (service as unknown as { apiClient: typeof apiClient }).apiClient = mockApiClient;
     return service;
   }
 

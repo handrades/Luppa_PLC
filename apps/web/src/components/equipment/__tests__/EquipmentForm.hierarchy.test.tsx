@@ -4,7 +4,6 @@
  * Story 4.5: Site Hierarchy Management - Task 10
  */
 
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import EquipmentForm from '../EquipmentForm';
@@ -181,7 +180,7 @@ describe('EquipmentForm Hierarchy Integration', () => {
     const initialData = {
       id: 'equipment-1',
       name: 'Test Equipment',
-      equipmentType: EquipmentType.PLC,
+      equipmentType: EquipmentType.OTHER,
       cellId: 'cell-123',
       createdBy: 'user-1',
       updatedBy: 'user-1',

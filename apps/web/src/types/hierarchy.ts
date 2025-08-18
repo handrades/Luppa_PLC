@@ -3,7 +3,7 @@
  * Story 4.5: Site Hierarchy Management
  */
 
-// Removed unused ReactNode import
+import { Equipment } from './equipment';
 
 /**
  * Site interface matching database schema
