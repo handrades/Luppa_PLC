@@ -197,16 +197,16 @@ export const hierarchyLocationSchema = z
  */
 export const bulkOperationSchema = z.object({
   operation: z.enum(['delete', 'move', 'update', 'export'], {
-    errorMap: () => ({ message: 'Invalid operation type' }),
+    message: 'Invalid operation type',
   }),
   entityType: z.enum(['site', 'cell', 'equipment'], {
-    errorMap: () => ({ message: 'Invalid entity type' }),
+    message: 'Invalid entity type',
   }),
   entityIds: z
     .array(z.string().uuid('Invalid entity ID'))
     .min(1, 'At least one entity must be selected')
     .max(100, 'Too many entities selected for bulk operation'),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
@@ -251,7 +251,7 @@ export const hierarchyTreeFiltersSchema = z.object({
  */
 export const importSchema = z.object({
   format: z.enum(['json', 'csv', 'xlsx'], {
-    errorMap: () => ({ message: 'Invalid import format' }),
+    message: 'Invalid import format',
   }),
   validateOnly: z.boolean().optional(),
   skipDuplicates: z.boolean().optional(),
@@ -262,7 +262,7 @@ export const importSchema = z.object({
  */
 export const exportSchema = z.object({
   format: z.enum(['json', 'csv', 'xlsx'], {
-    errorMap: () => ({ message: 'Invalid export format' }),
+    message: 'Invalid export format',
   }),
   siteIds: z.array(z.string().uuid()).optional(),
   includeEquipment: z.boolean().optional(),
@@ -347,7 +347,7 @@ export async function validateHierarchyIntegrity(): Promise<{
   } catch (error) {
     // Hierarchy integrity validation failed
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Hierarchy validation failed:', error);
+    // Log error for debugging - hierarchy validation failed
     return {
       isValid: false,
       errors: [`Failed to validate hierarchy integrity: ${errorMessage}`],
@@ -381,8 +381,7 @@ export async function checkForOrphanedRecords(): Promise<{
       orphanedEquipment,
     };
   } catch (error) {
-    // Orphaned records check failed
-    console.error('Orphaned records check failed:', error);
+    // Orphaned records check failed - log error for debugging
     return {
       hasOrphans: null,
       orphanedCells: [],
@@ -497,7 +496,7 @@ export function validateField<T>(
     return { isValid: true, data };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
+      const firstError = error.issues[0];
       return {
         isValid: false,
         error: firstError.message,
@@ -522,7 +521,7 @@ export async function validateFieldAsync<T>(
     return { isValid: true, data };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
+      const firstError = error.issues[0];
       return {
         isValid: false,
         error: firstError.message,

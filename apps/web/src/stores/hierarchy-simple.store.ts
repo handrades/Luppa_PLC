@@ -88,6 +88,15 @@ export const useHierarchyStore = create<HierarchyStore>()(
         }
       },
 
+      searchCellSuggestions: async (siteId: string, query: string) => {
+        try {
+          const suggestions = await hierarchyService.getCellSuggestions(siteId, query);
+          set({ cellSuggestions: suggestions });
+        } catch (error) {
+          set({ error: error as HierarchyServiceError });
+        }
+      },
+
       createSite: async data => {
         set({ isCreatingSite: true, error: null });
         try {
@@ -128,7 +137,7 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
       validateCellLineNumber: async (siteId: string, lineNumber: string, excludeId?: string) => {
         try {
-          return await hierarchyService.validateCellLineNumber(siteId, lineNumber, excludeId);
+          return await hierarchyService.validateCellUniqueness(siteId, lineNumber, excludeId);
         } catch (error) {
           set({ error: error as HierarchyServiceError });
           return false;

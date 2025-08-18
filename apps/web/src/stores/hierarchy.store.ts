@@ -6,7 +6,7 @@
 
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
-// Temporarily removing immer to fix build issue
+import { immer } from 'zustand/middleware/immer';
 import { hierarchyService } from '../services/hierarchy.service';
 import {
   Cell,
@@ -327,818 +327,831 @@ const initialState: HierarchyState = {
 export const useHierarchyStore = create<HierarchyStore>()(
   devtools(
     persist(
-      subscribeWithSelector((set, get) => ({
-        ...initialState,
+      subscribeWithSelector(
+        immer((set, get) => ({
+          ...initialState,
 
-        // Data loading actions
-        loadSites: async (params = {}) => {
-          set(state => ({
-            ...state,
-            isLoadingSites: true,
-            error: null,
-          }));
-
-          try {
-            const response = await hierarchyService.getSites({
-              page: params.page || get().sitesPagination.page,
-              pageSize: get().preferences.defaultPageSize,
-              search: params.search || get().searchQuery,
-              includeEmpty: params.includeEmpty ?? get().preferences.showEmptyNodes,
-            });
-
+          // Data loading actions
+          loadSites: async (params = {}) => {
             set(state => ({
               ...state,
-              sites: response.data,
-              sitesPagination: response.pagination,
-              isLoadingSites: false,
+              isLoadingSites: true,
+              error: null,
             }));
-          } catch (error) {
-            set(state => ({
-              ...state,
-              error: error as HierarchyServiceError,
-              isLoadingSites: false,
-            }));
-          }
-        },
 
-        loadCells: async (params = {}) => {
-          set(state => {
-            state.isLoadingCells = true;
-            state.error = null;
-          });
-
-          try {
-            const response = await hierarchyService.getCells({
-              siteId: params.siteId || get().selectedSiteId || undefined,
-              page: params.page || get().cellsPagination.page,
-              pageSize: get().preferences.defaultPageSize,
-              search: params.search || get().searchQuery,
-            });
-
-            set(state => {
-              state.cells = response.data;
-              state.cellsPagination = response.pagination;
-              state.isLoadingCells = false;
-            });
-          } catch (error) {
-            set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isLoadingCells = false;
-            });
-          }
-        },
-
-        loadHierarchyTree: async (params = {}) => {
-          set(state => {
-            state.isLoadingTree = true;
-            state.error = null;
-          });
-
-          try {
-            const response = await hierarchyService.getHierarchyTree({
-              expandLevel: params.expandLevel || get().preferences.defaultExpandLevel,
-              siteId: params.siteId || get().selectedSiteId || undefined,
-              search: params.search || get().searchQuery,
-              includeEmpty: get().preferences.showEmptyNodes,
-              includeCounts: true,
-            });
-
-            set(state => {
-              state.hierarchyTree = response.tree;
-              state.hierarchyStatistics = response.statistics;
-              state.isLoadingTree = false;
-
-              // Update tree state
-              state.treeState.nodes = response.tree;
-              state.treeState.isLoading = false;
-            });
-          } catch (error) {
-            set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isLoadingTree = false;
-              state.treeState.error = (error as HierarchyServiceError).message;
-              state.treeState.isLoading = false;
-            });
-          }
-        },
-
-        refreshHierarchy: async () => {
-          const actions = get();
-          await Promise.all([
-            actions.loadSites(),
-            actions.loadCells(),
-            actions.loadHierarchyTree(),
-          ]);
-        },
-
-        // Selection actions
-        selectSite: siteId => {
-          set(state => {
-            state.selectedSiteId = siteId;
-            // Clear cell selection when site changes
-            if (state.selectedCellId) {
-              state.selectedCellId = null;
-              state.currentLocation = null;
-            }
-            // Update current location if site is selected
-            if (siteId) {
-              const site = state.sites.find(s => s.id === siteId);
-              if (site && !state.selectedCellId) {
-                state.currentLocation = {
-                  site: { id: site.id, name: site.name },
-                  cell: { id: '', name: '', lineNumber: '' },
-                  path: site.name,
-                };
-              }
-            } else {
-              state.currentLocation = null;
-            }
-          });
-
-          // Auto-load cells for selected site
-          if (siteId) {
-            get().loadCells({ siteId });
-          }
-        },
-
-        selectCell: cellId => {
-          set(state => {
-            state.selectedCellId = cellId;
-
-            // Update current location
-            if (cellId) {
-              const cell = state.cells.find(c => c.id === cellId);
-              const site = state.sites.find(s => s.id === cell?.siteId);
-
-              if (cell && site) {
-                state.currentLocation = {
-                  site: { id: site.id, name: site.name },
-                  cell: {
-                    id: cell.id,
-                    name: cell.name,
-                    lineNumber: cell.lineNumber,
-                  },
-                  path: `${site.name} / ${cell.name}`,
-                };
-                // Also set site selection
-                state.selectedSiteId = site.id;
-              }
-            }
-          });
-        },
-
-        selectNode: nodeId => {
-          set(state => {
-            if (state.selectedNodeIds.has(nodeId)) {
-              state.selectedNodeIds.delete(nodeId);
-            } else {
-              state.selectedNodeIds.add(nodeId);
-            }
-            state.treeState.selectedNodes = new Set(state.selectedNodeIds);
-          });
-        },
-
-        selectMultipleNodes: nodeIds => {
-          set(state => {
-            nodeIds.forEach(id => state.selectedNodeIds.add(id));
-            state.treeState.selectedNodes = new Set(state.selectedNodeIds);
-          });
-        },
-
-        clearSelection: () => {
-          set(state => {
-            state.selectedSiteId = null;
-            state.selectedCellId = null;
-            state.selectedNodeIds.clear();
-            state.currentLocation = null;
-            state.treeState.selectedNodes.clear();
-          });
-        },
-
-        setCurrentLocation: location => {
-          set(state => {
-            state.currentLocation = location;
-            if (location) {
-              state.selectedSiteId = location.site.id;
-              state.selectedCellId = location.cell.id;
-            }
-          });
-        },
-
-        // Tree navigation actions
-        toggleNodeExpansion: nodeId => {
-          set(state => {
-            if (state.expandedNodes.has(nodeId)) {
-              state.expandedNodes.delete(nodeId);
-            } else {
-              state.expandedNodes.add(nodeId);
-            }
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-          });
-        },
-
-        expandNode: nodeId => {
-          set(state => {
-            state.expandedNodes.add(nodeId);
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-          });
-        },
-
-        collapseNode: nodeId => {
-          set(state => {
-            state.expandedNodes.delete(nodeId);
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-          });
-        },
-
-        expandToLevel: level => {
-          set(state => {
-            const expandNodes = (nodes: HierarchyNode[], currentLevel: number) => {
-              nodes.forEach(node => {
-                if (currentLevel < level) {
-                  state.expandedNodes.add(node.id);
-                  if (node.children) {
-                    expandNodes(node.children, currentLevel + 1);
-                  }
-                }
+            try {
+              const response = await hierarchyService.getSites({
+                page: params.page || get().sitesPagination.page,
+                pageSize: get().preferences.defaultPageSize,
+                search: params.search || get().searchQuery,
+                includeEmpty: params.includeEmpty ?? get().preferences.showEmptyNodes,
               });
-            };
 
-            expandNodes(state.hierarchyTree, 0);
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-          });
-        },
-
-        expandAll: () => {
-          set(state => {
-            const expandAllNodes = (nodes: HierarchyNode[]) => {
-              nodes.forEach(node => {
-                state.expandedNodes.add(node.id);
-                if (node.children) {
-                  expandAllNodes(node.children);
-                }
-              });
-            };
-
-            expandAllNodes(state.hierarchyTree);
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-          });
-        },
-
-        collapseAll: () => {
-          set(state => {
-            state.expandedNodes.clear();
-            state.treeState.expandedNodes.clear();
-          });
-        },
-
-        // Filter and search actions
-        setFilters: filters => {
-          set(state => {
-            state.filters = { ...state.filters, ...filters };
-          });
-        },
-
-        updateFilter: (key, value) => {
-          set(state => {
-            state.filters[key] = value;
-          });
-        },
-
-        clearFilters: () => {
-          set(state => {
-            state.filters = {};
-            state.appliedFilters = {};
-            state.searchQuery = '';
-            state.treeState.searchQuery = '';
-          });
-        },
-
-        applyFilters: () => {
-          set(state => {
-            state.appliedFilters = { ...state.filters };
-            state.treeState.filters = { ...state.filters };
-          });
-
-          // Reload data with applied filters
-          get().loadHierarchyTree();
-        },
-
-        setSearchQuery: query => {
-          set(state => {
-            state.searchQuery = query;
-            state.treeState.searchQuery = query;
-          });
-        },
-
-        saveFilterPreset: (name, filters) => {
-          set(state => {
-            const existingIndex = state.preferences.savedFilters.findIndex(f => f.name === name);
-            if (existingIndex >= 0) {
-              state.preferences.savedFilters[existingIndex] = { name, filters };
-            } else {
-              state.preferences.savedFilters.push({ name, filters });
+              set(state => ({
+                ...state,
+                sites: response.data,
+                sitesPagination: response.pagination,
+                isLoadingSites: false,
+              }));
+            } catch (error) {
+              set(state => ({
+                ...state,
+                error: error as HierarchyServiceError,
+                isLoadingSites: false,
+              }));
             }
-          });
-        },
+          },
 
-        loadFilterPreset: name => {
-          const preset = get().preferences.savedFilters.find(f => f.name === name);
-          if (preset) {
-            get().setFilters(preset.filters);
-            get().applyFilters();
-          }
-        },
-
-        deleteFilterPreset: name => {
-          set(state => {
-            state.preferences.savedFilters = state.preferences.savedFilters.filter(
-              f => f.name !== name
-            );
-          });
-        },
-
-        // Site CRUD actions
-        createSite: async data => {
-          set(state => {
-            state.isCreatingSite = true;
-            state.error = null;
-          });
-
-          try {
-            const site = await hierarchyService.createSite(data);
-
+          loadCells: async (params = {}) => {
             set(state => {
-              state.sites.push(site);
-              state.isCreatingSite = false;
+              state.isLoadingCells = true;
+              state.error = null;
             });
 
-            // Refresh hierarchy tree
-            get().loadHierarchyTree();
+            try {
+              const response = await hierarchyService.getCells({
+                siteId: params.siteId || get().selectedSiteId || undefined,
+                page: params.page || get().cellsPagination.page,
+                pageSize: get().preferences.defaultPageSize,
+                search: params.search || get().searchQuery,
+              });
 
-            return site;
-          } catch (error) {
+              set(state => {
+                state.cells = response.data;
+                state.cellsPagination = response.pagination;
+                state.isLoadingCells = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingCells = false;
+              });
+            }
+          },
+
+          loadHierarchyTree: async (params = {}) => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isCreatingSite = false;
-            });
-            throw error;
-          }
-        },
-
-        updateSite: async (id, data) => {
-          set(state => {
-            state.isUpdatingSite = true;
-            state.error = null;
-          });
-
-          try {
-            const site = await hierarchyService.updateSite(id, data);
-
-            set(state => {
-              const index = state.sites.findIndex(s => s.id === id);
-              if (index >= 0) {
-                state.sites[index] = site;
-              }
-              state.isUpdatingSite = false;
+              state.isLoadingTree = true;
+              state.error = null;
             });
 
-            // Refresh hierarchy tree
-            get().loadHierarchyTree();
+            try {
+              const response = await hierarchyService.getHierarchyTree({
+                expandLevel: params.expandLevel || get().preferences.defaultExpandLevel,
+                siteId: params.siteId || get().selectedSiteId || undefined,
+                search: params.search || get().searchQuery,
+                includeEmpty: get().preferences.showEmptyNodes,
+                includeCounts: true,
+              });
 
-            return site;
-          } catch (error) {
+              set(state => {
+                state.hierarchyTree = response.tree;
+                state.hierarchyStatistics = {
+                  ...response.statistics,
+                  totalPlcs: 0, // TODO: Calculate from equipment data
+                  avgCellsPerSite:
+                    response.statistics.totalSites > 0
+                      ? response.statistics.totalCells / response.statistics.totalSites
+                      : 0,
+                  avgEquipmentPerCell:
+                    response.statistics.totalCells > 0
+                      ? response.statistics.totalEquipment / response.statistics.totalCells
+                      : 0,
+                };
+                state.isLoadingTree = false;
+
+                // Update tree state
+                state.treeState.nodes = response.tree;
+                state.treeState.isLoading = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingTree = false;
+                state.treeState.error = (error as HierarchyServiceError).message;
+                state.treeState.isLoading = false;
+              });
+            }
+          },
+
+          refreshHierarchy: async () => {
+            const actions = get();
+            await Promise.all([
+              actions.loadSites(),
+              actions.loadCells(),
+              actions.loadHierarchyTree(),
+            ]);
+          },
+
+          // Selection actions
+          selectSite: siteId => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isUpdatingSite = false;
-            });
-            throw error;
-          }
-        },
-
-        deleteSite: async id => {
-          set(state => {
-            state.isDeletingSite = true;
-            state.error = null;
-          });
-
-          try {
-            await hierarchyService.deleteSite(id);
-
-            set(state => {
-              state.sites = state.sites.filter(s => s.id !== id);
-              // Clear selection if deleted site was selected
-              if (state.selectedSiteId === id) {
-                state.selectedSiteId = null;
+              state.selectedSiteId = siteId;
+              // Clear cell selection when site changes
+              if (state.selectedCellId) {
                 state.selectedCellId = null;
                 state.currentLocation = null;
               }
-              state.isDeletingSite = false;
-            });
-
-            // Refresh hierarchy tree
-            get().loadHierarchyTree();
-          } catch (error) {
-            set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isDeletingSite = false;
-            });
-            throw error;
-          }
-        },
-
-        getSiteById: async id => {
-          return hierarchyService.getSiteById(id);
-        },
-
-        loadSiteStatistics: async id => {
-          try {
-            const stats = await hierarchyService.getSiteStatistics(id);
-            set(state => {
-              state.siteStatistics[id] = stats;
-            });
-            return stats;
-          } catch (error) {
-            set(state => {
-              state.error = error as HierarchyServiceError;
-            });
-            throw error;
-          }
-        },
-
-        // Cell CRUD actions
-        createCell: async data => {
-          set(state => {
-            state.isCreatingCell = true;
-            state.error = null;
-          });
-
-          try {
-            const cell = await hierarchyService.createCell(data);
-
-            set(state => {
-              state.cells.push(cell);
-              state.isCreatingCell = false;
-            });
-
-            // Refresh hierarchy tree
-            get().loadHierarchyTree();
-
-            return cell;
-          } catch (error) {
-            set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isCreatingCell = false;
-            });
-            throw error;
-          }
-        },
-
-        updateCell: async (id, data) => {
-          set(state => {
-            state.isUpdatingCell = true;
-            state.error = null;
-          });
-
-          try {
-            const cell = await hierarchyService.updateCell(id, data);
-
-            set(state => {
-              const index = state.cells.findIndex(c => c.id === id);
-              if (index >= 0) {
-                state.cells[index] = cell;
+              // Update current location if site is selected
+              if (siteId) {
+                const site = state.sites.find(s => s.id === siteId);
+                if (site && !state.selectedCellId) {
+                  state.currentLocation = {
+                    site: { id: site.id, name: site.name },
+                    cell: { id: '', name: '', lineNumber: '' },
+                    path: site.name,
+                  };
+                }
+              } else {
+                state.currentLocation = null;
               }
-              state.isUpdatingCell = false;
             });
 
-            // Refresh hierarchy tree
-            get().loadHierarchyTree();
+            // Auto-load cells for selected site
+            if (siteId) {
+              get().loadCells({ siteId });
+            }
+          },
 
-            return cell;
-          } catch (error) {
+          selectCell: cellId => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isUpdatingCell = false;
+              state.selectedCellId = cellId;
+
+              // Update current location
+              if (cellId) {
+                const cell = state.cells.find(c => c.id === cellId);
+                const site = state.sites.find(s => s.id === cell?.siteId);
+
+                if (cell && site) {
+                  state.currentLocation = {
+                    site: { id: site.id, name: site.name },
+                    cell: {
+                      id: cell.id,
+                      name: cell.name,
+                      lineNumber: cell.lineNumber,
+                    },
+                    path: `${site.name} / ${cell.name}`,
+                  };
+                  // Also set site selection
+                  state.selectedSiteId = site.id;
+                }
+              }
             });
-            throw error;
-          }
-        },
+          },
 
-        deleteCell: async id => {
-          set(state => {
-            state.isDeletingCell = true;
-            state.error = null;
-          });
-
-          try {
-            await hierarchyService.deleteCell(id);
-
+          selectNode: nodeId => {
             set(state => {
-              state.cells = state.cells.filter(c => c.id !== id);
-              // Clear selection if deleted cell was selected
-              if (state.selectedCellId === id) {
-                state.selectedCellId = null;
-                state.currentLocation = state.selectedSiteId
-                  ? {
-                      site: state.currentLocation?.site || { id: '', name: '' },
-                      cell: { id: '', name: '', lineNumber: '' },
-                      path: state.currentLocation?.site.name || '',
+              if (state.selectedNodeIds.has(nodeId)) {
+                state.selectedNodeIds.delete(nodeId);
+              } else {
+                state.selectedNodeIds.add(nodeId);
+              }
+              state.treeState.selectedNodes = new Set(state.selectedNodeIds);
+            });
+          },
+
+          selectMultipleNodes: nodeIds => {
+            set(state => {
+              nodeIds.forEach(id => state.selectedNodeIds.add(id));
+              state.treeState.selectedNodes = new Set(state.selectedNodeIds);
+            });
+          },
+
+          clearSelection: () => {
+            set(state => {
+              state.selectedSiteId = null;
+              state.selectedCellId = null;
+              state.selectedNodeIds.clear();
+              state.currentLocation = null;
+              state.treeState.selectedNodes.clear();
+            });
+          },
+
+          setCurrentLocation: location => {
+            set(state => {
+              state.currentLocation = location;
+              if (location) {
+                state.selectedSiteId = location.site.id;
+                state.selectedCellId = location.cell.id;
+              }
+            });
+          },
+
+          // Tree navigation actions
+          toggleNodeExpansion: nodeId => {
+            set(state => {
+              if (state.expandedNodes.has(nodeId)) {
+                state.expandedNodes.delete(nodeId);
+              } else {
+                state.expandedNodes.add(nodeId);
+              }
+              state.treeState.expandedNodes = new Set(state.expandedNodes);
+            });
+          },
+
+          expandNode: nodeId => {
+            set(state => {
+              state.expandedNodes.add(nodeId);
+              state.treeState.expandedNodes = new Set(state.expandedNodes);
+            });
+          },
+
+          collapseNode: nodeId => {
+            set(state => {
+              state.expandedNodes.delete(nodeId);
+              state.treeState.expandedNodes = new Set(state.expandedNodes);
+            });
+          },
+
+          expandToLevel: level => {
+            set(state => {
+              const expandNodes = (nodes: HierarchyNode[], currentLevel: number) => {
+                nodes.forEach(node => {
+                  if (currentLevel < level) {
+                    state.expandedNodes.add(node.id);
+                    if (node.children) {
+                      expandNodes(node.children, currentLevel + 1);
                     }
-                  : null;
-              }
-              state.isDeletingCell = false;
+                  }
+                });
+              };
+
+              expandNodes(state.hierarchyTree, 0);
+              state.treeState.expandedNodes = new Set(state.expandedNodes);
+            });
+          },
+
+          expandAll: () => {
+            set(state => {
+              const expandAllNodes = (nodes: HierarchyNode[]) => {
+                nodes.forEach(node => {
+                  state.expandedNodes.add(node.id);
+                  if (node.children) {
+                    expandAllNodes(node.children);
+                  }
+                });
+              };
+
+              expandAllNodes(state.hierarchyTree);
+              state.treeState.expandedNodes = new Set(state.expandedNodes);
+            });
+          },
+
+          collapseAll: () => {
+            set(state => {
+              state.expandedNodes.clear();
+              state.treeState.expandedNodes.clear();
+            });
+          },
+
+          // Filter and search actions
+          setFilters: filters => {
+            set(state => {
+              state.filters = { ...state.filters, ...filters };
+            });
+          },
+
+          updateFilter: (key, value) => {
+            set(state => {
+              (state.filters as Record<string, unknown>)[key] = value;
+            });
+          },
+
+          clearFilters: () => {
+            set(state => {
+              state.filters = {};
+              state.appliedFilters = {};
+              state.searchQuery = '';
+              state.treeState.searchQuery = '';
+            });
+          },
+
+          applyFilters: () => {
+            set(state => {
+              state.appliedFilters = { ...state.filters };
+              state.treeState.filters = { ...state.filters };
             });
 
-            // Refresh hierarchy tree
+            // Reload data with applied filters
             get().loadHierarchyTree();
-          } catch (error) {
+          },
+
+          setSearchQuery: query => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isDeletingCell = false;
+              state.searchQuery = query;
+              state.treeState.searchQuery = query;
             });
-            throw error;
-          }
-        },
+          },
 
-        getCellById: async id => {
-          return hierarchyService.getCellById(id);
-        },
-
-        loadCellStatistics: async id => {
-          try {
-            const stats = await hierarchyService.getCellStatistics(id);
+          saveFilterPreset: (name, filters) => {
             set(state => {
-              state.cellStatistics[id] = stats;
+              const existingIndex = state.preferences.savedFilters.findIndex(f => f.name === name);
+              if (existingIndex >= 0) {
+                state.preferences.savedFilters[existingIndex] = { name, filters };
+              } else {
+                state.preferences.savedFilters.push({ name, filters });
+              }
             });
-            return stats;
-          } catch (error) {
+          },
+
+          loadFilterPreset: name => {
+            const preset = get().preferences.savedFilters.find(f => f.name === name);
+            if (preset) {
+              get().setFilters(preset.filters);
+              get().applyFilters();
+            }
+          },
+
+          deleteFilterPreset: name => {
             set(state => {
-              state.error = error as HierarchyServiceError;
+              state.preferences.savedFilters = state.preferences.savedFilters.filter(
+                f => f.name !== name
+              );
             });
-            throw error;
-          }
-        },
+          },
 
-        getCellsBySite: async siteId => {
-          return hierarchyService.getCellsBySite(siteId);
-        },
-
-        // Validation actions
-        validateHierarchy: async () => {
-          set(state => {
-            state.isValidating = true;
-          });
-
-          try {
-            const result = await hierarchyService.validateHierarchy({
-              checkOrphans: true,
-              checkConstraints: true,
-              checkCounts: true,
-            });
-
+          // Site CRUD actions
+          createSite: async data => {
             set(state => {
-              state.validationResults = result;
-              state.isValidating = false;
+              state.isCreatingSite = true;
+              state.error = null;
             });
 
-            return result;
-          } catch (error) {
+            try {
+              const site = await hierarchyService.createSite(data);
+
+              set(state => {
+                state.sites.push(site);
+                state.isCreatingSite = false;
+              });
+
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+
+              return site;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isCreatingSite = false;
+              });
+              throw error;
+            }
+          },
+
+          updateSite: async (id, data) => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isValidating = false;
+              state.isUpdatingSite = true;
+              state.error = null;
             });
-            throw error;
-          }
-        },
 
-        detectOrphanedRecords: async () => {
-          try {
-            const orphans = await hierarchyService.detectOrphanedRecords();
+            try {
+              const site = await hierarchyService.updateSite(id, data);
+
+              set(state => {
+                const index = state.sites.findIndex(s => s.id === id);
+                if (index >= 0) {
+                  state.sites[index] = site;
+                }
+                state.isUpdatingSite = false;
+              });
+
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+
+              return site;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isUpdatingSite = false;
+              });
+              throw error;
+            }
+          },
+
+          deleteSite: async id => {
             set(state => {
-              state.orphanedRecords = orphans;
+              state.isDeletingSite = true;
+              state.error = null;
             });
-            return orphans;
-          } catch (error) {
+
+            try {
+              await hierarchyService.deleteSite(id);
+
+              set(state => {
+                state.sites = state.sites.filter(s => s.id !== id);
+                // Clear selection if deleted site was selected
+                if (state.selectedSiteId === id) {
+                  state.selectedSiteId = null;
+                  state.selectedCellId = null;
+                  state.currentLocation = null;
+                }
+                state.isDeletingSite = false;
+              });
+
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isDeletingSite = false;
+              });
+              throw error;
+            }
+          },
+
+          getSiteById: async id => {
+            return hierarchyService.getSiteById(id);
+          },
+
+          loadSiteStatistics: async id => {
+            try {
+              const stats = await hierarchyService.getSiteStatistics(id);
+              set(state => {
+                state.siteStatistics[id] = stats;
+              });
+              return stats;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              throw error;
+            }
+          },
+
+          // Cell CRUD actions
+          createCell: async data => {
             set(state => {
-              state.error = error as HierarchyServiceError;
+              state.isCreatingCell = true;
+              state.error = null;
             });
-            throw error;
-          }
-        },
 
-        validateSiteName: async (name, excludeId) => {
-          return hierarchyService.validateSiteUniqueness(name, excludeId);
-        },
+            try {
+              const cell = await hierarchyService.createCell(data);
 
-        validateCellLineNumber: async (siteId, lineNumber, excludeId) => {
-          return hierarchyService.validateCellUniqueness(siteId, lineNumber, excludeId);
-        },
+              set(state => {
+                state.cells.push(cell);
+                state.isCreatingCell = false;
+              });
 
-        // Autocomplete actions
-        searchSiteSuggestions: async query => {
-          try {
-            const suggestions = await hierarchyService.getSiteSuggestions(query);
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+
+              return cell;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isCreatingCell = false;
+              });
+              throw error;
+            }
+          },
+
+          updateCell: async (id, data) => {
             set(state => {
-              state.siteSuggestions = suggestions;
+              state.isUpdatingCell = true;
+              state.error = null;
             });
-            return suggestions;
-          } catch (error) {
-            // Don't set error for autocomplete failures
-            return [];
-          }
-        },
 
-        searchCellSuggestions: async (siteId, query) => {
-          try {
-            const suggestions = await hierarchyService.getCellSuggestions(siteId, query);
+            try {
+              const cell = await hierarchyService.updateCell(id, data);
+
+              set(state => {
+                const index = state.cells.findIndex(c => c.id === id);
+                if (index >= 0) {
+                  state.cells[index] = cell;
+                }
+                state.isUpdatingCell = false;
+              });
+
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+
+              return cell;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isUpdatingCell = false;
+              });
+              throw error;
+            }
+          },
+
+          deleteCell: async id => {
             set(state => {
-              state.cellSuggestions = suggestions;
+              state.isDeletingCell = true;
+              state.error = null;
             });
-            return suggestions;
-          } catch (error) {
-            // Don't set error for autocomplete failures
-            return [];
-          }
-        },
 
-        // Bulk operations
-        performBulkOperation: async operation => {
-          set(state => {
-            state.isBulkOperating = true;
-            state.error = null;
-          });
+            try {
+              await hierarchyService.deleteCell(id);
 
-          try {
-            const result = await hierarchyService.performBulkOperation(operation);
+              set(state => {
+                state.cells = state.cells.filter(c => c.id !== id);
+                // Clear selection if deleted cell was selected
+                if (state.selectedCellId === id) {
+                  state.selectedCellId = null;
+                  state.currentLocation = state.selectedSiteId
+                    ? {
+                        site: state.currentLocation?.site || { id: '', name: '' },
+                        cell: { id: '', name: '', lineNumber: '' },
+                        path: state.currentLocation?.site.name || '',
+                      }
+                    : null;
+                }
+                state.isDeletingCell = false;
+              });
 
+              // Refresh hierarchy tree
+              get().loadHierarchyTree();
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isDeletingCell = false;
+              });
+              throw error;
+            }
+          },
+
+          getCellById: async id => {
+            return hierarchyService.getCellById(id);
+          },
+
+          loadCellStatistics: async id => {
+            try {
+              const stats = await hierarchyService.getCellStatistics(id);
+              set(state => {
+                state.cellStatistics[id] = stats;
+              });
+              return stats;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              throw error;
+            }
+          },
+
+          getCellsBySite: async siteId => {
+            return hierarchyService.getCellsBySite(siteId);
+          },
+
+          // Validation actions
+          validateHierarchy: async () => {
             set(state => {
-              state.isBulkOperating = false;
+              state.isValidating = true;
             });
 
-            // Refresh data after bulk operation
-            await get().refreshHierarchy();
+            try {
+              const result = await hierarchyService.validateHierarchy({
+                checkOrphans: true,
+                checkConstraints: true,
+                checkCounts: true,
+              });
 
-            return result;
-          } catch (error) {
+              set(state => {
+                state.validationResults = result;
+                state.isValidating = false;
+              });
+
+              return result;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isValidating = false;
+              });
+              throw error;
+            }
+          },
+
+          detectOrphanedRecords: async () => {
+            try {
+              const orphans = await hierarchyService.detectOrphanedRecords();
+              set(state => {
+                state.orphanedRecords = orphans;
+              });
+              return orphans;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              throw error;
+            }
+          },
+
+          validateSiteName: async (name, excludeId) => {
+            return hierarchyService.validateSiteUniqueness(name, excludeId);
+          },
+
+          validateCellLineNumber: async (siteId, lineNumber, excludeId) => {
+            return hierarchyService.validateCellUniqueness(siteId, lineNumber, excludeId);
+          },
+
+          // Autocomplete actions
+          searchSiteSuggestions: async query => {
+            try {
+              const suggestions = await hierarchyService.getSiteSuggestions(query);
+              set(state => {
+                state.siteSuggestions = suggestions;
+              });
+              return suggestions;
+            } catch (error) {
+              // Don't set error for autocomplete failures
+              return [];
+            }
+          },
+
+          searchCellSuggestions: async (siteId, query) => {
+            try {
+              const suggestions = await hierarchyService.getCellSuggestions(siteId, query);
+              set(state => {
+                state.cellSuggestions = suggestions;
+              });
+              return suggestions;
+            } catch (error) {
+              // Don't set error for autocomplete failures
+              return [];
+            }
+          },
+
+          // Bulk operations
+          performBulkOperation: async operation => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isBulkOperating = false;
+              state.isBulkOperating = true;
+              state.error = null;
             });
-            throw error;
-          }
-        },
 
-        bulkDeleteSites: async siteIds => {
-          return get().performBulkOperation({
-            operation: 'delete',
-            entityType: 'site',
-            entityIds: siteIds,
-          });
-        },
+            try {
+              const result = await hierarchyService.performBulkOperation(operation);
 
-        bulkDeleteCells: async cellIds => {
-          return get().performBulkOperation({
-            operation: 'delete',
-            entityType: 'cell',
-            entityIds: cellIds,
-          });
-        },
+              set(state => {
+                state.isBulkOperating = false;
+              });
 
-        // Statistics actions
-        loadHierarchyStatistics: async () => {
-          set(state => {
-            state.isLoadingStatistics = true;
-          });
+              // Refresh data after bulk operation
+              await get().refreshHierarchy();
 
-          try {
-            const stats = await hierarchyService.getHierarchyStatistics();
+              return result;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isBulkOperating = false;
+              });
+              throw error;
+            }
+          },
+
+          bulkDeleteSites: async siteIds => {
+            return get().performBulkOperation({
+              operation: 'delete',
+              entityType: 'site',
+              entityIds: siteIds,
+            });
+          },
+
+          bulkDeleteCells: async cellIds => {
+            return get().performBulkOperation({
+              operation: 'delete',
+              entityType: 'cell',
+              entityIds: cellIds,
+            });
+          },
+
+          // Statistics actions
+          loadHierarchyStatistics: async () => {
             set(state => {
-              state.hierarchyStatistics = stats;
-              state.isLoadingStatistics = false;
+              state.isLoadingStatistics = true;
             });
-          } catch (error) {
+
+            try {
+              const stats = await hierarchyService.getHierarchyStatistics();
+              set(state => {
+                state.hierarchyStatistics = stats;
+                state.isLoadingStatistics = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingStatistics = false;
+              });
+            }
+          },
+
+          refreshStatistics: async () => {
+            await get().loadHierarchyStatistics();
+          },
+
+          // Error handling
+          setError: error => {
             set(state => {
-              state.error = error as HierarchyServiceError;
-              state.isLoadingStatistics = false;
+              state.error = error;
             });
-          }
-        },
+          },
 
-        refreshStatistics: async () => {
-          await get().loadHierarchyStatistics();
-        },
+          clearError: () => {
+            set(state => {
+              state.error = null;
+            });
+          },
 
-        // Error handling
-        setError: error => {
-          set(state => {
-            state.error = error;
-          });
-        },
+          setSiteError: (siteId, error) => {
+            set(state => {
+              state.siteErrors[siteId] = error;
+            });
+          },
 
-        clearError: () => {
-          set(state => {
-            state.error = null;
-          });
-        },
+          clearSiteError: siteId => {
+            set(state => {
+              delete state.siteErrors[siteId];
+            });
+          },
 
-        setSiteError: (siteId, error) => {
-          set(state => {
-            state.siteErrors[siteId] = error;
-          });
-        },
+          setCellError: (cellId, error) => {
+            set(state => {
+              state.cellErrors[cellId] = error;
+            });
+          },
 
-        clearSiteError: siteId => {
-          set(state => {
-            delete state.siteErrors[siteId];
-          });
-        },
+          clearCellError: cellId => {
+            set(state => {
+              delete state.cellErrors[cellId];
+            });
+          },
 
-        setCellError: (cellId, error) => {
-          set(state => {
-            state.cellErrors[cellId] = error;
-          });
-        },
+          // Utility actions
+          reset: () => {
+            set(initialState);
+          },
 
-        clearCellError: cellId => {
-          set(state => {
-            delete state.cellErrors[cellId];
-          });
-        },
+          updatePreferences: preferences => {
+            set(state => {
+              state.preferences = { ...state.preferences, ...preferences };
+            });
+          },
 
-        // Utility actions
-        reset: () => {
-          set(initialState);
-        },
+          // Computed selectors
+          getSelectedSite: () => {
+            const state = get();
+            return state.selectedSiteId
+              ? state.sites.find(s => s.id === state.selectedSiteId) || null
+              : null;
+          },
 
-        updatePreferences: preferences => {
-          set(state => {
-            state.preferences = { ...state.preferences, ...preferences };
-          });
-        },
+          getSelectedCell: () => {
+            const state = get();
+            return state.selectedCellId
+              ? state.cells.find(c => c.id === state.selectedCellId) || null
+              : null;
+          },
 
-        // Computed selectors
-        getSelectedSite: () => {
-          const state = get();
-          return state.selectedSiteId
-            ? state.sites.find(s => s.id === state.selectedSiteId) || null
-            : null;
-        },
+          getSitesBySearch: query => {
+            const state = get();
+            if (!query.trim()) return state.sites;
+            const lowerQuery = query.toLowerCase();
+            return state.sites.filter(site => site.name.toLowerCase().includes(lowerQuery));
+          },
 
-        getSelectedCell: () => {
-          const state = get();
-          return state.selectedCellId
-            ? state.cells.find(c => c.id === state.selectedCellId) || null
-            : null;
-        },
+          getCellsBySearch: query => {
+            const state = get();
+            if (!query.trim()) return state.cells;
+            const lowerQuery = query.toLowerCase();
+            return state.cells.filter(
+              cell =>
+                cell.name.toLowerCase().includes(lowerQuery) ||
+                cell.lineNumber.toLowerCase().includes(lowerQuery) ||
+                cell.siteName?.toLowerCase().includes(lowerQuery)
+            );
+          },
 
-        getSitesBySearch: query => {
-          const state = get();
-          if (!query.trim()) return state.sites;
-          const lowerQuery = query.toLowerCase();
-          return state.sites.filter(site => site.name.toLowerCase().includes(lowerQuery));
-        },
+          getFilteredTree: () => {
+            const state = get();
+            // This would implement tree filtering logic based on current filters
+            // For now, return the full tree
+            return state.hierarchyTree;
+          },
 
-        getCellsBySearch: query => {
-          const state = get();
-          if (!query.trim()) return state.cells;
-          const lowerQuery = query.toLowerCase();
-          return state.cells.filter(
-            cell =>
-              cell.name.toLowerCase().includes(lowerQuery) ||
-              cell.lineNumber.toLowerCase().includes(lowerQuery) ||
-              cell.siteName?.toLowerCase().includes(lowerQuery)
-          );
-        },
+          getHierarchyPath: (siteId, cellId) => {
+            const state = get();
+            const site = siteId ? state.sites.find(s => s.id === siteId) : null;
+            const cell = cellId ? state.cells.find(c => c.id === cellId) : null;
 
-        getFilteredTree: () => {
-          const state = get();
-          // This would implement tree filtering logic based on current filters
-          // For now, return the full tree
-          return state.hierarchyTree;
-        },
+            if (site && cell) {
+              return `${site.name} / ${cell.name}`;
+            } else if (site) {
+              return site.name;
+            }
+            return '';
+          },
 
-        getHierarchyPath: (siteId, cellId) => {
-          const state = get();
-          const site = siteId ? state.sites.find(s => s.id === siteId) : null;
-          const cell = cellId ? state.cells.find(c => c.id === cellId) : null;
+          getTotalSelectedNodes: () => {
+            return get().selectedNodeIds.size;
+          },
 
-          if (site && cell) {
-            return `${site.name} / ${cell.name}`;
-          } else if (site) {
-            return site.name;
-          }
-          return '';
-        },
-
-        getTotalSelectedNodes: () => {
-          return get().selectedNodeIds.size;
-        },
-
-        hasUnsavedChanges: () => {
-          const state = get();
-          return JSON.stringify(state.filters) !== JSON.stringify(state.appliedFilters);
-        },
-      })),
+          hasUnsavedChanges: () => {
+            const state = get();
+            return JSON.stringify(state.filters) !== JSON.stringify(state.appliedFilters);
+          },
+        }))
+      ),
       {
         name: 'hierarchy-store',
         partialize: state => ({

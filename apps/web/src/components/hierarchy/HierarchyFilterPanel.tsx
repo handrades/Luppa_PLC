@@ -177,7 +177,7 @@ export const HierarchyFilterPanel: React.FC<HierarchyFilterPanelProps> = ({
     cells,
     filters,
     // appliedFilters, // Unused
-    // preferences, // Unused
+    preferences,
     loadSites,
     loadCells,
     setFilters,
@@ -751,7 +751,7 @@ export const HierarchyFilterPanel: React.FC<HierarchyFilterPanelProps> = ({
           Save Current Filters
         </MenuItem>
         <Divider />
-        {preferences.savedFilters.map(preset => (
+        {preferences.savedFilters.map((preset: { name: string; filters: unknown }) => (
           <MenuItem key={preset.name} onClick={() => handleLoadPreset(preset.name)}>
             <BookmarkIcon fontSize='small' sx={{ mr: 1 }} />
             {preset.name}
@@ -771,7 +771,9 @@ export const HierarchyFilterPanel: React.FC<HierarchyFilterPanelProps> = ({
         open={presetDialog}
         onClose={() => setPresetDialog(false)}
         onSave={handleSavePreset}
-        existingNames={preferences.savedFilters.map(p => p.name)}
+        existingNames={preferences.savedFilters.map(
+          (p: { name: string; filters: unknown }) => p.name
+        )}
       />
     </Box>
   );
