@@ -128,6 +128,14 @@ export class CellService {
       throw new CellValidationError('Cell name must be less than 100 characters');
     }
 
+    // Validate name format
+    const nameFormatRegex = /^[a-zA-Z0-9\s_-]+$/;
+    if (!nameFormatRegex.test(trimmedName)) {
+      throw new CellValidationError(
+        'Cell name contains invalid characters; allowed: letters, numbers, spaces, underscores, hyphens'
+      );
+    }
+
     // Validate line number length and format
     if (trimmedLineNumber.length > 50) {
       throw new CellValidationError('Line number must be less than 50 characters');
@@ -441,6 +449,14 @@ export class CellService {
 
         if (trimmedName.length > 100) {
           throw new CellValidationError('Cell name must be less than 100 characters');
+        }
+
+        // Validate name format
+        const nameFormatRegex = /^[a-zA-Z0-9\s_-]+$/;
+        if (!nameFormatRegex.test(trimmedName)) {
+          throw new CellValidationError(
+            'Cell name contains invalid characters; allowed: letters, numbers, spaces, underscores, hyphens'
+          );
         }
 
         cellUpdateData.name = trimmedName;

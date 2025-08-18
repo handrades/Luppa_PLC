@@ -222,7 +222,7 @@ export class SiteService {
     // Build query
     const queryBuilder = siteRepository
       .createQueryBuilder('site')
-      .leftJoinAndSelect('site.cells', 'cell')
+      .leftJoin('site.cells', 'cell')
       .leftJoin('cell.equipment', 'equipment')
       .addSelect('COUNT(DISTINCT cell.id)', 'cellCount')
       .addSelect('COUNT(DISTINCT equipment.id)', 'equipmentCount')
@@ -235,7 +235,7 @@ export class SiteService {
 
     // Add search filter
     if (search) {
-      queryBuilder.where('site.name ILIKE :search', { search: `%${search}%` });
+      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', { search: `%${search}%` });
     }
 
     // Add empty filter
@@ -296,15 +296,16 @@ export class SiteService {
     const queryBuilder = siteRepository.createQueryBuilder('site');
 
     if (search) {
-      queryBuilder.where('site.name ILIKE :search', { search: `%${search}%` });
+      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', { search: `%${search}%` });
     }
 
     if (!includeEmpty) {
       queryBuilder
+        .select('site.id')
         .leftJoin('site.cells', 'cell')
         .leftJoin('cell.equipment', 'equipment')
-        .having('COUNT(DISTINCT equipment.id) > 0')
-        .groupBy('site.id');
+        .groupBy('site.id')
+        .having('COUNT(DISTINCT equipment.id) > 0');
     }
 
     return includeEmpty
@@ -326,15 +327,10 @@ export class SiteService {
     return await this.manager.transaction(async transactionManager => {
       const siteRepository = transactionManager.getRepository(Site);
 
-      // Get current site to check optimistic locking
+      // First check if site exists
       const currentSite = await siteRepository.findOne({ where: { id } });
       if (!currentSite) {
         throw new SiteNotFoundError(id);
-      }
-
-      // Check optimistic locking
-      if (currentSite.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
-        throw new OptimisticLockingError();
       }
 
       // Prepare update data
@@ -374,8 +370,33 @@ export class SiteService {
       }
 
       try {
-        await siteRepository.update(id, siteUpdateData);
+        // Atomic update with optimistic locking check
+        const updateResult = await siteRepository
+          .createQueryBuilder()
+          .update(Site)
+          .set(siteUpdateData)
+          .where('id = :id AND updatedAt = :expectedUpdatedAt', {
+            id,
+            expectedUpdatedAt,
+          })
+          .execute();
+
+        // Check if any rows were updated
+        if (updateResult.affected === 0) {
+          // Check if site still exists to determine error type
+          const siteStillExists = await siteRepository.findOne({ where: { id } });
+          if (!siteStillExists) {
+            throw new SiteNotFoundError(id);
+          } else {
+            throw new OptimisticLockingError();
+          }
+        }
       } catch (error: unknown) {
+        // Re-throw our custom errors
+        if (error instanceof SiteNotFoundError || error instanceof OptimisticLockingError) {
+          throw error;
+        }
+
         const dbError = error as Error & {
           code?: string;
           constraint?: string;

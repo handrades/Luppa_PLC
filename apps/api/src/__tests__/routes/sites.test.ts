@@ -7,7 +7,6 @@
 
 import request from 'supertest';
 import { Express } from 'express';
-import { EntityManager } from 'typeorm';
 import { createTestApp } from '../helpers/testApp';
 import { createAuthToken } from '../helpers/auth';
 
@@ -22,9 +21,7 @@ jest.mock('../../config/logger', () => ({
 
 describe('Sites Routes', () => {
   let app: Express;
-  // let _entityManager: EntityManager; // Unused but may be needed for setup
   let authToken: string;
-  // let _adminToken: string; // Unused but may be needed for setup
 
   // Test data
   const testSiteData = {
@@ -37,20 +34,12 @@ describe('Sites Routes', () => {
     permissions: ['sites.read', 'sites.create', 'sites.update', 'sites.delete'],
   };
 
-  const adminUser = {
-    id: '550e8400-e29b-41d4-a716-446655440001',
-    email: 'admin@example.com',
-    permissions: ['sites.read', 'sites.create', 'sites.update', 'sites.delete', 'hierarchy.manage'],
-  };
-
   beforeAll(async () => {
     app = await createTestApp();
     // In a real test, you would get EntityManager from your test database setup
     // For this example, we'll mock it
-    _entityManager = {} as EntityManager;
 
     authToken = createAuthToken(testUser);
-    _adminToken = createAuthToken(adminUser);
   });
 
   beforeEach(async () => {

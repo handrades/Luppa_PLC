@@ -92,3 +92,37 @@ export const generalRateLimit = rateLimit({
   legacyHeaders: false,
   // Use default keyGenerator (req.ip) which is IPv6-aware
 });
+
+/**
+ * Rate limiter for write operations (POST, PUT, DELETE)
+ * Limits to 5 write operations per minute per IP address
+ */
+export const writeOpsRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 write operations per windowMs
+  message: {
+    error: 'Too many write operations',
+    message: 'Too many write operations from this IP. Please try again in 1 minute.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use default keyGenerator (req.ip) which is IPv6-aware
+  // Custom handler for when rate limit is exceeded
+  handler: (req: Request, res: Response) => {
+    const ip = getClientIP(req);
+    logger.warn(`Write operations rate limit exceeded for IP: ${ip}`, {
+      ip,
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(429).json({
+      error: 'Too many write operations',
+      message: 'Too many write operations from this IP. Please try again in 1 minute.',
+      retryAfter: 60,
+    });
+  },
+  // Do not skip successful requests for write operations
+  skipSuccessfulRequests: false,
+});

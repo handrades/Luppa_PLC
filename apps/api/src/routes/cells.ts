@@ -8,7 +8,7 @@
 import { Request, Response, Router } from 'express';
 import { CellService } from '../services/CellService';
 import { authenticate, authorize } from '../middleware/auth';
-import { authRateLimit } from '../middleware/rateLimiter';
+import { writeOpsRateLimit } from '../middleware/rateLimiter';
 import {
   cellBulkOperationSchema,
   cellIdParamSchema,
@@ -48,7 +48,7 @@ router.post(
   '/',
   authenticate,
   authorize(['cells.create']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
     const cellData = validateSchema(createCellSchema)(req.body);
@@ -220,7 +220,7 @@ router.put(
   '/:id',
   authenticate,
   authorize(['cells.update']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate path parameters
     const params = validateSchema(cellIdParamSchema)(req.params);
@@ -258,7 +258,7 @@ router.delete(
   '/:id',
   authenticate,
   authorize(['cells.delete']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate path parameters
     const params = validateSchema(cellIdParamSchema)(req.params);
@@ -288,7 +288,7 @@ router.post(
   '/bulk',
   authenticate,
   authorize(['cells.delete', 'cells.read', 'cells.update']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
     const bulkData = validateSchema(cellBulkOperationSchema)(req.body);

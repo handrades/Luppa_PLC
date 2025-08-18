@@ -77,6 +77,9 @@ export default defineConfig({
       'react-hook-form',
       '@hookform/resolvers',
       'lodash',
+      'zustand',
+      'zustand/middleware/immer',
+      'immer',
     ],
   },
 });

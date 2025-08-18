@@ -8,7 +8,7 @@
 import { Request, Response, Router } from 'express';
 import { SiteService } from '../services/SiteService';
 import { authenticate, authorize } from '../middleware/auth';
-import { authRateLimit } from '../middleware/rateLimiter';
+import { writeOpsRateLimit } from '../middleware/rateLimiter';
 import {
   createSiteSchema,
   siteBulkOperationSchema,
@@ -46,7 +46,7 @@ router.post(
   '/',
   authenticate,
   authorize(['sites.create']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
     const siteData = validateSchema(createSiteSchema)(req.body);
@@ -155,11 +155,11 @@ router.post(
 );
 
 /**
- * GET /sites/:id
+ * GET /sites/:siteId
  * Get specific site by ID
  */
 router.get(
-  '/:id',
+  '/:siteId',
   authenticate,
   authorize(['sites.read']),
   asyncHandler(async (req: Request, res: Response) => {
@@ -167,7 +167,7 @@ router.get(
     const params = validateSchema(siteIdParamSchema)(req.params);
 
     const siteService = getSiteService(req);
-    const site = await siteService.getSiteById(params.id);
+    const site = await siteService.getSiteById(params.siteId);
 
     res.status(200).json({
       site,
@@ -176,14 +176,14 @@ router.get(
 );
 
 /**
- * PUT /sites/:id
+ * PUT /sites/:siteId
  * Update specific site
  */
 router.put(
-  '/:id',
+  '/:siteId',
   authenticate,
   authorize(['sites.update']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate path parameters
     const params = validateSchema(siteIdParamSchema)(req.params);
@@ -193,12 +193,12 @@ router.put(
     const { updatedAt, ...siteUpdateData } = updateData;
 
     const siteService = getSiteService(req);
-    const site = await siteService.updateSite(params.id, siteUpdateData, new Date(updatedAt), {
+    const site = await siteService.updateSite(params.siteId, siteUpdateData, new Date(updatedAt), {
       userId: req.user!.sub,
     });
 
     logger.info('Site updated successfully', {
-      siteId: params.id,
+      siteId: params.siteId,
       updatedFields: Object.keys(siteUpdateData),
       updatedBy: req.user?.sub,
       ipAddress: getClientIP(req),
@@ -212,25 +212,25 @@ router.put(
 );
 
 /**
- * DELETE /sites/:id
+ * DELETE /sites/:siteId
  * Delete specific site
  */
 router.delete(
-  '/:id',
+  '/:siteId',
   authenticate,
   authorize(['sites.delete']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate path parameters
     const params = validateSchema(siteIdParamSchema)(req.params);
 
     const siteService = getSiteService(req);
-    await siteService.deleteSite(params.id, {
+    await siteService.deleteSite(params.siteId, {
       userId: req.user!.sub,
     });
 
     logger.info('Site deleted successfully', {
-      siteId: params.id,
+      siteId: params.siteId,
       deletedBy: req.user?.sub,
       ipAddress: getClientIP(req),
     });
@@ -249,7 +249,7 @@ router.post(
   '/bulk',
   authenticate,
   authorize(['sites.delete', 'sites.read']),
-  authRateLimit,
+  writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
     const bulkData = validateSchema(siteBulkOperationSchema)(req.body);

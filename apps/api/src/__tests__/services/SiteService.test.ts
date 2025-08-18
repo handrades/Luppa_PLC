@@ -36,7 +36,9 @@ describe('SiteService', () => {
     createQueryBuilder: jest.Mock;
     leftJoinAndSelect: jest.Mock;
     leftJoin: jest.Mock;
+    innerJoin: jest.Mock;
     addSelect: jest.Mock;
+    select: jest.Mock;
     groupBy: jest.Mock;
     addGroupBy: jest.Mock;
     where: jest.Mock;
@@ -45,6 +47,9 @@ describe('SiteService', () => {
     orderBy: jest.Mock;
     offset: jest.Mock;
     limit: jest.Mock;
+    update: jest.Mock;
+    set: jest.Mock;
+    execute: jest.Mock;
     getCount: jest.Mock;
     getRawAndEntities: jest.Mock;
     getRawMany: jest.Mock;
@@ -59,7 +64,9 @@ describe('SiteService', () => {
       createQueryBuilder: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoin: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
       addSelect: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       groupBy: jest.fn().mockReturnThis(),
       addGroupBy: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
@@ -68,6 +75,9 @@ describe('SiteService', () => {
       orderBy: jest.fn().mockReturnThis(),
       offset: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
       getCount: jest.fn().mockResolvedValue(0),
       getRawAndEntities: jest.fn().mockResolvedValue({ entities: [], raw: [] }),
       getRawMany: jest.fn().mockResolvedValue([]),
@@ -289,7 +299,7 @@ describe('SiteService', () => {
 
       const result = await siteService.searchSites(filters);
 
-      expect(mockQueryBuilder.createQueryBuilder).toHaveBeenCalledWith('site');
+      expect(mockSiteRepository.createQueryBuilder).toHaveBeenCalledWith('site');
       expect(result.pagination).toEqual({
         page: 1,
         pageSize: 20,
@@ -303,7 +313,7 @@ describe('SiteService', () => {
 
       await siteService.searchSites(filters);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('site.name ILIKE :search', {
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('LOWER(site.name) LIKE LOWER(:search)', {
         search: '%test%',
       });
     });
@@ -355,7 +365,9 @@ describe('SiteService', () => {
     };
 
     beforeEach(() => {
-      mockSiteRepository.findOne.mockResolvedValue(mockCurrentSite);
+      mockSiteRepository.findOne
+        .mockResolvedValueOnce(mockCurrentSite) // First call for current site
+        .mockResolvedValueOnce(null); // Second call for uniqueness check
       mockSiteRepository.update.mockResolvedValue({
         affected: 1,
         raw: [],

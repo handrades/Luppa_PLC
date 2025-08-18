@@ -400,7 +400,7 @@ describe('CellService', () => {
 
       const result = await cellService.searchCells(filters);
 
-      expect(mockQueryBuilder.createQueryBuilder).toHaveBeenCalledWith('cell');
+      expect(mockCellRepository.createQueryBuilder).toHaveBeenCalledWith('cell');
       expect(result.pagination).toEqual({
         page: 1,
         pageSize: 20,
@@ -438,7 +438,7 @@ describe('CellService', () => {
       expect(mockQueryBuilder.where).toHaveBeenCalledWith('cell.siteId = :siteId', {
         siteId: mockSiteId,
       });
-      expect(mockQueryBuilder.and).toHaveBeenCalledWith(
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         '(cell.name ILIKE :search OR cell.lineNumber ILIKE :search OR site.name ILIKE :search)',
         { search: '%test%' }
       );

@@ -42,9 +42,13 @@ import {
 } from '../../validation/equipment.schema';
 import { ZodError } from 'zod';
 
-import SiteAutocomplete from './SiteAutocomplete';
 import TagInput from './TagInput';
 import IpAddressInput from './IpAddressInput';
+import { SiteDropdown } from '../hierarchy/SiteDropdown';
+import { CellSelector } from '../hierarchy/CellSelector';
+import { useHierarchyStore } from '../../stores/hierarchy.store';
+import { hierarchyLocationSchema } from '../../validation/hierarchy.schema';
+import { Cell } from '../../types/hierarchy';
 
 /**
  * Equipment Form Component
@@ -97,6 +101,11 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
     };
   });
 
+  // Hierarchy state
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
+  const [selectedCellId, setSelectedCellId] = useState<string>('');
+  const { getCellById } = useHierarchyStore();
+
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [submissionState, setSubmissionState] = useState<FormSubmissionState>({
@@ -116,6 +125,34 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
   useEffect(() => {
     setIsDirty(true);
   }, [formData]);
+
+  // Initialize hierarchy selection from existing cellId
+  useEffect(() => {
+    if (formData.cellId && mode === EquipmentFormMode.EDIT) {
+      const initializeHierarchy = async () => {
+        try {
+          const cell = await getCellById(formData.cellId);
+          if (cell) {
+            setSelectedSiteId(cell.siteId);
+            setSelectedCellId(cell.id);
+          }
+        } catch (error) {
+          // Failed to load cell hierarchy - using default state
+        }
+      };
+      initializeHierarchy();
+    }
+  }, [formData.cellId, mode, getCellById]);
+
+  // Update cellId when hierarchy selection changes
+  useEffect(() => {
+    if (selectedCellId && selectedCellId !== formData.cellId) {
+      setFormData(prev => ({
+        ...prev,
+        cellId: selectedCellId,
+      }));
+    }
+  }, [selectedCellId, formData.cellId]);
 
   // Generic field change handler
   const handleFieldChange = useCallback(
@@ -139,18 +176,65 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
     [fieldErrors]
   );
 
+  // Handle site selection
+  const handleSiteChange = useCallback(
+    (siteId: string | null) => {
+      setSelectedSiteId(siteId || '');
+      // Clear cell selection when site changes
+      if (selectedCellId) {
+        setSelectedCellId('');
+        setFormData(prev => ({ ...prev, cellId: '' }));
+      }
+      // Clear site/cell validation errors
+      if (fieldErrors.cellId) {
+        setFieldErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.cellId;
+          return newErrors;
+        });
+      }
+    },
+    [selectedCellId, fieldErrors.cellId]
+  );
+
+  // Handle cell selection
+  const handleCellChange = useCallback(
+    (cellId: string | null, _cell: Cell | null) => {
+      setSelectedCellId(cellId || '');
+      // Clear cell validation errors
+      if (fieldErrors.cellId) {
+        setFieldErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.cellId;
+          return newErrors;
+        });
+      }
+    },
+    [fieldErrors.cellId]
+  );
+
   // Validate entire form
   const validateForm = useCallback(async () => {
     try {
+      // Validate equipment form data
       const schema =
         mode === EquipmentFormMode.EDIT ? equipmentUpdateSchema : equipmentCreateSchema;
       await schema.parseAsync(formData);
+
+      // Validate hierarchy selection
+      if (selectedSiteId && selectedCellId) {
+        await hierarchyLocationSchema.parseAsync({
+          siteId: selectedSiteId,
+          cellId: selectedCellId,
+        });
+      }
+
       return { isValid: true, errors: {} };
     } catch (error: unknown) {
       const formattedErrors = formatValidationError(error as ZodError);
       return { isValid: false, errors: formattedErrors };
     }
-  }, [formData, mode]);
+  }, [formData, mode, selectedSiteId, selectedCellId]);
 
   // Handle form submission
   const handleSubmit = useCallback(
@@ -188,7 +272,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
           id: 'mock-id',
           name: formData.name,
           equipmentType: formData.equipmentType,
-          cellId: formData.cellId,
+          cellId: selectedCellId || formData.cellId,
           createdBy: 'current-user',
           updatedBy: 'current-user',
           createdAt: new Date().toISOString(),
@@ -210,7 +294,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
         }));
       }
     },
-    [formData, validateForm, onSuccess]
+    [formData, validateForm, onSuccess, selectedCellId]
   );
 
   // Handle cancel with dirty state check
@@ -253,6 +337,8 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
     formData.name.trim() &&
     formData.equipmentType &&
     formData.cellId &&
+    selectedSiteId &&
+    selectedCellId &&
     formData.tagId.trim() &&
     formData.description.trim() &&
     formData.make.trim() &&
@@ -331,15 +417,26 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12}>
-                <SiteAutocomplete
-                  value={formData.cellId} // Using cellId as site for now
-                  onChange={handleFieldChange('cellId')}
-                  error={fieldErrors.cellId}
+              <Grid item xs={12} md={6}>
+                <SiteDropdown
+                  value={selectedSiteId}
+                  onChange={handleSiteChange}
+                  error={fieldErrors.siteId}
                   disabled={isLoading}
                   required
-                  label='Site/Cell'
-                  placeholder='Search for site or cell...'
+                  helperText='Select a site for this equipment'
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <CellSelector
+                  siteId={selectedSiteId}
+                  value={selectedCellId}
+                  onChange={handleCellChange}
+                  error={fieldErrors.cellId}
+                  disabled={isLoading || !selectedSiteId}
+                  required
+                  helperText='Select a cell for this equipment'
                 />
               </Grid>
             </Grid>

@@ -1448,17 +1448,40 @@ Task TestStrict -Description "Run workspace tests exactly like GitHub Actions - 
         try {
           if (Test-Command "pnpm") {
             $output = ""
-            # Use exact same command as GitHub Actions but suppress output during collection
-            if ($script:CollectAllErrors) {
-              $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
-            }
-            else {
-              $output = & pnpm test:coverage --passWithNoTests 2>&1
-            }
+            # Use exact same command as GitHub Actions (no --silent to catch failures)
+            $output = & pnpm test:coverage --passWithNoTests 2>&1
             
             if ($LASTEXITCODE -ne 0) {
               if ($script:CollectAllErrors) {
-                Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+                # Parse test output for specific failures
+                $lines = $output -split "`n"
+                $testFailures = @()
+                $hasModuleErrors = $false
+                
+                foreach ($line in $lines) {
+                  if ($line -match "FAIL (.+)") {
+                    $testFailures += $matches[1]
+                  }
+                  elseif ($line -match "Cannot find module '(.+)'" -or $line -match "Module not found: (.+)") {
+                    $hasModuleErrors = $true
+                    Add-TaskError -TaskName "Tests" -ErrorMessage "Missing module: $($matches[1])" -FilePath "apps/api" -SuggestedFix "Install missing dependencies or create missing files"
+                  }
+                  elseif ($line -match "● (.+)") {
+                    $testDetails = $matches[1]
+                    Add-TaskError -TaskName "Tests" -ErrorMessage "Test failed: $testDetails" -FilePath "apps/api" -SuggestedFix "Review test logic and fix failing tests"
+                  }
+                  elseif ($line -match "Error: (.+)" -and $line -notmatch "npm|pnpm") {
+                    Add-TaskError -TaskName "Tests" -ErrorMessage $matches[1] -FilePath "apps/api" -SuggestedFix "Check test setup and dependencies"
+                  }
+                }
+                
+                if ($testFailures.Count -gt 0) {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "Failed test files: $($testFailures -join ', ')" -FilePath "apps/api" -SuggestedFix "Run individual test files to debug issues"
+                }
+                
+                if (-not $hasModuleErrors -and $testFailures.Count -eq 0) {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed - see output above for details" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+                }
               }
               else {
                 throw "API tests failed"

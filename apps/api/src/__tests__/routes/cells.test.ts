@@ -7,7 +7,6 @@
 
 import request from 'supertest';
 import { Express } from 'express';
-import { EntityManager } from 'typeorm';
 import { createTestApp } from '../helpers/testApp';
 import { createAuthToken } from '../helpers/auth';
 
@@ -22,7 +21,6 @@ jest.mock('../../config/logger', () => ({
 
 describe('Cells Routes', () => {
   let app: Express;
-  // let _entityManager: EntityManager; // Unused but may be needed for setup
   let authToken: string;
   let adminToken: string;
   let testSiteId: string;
@@ -50,7 +48,6 @@ describe('Cells Routes', () => {
     app = await createTestApp();
     // In a real test, you would get EntityManager from your test database setup
     // For this example, we'll mock it
-    _entityManager = {} as EntityManager;
 
     authToken = createAuthToken(testUser);
     adminToken = createAuthToken(adminUser);

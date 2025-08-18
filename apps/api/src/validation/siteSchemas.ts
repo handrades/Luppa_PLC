@@ -36,7 +36,7 @@ const siteNameSchema = Joi.string()
  * Site ID parameter validation
  */
 export const siteIdParamSchema = Joi.object({
-  id: uuidSchema.required().messages({
+  siteId: uuidSchema.required().messages({
     'any.required': 'Site ID is required',
   }),
 });
