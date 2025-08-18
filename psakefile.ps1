@@ -696,7 +696,19 @@ Task LintTypeScript {
             if ($script:CollectAllErrors) {
               # Parse ESLint/TypeScript output for structured errors
               $lines = $output -split "`n"
+              $currentFile = ""
               foreach ($line in $lines) {
+                # Track current file being processed (ESLint format: /path/to/file.ts or relative path)
+                # Also match lines that end with TypeScript/JavaScript extensions (common ESLint format)
+                if ($line -match "^(/[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^([a-zA-Z]:[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^((?:src/|apps/|\.\.?/)[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^([^/\\\s:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^(.*\.(?:ts|js|tsx|jsx))$") {
+                  $currentFile = $matches[1].Trim()
+                  # Convert relative paths to full paths for consistency
+                  if (-not ([System.IO.Path]::IsPathRooted($currentFile))) {
+                    $currentFile = Join-Path $PSScriptRoot $currentFile
+                    $currentFile = [System.IO.Path]::GetFullPath($currentFile)
+                  }
+                  continue
+                }
                 if ($line -match "^([^:]+):(\d+):(\d+):\s+(error|warning)\s+(.+?)\s+(.+)$") {
                   $filePath = $matches[1]
                   $lineNum = $matches[2]
@@ -712,7 +724,36 @@ Task LintTypeScript {
                     Add-TaskWarning -TaskName "TypeScript" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -WarningCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
                   }
                 }
+                elseif ($line -match "^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+(@[\w-]+/[\w-]+|\w+)$") {
+                  # ESLint error format without file path: line:col  error  message  @rule-name
+                  $lineNum = $matches[1]
+                  $colNum = $matches[2]
+                  $severity = $matches[3]
+                  $message = $matches[4]
+                  $ruleCode = $matches[5]
+                  
+                  # Use currentFile if available, otherwise try to parse more contexts
+                  $filePath = if ($currentFile) { $currentFile } else { "Unknown file" }
+                  
+                  if ($severity -eq "error") {
+                    Add-TaskError -TaskName "TypeScript" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                  else {
+                    Add-TaskWarning -TaskName "TypeScript" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -WarningCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                }
+                elseif ($line -match "^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.+)$") {
+                  # TypeScript compiler error format: src/file.ts(line,col): error TSxxxx: message
+                  $filePath = $matches[1]
+                  $lineNum = $matches[2] 
+                  $colNum = $matches[3]
+                  $errorCode = $matches[4]
+                  $message = $matches[5]
+                  
+                  Add-TaskError -TaskName "TypeScript" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $errorCode -SuggestedFix "Fix TypeScript error: $errorCode"
+                }
                 elseif ($line -match "error TS\d+") {
+                  # Fallback for other TypeScript error formats
                   Add-TaskError -TaskName "TypeScript" -ErrorMessage $line.Trim()
                 }
                 elseif ($line.Trim() -and -not ($line -match "^>|^npm|^\s*$|found \d+ error")) {
