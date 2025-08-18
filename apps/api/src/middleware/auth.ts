@@ -156,7 +156,11 @@ export const authorize = (requiredPermissions: string[] | string) => {
         let current: unknown = userPermissions;
 
         for (const key of keys) {
-          if (current && typeof current === 'object' && key in current) {
+          if (
+            current &&
+            typeof current === 'object' &&
+            Object.prototype.hasOwnProperty.call(current, key)
+          ) {
             current = (current as Record<string, unknown>)[key];
           } else {
             return false;
@@ -206,7 +210,11 @@ export const authorizeAll = (requiredPermissions: string[]) => {
         let current: unknown = userPermissions;
 
         for (const key of keys) {
-          if (current && typeof current === 'object' && key in current) {
+          if (
+            current &&
+            typeof current === 'object' &&
+            Object.prototype.hasOwnProperty.call(current, key)
+          ) {
             current = (current as Record<string, unknown>)[key];
           } else {
             return false;

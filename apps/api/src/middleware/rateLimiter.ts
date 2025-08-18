@@ -96,10 +96,11 @@ export const generalRateLimit = rateLimit({
 /**
  * Rate limiter for write operations (POST, PUT, DELETE)
  * Limits to 5 write operations per minute per IP address
+ * Disabled in test environment to allow rapid test execution
  */
 export const writeOpsRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // Limit each IP to 5 write operations per windowMs
+  max: process.env.NODE_ENV === 'test' ? 1000 : 5, // Higher limit in test environment
   message: {
     error: 'Too many write operations',
     message: 'Too many write operations from this IP. Please try again in 1 minute.',

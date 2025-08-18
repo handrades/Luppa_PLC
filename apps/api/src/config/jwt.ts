@@ -55,7 +55,7 @@ export interface JwtPayload {
   sub: string; // User ID
   email: string;
   roleId: string;
-  permissions: Record<string, unknown>;
+  permissions: string[] | Record<string, unknown>; // Support both array and object formats
   type: TokenType;
   jti?: string; // JWT ID for token tracking
   iat?: number;

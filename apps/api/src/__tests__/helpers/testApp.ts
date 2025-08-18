@@ -9,7 +9,7 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { EntityManager } from 'typeorm';
-import { jwtConfig } from '../../config/jwt';
+import { TokenType, jwtConfig } from '../../config/jwt';
 
 // Mock authentication helper
 interface MockUser {
@@ -17,6 +17,7 @@ interface MockUser {
   email: string;
   roleId: string;
   permissions: string[];
+  type: TokenType;
 }
 
 // In-memory storage for test data
@@ -194,7 +195,7 @@ const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => 
         email: decoded.email,
         roleId: 'test-role',
         permissions: decoded.permissions || [],
-        type: 'access',
+        type: TokenType.ACCESS,
       };
     } else {
       // Try to decode as real JWT for other tests
@@ -214,7 +215,7 @@ const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => 
 /**
  * Mock audit context middleware
  */
-const mockAuditMiddleware = (req: Request, res: Response, next: NextFunction) => {
+const mockAuditMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   // Mock the audit entity manager that the routes expect
   req.auditEntityManager = {
     // Add minimal mock methods that services might need
@@ -234,6 +235,10 @@ const mockAuditMiddleware = (req: Request, res: Response, next: NextFunction) =>
  * Creates a test Express app with real routes and mock authentication
  */
 export async function createTestApp(): Promise<Express> {
+  // Clear test data store to prevent cross-test contamination
+  testData.sites.clear();
+  testData.cells.clear();
+
   const app = express();
 
   // Basic middleware setup
