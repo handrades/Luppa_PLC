@@ -68,7 +68,7 @@ describe('Sites Routes', () => {
     it('should return 401 without authentication', async () => {
       const response = await request(app).post('/api/v1/sites').send(testSiteData).expect(401);
 
-      expect(response.body.error).toContain('Authentication required');
+      expect(response.body.message).toContain('Authorization header');
     });
 
     it('should return 403 without proper permissions', async () => {
@@ -84,7 +84,7 @@ describe('Sites Routes', () => {
         .send(testSiteData)
         .expect(403);
 
-      expect(response.body.error).toContain('Insufficient permissions');
+      expect(response.body.message).toContain('Insufficient permissions');
     });
 
     it('should validate required fields', async () => {
@@ -94,8 +94,8 @@ describe('Sites Routes', () => {
         .send({}) // Missing name
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
-      expect(response.body.details.name).toContain('Site name is required');
+      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.error.details.name).toContain('Site name is required');
     });
 
     it('should validate site name format', async () => {
@@ -105,8 +105,8 @@ describe('Sites Routes', () => {
         .send({ name: 'Invalid@Name#' })
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
-      expect(response.body.details.name).toContain(
+      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.error.details.name).toContain(
         'Site name can only contain letters, numbers, spaces, hyphens, and underscores'
       );
     });
@@ -119,8 +119,8 @@ describe('Sites Routes', () => {
         .send({ name: longName })
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
-      expect(response.body.details.name).toContain('Site name cannot exceed 100 characters');
+      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.error.details.name).toContain('Site name cannot exceed 100 characters');
     });
 
     it('should handle site name conflicts', async () => {
@@ -138,7 +138,7 @@ describe('Sites Routes', () => {
         .send(testSiteData)
         .expect(409);
 
-      expect(response.body.error).toContain("Site name 'Test Site' already exists");
+      expect(response.body.message).toContain("Site name 'Test Site' already exists");
     });
   });
 
@@ -209,7 +209,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
+      expect(response.body.error.message).toContain('Validation failed');
     });
   });
 
@@ -261,7 +261,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
+      expect(response.body.error.message).toContain('Validation failed');
     });
 
     it('should limit suggestions', async () => {
@@ -358,7 +358,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.error).toContain(`Site with ID '${fakeId}' not found`);
+      expect(response.body.message).toContain(`Site with ID '${fakeId}' not found`);
     });
 
     it('should validate UUID format', async () => {
@@ -367,7 +367,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error).toContain('Validation failed');
+      expect(response.body.error.message).toContain('Validation failed');
     });
   });
 
@@ -417,7 +417,7 @@ describe('Sites Routes', () => {
         .send(updateData)
         .expect(400);
 
-      expect(response.body.error).toContain('updatedAt is required for optimistic locking');
+      expect(response.body.message).toContain('updatedAt is required for optimistic locking');
     });
 
     it('should handle optimistic locking conflicts', async () => {
@@ -434,7 +434,7 @@ describe('Sites Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.error).toContain('Site was modified by another user');
+      expect(response.body.message).toContain('Site was modified by another user');
     });
 
     it('should validate updated name uniqueness', async () => {
@@ -455,7 +455,7 @@ describe('Sites Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.error).toContain("Site name 'Another Site' already exists");
+      expect(response.body.message).toContain("Site name 'Another Site' already exists");
     });
   });
 
@@ -495,7 +495,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(409); // Would be 409 if cells exist
 
-      expect(response.body.error).toContain('because it contains');
+      expect(response.body.message).toContain('because it contains');
     });
 
     it('should return 404 for non-existent site', async () => {
@@ -505,7 +505,7 @@ describe('Sites Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.error).toContain(`Site with ID '${fakeId}' not found`);
+      expect(response.body.message).toContain(`Site with ID '${fakeId}' not found`);
     });
   });
 
@@ -597,7 +597,7 @@ describe('Sites Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.error).toContain('Operation must be either delete or export');
+      expect(response.body.message).toContain('Operation must be either delete or export');
     });
 
     it('should handle partial failures in bulk delete', async () => {
