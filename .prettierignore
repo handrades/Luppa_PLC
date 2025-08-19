@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Generated files
+*.min.js
+*.min.css
+
+# Templates (these contain Handlebars syntax that Prettier can't parse)
+templates/
+
+# Environment files
+.env*
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Documentation generated files
+docs/generated/
+
+# Storybook static files
+storybook-static/
+
+# Playwright screenshots/artifacts
+.playwright-mcp/
+
+# Jest coverage
+coverage/
+
+# TypeScript output
+*.tsbuildinfo
+
+# Cache directories
+.cache/
+
+# OS and Editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git files
+.git/
+
+# Other generated content
+*.min.*
+*.bundle.*
+*.chunk.*
+
+# Build automation tools
+.bmad-core/
+
+# Test files that shouldn't be formatted differently
+__tests__/
+
+# Specific problematic directories
+apps/web/storybook-static/
+equipment-constraint-fixes-summary.md

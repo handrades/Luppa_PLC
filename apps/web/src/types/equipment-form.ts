@@ -59,6 +59,7 @@ export interface EquipmentFormErrors {
   name?: string[];
   equipmentType?: string[];
   cellId?: string[];
+  siteId?: string[]; // For hierarchy validation
   tagId?: string[];
   description?: string[];
   make?: string[];

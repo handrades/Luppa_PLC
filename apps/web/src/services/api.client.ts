@@ -155,4 +155,8 @@ export const api = {
     apiClient.patch<T>(url, data, config),
 };
 
+// Named export for apiClient
+export { apiClient };
+
+// Default export
 export default apiClient;

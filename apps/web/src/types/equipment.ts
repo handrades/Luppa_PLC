@@ -4,6 +4,7 @@
  */
 
 import { ReactNode } from 'react';
+import type { EquipmentFormData } from './equipment-form';
 
 // Equipment Type Enum
 export enum EquipmentType {
@@ -135,12 +136,12 @@ export interface EquipmentFormState {
 // Form-specific actions for equipment store
 export interface EquipmentFormActions {
   // CRUD operations
-  createEquipment: (data: unknown) => Promise<Equipment>; // Form data
-  updateEquipment: (id: string, data: unknown) => Promise<Equipment>; // Form data
+  createEquipment: (data: EquipmentFormData) => Promise<Equipment>; // Form data
+  updateEquipment: (id: string, data: EquipmentFormData) => Promise<Equipment>; // Form data
   loadEquipmentForEdit: (id: string) => Promise<void>;
 
   // Form state management
-  saveFormDraft: (draft: unknown) => void; // Form draft
+  saveFormDraft: (draft: EquipmentFormData) => void; // Form draft
   loadFormDraft: () => unknown | null; // Form draft
   clearFormDraft: () => void;
 

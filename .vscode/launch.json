@@ -18,7 +18,10 @@
       "protocol": "inspector",
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/apps/api/dist/**/*.js"],
-      "resolveSourceMapLocations": ["${workspaceFolder}/apps/api/**", "!**/node_modules/**"]
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/apps/api/**",
+        "!**/node_modules/**"
+      ]
     },
     {
       "name": "Debug API (Attach to Process)",
@@ -39,7 +42,10 @@
       "sourceMaps": true,
       "trace": "verbose",
       "userDataDir": false,
-      "runtimeArgs": ["--disable-web-security", "--disable-features=VizDisplayCompositor"]
+      "runtimeArgs": [
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor"
+      ]
     },
     {
       "name": "Debug Web App (Edge)",
@@ -56,7 +62,12 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": ["--config", "${workspaceFolder}/apps/api/jest.config.cjs", "--runInBand", "--detectOpenHandles"],
+      "args": [
+        "--config",
+        "${workspaceFolder}/apps/api/jest.config.cjs",
+        "--runInBand",
+        "--detectOpenHandles"
+      ],
       "cwd": "${workspaceFolder}",
       "env": {
         "NODE_ENV": "test"
@@ -73,7 +84,11 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": ["--config", "${workspaceFolder}/apps/web/jest.config.cjs", "--runInBand"],
+      "args": [
+        "--config",
+        "${workspaceFolder}/apps/web/jest.config.cjs",
+        "--runInBand"
+      ],
       "cwd": "${workspaceFolder}",
       "env": {
         "NODE_ENV": "test"

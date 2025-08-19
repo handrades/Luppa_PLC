@@ -9,49 +9,49 @@
  * 3. Creates an index page linking to all documentation
  */
 
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 async function generateApiDocs() {
   try {
-    console.log("🔧 Generating API documentation...");
+    console.log('🔧 Generating API documentation...');
 
     // Create output directory
-    const outputDir = path.join(__dirname, "..", "dist", "docs", "api");
+    const outputDir = path.join(__dirname, '..', 'dist', 'docs', 'api');
     fs.mkdirSync(outputDir, { recursive: true });
 
     // Create a placeholder OpenAPI spec (will be generated dynamically in production)
     const openApiSpec = {
-      openapi: "3.0.0",
+      openapi: '3.0.0',
       info: {
-        title: "Industrial Inventory Multi-App Framework API",
-        version: "1.0.0",
+        title: 'Industrial Inventory Multi-App Framework API',
+        version: '1.0.0',
         description:
-          "RESTful API for the Industrial Inventory Multi-App Framework. View the live documentation at /api-docs when the server is running.",
+          'RESTful API for the Industrial Inventory Multi-App Framework. View the live documentation at /api-docs when the server is running.',
       },
       servers: [
-        { url: "http://localhost:3010", description: "Development server" },
+        { url: 'http://localhost:3010', description: 'Development server' },
         {
-          url: "http://localhost:3000/api",
-          description: "Development server via Nginx proxy",
+          url: 'http://localhost:3000/api',
+          description: 'Development server via Nginx proxy',
         },
       ],
       paths: {
-        "/health": {
+        '/health': {
           get: {
-            summary: "Get system health status",
-            tags: ["Health"],
+            summary: 'Get system health status',
+            tags: ['Health'],
             responses: {
               200: {
-                description: "System is healthy",
+                description: 'System is healthy',
                 content: {
-                  "application/json": {
+                  'application/json': {
                     schema: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        status: { type: "string", example: "healthy" },
-                        timestamp: { type: "string", format: "date-time" },
-                        version: { type: "string", example: "1.0.0" },
+                        status: { type: 'string', example: 'healthy' },
+                        timestamp: { type: 'string', format: 'date-time' },
+                        version: { type: 'string', example: '1.0.0' },
                       },
                     },
                   },
@@ -63,9 +63,9 @@ async function generateApiDocs() {
       },
     };
 
-    const openApiPath = path.join(outputDir, "openapi.json");
+    const openApiPath = path.join(outputDir, 'openapi.json');
     fs.writeFileSync(openApiPath, JSON.stringify(openApiSpec, null, 2));
-    console.log("✅ Generated OpenAPI specification:", openApiPath);
+    console.log('✅ Generated OpenAPI specification:', openApiPath);
 
     // Create HTML page for API docs
     const htmlContent = `<!DOCTYPE html>
@@ -121,9 +121,9 @@ async function generateApiDocs() {
 </body>
 </html>`;
 
-    const htmlPath = path.join(outputDir, "index.html");
+    const htmlPath = path.join(outputDir, 'index.html');
     fs.writeFileSync(htmlPath, htmlContent);
-    console.log("✅ Generated API documentation HTML:", htmlPath);
+    console.log('✅ Generated API documentation HTML:', htmlPath);
 
     // Create a README for the API docs
     const readmeContent = `# API Documentation
@@ -166,13 +166,13 @@ pnpm docs:build:api
 ${new Date().toISOString()}
 `;
 
-    const readmePath = path.join(outputDir, "README.md");
+    const readmePath = path.join(outputDir, 'README.md');
     fs.writeFileSync(readmePath, readmeContent);
-    console.log("✅ Generated API documentation README:", readmePath);
+    console.log('✅ Generated API documentation README:', readmePath);
 
-    console.log("🎉 API documentation generation complete!");
+    console.log('🎉 API documentation generation complete!');
   } catch (error) {
-    console.error("❌ Error generating API documentation:", error.message);
+    console.error('❌ Error generating API documentation:', error.message);
     process.exit(1);
   }
 }

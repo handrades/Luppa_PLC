@@ -36,5 +36,9 @@
     "ms-vscode.hexeditor",
     "gruntfuggly.todo-tree"
   ],
-  "unwantedRecommendations": ["ms-vscode.vscode-typescript", "hookyqr.beautify", "esbenp.prettier-vscode-legacy"]
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify",
+    "esbenp.prettier-vscode-legacy"
+  ]
 }

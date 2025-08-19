@@ -318,33 +318,115 @@ Task Lint -Depends LintMarkdown, LintJson, LintYaml, LintTypeScript, CheckFormat
 
 # Type checking task (matches GitHub Actions type-check job)
 Task TypeCheck {
-  Write-Host "`nRunning TypeScript type checking..." -ForegroundColor Cyan
-    
-  if (-not (Test-Command "pnpm")) {
-    throw "pnpm not found. Please install pnpm first."
-  }
-    
-  Push-Location $PSScriptRoot
-  try {
-    # Type check API (matches GitHub Actions)
-    Write-Host "Type checking API..." -ForegroundColor Cyan
-    exec { pnpm --filter ./apps/api run type-check } "API type check failed"
-    Write-Host "✓ API type check passed" -ForegroundColor Green
-        
-    # Type check Web (matches GitHub Actions)
-    if (Test-Path "apps/web/package.json") {
-      Write-Host "Type checking Web..." -ForegroundColor Cyan
-      exec { pnpm --filter ./apps/web run type-check } "Web type check failed"
-      Write-Host "✓ Web type check passed" -ForegroundColor Green
+  function Invoke-TypeCheckWithDetails {
+    Write-Host "`nRunning TypeScript type checking..." -ForegroundColor Cyan
+      
+    if (-not (Test-Command "pnpm")) {
+      throw "pnpm not found. Please install pnpm first."
     }
-    else {
-      Write-Host "No web package found - skipping web type check" -ForegroundColor Yellow
-    }
+      
+    Push-Location $PSScriptRoot
+    try {
+      $hasErrors = $false
+      
+      # Type check API (matches GitHub Actions)
+      Write-Host "Type checking API..." -ForegroundColor Cyan
+      $apiResult = Start-Process -FilePath "pnpm" -ArgumentList @("--filter", "./apps/api", "run", "type-check") -Wait -PassThru -NoNewWindow -RedirectStandardOutput "api-typecheck.log" -RedirectStandardError "api-typecheck-err.log"
+      
+      if ($apiResult.ExitCode -ne 0) {
+        $hasErrors = $true
+        if (Test-Path "api-typecheck-err.log") {
+          $apiErrors = Get-Content "api-typecheck-err.log" -Raw
+          if ($apiErrors -and $apiErrors.Trim()) {
+            $lines = $apiErrors -split "`n"
+            foreach ($line in $lines) {
+              if ($line -match "^(.+?)\((\d+),(\d+)\): error (.+): (.+)$") {
+                if ($script:CollectAllErrors) {
+                  Add-TaskError -TaskName "TypeCheck" -ErrorMessage $Matches[5] -FilePath $Matches[1] -LineNumber $Matches[2] -ColumnNumber $Matches[3] -ErrorCode $Matches[4]
+                } else {
+                  Write-Host "❌ $($Matches[1]):$($Matches[2]):$($Matches[3]) - $($Matches[5])" -ForegroundColor Red
+                }
+              }
+              elseif ($line.Trim() -and $line -notmatch "^$" -and $line -notmatch "Found \d+ error") {
+                if ($script:CollectAllErrors) {
+                  Add-TaskError -TaskName "TypeCheck" -ErrorMessage $line.Trim() -FilePath "API"
+                } else {
+                  Write-Host "❌ API: $($line.Trim())" -ForegroundColor Red
+                }
+              }
+            }
+          }
+        }
+        Write-Host "❌ API type check failed with exit code $($apiResult.ExitCode)" -ForegroundColor Red
+      } else {
+        Write-Host "✓ API type check passed" -ForegroundColor Green
+      }
+      
+      # Clean up temp files
+      if (Test-Path "api-typecheck.log") { Remove-Item "api-typecheck.log" -Force }
+      if (Test-Path "api-typecheck-err.log") { Remove-Item "api-typecheck-err.log" -Force }
+          
+      # Type check Web (matches GitHub Actions)
+      if (Test-Path "apps/web/package.json") {
+        Write-Host "Type checking Web..." -ForegroundColor Cyan
+        $webResult = Start-Process -FilePath "pnpm" -ArgumentList @("--filter", "./apps/web", "run", "type-check") -Wait -PassThru -NoNewWindow -RedirectStandardOutput "web-typecheck.log" -RedirectStandardError "web-typecheck-err.log"
         
-    Write-Host "✓ All type checks passed" -ForegroundColor Green
+        if ($webResult.ExitCode -ne 0) {
+          $hasErrors = $true
+          if (Test-Path "web-typecheck-err.log") {
+            $webErrors = Get-Content "web-typecheck-err.log" -Raw
+            if ($webErrors -and $webErrors.Trim()) {
+              $lines = $webErrors -split "`n"
+              foreach ($line in $lines) {
+                if ($line -match "^(.+?)\((\d+),(\d+)\): error (.+): (.+)$") {
+                  if ($script:CollectAllErrors) {
+                    Add-TaskError -TaskName "TypeCheck" -ErrorMessage $Matches[5] -FilePath $Matches[1] -LineNumber $Matches[2] -ColumnNumber $Matches[3] -ErrorCode $Matches[4]
+                  } else {
+                    Write-Host "❌ $($Matches[1]):$($Matches[2]):$($Matches[3]) - $($Matches[5])" -ForegroundColor Red
+                  }
+                }
+                elseif ($line.Trim() -and $line -notmatch "^$" -and $line -notmatch "Found \d+ error") {
+                  if ($script:CollectAllErrors) {
+                    Add-TaskError -TaskName "TypeCheck" -ErrorMessage $line.Trim() -FilePath "Web"
+                  } else {
+                    Write-Host "❌ Web: $($line.Trim())" -ForegroundColor Red
+                  }
+                }
+              }
+            }
+          }
+          Write-Host "❌ Web type check failed with exit code $($webResult.ExitCode)" -ForegroundColor Red
+        } else {
+          Write-Host "✓ Web type check passed" -ForegroundColor Green
+        }
+        
+        # Clean up temp files
+        if (Test-Path "web-typecheck.log") { Remove-Item "web-typecheck.log" -Force }
+        if (Test-Path "web-typecheck-err.log") { Remove-Item "web-typecheck-err.log" -Force }
+      }
+      else {
+        Write-Host "No web package found - skipping web type check" -ForegroundColor Yellow
+      }
+      
+      if (-not $hasErrors) {
+        Write-Host "✓ All type checks passed" -ForegroundColor Green
+      } else {
+        if (-not $script:CollectAllErrors) {
+          throw "Type check failed - see errors above"
+        }
+      }
+    }
+    finally {
+      Pop-Location
+    }
   }
-  finally {
-    Pop-Location
+
+  if ($script:CollectAllErrors) {
+    Invoke-TaskWithErrorCollection -TaskName "TypeCheck" -ScriptBlock {
+      Invoke-TypeCheckWithDetails
+    }
+  } else {
+    Invoke-TypeCheckWithDetails
   }
 }
 
@@ -696,7 +778,19 @@ Task LintTypeScript {
             if ($script:CollectAllErrors) {
               # Parse ESLint/TypeScript output for structured errors
               $lines = $output -split "`n"
+              $currentFile = ""
               foreach ($line in $lines) {
+                # Track current file being processed (ESLint format: /path/to/file.ts or relative path)
+                # Also match lines that end with TypeScript/JavaScript extensions (common ESLint format)
+                if ($line -match "^(/[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^([a-zA-Z]:[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^((?:src/|apps/|\.\.?/)[^:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^([^/\\\s:]+\.(?:ts|js|tsx|jsx))$" -or $line -match "^(.*\.(?:ts|js|tsx|jsx))$") {
+                  $currentFile = $matches[1].Trim()
+                  # Convert relative paths to full paths for consistency
+                  if (-not ([System.IO.Path]::IsPathRooted($currentFile))) {
+                    $currentFile = Join-Path $PSScriptRoot $currentFile
+                    $currentFile = [System.IO.Path]::GetFullPath($currentFile)
+                  }
+                  continue
+                }
                 if ($line -match "^([^:]+):(\d+):(\d+):\s+(error|warning)\s+(.+?)\s+(.+)$") {
                   $filePath = $matches[1]
                   $lineNum = $matches[2]
@@ -712,7 +806,36 @@ Task LintTypeScript {
                     Add-TaskWarning -TaskName "TypeScript" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -WarningCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
                   }
                 }
+                elseif ($line -match "^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+(@[\w-]+/[\w-]+|\w+)$") {
+                  # ESLint error format without file path: line:col  error  message  @rule-name
+                  $lineNum = $matches[1]
+                  $colNum = $matches[2]
+                  $severity = $matches[3]
+                  $message = $matches[4]
+                  $ruleCode = $matches[5]
+                  
+                  # Use currentFile if available, otherwise try to parse more contexts
+                  $filePath = if ($currentFile) { $currentFile } else { "Unknown file" }
+                  
+                  if ($severity -eq "error") {
+                    Add-TaskError -TaskName "TypeScript" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                  else {
+                    Add-TaskWarning -TaskName "TypeScript" -WarningMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -WarningCode $ruleCode -SuggestedFix "Review ESLint rule: $ruleCode"
+                  }
+                }
+                elseif ($line -match "^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.+)$") {
+                  # TypeScript compiler error format: src/file.ts(line,col): error TSxxxx: message
+                  $filePath = $matches[1]
+                  $lineNum = $matches[2] 
+                  $colNum = $matches[3]
+                  $errorCode = $matches[4]
+                  $message = $matches[5]
+                  
+                  Add-TaskError -TaskName "TypeScript" -ErrorMessage $message -FilePath $filePath -LineNumber $lineNum -ColumnNumber $colNum -ErrorCode $errorCode -SuggestedFix "Fix TypeScript error: $errorCode"
+                }
                 elseif ($line -match "error TS\d+") {
+                  # Fallback for other TypeScript error formats
                   Add-TaskError -TaskName "TypeScript" -ErrorMessage $line.Trim()
                 }
                 elseif ($line.Trim() -and -not ($line -match "^>|^npm|^\s*$|found \d+ error")) {
@@ -1407,17 +1530,40 @@ Task TestStrict -Description "Run workspace tests exactly like GitHub Actions - 
         try {
           if (Test-Command "pnpm") {
             $output = ""
-            # Use exact same command as GitHub Actions but suppress output during collection
-            if ($script:CollectAllErrors) {
-              $output = & pnpm test:coverage --passWithNoTests --silent 2>&1
-            }
-            else {
-              $output = & pnpm test:coverage --passWithNoTests 2>&1
-            }
+            # Use exact same command as GitHub Actions (no --silent to catch failures)
+            $output = & pnpm test:coverage --passWithNoTests 2>&1
             
             if ($LASTEXITCODE -ne 0) {
               if ($script:CollectAllErrors) {
-                Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+                # Parse test output for specific failures
+                $lines = $output -split "`n"
+                $testFailures = @()
+                $hasModuleErrors = $false
+                
+                foreach ($line in $lines) {
+                  if ($line -match "FAIL (.+)") {
+                    $testFailures += $matches[1]
+                  }
+                  elseif ($line -match "Cannot find module '(.+)'" -or $line -match "Module not found: (.+)") {
+                    $hasModuleErrors = $true
+                    Add-TaskError -TaskName "Tests" -ErrorMessage "Missing module: $($matches[1])" -FilePath "apps/api" -SuggestedFix "Install missing dependencies or create missing files"
+                  }
+                  elseif ($line -match "● (.+)") {
+                    $testDetails = $matches[1]
+                    Add-TaskError -TaskName "Tests" -ErrorMessage "Test failed: $testDetails" -FilePath "apps/api" -SuggestedFix "Review test logic and fix failing tests"
+                  }
+                  elseif ($line -match "Error: (.+)" -and $line -notmatch "npm|pnpm") {
+                    Add-TaskError -TaskName "Tests" -ErrorMessage $matches[1] -FilePath "apps/api" -SuggestedFix "Check test setup and dependencies"
+                  }
+                }
+                
+                if ($testFailures.Count -gt 0) {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "Failed test files: $($testFailures -join ', ')" -FilePath "apps/api" -SuggestedFix "Run individual test files to debug issues"
+                }
+                
+                if (-not $hasModuleErrors -and $testFailures.Count -eq 0) {
+                  Add-TaskError -TaskName "Tests" -ErrorMessage "API tests failed - see output above for details" -FilePath "apps/api" -SuggestedFix "Review API test failures and fix issues"
+                }
               }
               else {
                 throw "API tests failed"

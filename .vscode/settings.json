@@ -33,7 +33,12 @@
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.preferences.includePackageJsonAutoImports": "auto",
   "eslint.workingDirectories": ["apps/api", "apps/web", "packages/*"],
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
   "prettier.configPath": "./config/.prettierrc",
   "prettier.ignorePath": "./config/.prettierignore",
   "jest.jestCommandLine": "pnpm test",

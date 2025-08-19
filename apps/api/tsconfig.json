@@ -21,8 +21,8 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "types/**/*", "types/express.d.ts"],
-  "typeRoots": ["node_modules/@types", "types"],
+  "include": ["src/**/*", "src/types/**/*", "types/**/*"],
+  "typeRoots": ["node_modules/@types"],
   "exclude": ["node_modules", "dist", "__tests__", "**/*.test.ts"],
   "ts-node": {
     "esm": false,

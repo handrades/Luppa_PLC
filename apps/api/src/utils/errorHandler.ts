@@ -150,6 +150,24 @@ export function handleRouteError(
     return;
   }
 
+  // Handle general conflict errors (name conflicts, optimistic locking, etc.)
+  if (
+    message.includes('already exists') ||
+    message.includes('was modified by another user') ||
+    message.includes('because it contains') ||
+    (error instanceof Error && error.name === 'ConflictError') ||
+    (error instanceof Error && error.name === 'SiteConflictError') ||
+    (error instanceof Error && error.name === 'CellConflictError') ||
+    (error instanceof Error && error.name === 'EquipmentConflictError') ||
+    (error instanceof Error && error.name === 'OptimisticLockingError')
+  ) {
+    res.status(409).json({
+      error: 'Conflict',
+      message,
+    });
+    return;
+  }
+
   // Handle role-related errors first (before generic "not found" check)
   if (
     message.includes('Role not found') ||

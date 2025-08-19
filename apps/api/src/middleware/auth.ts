@@ -126,6 +126,7 @@ export const optionalAuthenticate = async (
 
 /**
  * Role-based authorization middleware
+ * By default, requires ANY of the provided permissions (OR logic)
  */
 export const authorize = (requiredPermissions: string[] | string) => {
   const permissions = Array.isArray(requiredPermissions)
@@ -145,22 +146,86 @@ export const authorize = (requiredPermissions: string[] | string) => {
     const userPermissions = req.user.permissions;
 
     const hasPermission = permissions.some(permission => {
-      // Handle dot notation for nested permissions (e.g., 'plc.read')
-      const keys = permission.split('.');
-      let current: unknown = userPermissions;
+      // Handle both array format ['cells.read'] and object format { cells: { read: true } }
+      if (Array.isArray(userPermissions)) {
+        // Array format - check if permission exists in array
+        return userPermissions.includes(permission);
+      } else {
+        // Object format - handle dot notation for nested permissions (e.g., 'plc.read')
+        const keys = permission.split('.');
+        let current: unknown = userPermissions;
 
-      for (const key of keys) {
-        if (current && typeof current === 'object' && key in current) {
-          current = (current as Record<string, unknown>)[key];
-        } else {
-          return false;
+        for (const key of keys) {
+          if (
+            current &&
+            typeof current === 'object' &&
+            Object.prototype.hasOwnProperty.call(current, key)
+          ) {
+            current = (current as Record<string, unknown>)[key];
+          } else {
+            return false;
+          }
         }
-      }
 
-      return current === true;
+        return current === true;
+      }
     });
 
     if (!hasPermission) {
+      res.status(403).json({
+        error: 'Access forbidden',
+        message: 'Insufficient permissions',
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+/**
+ * Role-based authorization middleware that requires ALL permissions (AND logic)
+ */
+export const authorizeAll = (requiredPermissions: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({
+        error: 'Authentication required',
+        message: 'User not authenticated',
+      });
+      return;
+    }
+
+    // Check if user has ALL required permissions
+    const userPermissions = req.user.permissions;
+
+    const hasAllPermissions = requiredPermissions.every(permission => {
+      // Handle both array format ['cells.read'] and object format { cells: { read: true } }
+      if (Array.isArray(userPermissions)) {
+        // Array format - check if permission exists in array
+        return userPermissions.includes(permission);
+      } else {
+        // Object format - handle dot notation for nested permissions (e.g., 'plc.read')
+        const keys = permission.split('.');
+        let current: unknown = userPermissions;
+
+        for (const key of keys) {
+          if (
+            current &&
+            typeof current === 'object' &&
+            Object.prototype.hasOwnProperty.call(current, key)
+          ) {
+            current = (current as Record<string, unknown>)[key];
+          } else {
+            return false;
+          }
+        }
+
+        return current === true;
+      }
+    });
+
+    if (!hasAllPermissions) {
       res.status(403).json({
         error: 'Access forbidden',
         message: 'Insufficient permissions',
