@@ -1,6 +1,6 @@
 // Simple validation script for workspace setup
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+const { existsSync, readFileSync } = require("fs");
+const { join } = require("path");
 
 const rootDir = process.cwd();
 let passed = 0;

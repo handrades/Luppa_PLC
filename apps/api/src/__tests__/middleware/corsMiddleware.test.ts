@@ -159,19 +159,12 @@ describe("CORS Middleware", () => {
   describe("production environment", () => {
     const originalEnv = process.env.NODE_ENV;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       process.env.NODE_ENV = "production";
 
       // Need to recreate app with new environment
       app = express();
-
-      // Re-require the middleware to get updated configuration
-      delete require.cache[require.resolve("../../middleware/corsMiddleware")];
-      const { corsMiddleware: prodCorsMiddleware } = await import(
-        "../../middleware/corsMiddleware"
-      );
-
-      app.use(prodCorsMiddleware);
+      app.use(corsMiddleware);
       app.get("/test", (req, res) => {
         res.json({ success: true });
       });
@@ -179,8 +172,6 @@ describe("CORS Middleware", () => {
 
     afterAll(() => {
       process.env.NODE_ENV = originalEnv;
-      // Clean up require cache
-      delete require.cache[require.resolve("../../middleware/corsMiddleware")];
     });
 
     it("should reject localhost origins in production", async () => {

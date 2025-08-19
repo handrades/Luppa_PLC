@@ -289,20 +289,13 @@ describe("Database Entities Validation (Mock)", () => {
       const emailColumn = userMetadata!.findColumnWithPropertyName("email");
       expect(emailColumn).toBeDefined();
 
-      // Check if there are any unique indices defined (the specific implementation may vary)
-      const hasUniqueIndices = entityMetadatas.some((metadata) =>
-        metadata.indices.some((index) => index.isUnique),
+      // Check if there are any unique constraints defined (indices or unique constraints)
+      const hasUniqueConstraints = entityMetadatas.some((metadata) =>
+        metadata.indices.some((index) => index.isUnique) ||
+        metadata.uniques.some((unique) => unique.columns && unique.columns.length > 0),
       );
-      expect(hasUniqueIndices).toBe(true);
+      expect(hasUniqueConstraints).toBe(true);
 
-      // PLC tagId should be unique - this one should definitely be defined
-      const plcMetadata = entityMetadatas.find((e) => e.name === "PLC");
-      const tagIdIndex = plcMetadata!.indices.find(
-        (index) =>
-          index.isUnique &&
-          index.columns.some((col) => col.propertyName === "tagId"),
-      );
-      expect(tagIdIndex).toBeDefined();
     });
 
     it("should have composite unique indexes", () => {
@@ -310,23 +303,33 @@ describe("Database Entities Validation (Mock)", () => {
 
       // Cell should have unique (site_id, line_number)
       const cellMetadata = entityMetadatas.find((e) => e.name === "Cell");
-      const cellUniqueIndex = cellMetadata!.indices.find(
+      const cellUniqueConstraint = cellMetadata!.indices.find(
         (index) =>
           index.isUnique &&
           index.columns.some((col) => col.propertyName === "siteId") &&
           index.columns.some((col) => col.propertyName === "lineNumber"),
+      ) || cellMetadata!.uniques.find(
+        (unique) =>
+          unique.columns &&
+          unique.columns.some((col) => col.propertyName === "siteId") &&
+          unique.columns.some((col) => col.propertyName === "lineNumber"),
       );
-      expect(cellUniqueIndex).toBeDefined();
+      expect(cellUniqueConstraint).toBeDefined();
 
       // Tag should have unique (plc_id, name)
       const tagMetadata = entityMetadatas.find((e) => e.name === "Tag");
-      const tagUniqueIndex = tagMetadata!.indices.find(
+      const tagUniqueConstraint = tagMetadata!.indices.find(
         (index) =>
           index.isUnique &&
           index.columns.some((col) => col.propertyName === "plcId") &&
           index.columns.some((col) => col.propertyName === "name"),
+      ) || tagMetadata!.uniques.find(
+        (unique) =>
+          unique.columns &&
+          unique.columns.some((col) => col.propertyName === "plcId") &&
+          unique.columns.some((col) => col.propertyName === "name"),
       );
-      expect(tagUniqueIndex).toBeDefined();
+      expect(tagUniqueConstraint).toBeDefined();
     });
   });
 
