@@ -68,7 +68,7 @@ jest.mock('../../services/SiteService', () => {
         // Apply sorting
         if (filters.sortBy && typeof filters.sortBy === 'string') {
           const sortField = filters.sortBy;
-          const sortOrder = filters.sortOrder === 'desc' ? -1 : 1;
+          const sortOrder = String(filters.sortOrder || '').toUpperCase() === 'DESC' ? -1 : 1;
           sites.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
             const aVal = String(a[sortField] || '');
             const bVal = String(b[sortField] || '');
@@ -107,8 +107,9 @@ jest.mock('../../services/SiteService', () => {
         totalEquipment: 0,
         averageCellsPerSite:
           testData.sites.size > 0 ? testData.cells.size / testData.sites.size : 0,
+        averageEquipmentPerSite: 0,
         sitesWithoutCells: 0,
-        equipmentBySite: {},
+        sitesWithoutEquipment: testData.sites.size, // Assuming no equipment in test data
       })),
       getSiteSuggestions: jest.fn().mockImplementation(async (query?: string, limit = 10) => {
         let sites = Array.from(testData.sites.values());
@@ -138,11 +139,36 @@ jest.mock('../../services/SiteService', () => {
         }),
       updateSite: jest
         .fn()
-        .mockImplementation(async (id: string, data: Record<string, unknown>) => {
+        .mockImplementation(async (
+          id: string, 
+          data: Record<string, unknown>, 
+          expectedUpdatedAt: Date,
+          _options: Record<string, unknown>
+        ) => {
           const site = testData.sites.get(id);
           if (!site) {
             throw new Error(`Site with ID '${id}' not found`);
           }
+          
+          // Check optimistic locking
+          const siteUpdatedAt = new Date(String(site.updatedAt));
+          if (siteUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+            throw new Error('Site was modified by another user');
+          }
+          
+          // Check name uniqueness if name is being changed
+          if (data.name && data.name !== site.name) {
+            const existingSites = Array.from(testData.sites.values());
+            const duplicate = existingSites.find(
+              (s: Record<string, unknown>) => s.name === data.name && s.id !== id
+            );
+            if (duplicate) {
+              const error = new Error(`Site name '${data.name}' already exists`);
+              error.name = 'ConflictError';
+              throw error;
+            }
+          }
+          
           const updatedSite = { ...site, ...data, updatedAt: new Date().toISOString() };
           testData.sites.set(id, updatedSite);
           return updatedSite;
@@ -227,7 +253,7 @@ jest.mock('../../services/CellService', () => {
         // Apply sorting
         if (filters.sortBy && typeof filters.sortBy === 'string') {
           const sortField = filters.sortBy;
-          const sortOrder = filters.sortOrder === 'desc' ? -1 : 1;
+          const sortOrder = String(filters.sortOrder || '').toUpperCase() === 'DESC' ? -1 : 1;
           cells.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
             const aVal = String(a[sortField] || '');
             const bVal = String(b[sortField] || '');
