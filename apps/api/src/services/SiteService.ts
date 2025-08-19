@@ -235,7 +235,9 @@ export class SiteService {
 
     // Add search filter
     if (search) {
-      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', { search: `%${search}%` });
+      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
     }
 
     // Add empty filter
@@ -296,7 +298,9 @@ export class SiteService {
     const queryBuilder = siteRepository.createQueryBuilder('site');
 
     if (search) {
-      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', { search: `%${search}%` });
+      queryBuilder.where('LOWER(site.name) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (!includeEmpty) {
@@ -384,7 +388,9 @@ export class SiteService {
         // Check if any rows were updated
         if (updateResult.affected === 0) {
           // Check if site still exists to determine error type
-          const siteStillExists = await siteRepository.findOne({ where: { id } });
+          const siteStillExists = await siteRepository.findOne({
+            where: { id },
+          });
           if (!siteStillExists) {
             throw new SiteNotFoundError(id);
           } else {

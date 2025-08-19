@@ -5,10 +5,11 @@
  */
 
 // Set JWT_SECRET environment variable before any imports
-process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+process.env.JWT_SECRET =
+  "test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes";
 
 // Mock dependencies first, before importing modules that use them
-jest.mock('../../config/database', () => ({
+jest.mock("../../config/database", () => ({
   AppDataSource: {
     getRepository: jest.fn(),
     manager: {
@@ -17,12 +18,12 @@ jest.mock('../../config/database', () => ({
   },
 }));
 
-jest.mock('../../config/redis');
-jest.mock('bcrypt');
+jest.mock("../../config/redis");
+jest.mock("bcrypt");
 
 // Partially mock jsonwebtoken to preserve error classes
-jest.mock('jsonwebtoken', () => {
-  const originalJwt = jest.requireActual('jsonwebtoken');
+jest.mock("jsonwebtoken", () => {
+  const originalJwt = jest.requireActual("jsonwebtoken");
   return {
     ...originalJwt,
     sign: jest.fn(),
@@ -33,17 +34,17 @@ jest.mock('jsonwebtoken', () => {
   };
 });
 
-import { EntityManager, Repository } from 'typeorm';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { AuthService } from '../../services/AuthService';
-import { User } from '../../entities/User';
-import { Role } from '../../entities/Role';
-import { TokenType, jwtConfig } from '../../config/jwt';
-import * as redisConfig from '../../config/redis';
-import { TEST_CREDENTIALS, TEST_USER } from '../helpers/test-constants';
+import { EntityManager, Repository } from "typeorm";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { AuthService } from "../../services/AuthService";
+import { User } from "../../entities/User";
+import { Role } from "../../entities/Role";
+import { TokenType, jwtConfig } from "../../config/jwt";
+import * as redisConfig from "../../config/redis";
+import { TEST_CREDENTIALS, TEST_USER } from "../helpers/test-constants";
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let authService: AuthService;
   let mockUserRepository: jest.Mocked<Repository<User>>;
   let mockRoleRepository: jest.Mocked<Repository<Role>>;
@@ -53,13 +54,13 @@ describe('AuthService', () => {
 
   // Mock user and role data
   const mockRole = {
-    id: 'role-123',
-    name: 'Admin',
+    id: "role-123",
+    name: "Admin",
     permissions: {
       plc: { read: true, write: true },
       users: { read: true, write: true },
     },
-    description: 'Administrator role',
+    description: "Administrator role",
     isSystem: false,
     users: [],
   } as Role;
@@ -70,7 +71,7 @@ describe('AuthService', () => {
     firstName: TEST_USER.firstName,
     lastName: TEST_USER.lastName,
     passwordHash: TEST_CREDENTIALS.hashedPassword,
-    roleId: 'role-123',
+    roleId: "role-123",
     isActive: true,
     lastLogin: null,
     role: mockRole,
@@ -92,15 +93,19 @@ describe('AuthService', () => {
 
     // Configure the existing mocked AppDataSource
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { AppDataSource } = require('../../config/database');
+    const { AppDataSource } = require("../../config/database");
     const repositoryMockImplementation = (entity: unknown) => {
       if (entity === User) return mockUserRepository;
       if (entity === Role) return mockRoleRepository;
       return null;
     };
 
-    AppDataSource.getRepository.mockImplementation(repositoryMockImplementation);
-    AppDataSource.manager.getRepository.mockImplementation(repositoryMockImplementation);
+    AppDataSource.getRepository.mockImplementation(
+      repositoryMockImplementation,
+    );
+    AppDataSource.manager.getRepository.mockImplementation(
+      repositoryMockImplementation,
+    );
 
     // Setup bcrypt mock
     mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
@@ -133,19 +138,21 @@ describe('AuthService', () => {
     authService = new AuthService(mockEntityManager as EntityManager);
   });
 
-  describe('login', () => {
-    it('should successfully authenticate valid credentials', async () => {
+  describe("login", () => {
+    it("should successfully authenticate valid credentials", async () => {
       // Arrange
       const credentials = {
         email: TEST_CREDENTIALS.email,
         password: TEST_CREDENTIALS.password,
       };
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true);
-      mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
+      mockJwt.sign
+        .mockReturnValueOnce("access-token")
+        .mockReturnValueOnce("refresh-token");
       mockRedis.storeSession.mockResolvedValue();
       mockUserRepository.save.mockResolvedValue({
         ...mockUser,
@@ -157,12 +164,12 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-        relations: ['role'],
+        where: { email: "test@example.com" },
+        relations: ["role"],
       });
       expect(mockBcrypt.compare).toHaveBeenCalledWith(
         TEST_CREDENTIALS.password,
-        TEST_CREDENTIALS.hashedPassword
+        TEST_CREDENTIALS.hashedPassword,
       );
       expect(mockJwt.sign).toHaveBeenCalledTimes(2);
       expect(mockRedis.storeSession).toHaveBeenCalled();
@@ -170,86 +177,88 @@ describe('AuthService', () => {
 
       expect(result).toMatchObject({
         tokens: {
-          accessToken: 'access-token',
-          refreshToken: 'refresh-token',
+          accessToken: "access-token",
+          refreshToken: "refresh-token",
         },
         user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          firstName: 'Test',
-          lastName: 'User',
-          roleId: 'role-123',
-          roleName: 'Admin',
+          id: "user-123",
+          email: "test@example.com",
+          firstName: "Test",
+          lastName: "User",
+          roleId: "role-123",
+          roleName: "Admin",
           isActive: true,
         },
       });
     });
 
-    it('should throw error for non-existent user', async () => {
+    it("should throw error for non-existent user", async () => {
       // Arrange
       const credentials = {
-        email: 'nonexistent@example.com',
+        email: "nonexistent@example.com",
         password: TEST_CREDENTIALS.password,
       };
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
 
       mockUserRepository.findOne.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
-        'Invalid credentials'
-      );
+      await expect(
+        authService.login(credentials, ipAddress, userAgent),
+      ).rejects.toThrow("Invalid credentials");
     });
 
-    it('should throw error for inactive user', async () => {
+    it("should throw error for inactive user", async () => {
       // Arrange
       const credentials = {
         email: TEST_CREDENTIALS.email,
         password: TEST_CREDENTIALS.password,
       };
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
       const inactiveUser = { ...mockUser, isActive: false };
 
       mockUserRepository.findOne.mockResolvedValue(inactiveUser);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
-        'Invalid credentials'
-      );
+      await expect(
+        authService.login(credentials, ipAddress, userAgent),
+      ).rejects.toThrow("Invalid credentials");
     });
 
-    it('should throw error for invalid password', async () => {
+    it("should throw error for invalid password", async () => {
       // Arrange
       const credentials = {
         email: TEST_CREDENTIALS.email,
         password: TEST_CREDENTIALS.wrongPassword,
       };
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(false);
 
       // Act & Assert
-      await expect(authService.login(credentials, ipAddress, userAgent)).rejects.toThrow(
-        'Invalid credentials'
-      );
+      await expect(
+        authService.login(credentials, ipAddress, userAgent),
+      ).rejects.toThrow("Invalid credentials");
     });
 
-    it('should trim and lowercase email', async () => {
+    it("should trim and lowercase email", async () => {
       // Arrange
       const credentials = {
-        email: '  TEST@EXAMPLE.COM  ',
-        password: 'password123',
+        email: "  TEST@EXAMPLE.COM  ",
+        password: "password123",
       };
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true);
-      mockJwt.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
+      mockJwt.sign
+        .mockReturnValueOnce("access-token")
+        .mockReturnValueOnce("refresh-token");
       mockRedis.storeSession.mockResolvedValue();
       mockUserRepository.save.mockResolvedValue({
         ...mockUser,
@@ -261,32 +270,32 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-        relations: ['role'],
+        where: { email: "test@example.com" },
+        relations: ["role"],
       });
     });
   });
 
-  describe('validateToken', () => {
-    it('should successfully validate valid access token', async () => {
+  describe("validateToken", () => {
+    it("should successfully validate valid access token", async () => {
       // Arrange
-      const token = 'valid-token';
+      const token = "valid-token";
       const mockPayload = {
-        sub: 'user-123',
-        email: 'test@example.com',
-        roleId: 'role-123',
+        sub: "user-123",
+        email: "test@example.com",
+        roleId: "role-123",
         permissions: { plc: { read: true } },
         type: TokenType.ACCESS,
-        jti: 'token-id',
+        jti: "token-id",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload);
       mockRedis.isTokenBlacklisted.mockResolvedValue(false);
       mockRedis.getSession.mockResolvedValue({
-        userId: 'user-123',
+        userId: "user-123",
         loginTime: Date.now(),
-        ipAddress: '192.168.1.1',
-        userAgent: 'test-agent',
+        ipAddress: "192.168.1.1",
+        userAgent: "test-agent",
         lastActivity: Date.now(),
       });
       mockRedis.updateSessionActivity.mockResolvedValue();
@@ -300,18 +309,20 @@ describe('AuthService', () => {
         issuer: jwtConfig.issuer,
         audience: jwtConfig.audience,
       });
-      expect(mockRedis.isTokenBlacklisted).toHaveBeenCalledWith('token-id');
-      expect(mockRedis.getSession).toHaveBeenCalledWith('user-123:token-id');
-      expect(mockRedis.updateSessionActivity).toHaveBeenCalledWith('user-123:token-id');
+      expect(mockRedis.isTokenBlacklisted).toHaveBeenCalledWith("token-id");
+      expect(mockRedis.getSession).toHaveBeenCalledWith("user-123:token-id");
+      expect(mockRedis.updateSessionActivity).toHaveBeenCalledWith(
+        "user-123:token-id",
+      );
       expect(result).toEqual(mockPayload);
     });
 
-    it('should throw error for blacklisted token', async () => {
+    it("should throw error for blacklisted token", async () => {
       // Arrange
-      const token = 'blacklisted-token';
+      const token = "blacklisted-token";
       const mockPayload = {
-        sub: 'user-123',
-        jti: 'token-id',
+        sub: "user-123",
+        jti: "token-id",
         type: TokenType.ACCESS,
       };
 
@@ -319,42 +330,48 @@ describe('AuthService', () => {
       mockRedis.isTokenBlacklisted.mockResolvedValue(true);
 
       // Act & Assert
-      await expect(authService.validateToken(token)).rejects.toThrow('Token has been revoked');
+      await expect(authService.validateToken(token)).rejects.toThrow(
+        "Token has been revoked",
+      );
     });
 
-    it('should throw error for expired token', async () => {
+    it("should throw error for expired token", async () => {
       // Arrange
-      const token = 'expired-token';
-      const expiredError = new jwt.TokenExpiredError('jwt expired', new Date());
+      const token = "expired-token";
+      const expiredError = new jwt.TokenExpiredError("jwt expired", new Date());
 
       mockJwt.verify.mockImplementation(() => {
         throw expiredError;
       });
 
       // Act & Assert
-      await expect(authService.validateToken(token)).rejects.toThrow('Token expired');
+      await expect(authService.validateToken(token)).rejects.toThrow(
+        "Token expired",
+      );
     });
 
-    it('should throw error for invalid token', async () => {
+    it("should throw error for invalid token", async () => {
       // Arrange
-      const token = 'invalid-token';
-      const jwtError = new jwt.JsonWebTokenError('invalid token');
+      const token = "invalid-token";
+      const jwtError = new jwt.JsonWebTokenError("invalid token");
 
       mockJwt.verify.mockImplementation(() => {
         throw jwtError;
       });
 
       // Act & Assert
-      await expect(authService.validateToken(token)).rejects.toThrow('Invalid token');
+      await expect(authService.validateToken(token)).rejects.toThrow(
+        "Invalid token",
+      );
     });
 
-    it('should throw error when session not found for access token', async () => {
+    it("should throw error when session not found for access token", async () => {
       // Arrange
-      const token = 'valid-token';
+      const token = "valid-token";
       const mockPayload = {
-        sub: 'user-123',
+        sub: "user-123",
         type: TokenType.ACCESS,
-        jti: 'token-id',
+        jti: "token-id",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload);
@@ -362,75 +379,86 @@ describe('AuthService', () => {
       mockRedis.getSession.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.validateToken(token)).rejects.toThrow('Session not found');
+      await expect(authService.validateToken(token)).rejects.toThrow(
+        "Session not found",
+      );
     });
   });
 
-  describe('refreshToken', () => {
-    it('should successfully refresh tokens', async () => {
+  describe("refreshToken", () => {
+    it("should successfully refresh tokens", async () => {
       // Arrange
-      const refreshToken = 'valid-refresh-token';
-      const ipAddress = '192.168.1.1';
-      const userAgent = 'test-agent';
+      const refreshToken = "valid-refresh-token";
+      const ipAddress = "192.168.1.1";
+      const userAgent = "test-agent";
       const mockPayload = {
-        sub: 'user-123',
+        sub: "user-123",
         type: TokenType.REFRESH,
-        jti: 'refresh-token-id',
+        jti: "refresh-token-id",
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       mockJwt.verify.mockReturnValue(mockPayload);
       mockRedis.isTokenBlacklisted.mockResolvedValue(false);
       mockUserRepository.findOne.mockResolvedValue(mockUser);
-      mockJwt.sign.mockReturnValueOnce('new-access-token').mockReturnValueOnce('new-refresh-token');
+      mockJwt.sign
+        .mockReturnValueOnce("new-access-token")
+        .mockReturnValueOnce("new-refresh-token");
       mockRedis.storeSession.mockResolvedValue();
       mockRedis.blacklistToken.mockResolvedValue();
 
       // Act
-      const result = await authService.refreshToken(refreshToken, ipAddress, userAgent);
+      const result = await authService.refreshToken(
+        refreshToken,
+        ipAddress,
+        userAgent,
+      );
 
       // Assert
       expect(result).toMatchObject({
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
+        accessToken: "new-access-token",
+        refreshToken: "new-refresh-token",
       });
-      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('refresh-token-id', expect.any(Number));
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith(
+        "refresh-token-id",
+        expect.any(Number),
+      );
     });
 
-    it('should throw error for non-refresh token', async () => {
+    it("should throw error for non-refresh token", async () => {
       // Arrange
-      const refreshToken = 'access-token';
+      const refreshToken = "access-token";
       const mockPayload = {
-        sub: 'user-123',
+        sub: "user-123",
         type: TokenType.ACCESS, // Wrong type
-        jti: 'token-id',
+        jti: "token-id",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload);
       mockRedis.isTokenBlacklisted.mockResolvedValue(false);
       // Since this is an ACCESS token, it will try to check session
       mockRedis.getSession.mockResolvedValue({
-        userId: 'user-123',
+        userId: "user-123",
         loginTime: Date.now(),
-        ipAddress: '192.168.1.1',
-        userAgent: 'test-agent',
+        ipAddress: "192.168.1.1",
+        userAgent: "test-agent",
         lastActivity: Date.now(),
       });
       mockRedis.updateSessionActivity.mockResolvedValue();
 
       // Act & Assert
       await expect(
-        authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent')
-      ).rejects.toThrow('Invalid token type');
+        authService.refreshToken(refreshToken, "192.168.1.1", "test-agent"),
+      ).rejects.toThrow("Invalid token type");
     });
 
-    it('should throw error for inactive user', async () => {
+    it("should throw error for inactive user", async () => {
       // Arrange
-      const refreshToken = 'valid-refresh-token';
+      const refreshToken = "valid-refresh-token";
       const mockPayload = {
-        sub: 'user-123',
+        sub: "user-123",
         type: TokenType.REFRESH,
-        jti: 'refresh-token-id',
+        jti: "refresh-token-id",
       };
       const inactiveUser = { ...mockUser, isActive: false };
 
@@ -440,16 +468,16 @@ describe('AuthService', () => {
 
       // Act & Assert
       await expect(
-        authService.refreshToken(refreshToken, '192.168.1.1', 'test-agent')
-      ).rejects.toThrow('User not found or inactive');
+        authService.refreshToken(refreshToken, "192.168.1.1", "test-agent"),
+      ).rejects.toThrow("User not found or inactive");
     });
   });
 
-  describe('logout', () => {
-    it('should successfully logout user', async () => {
+  describe("logout", () => {
+    it("should successfully logout user", async () => {
       // Arrange
-      const userId = 'user-123';
-      const tokenId = 'token-id';
+      const userId = "user-123";
+      const tokenId = "token-id";
 
       mockRedis.removeSession.mockResolvedValue();
       mockRedis.blacklistToken.mockResolvedValue();
@@ -458,15 +486,21 @@ describe('AuthService', () => {
       await authService.logout(userId, tokenId);
 
       // Assert
-      expect(mockRedis.removeSession).toHaveBeenCalledWith('user-123:token-id');
+      expect(mockRedis.removeSession).toHaveBeenCalledWith("user-123:token-id");
       // Should blacklist both access and refresh tokens
-      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('token-id_access', 24 * 60 * 60);
-      expect(mockRedis.blacklistToken).toHaveBeenCalledWith('token-id_refresh', 7 * 24 * 60 * 60);
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith(
+        "token-id_access",
+        24 * 60 * 60,
+      );
+      expect(mockRedis.blacklistToken).toHaveBeenCalledWith(
+        "token-id_refresh",
+        7 * 24 * 60 * 60,
+      );
     });
 
-    it('should logout without token ID', async () => {
+    it("should logout without token ID", async () => {
       // Arrange
-      const userId = 'user-123';
+      const userId = "user-123";
 
       mockRedis.removeSession.mockResolvedValue();
 
@@ -479,11 +513,11 @@ describe('AuthService', () => {
     });
   });
 
-  describe('hashPassword', () => {
-    it('should hash password with correct salt rounds', async () => {
+  describe("hashPassword", () => {
+    it("should hash password with correct salt rounds", async () => {
       // Arrange
-      const password = 'password123';
-      const hashedPassword = 'hashed-password';
+      const password = "password123";
+      const hashedPassword = "hashed-password";
 
       mockBcrypt.hash.mockResolvedValue(hashedPassword);
 
@@ -496,11 +530,11 @@ describe('AuthService', () => {
     });
   });
 
-  describe('verifyPassword', () => {
-    it('should verify password correctly', async () => {
+  describe("verifyPassword", () => {
+    it("should verify password correctly", async () => {
       // Arrange
-      const password = 'password123';
-      const hash = 'hashed-password';
+      const password = "password123";
+      const hash = "hashed-password";
 
       mockBcrypt.compare.mockResolvedValue(true);
 
@@ -513,10 +547,10 @@ describe('AuthService', () => {
     });
   });
 
-  describe('getUserById', () => {
-    it('should return user with role information', async () => {
+  describe("getUserById", () => {
+    it("should return user with role information", async () => {
       // Arrange
-      const userId = 'user-123';
+      const userId = "user-123";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
@@ -526,16 +560,16 @@ describe('AuthService', () => {
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
         where: { id: userId },
-        relations: ['role'],
+        relations: ["role"],
       });
       expect(result).toBe(mockUser);
     });
   });
 
-  describe('userExistsByEmail', () => {
-    it('should return true for existing user', async () => {
+  describe("userExistsByEmail", () => {
+    it("should return true for existing user", async () => {
       // Arrange
-      const email = 'test@example.com';
+      const email = "test@example.com";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
@@ -544,14 +578,14 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
+        where: { email: "test@example.com" },
       });
       expect(result).toBe(true);
     });
 
-    it('should return false for non-existent user', async () => {
+    it("should return false for non-existent user", async () => {
       // Arrange
-      const email = 'nonexistent@example.com';
+      const email = "nonexistent@example.com";
 
       mockUserRepository.findOne.mockResolvedValue(null);
 
@@ -562,9 +596,9 @@ describe('AuthService', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle email trimming and lowercasing', async () => {
+    it("should handle email trimming and lowercasing", async () => {
       // Arrange
-      const email = '  TEST@EXAMPLE.COM  ';
+      const email = "  TEST@EXAMPLE.COM  ";
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
@@ -573,7 +607,7 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
+        where: { email: "test@example.com" },
       });
     });
   });

@@ -647,7 +647,10 @@ export const useHierarchyStore = create<HierarchyStore>()(
             set(state => {
               const existingIndex = state.preferences.savedFilters.findIndex(f => f.name === name);
               if (existingIndex >= 0) {
-                state.preferences.savedFilters[existingIndex] = { name, filters };
+                state.preferences.savedFilters[existingIndex] = {
+                  name,
+                  filters,
+                };
               } else {
                 state.preferences.savedFilters.push({ name, filters });
               }
@@ -852,7 +855,10 @@ export const useHierarchyStore = create<HierarchyStore>()(
                   state.selectedCellId = null;
                   state.currentLocation = state.selectedSiteId
                     ? {
-                        site: state.currentLocation?.site || { id: '', name: '' },
+                        site: state.currentLocation?.site || {
+                          id: '',
+                          name: '',
+                        },
                         cell: { id: '', name: '', lineNumber: '' },
                         path: state.currentLocation?.site.name || '',
                       }
