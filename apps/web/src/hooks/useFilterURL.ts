@@ -348,7 +348,14 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
         }
       }, currentConfig.debounceDelay);
     },
-    [currentConfig, replaceHistory, historyIndex, onURLChange, onError]
+    [
+      currentConfig.debounceDelay,
+      currentConfig.syncEnabled,
+      replaceHistory,
+      historyIndex,
+      onURLChange,
+      onError,
+    ]
   );
 
   /**
