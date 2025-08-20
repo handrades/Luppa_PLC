@@ -7,6 +7,7 @@
 import { SearchService } from '../../services/SearchService';
 import { AppDataSource } from '../../config/database';
 import { createClient } from 'redis';
+import { createHash } from 'crypto';
 
 // Mock Redis
 jest.mock('redis');
@@ -27,6 +28,8 @@ describe('SearchService', () => {
       get: jest.fn(),
       setEx: jest.fn(),
       keys: jest.fn(),
+      mget: jest.fn(),
+      scanIterator: jest.fn(),
       connect: jest.fn().mockResolvedValue(undefined),
       ping: jest.fn().mockResolvedValue('PONG'),
       on: jest.fn(),
@@ -276,7 +279,7 @@ describe('SearchService', () => {
       );
     });
 
-    it('should generate consistent cache keys', async () => {
+    it('should generate consistent SHA256-hashed cache keys', async () => {
       const query1 = { q: 'test', page: 1, pageSize: 50 };
       const query2 = { q: 'test', page: 1, pageSize: 50 };
 
@@ -290,7 +293,27 @@ describe('SearchService', () => {
       await searchService.search(query2);
       const secondCacheKey = mockRedis.setEx.mock.calls[0][0];
 
+      // Cache keys should be identical
       expect(firstCacheKey).toBe(secondCacheKey);
+      
+      // Cache key should start with prefix and contain SHA256 hash
+      expect(firstCacheKey).toMatch(/^search:[a-f0-9]{64}$/i);
+      
+      // Verify it matches the expected hash of the canonicalized query (as the service normalizes it)
+      const normalizedKey = {
+        q: 'test', // Service normalizes to lowercase
+        page: 1,
+        pageSize: 50,
+        fields: [], // Empty array
+        sortBy: '',
+        sortOrder: 'DESC',
+        includeHighlights: false,
+        maxResults: 1000,
+      };
+      const keyString = JSON.stringify(normalizedKey, Object.keys(normalizedKey).sort());
+      const expectedHash = createHash('sha256').update(keyString).digest('hex');
+      const expectedCacheKey = `search:${expectedHash}`;
+      expect(firstCacheKey).toBe(expectedCacheKey);
     });
   });
 
@@ -407,14 +430,71 @@ describe('SearchService', () => {
         },
       ];
 
-      mockRedis.keys.mockResolvedValue(['search_analytics:1', 'search_analytics:2']);
-      mockRedis.get
-        .mockResolvedValueOnce(JSON.stringify(mockAnalytics[0]))
-        .mockResolvedValueOnce(null);
+      // Mock scanIterator to return the keys
+      mockRedis.scanIterator = jest.fn().mockImplementation(function*() {
+        yield 'search_analytics:1';
+        yield 'search_analytics:2';
+      });
+      
+      // Mock mget to return the values
+      mockRedis.mget.mockResolvedValue([
+        JSON.stringify(mockAnalytics[0]),
+        null,
+      ]);
 
       const metrics = await searchService.getSearchMetrics();
 
-      expect(metrics).toEqual([mockAnalytics[0]]);
+      expect(metrics).toEqual([{
+        ...mockAnalytics[0],
+        timestamp: new Date(mockAnalytics[0].timestamp),
+      }]);
+    });
+  });
+
+  describe('security', () => {
+    it('should sanitize highlighted fields to prevent XSS', async () => {
+      const mockResult = [{
+        plc_id: '1',
+        tag_id: 'test',
+        plc_description: 'test description',
+        make: 'test',
+        model: 'test',
+        ip_address: null,
+        firmware_version: null,
+        equipment_id: '1',
+        equipment_name: 'test',
+        equipment_type: 'test',
+        cell_id: '1',
+        cell_name: 'test',
+        line_number: '1',
+        site_id: '1',
+        site_name: 'test',
+        hierarchy_path: 'test',
+        relevance_score: 1.0,
+        highlighted_fields: {
+          description: '<script>alert(1)</script><mark>test</mark>',
+          make: '<img src=x onerror=alert(1)><b>test</b>',
+          model: '<mark>safe content</mark>',
+        },
+        tags_text: 'test',
+      }];
+
+      mockQueryRunner.query.mockResolvedValue(mockResult);
+      mockRedis.get.mockResolvedValue(null);
+
+      const result = await searchService.search({
+        q: 'test',
+        includeHighlights: true,
+      });
+
+      // Verify XSS payloads are removed but safe highlighting is preserved
+      expect(result.data[0].highlighted_fields?.description).toBe('<mark>test</mark>');
+      expect(result.data[0].highlighted_fields?.make).toBe('<b>test</b>');
+      expect(result.data[0].highlighted_fields?.model).toBe('<mark>safe content</mark>');
+      
+      // Verify dangerous content was stripped
+      expect(result.data[0].highlighted_fields?.description).not.toContain('<script>');
+      expect(result.data[0].highlighted_fields?.make).not.toContain('onerror=');
     });
   });
 });

@@ -225,12 +225,12 @@ describe('Search Performance Benchmarks', () => {
       // Calculate statistics
       const avgTime = results.reduce((sum, time) => sum + time, 0) / results.length;
       const maxTime = Math.max(...results);
-      const minTime = Math.min(...results);
+      const _minTime = Math.min(...results); // eslint-disable-line @typescript-eslint/no-unused-vars
 
-      console.log(`Load test results over ${iterations} iterations:`);
-      console.log(`Average: ${avgTime.toFixed(2)}ms`);
-      console.log(`Min: ${minTime.toFixed(2)}ms`);
-      console.log(`Max: ${maxTime.toFixed(2)}ms`);
+      // Load test results over ${iterations} iterations
+      // Average: ${avgTime.toFixed(2)}ms
+      // Min: ${minTime.toFixed(2)}ms  
+      // Max: ${maxTime.toFixed(2)}ms
 
       // Performance requirements
       expect(avgTime).toBeLessThan(300);
@@ -272,18 +272,25 @@ describe('Search Performance Benchmarks', () => {
       mockQueryRunner.query.mockResolvedValue([]);
 
       await searchService.search({
-        q: 'optimization test',
+        q: 'optimization test fulltext query',
         page: 1,
         pageSize: 50,
       });
 
-      const queryCall = mockQueryRunner.query.mock.calls[0];
-      const query = queryCall[0];
+      // Find the query that contains ts_rank (full-text search query)
+      const tsRankQuery = mockQueryRunner.query.mock.calls
+        .map(call => call[0])
+        .find(query => typeof query === 'string' && query.includes('ts_rank'));
+
+      if (!tsRankQuery) {
+        fail('No query containing ts_rank was found in mock calls. Available queries: ' + 
+             mockQueryRunner.query.mock.calls.map(call => call[0]).join('\n---\n'));
+      }
 
       // Verify query contains performance optimizations
-      expect(query).toContain('ts_rank'); // Full-text search ranking
-      expect(query).toContain('LIMIT'); // Pagination
-      expect(query).not.toContain('SELECT *'); // Should select specific columns
+      expect(tsRankQuery).toContain('ts_rank'); // Full-text search ranking
+      expect(tsRankQuery).toContain('LIMIT'); // Pagination
+      expect(tsRankQuery).not.toContain('SELECT *'); // Should select specific columns
     });
 
     it('should use appropriate search strategy based on query', async () => {

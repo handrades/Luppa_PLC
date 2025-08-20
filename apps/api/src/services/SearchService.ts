@@ -98,7 +98,7 @@ export class SearchService {
         password: process.env.REDIS_PASSWORD,
         socket: {
           connectTimeout: 10000,
-          reconnectStrategy: (retries) => {
+          reconnectStrategy: retries => {
             if (retries > 3) {
               logger.warn('Redis max reconnection attempts reached');
               return false;
@@ -109,8 +109,10 @@ export class SearchService {
       });
 
       // Set up error handlers
-      this.redis.on('error', (error) => {
-        logger.warn('Redis connection error - falling back to no-cache mode', { error: error.message });
+      this.redis.on('error', error => {
+        logger.warn('Redis connection error - falling back to no-cache mode', {
+          error: error.message,
+        });
         this.redisAvailable = false;
       });
 
@@ -136,7 +138,9 @@ export class SearchService {
       logger.info('Redis initialized successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.warn('Redis initialization failed - continuing without cache', { error: errorMessage });
+      logger.warn('Redis initialization failed - continuing without cache', {
+        error: errorMessage,
+      });
       this.redisAvailable = false;
       this.redis = null;
     }
@@ -154,7 +158,7 @@ export class SearchService {
       processingTime: 0,
       totalTime: 0,
     };
-    
+
     try {
       // Input validation and sanitization
       const sanitizedQuery = this.sanitizeQuery(searchQuery.q);
@@ -167,11 +171,11 @@ export class SearchService {
       const cacheKey = this.getCacheKey(searchQuery);
       const cachedResult = this.redisAvailable ? await this.getFromCache(cacheKey) : null;
       performanceMetrics.cacheCheckTime = Date.now() - cacheCheckStart;
-      
+
       if (cachedResult) {
-        logger.info('Search cache hit', { 
-          query: sanitizedQuery, 
-          cacheCheckTime: performanceMetrics.cacheCheckTime 
+        logger.info('Search cache hit', {
+          query: sanitizedQuery,
+          cacheCheckTime: performanceMetrics.cacheCheckTime,
         });
         return cachedResult;
       }
@@ -280,19 +284,19 @@ export class SearchService {
   /**
    * Execute PostgreSQL full-text search using tsvector
    */
-  private async executeFullTextSearch(query: string, options: SearchQuery): Promise<SearchResultItem[]> {
+  private async executeFullTextSearch(
+    query: string,
+    options: SearchQuery
+  ): Promise<SearchResultItem[]> {
     const queryRunner = AppDataSource.createQueryRunner();
-    
-    // Set query timeout to prevent long-running queries from blocking the pool
-    const timeout = setTimeout(() => {
-      queryRunner.release();
-      throw new Error('Search query timeout exceeded (5 seconds)');
-    }, 5000);
-    
+
     try {
+      // Set DB-side timeout to prevent long-running queries
+      await queryRunner.query("SET LOCAL statement_timeout = '5000'");
+
       // Convert query to tsquery format
       const tsQuery = this.buildTsQuery(query);
-      
+
       const sql = `
         SELECT 
           mes.*,
@@ -307,11 +311,9 @@ export class SearchService {
 
       const maxResults = options.maxResults || 1000;
       const results = await queryRunner.query(sql, [tsQuery, maxResults]);
-      
-      clearTimeout(timeout);
+
       return this.processSearchResults(results, options);
     } finally {
-      clearTimeout(timeout);
       await queryRunner.release();
     }
   }
@@ -319,16 +321,16 @@ export class SearchService {
   /**
    * Execute similarity search using pg_trgm
    */
-  private async executeSimilaritySearch(query: string, options: SearchQuery): Promise<SearchResultItem[]> {
+  private async executeSimilaritySearch(
+    query: string,
+    options: SearchQuery
+  ): Promise<SearchResultItem[]> {
     const queryRunner = AppDataSource.createQueryRunner();
-    
-    // Set query timeout to prevent long-running queries from blocking the pool
-    const timeout = setTimeout(() => {
-      queryRunner.release();
-      throw new Error('Similarity search query timeout exceeded (5 seconds)');
-    }, 5000);
-    
+
     try {
+      // Set DB-side timeout to prevent long-running queries
+      await queryRunner.query("SET LOCAL statement_timeout = '5000'");
+
       const sql = `
         SELECT 
           mes.*,
@@ -351,11 +353,9 @@ export class SearchService {
 
       const maxResults = options.maxResults || 1000;
       const results = await queryRunner.query(sql, [query, maxResults]);
-      
-      clearTimeout(timeout);
+
       return this.processSearchResults(results, options);
     } finally {
-      clearTimeout(timeout);
       await queryRunner.release();
     }
   }
@@ -363,7 +363,10 @@ export class SearchService {
   /**
    * Execute hybrid search combining full-text and similarity
    */
-  private async executeHybridSearch(query: string, options: SearchQuery): Promise<SearchResultItem[]> {
+  private async executeHybridSearch(
+    query: string,
+    options: SearchQuery
+  ): Promise<SearchResultItem[]> {
     const [fullTextResults, similarityResults] = await Promise.all([
       this.executeFullTextSearch(query, { ...options, maxResults: 500 }),
       this.executeSimilaritySearch(query, { ...options, maxResults: 500 }),
@@ -405,12 +408,12 @@ export class SearchService {
     if (query.split(/\s+/).length >= 3) {
       return 'fulltext';
     }
-    
+
     // Use similarity search for very short queries or potential typos
     if (query.length <= 3) {
       return 'similarity';
     }
-    
+
     // Use hybrid approach for medium-length queries
     return 'hybrid';
   }
@@ -420,13 +423,16 @@ export class SearchService {
    */
   private buildTsQuery(query: string): string {
     // Split query into words and create OR/AND combinations
-    const words = query.trim().split(/\s+/).filter(word => word.length > 0);
-    
+    const words = query
+      .trim()
+      .split(/\s+/)
+      .filter(word => word.length > 0);
+
     if (words.length === 1) {
       // Single word - add prefix matching
       return `${words[0]}:*`;
     }
-    
+
     // Multiple words - create AND combination with prefix matching
     return words.map(word => `${word}:*`).join(' & ');
   }
@@ -451,7 +457,10 @@ export class SearchService {
   /**
    * Process and normalize search results
    */
-  private processSearchResults(rawResults: Record<string, unknown>[], _options: SearchQuery): SearchResultItem[] {
+  private processSearchResults(
+    rawResults: Record<string, unknown>[],
+    _options: SearchQuery
+  ): SearchResultItem[] {
     return rawResults.map(row => ({
       plc_id: String(row.plc_id || ''),
       tag_id: String(row.tag_id || ''),
@@ -470,9 +479,41 @@ export class SearchService {
       site_name: String(row.site_name || ''),
       hierarchy_path: String(row.hierarchy_path || ''),
       relevance_score: parseFloat(String(row.relevance_score || '0')),
-      highlighted_fields: row.highlighted_fields as Record<string, string> | undefined,
+      highlighted_fields: row.highlighted_fields
+        ? this.sanitizeHighlightFields(row.highlighted_fields as Record<string, string>)
+        : undefined,
       tags_text: row.tags_text ? String(row.tags_text) : undefined,
     }));
+  }
+
+  /**
+   * Sanitize highlighted fields to prevent XSS attacks
+   */
+  private sanitizeHighlightFields(fields: Record<string, string>): Record<string, string> {
+    const sanitized: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(fields)) {
+      if (typeof value === 'string') {
+        // Simple HTML sanitization - remove dangerous tags but preserve highlighting
+        sanitized[key] = value
+          .replace(/<script[^>]*>.*?<\/script>/gi, '')
+          .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+          .replace(/<object[^>]*>.*?<\/object>/gi, '')
+          .replace(/<img[^>]*>/gi, '') // Remove img tags
+          .replace(/<embed[^>]*>/gi, '')
+          .replace(/<link[^>]*>/gi, '')
+          .replace(/<meta[^>]*>/gi, '')
+          .replace(/<style[^>]*>.*?<\/style>/gi, '')
+          .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers
+          .replace(/javascript:/gi, '') // Remove javascript: urls
+          .replace(/vbscript:/gi, '') // Remove vbscript: urls
+          .replace(/data:/gi, ''); // Remove data: urls
+      } else {
+        sanitized[key] = value;
+      }
+    }
+
+    return sanitized;
   }
 
   /**
@@ -482,7 +523,7 @@ export class SearchService {
     if (!query || typeof query !== 'string') {
       return '';
     }
-    
+
     // Remove potentially dangerous characters and normalize
     return query
       .replace(/[';\\]/g, '') // Remove semicolons and backslashes
@@ -507,7 +548,7 @@ export class SearchService {
       includeHighlights: query.includeHighlights || false,
       maxResults: query.maxResults || 1000,
     };
-    
+
     // Create deterministic hash to prevent collisions
     const keyString = JSON.stringify(normalizedKey, Object.keys(normalizedKey).sort());
     const hash = createHash('sha256').update(keyString).digest('hex');
@@ -527,7 +568,10 @@ export class SearchService {
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.warn('Cache retrieval failed - disabling Redis temporarily', { error: errorMessage, key });
+      logger.warn('Cache retrieval failed - disabling Redis temporarily', {
+        error: errorMessage,
+        key,
+      });
       this.redisAvailable = false;
       return null;
     }
@@ -545,7 +589,10 @@ export class SearchService {
       await this.redis.setEx(key, this.CACHE_TTL, JSON.stringify(result));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.warn('Cache storage failed - disabling Redis temporarily', { error: errorMessage, key });
+      logger.warn('Cache storage failed - disabling Redis temporarily', {
+        error: errorMessage,
+        key,
+      });
       this.redisAvailable = false;
     }
   }
@@ -563,7 +610,9 @@ export class SearchService {
       await this.redis.setEx(key, 86400, JSON.stringify(analytics)); // Store for 24 hours
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.warn('Analytics tracking failed - disabling Redis temporarily', { error: errorMessage });
+      logger.warn('Analytics tracking failed - disabling Redis temporarily', {
+        error: errorMessage,
+      });
       this.redisAvailable = false;
     }
   }
@@ -588,13 +637,13 @@ export class SearchService {
    */
   async refreshSearchView(): Promise<void> {
     const queryRunner = AppDataSource.createQueryRunner();
-    
+
     // Set longer timeout for view refresh operations
     const timeout = setTimeout(() => {
       queryRunner.release();
       throw new Error('Search view refresh timeout exceeded (30 seconds)');
     }, 30000);
-    
+
     try {
       await queryRunner.query('SELECT refresh_equipment_search_view()');
       clearTimeout(timeout);
@@ -620,16 +669,52 @@ export class SearchService {
 
     try {
       const pattern = `${this.ANALYTICS_PREFIX}*`;
-      const keys = await this.redis.keys(pattern);
-      
-      const metrics = await Promise.all(
-        keys.map(async key => {
-          const data = await this.redis!.get(key);
-          return data ? JSON.parse(data) : null;
-        })
-      );
+      const keys: string[] = [];
 
-      return metrics.filter(m => m !== null);
+      // Use SCAN to safely iterate through keys without blocking Redis
+      for await (const key of this.redis.scanIterator({ MATCH: pattern })) {
+        keys.push(String(key));
+      }
+
+      const metrics: SearchAnalytics[] = [];
+
+      // Process keys in batches to reduce round-trips
+      const batchSize = 10;
+      for (let i = 0; i < keys.length; i += batchSize) {
+        const batch = keys.slice(i, i + batchSize);
+        const batchData = await this.redis.mget(...batch);
+
+        for (let j = 0; j < batch.length; j++) {
+          if (!batchData || j >= batchData.length) continue;
+          const data = batchData[j];
+          if (!data) continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            // Convert timestamp string back to Date object
+            if (parsed.timestamp) {
+              const timestamp = new Date(parsed.timestamp);
+              // Validate the Date object
+              if (isNaN(timestamp.getTime())) {
+                logger.warn('Invalid timestamp in search analytics', {
+                  key: batch[j],
+                  timestamp: parsed.timestamp,
+                });
+                continue;
+              }
+              parsed.timestamp = timestamp;
+            }
+            metrics.push(parsed);
+          } catch (parseError) {
+            logger.warn('Failed to parse search analytics data', {
+              key: batch[j],
+              error: parseError,
+            });
+          }
+        }
+      }
+
+      return metrics;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.warn('Failed to retrieve search metrics', { error: errorMessage });

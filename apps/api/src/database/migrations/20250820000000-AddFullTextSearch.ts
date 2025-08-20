@@ -17,9 +17,9 @@ export class AddFullTextSearch20250820000000 implements MigrationInterface {
       RETURNS TRIGGER AS $$
       BEGIN
         NEW.search_vector := 
-          setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'A') ||
-          setweight(to_tsvector('english', COALESCE(NEW.make, '') || ' ' || COALESCE(NEW.model, '')), 'B') ||
-          setweight(to_tsvector('english', COALESCE(NEW.tag_id, '')), 'C');
+          setweight(to_tsvector('english', unaccent(COALESCE(NEW.description, ''))), 'A') ||
+          setweight(to_tsvector('english', unaccent(COALESCE(NEW.make, '') || ' ' || COALESCE(NEW.model, ''))), 'B') ||
+          setweight(to_tsvector('english', unaccent(COALESCE(NEW.tag_id, ''))), 'C');
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
@@ -35,23 +35,31 @@ export class AddFullTextSearch20250820000000 implements MigrationInterface {
     // Update existing records with search vectors
     await queryRunner.query(`
       UPDATE plcs SET search_vector = 
-        setweight(to_tsvector('english', COALESCE(description, '')), 'A') ||
-        setweight(to_tsvector('english', COALESCE(make, '') || ' ' || COALESCE(model, '')), 'B') ||
-        setweight(to_tsvector('english', COALESCE(tag_id, '')), 'C')
+        setweight(to_tsvector('english', unaccent(COALESCE(description, ''))), 'A') ||
+        setweight(to_tsvector('english', unaccent(COALESCE(make, '') || ' ' || COALESCE(model, ''))), 'B') ||
+        setweight(to_tsvector('english', unaccent(COALESCE(tag_id, ''))), 'C')
     `);
 
     // Create GIN index for search vector (fastest for full-text search)
     await queryRunner.query(`CREATE INDEX idx_plcs_search_vector ON plcs USING GIN(search_vector)`);
 
     // Create GIN indexes for trigram similarity search (fuzzy matching)
-    await queryRunner.query(`CREATE INDEX idx_plcs_description_trgm ON plcs USING GIN(description gin_trgm_ops)`);
+    await queryRunner.query(
+      `CREATE INDEX idx_plcs_description_trgm ON plcs USING GIN(description gin_trgm_ops)`
+    );
     await queryRunner.query(`CREATE INDEX idx_plcs_make_trgm ON plcs USING GIN(make gin_trgm_ops)`);
-    await queryRunner.query(`CREATE INDEX idx_plcs_model_trgm ON plcs USING GIN(model gin_trgm_ops)`);
-    await queryRunner.query(`CREATE INDEX idx_plcs_tag_id_trgm ON plcs USING GIN(tag_id gin_trgm_ops)`);
+    await queryRunner.query(
+      `CREATE INDEX idx_plcs_model_trgm ON plcs USING GIN(model gin_trgm_ops)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_plcs_tag_id_trgm ON plcs USING GIN(tag_id gin_trgm_ops)`
+    );
 
     // Create composite indexes for common search patterns
     await queryRunner.query(`CREATE INDEX idx_plcs_make_model_composite ON plcs(make, model)`);
-    await queryRunner.query(`CREATE INDEX idx_plcs_description_text ON plcs USING GIN(to_tsvector('english', description))`);
+    await queryRunner.query(
+      `CREATE INDEX idx_plcs_description_text ON plcs USING GIN(to_tsvector('english', unaccent(description)))`
+    );
 
     // Create materialized view for optimized cross-table search
     await queryRunner.query(`
@@ -75,10 +83,10 @@ export class AddFullTextSearch20250820000000 implements MigrationInterface {
         s.name as site_name,
         CONCAT(s.name, ' > ', c.name, ' > ', e.name, ' > ', p.tag_id) as hierarchy_path,
         -- Combined search vector with hierarchy information
-        setweight(to_tsvector('english', COALESCE(p.description, '')), 'A') ||
-        setweight(to_tsvector('english', COALESCE(p.make, '') || ' ' || COALESCE(p.model, '')), 'B') ||
-        setweight(to_tsvector('english', COALESCE(p.tag_id, '')), 'C') ||
-        setweight(to_tsvector('english', COALESCE(s.name, '') || ' ' || COALESCE(c.name, '') || ' ' || COALESCE(e.name, '')), 'D') as combined_search_vector,
+        setweight(to_tsvector('english', unaccent(COALESCE(p.description, ''))), 'A') ||
+        setweight(to_tsvector('english', unaccent(COALESCE(p.make, '') || ' ' || COALESCE(p.model, ''))), 'B') ||
+        setweight(to_tsvector('english', unaccent(COALESCE(p.tag_id, ''))), 'C') ||
+        setweight(to_tsvector('english', unaccent(COALESCE(s.name, '') || ' ' || COALESCE(c.name, '') || ' ' || COALESCE(e.name, ''))), 'D') as combined_search_vector,
         -- Extract tags as searchable text
         COALESCE(
           (SELECT string_agg(t.name || ' ' || COALESCE(t.description, ''), ' ')
@@ -92,11 +100,21 @@ export class AddFullTextSearch20250820000000 implements MigrationInterface {
     `);
 
     // Create indexes on materialized view for optimal search performance
-    await queryRunner.query(`CREATE UNIQUE INDEX idx_mv_equipment_search_plc_id ON mv_equipment_search(plc_id)`);
-    await queryRunner.query(`CREATE INDEX idx_mv_equipment_search_combined_vector ON mv_equipment_search USING GIN(combined_search_vector)`);
-    await queryRunner.query(`CREATE INDEX idx_mv_equipment_search_site_name ON mv_equipment_search(site_name)`);
-    await queryRunner.query(`CREATE INDEX idx_mv_equipment_search_equipment_type ON mv_equipment_search(equipment_type)`);
-    await queryRunner.query(`CREATE INDEX idx_mv_equipment_search_make_model ON mv_equipment_search(make, model)`);
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX idx_mv_equipment_search_plc_id ON mv_equipment_search(plc_id)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_mv_equipment_search_combined_vector ON mv_equipment_search USING GIN(combined_search_vector)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_mv_equipment_search_site_name ON mv_equipment_search(site_name)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_mv_equipment_search_equipment_type ON mv_equipment_search(equipment_type)`
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_mv_equipment_search_make_model ON mv_equipment_search(make, model)`
+    );
 
     // Create function to refresh materialized view
     await queryRunner.query(`
@@ -157,7 +175,9 @@ export class AddFullTextSearch20250820000000 implements MigrationInterface {
     await queryRunner.query(`DROP TRIGGER IF EXISTS refresh_search_on_tag_change ON tags`);
     await queryRunner.query(`DROP TRIGGER IF EXISTS refresh_search_on_site_change ON sites`);
     await queryRunner.query(`DROP TRIGGER IF EXISTS refresh_search_on_cell_change ON cells`);
-    await queryRunner.query(`DROP TRIGGER IF EXISTS refresh_search_on_equipment_change ON equipment`);
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS refresh_search_on_equipment_change ON equipment`
+    );
     await queryRunner.query(`DROP TRIGGER IF EXISTS refresh_search_on_plc_change ON plcs`);
     await queryRunner.query(`DROP TRIGGER IF EXISTS update_plcs_search_vector ON plcs`);
 

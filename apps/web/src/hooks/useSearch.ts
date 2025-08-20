@@ -1,6 +1,6 @@
 /**
  * useSearch Hook
- * 
+ *
  * Provides a convenient interface for search functionality with
  * debouncing, error handling, and performance tracking.
  */
@@ -20,19 +20,19 @@ interface UseSearchOptions {
 interface UseSearchReturn {
   // State
   query: string;
-  results: any[];
+  results: unknown[];
   loading: boolean;
   error: string | null;
   totalResults: number;
   executionTime: number;
-  
+
   // Actions
   setQuery: (query: string) => void;
   search: (query?: string, options?: Partial<SearchQuery>) => Promise<void>;
   loadMore: () => Promise<void>;
   clearResults: () => void;
   clearError: () => void;
-  
+
   // Computed values
   hasResults: boolean;
   hasMore: boolean;
@@ -41,7 +41,7 @@ interface UseSearchReturn {
 
 /**
  * useSearch Hook
- * 
+ *
  * @param options - Configuration options for the search hook
  * @returns Search state and actions
  */
@@ -82,30 +82,36 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
 
   // Auto-search when debounced query changes
   useEffect(() => {
-    if (autoSearch && debouncedQuery.trim() && debouncedQuery !== query) {
+    if (autoSearch && debouncedQuery.trim()) {
       executeSearch(debouncedQuery);
     }
-  }, [autoSearch, debouncedQuery, executeSearch, query]);
+  }, [autoSearch, debouncedQuery, executeSearch]);
 
   // Memoized actions
-  const setQuery = useCallback((newQuery: string) => {
-    setStoreQuery(newQuery);
-  }, [setStoreQuery]);
+  const setQuery = useCallback(
+    (newQuery: string) => {
+      setStoreQuery(newQuery);
+    },
+    [setStoreQuery]
+  );
 
-  const search = useCallback(async (searchQuery?: string, searchOptions?: Partial<SearchQuery>) => {
-    const queryToUse = searchQuery ?? query;
-    if (!queryToUse.trim()) {
-      clearResults();
-      return;
-    }
-    
-    await executeSearch(queryToUse, {
-      page: 1,
-      pageSize: defaultPageSize,
-      includeHighlights,
-      ...searchOptions,
-    });
-  }, [query, executeSearch, clearResults, defaultPageSize, includeHighlights]);
+  const search = useCallback(
+    async (searchQuery?: string, searchOptions?: Partial<SearchQuery>) => {
+      const queryToUse = searchQuery ?? query;
+      if (!queryToUse.trim()) {
+        clearResults();
+        return;
+      }
+
+      await executeSearch(queryToUse, {
+        page: 1,
+        pageSize: defaultPageSize,
+        includeHighlights,
+        ...searchOptions,
+      });
+    },
+    [query, executeSearch, clearResults, defaultPageSize, includeHighlights]
+  );
 
   const loadMore = useCallback(async () => {
     if (hasNext && !loading) {
@@ -114,11 +120,14 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
   }, [hasNext, loading, loadMoreResults]);
 
   // Computed values
-  const computed = useMemo(() => ({
-    hasResults: results.length > 0,
-    hasMore: hasNext,
-    isSearching: loading,
-  }), [results.length, hasNext, loading]);
+  const computed = useMemo(
+    () => ({
+      hasResults: results.length > 0,
+      hasMore: hasNext,
+      isSearching: loading,
+    }),
+    [results.length, hasNext, loading]
+  );
 
   return {
     // State
@@ -128,14 +137,14 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     error,
     totalResults,
     executionTime,
-    
+
     // Actions
     setQuery,
     search,
     loadMore,
     clearResults,
     clearError,
-    
+
     // Computed values
     ...computed,
   };

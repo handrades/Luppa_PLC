@@ -39,6 +39,7 @@ import { FixedSizeList as VirtualizedList } from 'react-window';
 import { SearchResultItem } from '../../types/search';
 // import { useSearchStore } from '../../stores/search.store';
 import { exportSearchResults } from '../../utils/searchExport';
+import { useToast } from '../../hooks/useToast';
 
 interface SearchResultsProps {
   results?: SearchResultItem[];
@@ -122,7 +123,9 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
     >
       <CardContent sx={{ pb: 1 }}>
         {/* Header with equipment name and relevance score */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+        >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant='h6' component='h3' sx={{ fontWeight: 600, mb: 0.5 }}>
               {renderHighlightedText(result.tag_id, result.highlighted_fields?.tag_id)}
@@ -134,7 +137,7 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
               )}
             </Typography>
           </Box>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
             {showRelevanceScore && (
               <Tooltip title={`Relevance Score: ${result.relevance_score.toFixed(3)}`}>
@@ -148,7 +151,7 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
             )}
             <IconButton
               size='small'
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 setExpanded(!expanded);
               }}
@@ -169,56 +172,44 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
             size='small'
             variant='outlined'
           />
-          <Chip
-            label={result.equipment_type}
-            size='small'
-            color='secondary'
-            variant='outlined'
-          />
+          <Chip label={result.equipment_type} size='small' color='secondary' variant='outlined' />
           {result.ip_address && (
-            <Chip
-              label={result.ip_address}
-              size='small'
-              color='info'
-              variant='outlined'
-            />
+            <Chip label={result.ip_address} size='small' color='info' variant='outlined' />
           )}
         </Box>
 
         {/* Hierarchy path */}
         <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
-          📍 {renderHighlightedText(result.hierarchy_path, 
-            result.highlighted_fields?.site_name || 
-            result.highlighted_fields?.cell_name || 
-            result.highlighted_fields?.equipment_name
+          📍{' '}
+          {renderHighlightedText(
+            result.hierarchy_path,
+            result.highlighted_fields?.site_name ||
+              result.highlighted_fields?.cell_name ||
+              result.highlighted_fields?.equipment_name
           )}
         </Typography>
 
         {/* Expandable details */}
         <Collapse in={expanded} timeout='auto' unmountOnExit>
           <Divider sx={{ my: 2 }} />
-          
+
           <Stack spacing={1}>
             {result.firmware_version && (
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant='body2' fontWeight={500}>
                   Firmware Version:
                 </Typography>
-                <Typography variant='body2'>
-                  {result.firmware_version}
-                </Typography>
+                <Typography variant='body2'>{result.firmware_version}</Typography>
               </Box>
             )}
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant='body2' fontWeight={500}>
                 Equipment:
               </Typography>
-              <Typography variant='body2'>
-                {result.equipment_name}
-              </Typography>
+              <Typography variant='body2'>{result.equipment_name}</Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant='body2' fontWeight={500}>
                 Cell:
@@ -227,14 +218,12 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
                 {result.cell_name} (Line {result.line_number})
               </Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant='body2' fontWeight={500}>
                 Site:
               </Typography>
-              <Typography variant='body2'>
-                {result.site_name}
-              </Typography>
+              <Typography variant='body2'>{result.site_name}</Typography>
             </Box>
 
             {result.tags_text && (
@@ -252,7 +241,7 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
               <Button
                 size='small'
                 startIcon={<OpenInNewIcon />}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   // Navigate to equipment details
                   onResultClick?.(result);
@@ -317,6 +306,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
 
+  // Toast notifications
+  const { showError } = useToast();
+
   // Memoized sorted and filtered results
   const processedResults = useMemo(() => {
     let filtered = results;
@@ -374,25 +366,33 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   }, []);
 
   // Handle export with format selection
-  const handleExport = useCallback((format: 'csv' | 'json') => {
-    try {
-      const filename = `search_results_${searchQuery.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}`;
-      
-      exportSearchResults(processedResults, {
-        format,
-        filename,
-        includeMetadata: true,
-      });
+  const handleExport = useCallback(
+    (format: 'csv' | 'json') => {
+      try {
+        const filename = `search_results_${searchQuery.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}`;
 
-      // Also call the legacy onExport prop if provided
-      onExport?.(processedResults);
-      
-      handleExportMenuClose();
-    } catch (error) {
-      // console.error('Export failed:', error);
-      // You could add a toast notification here
-    }
-  }, [processedResults, searchQuery, onExport, handleExportMenuClose]);
+        exportSearchResults(processedResults, {
+          format,
+          filename,
+          includeMetadata: true,
+        });
+
+        // Also call the legacy onExport prop if provided
+        onExport?.(processedResults);
+
+        handleExportMenuClose();
+      } catch (error) {
+        // console.error('Export failed:', error); // Disabled for production
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to export search results';
+        showError(`Export failed: ${errorMessage}`, {
+          persist: true,
+        });
+        handleExportMenuClose();
+      }
+    },
+    [processedResults, searchQuery, onExport, handleExportMenuClose, showError]
+  );
 
   // Loading state
   if (loading) {
@@ -413,9 +413,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         <Typography variant='body1' fontWeight={500}>
           Search Error
         </Typography>
-        <Typography variant='body2'>
-          {error}
-        </Typography>
+        <Typography variant='body2'>{error}</Typography>
       </Alert>
     );
   }
@@ -463,7 +461,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           <Select
             value={filterType}
             label='Filter'
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={e => setFilterType(e.target.value)}
             startAdornment={<FilterIcon fontSize='small' />}
           >
             <MenuItem value='all'>All Types</MenuItem>
@@ -481,7 +479,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           <Select
             value={sortBy}
             label='Sort'
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={e => setSortBy(e.target.value)}
             startAdornment={<SortIcon fontSize='small' />}
           >
             <MenuItem value='relevance'>Relevance</MenuItem>
@@ -523,7 +521,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                 <ListItemIcon>
                   <TableChartIcon fontSize='small' />
                 </ListItemIcon>
-                <ListItemText 
+                <ListItemText
                   primary='Export as CSV'
                   secondary={`${processedResults.length} results`}
                 />
@@ -532,7 +530,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                 <ListItemIcon>
                   <CodeIcon fontSize='small' />
                 </ListItemIcon>
-                <ListItemText 
+                <ListItemText
                   primary='Export as JSON'
                   secondary={`${processedResults.length} results`}
                 />
@@ -567,7 +565,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       return (
         <VirtualizedList
           height={600}
-          width="100%"
+          width='100%'
           itemCount={resultsList.length}
           itemSize={180}
           itemData={{
@@ -584,7 +582,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
     return (
       <Box>
-        {resultsList.map((result) => (
+        {resultsList.map(result => (
           <SearchResultCard
             key={result.plc_id}
             result={result}

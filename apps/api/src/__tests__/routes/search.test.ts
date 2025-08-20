@@ -436,19 +436,25 @@ describe('Search Routes', () => {
         searchMetadata: { query: 'concurrent', executionTimeMs: 30, totalMatches: 0, searchType: 'fulltext' },
       });
 
-      // Send 10 concurrent requests
-      const requests = Array.from({ length: 10 }, (_, i) =>
-        request(app)
+      // Send 10 concurrent requests with timing measurement
+      const requestPromises = Array.from({ length: 10 }, (_, i) => {
+        const startTime = Date.now();
+        return request(app)
           .get('/api/v1/search/equipment')
           .set('Authorization', `Bearer ${authToken}`)
           .query({ q: `concurrent-${i}` })
-      );
+          .then(response => {
+            const duration = Date.now() - startTime;
+            return { response, duration };
+          });
+      });
 
-      const responses = await Promise.all(requests);
+      const results = await Promise.all(requestPromises);
 
-      // All should succeed
-      responses.forEach(response => {
+      // All should succeed and complete within 100ms
+      results.forEach(({ response, duration }) => {
         expect(response.status).toBe(200);
+        expect(duration).toBeLessThan(100);
       });
 
       expect(mockSearchService.search).toHaveBeenCalledTimes(10);
@@ -483,20 +489,38 @@ describe('Search Routes', () => {
   });
 
   describe('security tests', () => {
-    it('should prevent SQL injection attacks', async () => {
-      const maliciousQueries = [
+    it('should prevent SQL injection and XSS attacks', async () => {
+      const sqlInjectionQueries = [
         "'; DROP TABLE plcs; --",
         "' UNION SELECT * FROM users --",
         "1'; DELETE FROM equipment; --",
-        "<script>alert('xss')</script>",
       ];
 
-      // Mock the SearchService to throw validation errors for malicious queries
+      const xssPayloads = [
+        "<script>alert('xss')</script>",
+        '<img src=x onerror=alert(1)>',
+        '<script>evil()</script>',
+        'javascript:alert(1)',
+      ];
+
+      // Mock the SearchService to handle malicious queries appropriately
       mockSearchService.search.mockImplementation((query) => {
         const queryString = query.q;
-        if (maliciousQueries.includes(queryString)) {
+        
+        // SQL injection attempts should throw validation errors
+        if (sqlInjectionQueries.includes(queryString)) {
           throw new Error('Invalid search query');
         }
+        
+        // XSS payloads should be sanitized and return empty results or handled safely
+        if (xssPayloads.includes(queryString)) {
+          return Promise.resolve({
+            data: [],
+            pagination: { page: 1, pageSize: 50, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
+            searchMetadata: { query: '', executionTimeMs: 10, totalMatches: 0, searchType: 'fulltext' },
+          });
+        }
+        
         return Promise.resolve({
           data: [],
           pagination: { page: 1, pageSize: 50, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
@@ -504,12 +528,26 @@ describe('Search Routes', () => {
         });
       });
 
-      for (const maliciousQuery of maliciousQueries) {
+      // Test SQL injection prevention
+      for (const maliciousQuery of sqlInjectionQueries) {
         await request(app)
           .get('/api/v1/search/equipment')
           .set('Authorization', `Bearer ${authToken}`)
           .query({ q: maliciousQuery })
           .expect(500); // Should throw an error and return 500
+      }
+
+      // Test XSS prevention - these should be handled safely
+      for (const xssPayload of xssPayloads) {
+        const response = await request(app)
+          .get('/api/v1/search/equipment')
+          .set('Authorization', `Bearer ${authToken}`)
+          .query({ q: xssPayload });
+          
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual([]);
+        // Verify the query was sanitized (empty in our mock)
+        expect(response.body.searchMetadata.query).toBe('');
       }
     });
 

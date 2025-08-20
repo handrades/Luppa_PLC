@@ -64,7 +64,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const {
     recentSearches,
     suggestions,
-    loading,
+    // loading, // TODO: Use loading state for search feedback
+    suggestionsLoading,
     setQuery,
     addToHistory,
     clearHistory,
@@ -75,13 +76,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const debouncedValue = useDebounce(inputValue, 300);
 
   // Handle input value changes
-  const handleInputChange = useCallback(
-    (_event: React.SyntheticEvent, newValue: string) => {
-      setInputValue(newValue);
-      setShowSuggestions(newValue.length > 0);
-    },
-    []
-  );
+  const handleInputChange = useCallback((_event: React.SyntheticEvent, newValue: string) => {
+    setInputValue(newValue);
+    setShowSuggestions(newValue.length > 0);
+  }, []);
 
   // Handle search execution
   const handleSearch = useCallback(
@@ -154,17 +152,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     const options: Array<{ label: string; type: 'recent' | 'suggestion' }> = [];
 
     // Add recent searches if input is empty or matches
-    if (inputValue.length === 0 || recentSearches.some(search => 
-      search.query.toLowerCase().includes(inputValue.toLowerCase())
-    )) {
+    if (
+      inputValue.length === 0 ||
+      recentSearches.some(search => search.query.toLowerCase().includes(inputValue.toLowerCase()))
+    ) {
       const matchingRecent = recentSearches
-        .filter(search => 
-          inputValue.length === 0 || 
-          search.query.toLowerCase().includes(inputValue.toLowerCase())
+        .filter(
+          search =>
+            inputValue.length === 0 || search.query.toLowerCase().includes(inputValue.toLowerCase())
         )
         .slice(0, 5)
         .map(search => ({ label: search.query, type: 'recent' as const }));
-      
+
       options.push(...matchingRecent);
     }
 
@@ -185,9 +184,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         <Autocomplete
           freeSolo
           options={suggestionOptions}
-          getOptionLabel={(option) => 
-            typeof option === 'string' ? option : option.label
-          }
+          getOptionLabel={option => (typeof option === 'string' ? option : option.label)}
           inputValue={inputValue}
           onInputChange={handleInputChange}
           onChange={(_event, value) => {
@@ -201,16 +198,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onClose={() => setShowSuggestions(false)}
           open={showSuggestions && suggestionOptions.length > 0}
           disabled={disabled}
-          loading={loading}
-          PaperComponent={(props) => (
+          loading={suggestionsLoading}
+          PaperComponent={props => (
             <Paper {...props} elevation={3} sx={{ mt: 1 }}>
               {props.children}
             </Paper>
           )}
-          PopperComponent={(props) => (
+          PopperComponent={props => (
             <Popper {...props} placement='bottom-start' style={{ zIndex: 1300 }} />
           )}
-          renderInput={(params) => (
+          renderInput={params => (
             <TextField
               {...params}
               ref={inputRef}
@@ -244,7 +241,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 endAdornment: (
                   <InputAdornment position='end'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      {loading && (
+                      {suggestionsLoading && (
                         <CircularProgress size={20} sx={{ color: 'primary.main' }} />
                       )}
                       {inputValue && (
@@ -326,7 +323,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           }}
         >
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            >
               <Typography id='search-help-title' variant='h6' component='h2'>
                 Search Help
               </Typography>
@@ -340,7 +339,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </Box>
 
             <Typography variant='body1' gutterBottom>
-              Search across all equipment fields including descriptions, makes, models, sites, and more.
+              Search across all equipment fields including descriptions, makes, models, sites, and
+              more.
             </Typography>
 
             <Typography variant='h6' gutterBottom sx={{ mt: 3 }}>
@@ -390,31 +390,28 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
             <List dense>
               <ListItem>
-                <ListItemText
-                  primary='Enter'
-                  secondary='Execute search'
-                />
+                <ListItemText primary='Enter' secondary='Execute search' />
               </ListItem>
               <ListItem>
-                <ListItemText
-                  primary='Escape'
-                  secondary='Close suggestions or clear focus'
-                />
+                <ListItemText primary='Escape' secondary='Close suggestions or clear focus' />
               </ListItem>
               <ListItem>
-                <ListItemText
-                  primary='Arrow Keys'
-                  secondary='Navigate through suggestions'
-                />
+                <ListItemText primary='Arrow Keys' secondary='Navigate through suggestions' />
               </ListItem>
             </List>
 
             {recentSearches.length > 0 && (
               <>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, mb: 1 }}>
-                  <Typography variant='h6'>
-                    Recent Searches:
-                  </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mt: 2,
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant='h6'>Recent Searches:</Typography>
                   <IconButton onClick={clearHistory} size='small' aria-label='Clear search history'>
                     <ClearIcon fontSize='small' />
                   </IconButton>

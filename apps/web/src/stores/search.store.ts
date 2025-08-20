@@ -23,7 +23,7 @@ interface SearchStore {
   results: SearchResultItem[];
   loading: boolean;
   error: string | null;
-  
+
   // Pagination state
   currentPage: number;
   pageSize: number;
@@ -31,57 +31,57 @@ interface SearchStore {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-  
+
   // Search metadata
   executionTime: number;
   searchType: 'fulltext' | 'similarity' | 'hybrid' | null;
-  
+
   // History and suggestions
   recentSearches: RecentSearch[];
   suggestions: string[];
   suggestionsLoading: boolean;
-  
+
   // Search presets
   presets: SearchPreset[];
   activePreset: string | null;
-  
+
   // Performance tracking
   metrics: SearchMetrics | null;
-  
+
   // UI state
   showAdvancedOptions: boolean;
   includeHighlights: boolean;
-  
+
   // Actions
   setQuery: (query: string) => void;
   executeSearch: (query: string, options?: Partial<SearchQuery>) => Promise<void>;
   loadMoreResults: () => Promise<void>;
   clearResults: () => void;
   clearError: () => void;
-  
+
   // History management
   addToHistory: (query: string, resultCount?: number, executionTime?: number) => void;
   clearHistory: () => void;
   removeFromHistory: (index: number) => void;
-  
+
   // Suggestions
   getSuggestions: (partialQuery: string, limit?: number) => Promise<void>;
   clearSuggestions: () => void;
-  
+
   // Presets
   savePreset: (name: string, description: string, query: SearchQuery) => void;
   loadPreset: (presetId: string) => void;
   deletePreset: (presetId: string) => void;
   setActivePreset: (presetId: string | null) => void;
-  
+
   // Settings
   setPageSize: (size: number) => void;
   setIncludeHighlights: (include: boolean) => void;
   toggleAdvancedOptions: () => void;
-  
+
   // Metrics
   loadMetrics: () => Promise<void>;
-  
+
   // Reset
   reset: () => void;
 }
@@ -115,7 +115,7 @@ export const useSearchStore = create<SearchStore>()(
       ...INITIAL_STATE,
 
       setQuery: (query: string) => {
-        set((state) => {
+        set(state => {
           state.query = query;
           if (!query.trim()) {
             state.results = [];
@@ -127,9 +127,9 @@ export const useSearchStore = create<SearchStore>()(
 
       executeSearch: async (query: string, options = {}) => {
         const state = get();
-        
+
         if (!query.trim()) {
-          set((state) => {
+          set(state => {
             state.results = [];
             state.totalResults = 0;
             state.error = null;
@@ -137,7 +137,7 @@ export const useSearchStore = create<SearchStore>()(
           return;
         }
 
-        set((state) => {
+        set(state => {
           state.loading = true;
           state.error = null;
           state.query = query.trim();
@@ -161,23 +161,23 @@ export const useSearchStore = create<SearchStore>()(
 
           const response: SearchResponse = await searchService.search(searchQuery);
 
-          set((state) => {
+          set(state => {
             if (searchQuery.page === 1) {
               state.results = response.data;
             } else {
               state.results.push(...response.data);
             }
-            
+
             state.currentPage = response.pagination.page;
             state.pageSize = response.pagination.pageSize;
             state.totalResults = response.pagination.total;
             state.totalPages = response.pagination.totalPages;
             state.hasNext = response.pagination.hasNext;
             state.hasPrev = response.pagination.hasPrev;
-            
+
             state.executionTime = response.searchMetadata.executionTimeMs;
             state.searchType = response.searchMetadata.searchType;
-            
+
             state.loading = false;
           });
 
@@ -195,11 +195,10 @@ export const useSearchStore = create<SearchStore>()(
             executionTime: response.searchMetadata.executionTimeMs,
             searchType: response.searchMetadata.searchType,
           });
-
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Search failed';
-          
-          set((state) => {
+
+          set(state => {
             state.loading = false;
             state.error = errorMessage;
             state.results = [];
@@ -215,7 +214,7 @@ export const useSearchStore = create<SearchStore>()(
 
       loadMoreResults: async () => {
         const state = get();
-        
+
         if (!state.hasNext || state.loading || !state.query) {
           return;
         }
@@ -227,7 +226,7 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       clearResults: () => {
-        set((state) => {
+        set(state => {
           state.results = [];
           state.totalResults = 0;
           state.totalPages = 0;
@@ -241,13 +240,13 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       clearError: () => {
-        set((state) => {
+        set(state => {
           state.error = null;
         });
       },
 
       addToHistory: (query: string, resultCount = 0, executionTime = 0) => {
-        set((state) => {
+        set(state => {
           const trimmedQuery = query.trim();
           if (!trimmedQuery) return;
 
@@ -270,40 +269,40 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       clearHistory: () => {
-        set((state) => {
+        set(state => {
           state.recentSearches = [];
         });
       },
 
       removeFromHistory: (index: number) => {
-        set((state) => {
+        set(state => {
           state.recentSearches.splice(index, 1);
         });
       },
 
       getSuggestions: async (partialQuery: string, limit = 10) => {
         const trimmedQuery = partialQuery.trim();
-        
+
         if (!trimmedQuery || trimmedQuery.length < 2) {
-          set((state) => {
+          set(state => {
             state.suggestions = [];
           });
           return;
         }
 
-        set((state) => {
+        set(state => {
           state.suggestionsLoading = true;
         });
 
         try {
           const response = await searchService.getSuggestions(trimmedQuery, limit);
-          
-          set((state) => {
+
+          set(state => {
             state.suggestions = response.suggestions;
             state.suggestionsLoading = false;
           });
         } catch (error) {
-          set((state) => {
+          set(state => {
             state.suggestions = [];
             state.suggestionsLoading = false;
           });
@@ -316,14 +315,14 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       clearSuggestions: () => {
-        set((state) => {
+        set(state => {
           state.suggestions = [];
           state.suggestionsLoading = false;
         });
       },
 
       savePreset: (name: string, description: string, query: SearchQuery) => {
-        set((state) => {
+        set(state => {
           const preset: SearchPreset = {
             id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             name,
@@ -340,14 +339,14 @@ export const useSearchStore = create<SearchStore>()(
       loadPreset: (presetId: string) => {
         const state = get();
         const preset = state.presets.find(p => p.id === presetId);
-        
+
         if (preset) {
-          set((state) => {
+          set(state => {
             state.activePreset = presetId;
             state.query = preset.query.q;
             state.pageSize = preset.query.pageSize || 50;
             state.includeHighlights = preset.query.includeHighlights ?? true;
-            
+
             // Update last used timestamp
             const presetIndex = state.presets.findIndex(p => p.id === presetId);
             if (presetIndex !== -1) {
@@ -361,7 +360,7 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       deletePreset: (presetId: string) => {
-        set((state) => {
+        set(state => {
           state.presets = state.presets.filter(p => p.id !== presetId);
           if (state.activePreset === presetId) {
             state.activePreset = null;
@@ -370,25 +369,25 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       setActivePreset: (presetId: string | null) => {
-        set((state) => {
+        set(state => {
           state.activePreset = presetId;
         });
       },
 
       setPageSize: (size: number) => {
-        set((state) => {
+        set(state => {
           state.pageSize = Math.max(1, Math.min(100, size));
         });
       },
 
       setIncludeHighlights: (include: boolean) => {
-        set((state) => {
+        set(state => {
           state.includeHighlights = include;
         });
       },
 
       toggleAdvancedOptions: () => {
-        set((state) => {
+        set(state => {
           state.showAdvancedOptions = !state.showAdvancedOptions;
         });
       },
@@ -396,8 +395,8 @@ export const useSearchStore = create<SearchStore>()(
       loadMetrics: async () => {
         try {
           const metrics = await searchService.getMetrics();
-          
-          set((state) => {
+
+          set(state => {
             state.metrics = metrics;
           });
         } catch (error) {
@@ -408,7 +407,7 @@ export const useSearchStore = create<SearchStore>()(
       },
 
       reset: () => {
-        set((state) => {
+        set(state => {
           Object.assign(state, INITIAL_STATE);
         });
       },
@@ -416,7 +415,7 @@ export const useSearchStore = create<SearchStore>()(
     {
       name: 'search-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         // Only persist certain parts of the state
         recentSearches: state.recentSearches,
         presets: state.presets,
@@ -425,14 +424,15 @@ export const useSearchStore = create<SearchStore>()(
         showAdvancedOptions: state.showAdvancedOptions,
       }),
       version: 1,
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: unknown, version: number) => {
         // Handle migrations if needed
         if (version < 1) {
           // Migration logic for older versions
+          const state = persistedState as Record<string, unknown>;
           return {
-            ...persistedState,
-            recentSearches: persistedState.recentSearches || [],
-            presets: persistedState.presets || [],
+            ...state,
+            recentSearches: state.recentSearches || [],
+            presets: state.presets || [],
           };
         }
         return persistedState;

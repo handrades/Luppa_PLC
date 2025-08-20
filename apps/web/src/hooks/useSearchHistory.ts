@@ -1,8 +1,10 @@
 /**
  * useSearchHistory Hook
- * 
+ *
  * Manages search history with localStorage persistence and utilities
  */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useCallback, useMemo } from 'react';
 import { useSearchStore } from '../stores/search.store';
@@ -16,19 +18,19 @@ interface UseSearchHistoryOptions {
 interface UseSearchHistoryReturn {
   // State
   recentSearches: RecentSearch[];
-  
+
   // Actions
   addToHistory: (query: string, resultCount?: number, executionTime?: number) => void;
   clearHistory: () => void;
   removeFromHistory: (index: number) => void;
   getSearchFromHistory: (index: number) => RecentSearch | null;
-  
+
   // Utilities
   getFrequentSearches: (limit?: number) => Array<{ query: string; count: number }>;
   getRecentByTimeRange: (hours: number) => RecentSearch[];
   exportHistory: () => string;
   importHistory: (data: string) => boolean;
-  
+
   // Computed
   hasHistory: boolean;
   totalSearches: number;
@@ -37,17 +39,12 @@ interface UseSearchHistoryReturn {
 
 /**
  * useSearchHistory Hook
- * 
+ *
  * @param options - Configuration options for search history
  * @returns Search history state and utilities
  */
-export function useSearchHistory(
-  options: UseSearchHistoryOptions = {}
-): UseSearchHistoryReturn {
-  const {
-    maxHistorySize: _maxHistorySize = 50,
-    autoCleanupDays = 30,
-  } = options;
+export function useSearchHistory(options: UseSearchHistoryOptions = {}): UseSearchHistoryReturn {
+  const { maxHistorySize = 50, autoCleanupDays = 30 } = options;
 
   // Store selectors
   const {
@@ -57,17 +54,35 @@ export function useSearchHistory(
     removeFromHistory: storeRemoveFromHistory,
   } = useSearchStore();
 
-  // Enhanced add to history with cleanup
+  // Enhanced add to history with cleanup and size limiting
   const addToHistory = useCallback(
     (query: string, resultCount = 0, executionTime = 0) => {
-      // Clean up old entries before adding new one
+      // Clean up old entries by date before adding new one
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - autoCleanupDays);
-      
-      // This would ideally filter old entries, but store handles basic cleanup
+
+      // Filter out expired entries
+      const validSearches = recentSearches.filter(
+        search => new Date(search.timestamp) >= cutoffDate
+      );
+
+      // Apply size limit - keep only the most recent entries
+      const limitedSearches = validSearches
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, maxHistorySize - 1); // Reserve space for new entry
+
+      // If we need to prune, clear and re-add limited entries
+      if (recentSearches.length !== limitedSearches.length) {
+        storeClearHistory();
+        limitedSearches.reverse().forEach(search => {
+          storeAddToHistory(search.query, search.resultCount, search.executionTime);
+        });
+      }
+
+      // Add the new search
       storeAddToHistory(query, resultCount, executionTime);
     },
-    [storeAddToHistory, autoCleanupDays]
+    [storeAddToHistory, storeClearHistory, autoCleanupDays, maxHistorySize, recentSearches]
   );
 
   // Get search by index
@@ -81,10 +96,13 @@ export function useSearchHistory(
   // Get frequent searches (grouped by query)
   const getFrequentSearches = useCallback(
     (limit = 10): Array<{ query: string; count: number }> => {
-      const queryCount = recentSearches.reduce((acc, search) => {
-        acc[search.query] = (acc[search.query] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const queryCount = recentSearches.reduce(
+        (acc, search) => {
+          acc[search.query] = (acc[search.query] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       return Object.entries(queryCount)
         .map(([query, count]) => ({ query, count }))
@@ -100,9 +118,7 @@ export function useSearchHistory(
       const cutoffTime = new Date();
       cutoffTime.setHours(cutoffTime.getHours() - hours);
 
-      return recentSearches.filter(
-        search => new Date(search.timestamp) >= cutoffTime
-      );
+      return recentSearches.filter(search => new Date(search.timestamp) >= cutoffTime);
     },
     [recentSearches]
   );
@@ -122,19 +138,20 @@ export function useSearchHistory(
     (data: string): boolean => {
       try {
         const importData = JSON.parse(data);
-        
+
         if (!importData.searches || !Array.isArray(importData.searches)) {
           throw new Error('Invalid format: searches array not found');
         }
 
         // Validate search objects
-        const validSearches = importData.searches.filter((search: any) => {
+        const validSearches = importData.searches.filter((search: unknown) => {
+          const searchObj = search as Record<string, unknown>;
           return (
-            search &&
-            typeof search.query === 'string' &&
-            search.timestamp &&
-            typeof search.resultCount === 'number' &&
-            typeof search.executionTime === 'number'
+            searchObj &&
+            typeof searchObj.query === 'string' &&
+            searchObj.timestamp &&
+            typeof searchObj.resultCount === 'number' &&
+            typeof searchObj.executionTime === 'number'
           );
         });
 
@@ -150,8 +167,10 @@ export function useSearchHistory(
         });
 
         return true;
-      } catch (error) {
-        console.warn('Failed to import search history:', error);
+      } catch (_error) {
+        if (process.env.NODE_ENV === 'development') {
+          // console.warn('Failed to import search history:', _error);
+        }
         return false;
       }
     },
@@ -176,19 +195,19 @@ export function useSearchHistory(
   return {
     // State
     recentSearches,
-    
+
     // Actions
     addToHistory,
     clearHistory: storeClearHistory,
     removeFromHistory: storeRemoveFromHistory,
     getSearchFromHistory,
-    
+
     // Utilities
     getFrequentSearches,
     getRecentByTimeRange,
     exportHistory,
     importHistory,
-    
+
     // Computed
     ...computed,
   };

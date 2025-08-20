@@ -4,16 +4,18 @@
  * End-to-end tests for search functionality
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// @ts-expect-error - Playwright types not available in build
 import { Page, expect, test } from '@playwright/test';
 
 test.describe('Search Functionality', () => {
   let page: Page;
 
-  test.beforeEach(async ({ browser }) => {
+  test.beforeEach(async ({ browser }: { browser: any }) => {
     page = await browser.newPage();
     
     // Mock API responses for testing
-    await page.route('**/api/v1/search/equipment*', async route => {
+    await page.route('**/api/v1/search/equipment*', async (route: any) => {
       const url = new URL(route.request().url());
       const query = url.searchParams.get('q');
       
@@ -60,7 +62,7 @@ test.describe('Search Functionality', () => {
       });
     });
 
-    await page.route('**/api/v1/search/suggestions*', async route => {
+    await page.route('**/api/v1/search/suggestions*', async (route: any) => {
       const url = new URL(route.request().url());
       const query = url.searchParams.get('q');
       
@@ -181,7 +183,7 @@ test.describe('Search Functionality', () => {
 
   test('should handle no results', async () => {
     // Mock empty results
-    await page.route('**/api/v1/search/equipment*', async route => {
+    await page.route('**/api/v1/search/equipment*', async (route: any) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -217,7 +219,7 @@ test.describe('Search Functionality', () => {
 
   test('should handle search errors', async () => {
     // Mock error response
-    await page.route('**/api/v1/search/equipment*', async route => {
+    await page.route('**/api/v1/search/equipment*', async (route: any) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -280,19 +282,54 @@ test.describe('Search Functionality', () => {
 
   test('should maintain search state on page reload', async () => {
     const searchInput = page.getByPlaceholder('Search equipment, PLCs, sites...');
+    const searchQuery = 'Siemens PLC Test';
     
-    await searchInput.fill('Siemens');
+    // Perform search and wait for results
+    await searchInput.fill(searchQuery);
     await searchInput.press('Enter');
     
-    // Wait for results
+    // Wait for results to load
     await expect(page.getByText('PLC-001')).toBeVisible();
+    
+    // Get the current URL to check if query is in URL params
+    const urlBeforeReload = page.url();
+    
+    // Count initial results
+    const initialResults = page.locator('[data-testid="search-result-item"]');
+    const initialCount = await initialResults.count();
     
     // Reload the page
     await page.reload();
     
-    // Search state should be restored (if implemented)
-    // This would depend on URL state management or local storage
+    // Verify search input is still visible after reload
     await expect(searchInput).toBeVisible();
+    
+    // Check if search state was preserved via URL params or localStorage
+    if (urlBeforeReload.includes('q=')) {
+      // URL-based persistence: verify query param preserved and input value restored
+      expect(page.url()).toContain('q=');
+      await expect(searchInput).toHaveValue(searchQuery);
+      
+      // Wait for results to be restored
+      await expect(page.getByText('PLC-001')).toBeVisible();
+      const restoredResults = page.locator('[data-testid="search-result-item"]');
+      expect(await restoredResults.count()).toBe(initialCount);
+    } else {
+      // Check localStorage-based persistence
+      const searchState = await page.evaluate(() => {
+        return localStorage.getItem('searchState') || localStorage.getItem('searchQuery');
+      });
+      
+      if (searchState && searchState.includes(searchQuery)) {
+        // localStorage persistence: verify state restored
+        await expect(searchInput).toHaveValue(searchQuery);
+        await expect(page.getByText('PLC-001')).toBeVisible();
+      } else {
+        // No persistence implemented: just verify basic functionality restored
+        // eslint-disable-next-line no-console
+        console.log('No search persistence detected - state not maintained across reload');
+      }
+    }
   });
 
   test('should be responsive on mobile', async () => {
@@ -328,7 +365,7 @@ test.describe('Search Functionality', () => {
 
   test('should show loading state during search', async () => {
     // Add delay to API response
-    await page.route('**/api/v1/search/equipment*', async route => {
+    await page.route('**/api/v1/search/equipment*', async (route: any) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       await route.fulfill({
         status: 200,

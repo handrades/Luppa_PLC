@@ -1,15 +1,15 @@
 /**
  * Search Service
- * 
+ *
  * Handles API communication for search functionality
  */
 
 import { apiClient } from './api.client';
-import { 
-  SearchMetrics, 
-  SearchQuery, 
+import {
+  SearchMetrics,
+  SearchQuery,
   SearchResponse,
-  SearchSuggestionsResponse 
+  SearchSuggestionsResponse,
 } from '../types/search';
 
 class SearchService {
@@ -21,10 +21,10 @@ class SearchService {
   async search(query: SearchQuery): Promise<SearchResponse> {
     try {
       const params = new URLSearchParams();
-      
+
       // Add query parameters
       params.append('q', query.q);
-      
+
       if (query.page) params.append('page', query.page.toString());
       if (query.pageSize) params.append('pageSize', query.pageSize.toString());
       if (query.maxResults) params.append('maxResults', query.maxResults.toString());
@@ -37,9 +37,7 @@ class SearchService {
         query.fields.forEach(field => params.append('fields', field));
       }
 
-      const response = await apiClient.get(
-        `${this.baseUrl}/equipment?${params.toString()}`
-      );
+      const response = await apiClient.get(`${this.baseUrl}/equipment?${params.toString()}`);
 
       return response.data;
     } catch (error) {
@@ -57,9 +55,7 @@ class SearchService {
         limit: limit.toString(),
       });
 
-      const response = await apiClient.get(
-        `${this.baseUrl}/suggestions?${params.toString()}`
-      );
+      const response = await apiClient.get(`${this.baseUrl}/suggestions?${params.toString()}`);
 
       return response.data;
     } catch (error) {
@@ -88,9 +84,7 @@ class SearchService {
         includeDetails: 'false',
       });
 
-      const response = await apiClient.get(
-        `${this.baseUrl}/metrics?${params.toString()}`
-      );
+      const response = await apiClient.get(`${this.baseUrl}/metrics?${params.toString()}`);
 
       return response.data.metrics;
     } catch (error) {
@@ -113,19 +107,24 @@ class SearchService {
   /**
    * Handle API errors with consistent error messages
    */
-  private handleError(error: any, defaultMessage: string): Error {
-    if (error.response) {
+  private handleError(error: unknown, defaultMessage: string): Error {
+    const err = error as {
+      response?: { data?: { error?: { message?: string }; message?: string } };
+      request?: unknown;
+      message?: string;
+    };
+
+    if (err.response) {
       // Server responded with error status
-      const message = error.response.data?.error?.message || 
-                     error.response.data?.message || 
-                     defaultMessage;
+      const message =
+        err.response.data?.error?.message || err.response.data?.message || defaultMessage;
       return new Error(message);
-    } else if (error.request) {
+    } else if (err.request) {
       // Request was made but no response received
       return new Error('Search service is unavailable. Please try again later.');
     } else {
       // Something else happened
-      return new Error(error.message || defaultMessage);
+      return new Error(err.message || defaultMessage);
     }
   }
 }

@@ -2,6 +2,8 @@
  * useSearch Hook Tests
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useSearch } from '../useSearch';
 import { useSearchStore } from '../../stores/search.store';
@@ -12,7 +14,7 @@ const mockUseSearchStore = useSearchStore as jest.MockedFunction<typeof useSearc
 
 // Mock debounce hook
 jest.mock('../useDebounce', () => ({
-  useDebounce: (value: any, delay: number) => value,
+  useDebounce: (value: unknown) => value,
 }));
 
 describe('useSearch', () => {
@@ -157,7 +159,7 @@ describe('useSearch', () => {
   describe('auto-search functionality', () => {
     it('should auto-search when debounced query changes', async () => {
       const { rerender } = renderHook(
-        ({ query }) => useSearch({ autoSearch: true }),
+        ({ query: _query }: { query: string }) => useSearch({ autoSearch: true }),
         { initialProps: { query: '' } }
       );
 
@@ -176,7 +178,7 @@ describe('useSearch', () => {
 
     it('should not auto-search when autoSearch is disabled', () => {
       const { rerender } = renderHook(
-        ({ query }) => useSearch({ autoSearch: false }),
+        ({ query: _query }: { query: string }) => useSearch({ autoSearch: false }),
         { initialProps: { query: '' } }
       );
 

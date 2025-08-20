@@ -6,6 +6,8 @@
  * enabling shareable links and browser navigation.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { AdvancedFilters } from '../types/advanced-filters';
 // import type { FilterPreset } from '../types/advanced-filters';
 import { validateAdvancedFilters } from '../validation/filter.schemas';
@@ -56,8 +58,8 @@ export const serializeFiltersToURL = (filters: AdvancedFilters): string => {
     const compressed = btoa(jsonString);
 
     return compressed;
-  } catch (error) {
-    console.warn('Failed to serialize filters to URL:', error);
+  } catch (_error) {
+    // console.warn('Failed to serialize filters to URL:', error);
     return '';
   }
 };
@@ -83,11 +85,11 @@ export const deserializeFiltersFromURL = (urlParam: string): AdvancedFilters | n
     if (validation.success) {
       return validation.data!;
     } else {
-      console.warn('Invalid filters from URL:', validation.fieldErrors);
+      // console.warn('Invalid filters from URL:', validation.fieldErrors);
       return null;
     }
-  } catch (error) {
-    console.warn('Failed to deserialize filters from URL:', error);
+  } catch (_error) {
+    // console.warn('Failed to deserialize filters from URL:', error);
     return null;
   }
 };
@@ -175,7 +177,7 @@ export const generateFilterURL = (
 
   // Check URL length limit
   if (finalUrl.length > MAX_URL_LENGTH) {
-    console.warn(`Generated URL exceeds maximum length (${finalUrl.length}/${MAX_URL_LENGTH})`);
+    // console.warn(`Generated URL exceeds maximum length (${finalUrl.length}/${MAX_URL_LENGTH})`);
     // Fallback to preset-only or no filters
     url.searchParams.delete(URL_PARAMS.FILTERS);
     if (!presetId) {
@@ -225,8 +227,8 @@ export const updateBrowserURL = (
     } else {
       window.history.pushState(null, '', newUrl);
     }
-  } catch (error) {
-    console.warn('Failed to update browser URL:', error);
+  } catch (_error) {
+    // console.warn('Failed to update browser URL:', error);
   }
 };
 
@@ -288,8 +290,8 @@ export const copyShareableLinkToClipboard = async (
     }
 
     return true;
-  } catch (error) {
-    console.error('Failed to copy shareable link:', error);
+  } catch (_error) {
+    // console.error('Failed to copy shareable link:', error);
     return false;
   }
 };
@@ -338,8 +340,8 @@ export const generateQRCodeDataURL = async (
     }
 
     return null;
-  } catch (error) {
-    console.error('Failed to generate QR code:', error);
+  } catch (_error) {
+    // console.error('Failed to generate QR code:', error);
     return null;
   }
 };
@@ -458,8 +460,8 @@ export const encryptFilterData = (data: string): string => {
       encrypted += String.fromCharCode(dataChar ^ keyChar);
     }
     return btoa(encrypted);
-  } catch (error) {
-    console.warn('Failed to encrypt filter data:', error);
+  } catch (_error) {
+    // console.warn('Failed to encrypt filter data:', error);
     return data;
   }
 };
@@ -477,8 +479,8 @@ export const decryptFilterData = (encryptedData: string): string => {
       decrypted += String.fromCharCode(dataChar ^ keyChar);
     }
     return decrypted;
-  } catch (error) {
-    console.warn('Failed to decrypt filter data:', error);
+  } catch (_error) {
+    // console.warn('Failed to decrypt filter data:', error);
     return encryptedData;
   }
 };

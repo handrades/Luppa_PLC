@@ -3,17 +3,17 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SearchResults } from '../SearchResults';
 import { SearchResultItem } from '../../../types/search';
 
 // Mock react-window for virtual scrolling
 jest.mock('react-window', () => ({
-  FixedSizeList: ({ children, itemCount, itemData }: any) => (
+  FixedSizeList: ({ itemCount }: { children: React.ReactNode; itemCount: number; itemData: unknown }) => (
     <div data-testid='virtual-list'>
       {Array.from({ length: itemCount }, (_, index) =>
-        children({ index, style: {}, data: itemData })
+        React.createElement('div', { key: index, style: {} }, `Item ${index}`)
       )}
     </div>
   ),
@@ -234,14 +234,42 @@ describe('SearchResults', () => {
   });
 
   describe('export functionality', () => {
-    it('should show export button when onExport is provided', () => {
-      const mockOnExport = jest.fn();
-      render(<SearchResults {...defaultProps} onExport={mockOnExport} />);
+    it('should show export button when results are present', () => {
+      render(<SearchResults {...defaultProps} />);
       
       expect(screen.getByText('Export')).toBeInTheDocument();
     });
 
-    it('should call onExport when export button is clicked', async () => {
+    it('should not show export button when no results', () => {
+      render(<SearchResults results={[]} searchQuery='test' />);
+      
+      expect(screen.queryByText('Export')).not.toBeInTheDocument();
+    });
+
+    it('should open export menu when export button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<SearchResults {...defaultProps} />);
+      
+      const exportButton = screen.getByText('Export');
+      await user.click(exportButton);
+      
+      // Check menu items are visible
+      expect(screen.getByText('Export as CSV')).toBeInTheDocument();
+      expect(screen.getByText('Export as JSON')).toBeInTheDocument();
+    });
+
+    it('should show result count in export menu items', async () => {
+      const user = userEvent.setup();
+      render(<SearchResults {...defaultProps} />);
+      
+      const exportButton = screen.getByText('Export');
+      await user.click(exportButton);
+      
+      // Check result counts are shown in menu items
+      expect(screen.getAllByText('2 results')).toHaveLength(2);
+    });
+
+    it('should call onExport with CSV format when CSV menu item is clicked', async () => {
       const mockOnExport = jest.fn();
       const user = userEvent.setup();
       
@@ -250,13 +278,41 @@ describe('SearchResults', () => {
       const exportButton = screen.getByText('Export');
       await user.click(exportButton);
       
-      expect(mockOnExport).toHaveBeenCalledWith(mockResults);
+      const csvMenuItem = screen.getByText('Export as CSV');
+      await user.click(csvMenuItem);
+      
+      expect(mockOnExport).toHaveBeenCalledWith(mockResults, 'csv');
     });
 
-    it('should not show export button when no onExport provided', () => {
-      render(<SearchResults {...defaultProps} />);
+    it('should call onExport with JSON format when JSON menu item is clicked', async () => {
+      const mockOnExport = jest.fn();
+      const user = userEvent.setup();
       
-      expect(screen.queryByText('Export')).not.toBeInTheDocument();
+      render(<SearchResults {...defaultProps} onExport={mockOnExport} />);
+      
+      const exportButton = screen.getByText('Export');
+      await user.click(exportButton);
+      
+      const jsonMenuItem = screen.getByText('Export as JSON');
+      await user.click(jsonMenuItem);
+      
+      expect(mockOnExport).toHaveBeenCalledWith(mockResults, 'json');
+    });
+
+    it('should close export menu after selecting an option', async () => {
+      const mockOnExport = jest.fn();
+      const user = userEvent.setup();
+      
+      render(<SearchResults {...defaultProps} onExport={mockOnExport} />);
+      
+      const exportButton = screen.getByText('Export');
+      await user.click(exportButton);
+      
+      const csvMenuItem = screen.getByText('Export as CSV');
+      await user.click(csvMenuItem);
+      
+      // Menu should close after selection
+      expect(screen.queryByText('Export as CSV')).not.toBeInTheDocument();
     });
   });
 

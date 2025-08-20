@@ -1,10 +1,11 @@
 /**
  * useSearchHighlight Hook
- * 
+ *
  * Provides utilities for highlighting search terms in text
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 
 interface UseSearchHighlightOptions {
   caseSensitive?: boolean;
@@ -22,7 +23,7 @@ interface UseSearchHighlightReturn {
 
 /**
  * useSearchHighlight Hook
- * 
+ *
  * @param options - Configuration options for highlighting
  * @returns Highlighting utilities
  */
@@ -58,9 +59,7 @@ export function useSearchHighlight(
   // Normalize search terms
   const normalizeTerms = useCallback((searchTerms: string | string[]): string[] => {
     if (typeof searchTerms === 'string') {
-      return searchTerms
-        .split(/\s+/)
-        .filter(term => term.length > 0);
+      return searchTerms.split(/\s+/).filter(term => term.length > 0);
     }
     return searchTerms.filter(term => term.length > 0);
   }, []);
@@ -68,16 +67,23 @@ export function useSearchHighlight(
   // Highlight text with HTML tags
   const highlightText = useCallback(
     (text: string, searchTerms: string | string[]): string => {
-      if (!text || (!searchTerms || searchTerms.length === 0)) {
+      if (!text || !searchTerms || searchTerms.length === 0) {
         return text;
       }
 
       const terms = normalizeTerms(searchTerms);
       const regex = createHighlightRegex(terms);
 
-      return text.replace(regex, (match) => {
+      const highlighted = text.replace(regex, match => {
         const className = highlightClass ? ` class="${highlightClass}"` : '';
         return `<${highlightTag}${className}>${match}</${highlightTag}>`;
+      });
+
+      // Sanitize the resulting HTML to prevent XSS attacks
+      return DOMPurify.sanitize(highlighted, {
+        ALLOWED_TAGS: [highlightTag],
+        ALLOWED_ATTR: ['class'],
+        KEEP_CONTENT: true,
       });
     },
     [normalizeTerms, createHighlightRegex, highlightTag, highlightClass]
@@ -86,33 +92,35 @@ export function useSearchHighlight(
   // Highlight text for React (returns JSX elements)
   const highlightReactNode = useCallback(
     (text: string, searchTerms: string | string[]): React.ReactNode => {
-      if (!text || (!searchTerms || searchTerms.length === 0)) {
+      if (!text || !searchTerms || searchTerms.length === 0) {
         return text;
       }
 
       const terms = normalizeTerms(searchTerms);
       const regex = createHighlightRegex(terms);
-      
+
       const parts = text.split(regex);
-      
+
       return parts.map((part, index) => {
-        const isHighlight = terms.some(term => 
-          caseSensitive 
-            ? part === term 
-            : part.toLowerCase() === term.toLowerCase()
+        const isHighlight = terms.some(term =>
+          caseSensitive ? part === term : part.toLowerCase() === term.toLowerCase()
         );
 
         if (isHighlight) {
-          return React.createElement('mark', {
-            key: index,
-            className: highlightClass,
-            style: {
-              backgroundColor: '#fff59d',
-              padding: '0 2px',
-              borderRadius: '2px',
-              fontWeight: 500,
-            }
-          }, part);
+          return React.createElement(
+            'mark',
+            {
+              key: index,
+              className: highlightClass,
+              style: {
+                backgroundColor: '#fff59d',
+                padding: '0 2px',
+                borderRadius: '2px',
+                fontWeight: 500,
+              },
+            },
+            part
+          );
         }
 
         return part;

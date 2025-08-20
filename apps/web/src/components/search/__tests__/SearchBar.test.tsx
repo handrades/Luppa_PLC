@@ -2,8 +2,7 @@
  * SearchBar Component Tests
  */
 
-import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SearchBar } from '../SearchBar';
 import { useSearchStore } from '../../../stores/search.store';
@@ -14,7 +13,7 @@ const mockUseSearchStore = useSearchStore as jest.MockedFunction<typeof useSearc
 
 // Mock debounce hook
 jest.mock('../../../hooks/useDebounce', () => ({
-  useDebounce: (value: any, delay: number) => value, // Return value immediately for testing
+  useDebounce: (value: unknown, _delay: number) => value, // Return value immediately for testing
 }));
 
 describe('SearchBar', () => {
@@ -37,7 +36,7 @@ describe('SearchBar', () => {
   };
 
   beforeEach(() => {
-    mockUseSearchStore.mockReturnValue(defaultStoreValues as any);
+    mockUseSearchStore.mockReturnValue(defaultStoreValues as ReturnType<typeof useSearchStore>);
   });
 
   afterEach(() => {
@@ -106,7 +105,7 @@ describe('SearchBar', () => {
       
       render(<SearchBar onSearch={mockOnSearch} />);
       
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      // Get input but don't need to use it
       
       await user.keyboard('{Enter}');
       
@@ -181,7 +180,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         recentSearches,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar />);
@@ -201,7 +200,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         suggestions,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar />);
@@ -223,7 +222,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         suggestions,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar onSearch={mockOnSearch} />);
@@ -245,8 +244,9 @@ describe('SearchBar', () => {
     it('should show loading spinner when loading', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
-        loading: true,
-      } as any);
+        suggestionsLoading: true,
+        loading: false, // Keep for other parts of the component
+      } as ReturnType<typeof useSearchStore>);
 
       render(<SearchBar />);
       
@@ -262,7 +262,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         suggestions,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar />);
@@ -316,7 +316,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         recentSearches,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar showHelp={true} />);
@@ -387,7 +387,7 @@ describe('SearchBar', () => {
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
         suggestions,
-      } as any);
+      } as ReturnType<typeof useSearchStore>);
 
       const user = userEvent.setup();
       render(<SearchBar maxSuggestions={5} />);

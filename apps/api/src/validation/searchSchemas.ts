@@ -11,16 +11,11 @@ import { ValidationError } from '../errors/ValidationError';
 /**
  * Search query validation schema
  */
-const searchQuerySchema = Joi.string()
-  .trim()
-  .min(1)
-  .max(100)
-  .required()
-  .messages({
-    'string.min': 'Search query must be at least 1 character',
-    'string.max': 'Search query cannot exceed 100 characters',
-    'any.required': 'Search query is required',
-  });
+const searchQuerySchema = Joi.string().trim().min(1).max(100).required().messages({
+  'string.min': 'Search query must be at least 1 character',
+  'string.max': 'Search query cannot exceed 100 characters',
+  'any.required': 'Search query is required',
+});
 
 /**
  * Search fields validation schema
@@ -33,7 +28,7 @@ const searchFieldsSchema = Joi.array()
       'model',
       'tag_id',
       'site_name',
-      'cell_name', 
+      'cell_name',
       'equipment_name',
       'equipment_type',
       'ip_address',
@@ -42,7 +37,8 @@ const searchFieldsSchema = Joi.array()
   )
   .optional()
   .messages({
-    'array.includes': 'Invalid search field. Valid fields are: description, make, model, tag_id, site_name, cell_name, equipment_name, equipment_type, ip_address, firmware_version',
+    'array.includes':
+      'Invalid search field. Valid fields are: description, make, model, tag_id, site_name, cell_name, equipment_name, equipment_type, ip_address, firmware_version',
   });
 
 /**
@@ -86,12 +82,17 @@ const sortBySchema = Joi.string()
   )
   .default('relevance')
   .messages({
-    'any.only': 'Sort field must be one of: relevance, tag_id, make, model, site_name, cell_name, equipment_name, equipment_type, created_at',
+    'any.only':
+      'Sort field must be one of: relevance, tag_id, make, model, site_name, cell_name, equipment_name, equipment_type, created_at',
   });
 
-const sortOrderSchema = Joi.string().valid('ASC', 'DESC').default('DESC').messages({
-  'any.only': 'Sort order must be either ASC or DESC',
-});
+const sortOrderSchema = Joi.string()
+  .valid('ASC', 'DESC', 'asc', 'desc')
+  .uppercase()
+  .default('DESC')
+  .messages({
+    'any.only': 'Sort order must be either ASC or DESC',
+  });
 
 /**
  * Boolean flags validation schemas
@@ -122,9 +123,11 @@ export const searchEquipmentSchema = Joi.object({
   sortBy: sortBySchema,
   sortOrder: sortOrderSchema,
   includeHighlights: includeHighlightsSchema,
-}).messages({
-  'object.unknown': 'Unknown query parameter: {#label}',
-});
+})
+  .unknown(false)
+  .messages({
+    'object.unknown': 'Unknown query parameter: {#label}',
+  });
 
 /**
  * Search suggestions validation schema
@@ -136,9 +139,11 @@ export const searchSuggestionsSchema = Joi.object({
     'any.required': 'Partial query is required',
   }),
   limit: suggestionLimitSchema,
-}).messages({
-  'object.unknown': 'Unknown query parameter: {#label}',
-});
+})
+  .unknown(false)
+  .messages({
+    'object.unknown': 'Unknown query parameter: {#label}',
+  });
 
 /**
  * Search metrics validation schema
@@ -150,9 +155,11 @@ export const searchMetricsSchema = Joi.object({
   includeDetails: Joi.boolean().default(false).messages({
     'boolean.base': 'Include details must be a boolean value',
   }),
-}).messages({
-  'object.unknown': 'Unknown query parameter: {#label}',
-});
+})
+  .unknown(false)
+  .messages({
+    'object.unknown': 'Unknown query parameter: {#label}',
+  });
 
 /**
  * Validation middleware helper function
@@ -161,7 +168,7 @@ export const validateSchema = (schema: Joi.ObjectSchema) => {
   return (data: unknown) => {
     const { error, value } = schema.validate(data, {
       abortEarly: false,
-      stripUnknown: true,
+      stripUnknown: false,
     });
 
     if (error) {

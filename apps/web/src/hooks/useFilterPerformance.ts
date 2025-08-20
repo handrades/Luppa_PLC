@@ -613,10 +613,10 @@ export const useFilterPerformance = (
 
         if (finalConfig.enableMonitoring) {
           // Log performance measurement
-          console.debug('Performance measurement:', {
-            duration,
-            metadata,
-          });
+          // Debug logging disabled in production
+          if (process.env.NODE_ENV === 'development') {
+            // console.debug('Performance measurement:', { duration, metadata });
+          }
         }
 
         return { result, duration };
@@ -645,20 +645,21 @@ export const useFilterPerformance = (
   /**
    * Current performance state for default filters
    */
-  const defaultFilters: AdvancedFilters = {
-    siteIds: [],
-    cellTypes: [],
-    equipmentTypes: [],
-    makes: [],
-    models: [],
-    searchFields: ['name', 'description'],
-    page: 1,
-    pageSize: 50,
-    sortBy: 'name',
-    sortOrder: 'asc',
-  };
-
-  const complexity = useMemo(() => getComplexity(defaultFilters), [getComplexity]);
+  const complexity = useMemo(() => {
+    const defaultFilters: AdvancedFilters = {
+      siteIds: [],
+      cellTypes: [],
+      equipmentTypes: [],
+      makes: [],
+      models: [],
+      searchFields: ['name', 'description'],
+      page: 1,
+      pageSize: 50,
+      sortBy: 'name',
+      sortOrder: 'asc',
+    };
+    return getComplexity(defaultFilters);
+  }, [getComplexity]);
 
   const performanceLevel = useMemo(
     () => getPerformanceLevel(complexity),
@@ -678,8 +679,9 @@ export const useFilterPerformance = (
    * Performance monitoring cleanup
    */
   useEffect(() => {
+    const currentDebounceManager = debounceManager.current;
     return () => {
-      debounceManager.current.cancelAll();
+      currentDebounceManager.cancelAll();
     };
   }, []);
 
