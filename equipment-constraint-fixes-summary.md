@@ -37,27 +37,15 @@ try {
   await plcRepository.save(plc);
 } catch (error: any) {
   // Handle database constraint violations (PostgreSQL error code 23505)
-  if (error.code === "23505") {
+  if (error.code === '23505') {
     // Parse the constraint name to determine which field caused the conflict
     const constraintName = error.constraint;
-    if (
-      constraintName?.includes("tag_id") ||
-      error.detail?.includes("tag_id")
-    ) {
-      throw new EquipmentConflictError(
-        `PLC with tag ID '${plcData.tagId}' already exists`,
-      );
-    } else if (
-      constraintName?.includes("ip_address") ||
-      error.detail?.includes("ip_address")
-    ) {
-      throw new EquipmentConflictError(
-        `PLC with IP address '${plcData.ipAddress}' already exists`,
-      );
+    if (constraintName?.includes('tag_id') || error.detail?.includes('tag_id')) {
+      throw new EquipmentConflictError(`PLC with tag ID '${plcData.tagId}' already exists`);
+    } else if (constraintName?.includes('ip_address') || error.detail?.includes('ip_address')) {
+      throw new EquipmentConflictError(`PLC with IP address '${plcData.ipAddress}' already exists`);
     } else {
-      throw new EquipmentConflictError(
-        "PLC data conflicts with existing record",
-      );
+      throw new EquipmentConflictError('PLC data conflicts with existing record');
     }
   }
   throw error;

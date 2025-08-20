@@ -960,7 +960,7 @@ export const useHierarchyStore = create<HierarchyStore>()(
                 state.siteSuggestions = suggestions;
               });
               return suggestions;
-            } catch (error) {
+            } catch {
               // Don't set error for autocomplete failures
               return [];
             }
@@ -973,7 +973,7 @@ export const useHierarchyStore = create<HierarchyStore>()(
                 state.cellSuggestions = suggestions;
               });
               return suggestions;
-            } catch (error) {
+            } catch {
               // Don't set error for autocomplete failures
               return [];
             }

@@ -136,7 +136,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({
             setSelectedSiteId(cell.siteId);
             setSelectedCellId(cell.id);
           }
-        } catch (error) {
+        } catch {
           // Failed to load cell hierarchy - using default state
         }
       };

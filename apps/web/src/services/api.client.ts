@@ -35,7 +35,8 @@ apiClient.interceptors.request.use(
 
     // Add request ID for tracking
     if (config.headers) {
-      config.headers['X-Request-ID'] = crypto.randomUUID();
+      config.headers['X-Request-ID'] =
+        crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
     return config;

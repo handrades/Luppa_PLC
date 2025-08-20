@@ -6,7 +6,7 @@
  * PostgreSQL features rather than SQLite compatibility mode.
  */
 
-import { DataSource } from "typeorm";
+import { DataSource } from 'typeorm';
 import {
   AuditLog,
   Cell,
@@ -17,7 +17,7 @@ import {
   Site,
   Tag,
   User,
-} from "../../entities";
+} from '../../entities';
 
 /**
  * Create a test DataSource using PostgreSQL for integration testing
@@ -25,24 +25,14 @@ import {
  */
 export const createTestDataSource = (): DataSource => {
   return new DataSource({
-    type: "postgres",
-    host: process.env.TEST_DB_HOST || "localhost",
-    port: parseInt(process.env.TEST_DB_PORT || "5434", 10), // Use dedicated test port
-    username: process.env.TEST_DB_USER || "testuser",
+    type: 'postgres',
+    host: process.env.TEST_DB_HOST || 'localhost',
+    port: parseInt(process.env.TEST_DB_PORT || '5434', 10), // Use dedicated test port
+    username: process.env.TEST_DB_USER || 'testuser',
     // nosemgrep: generic.secrets.security.detected-generic-secret - Test DB password, not a real secret
-    password: process.env.TEST_DB_PASSWORD || "testpass",
-    database: process.env.TEST_DB_NAME || "luppa_plc_test",
-    entities: [
-      User,
-      Role,
-      Site,
-      Cell,
-      Equipment,
-      PLC,
-      Tag,
-      AuditLog,
-      Notification,
-    ],
+    password: process.env.TEST_DB_PASSWORD || 'testpass',
+    database: process.env.TEST_DB_NAME || 'luppa_plc_test',
+    entities: [User, Role, Site, Cell, Equipment, PLC, Tag, AuditLog, Notification],
 
     // Test-specific settings
     synchronize: true, // Auto-create schema for testing
@@ -66,7 +56,7 @@ export const createTestDataSource = (): DataSource => {
 export const createTestFixtures = async (dataSource: DataSource) => {
   // Create test role with minimal permissions
   const testRole = dataSource.manager.create(Role, {
-    name: "TestRole",
+    name: 'TestRole',
     permissions: {
       sites: { read: true, create: true, update: true, delete: true },
       cells: { read: true, create: true, update: true, delete: true },
@@ -74,19 +64,18 @@ export const createTestFixtures = async (dataSource: DataSource) => {
       plcs: { read: true, create: true, update: true, delete: true },
       tags: { read: true, create: true, update: true, delete: true },
     },
-    description: "Test role with full permissions",
+    description: 'Test role with full permissions',
     isSystem: false,
   });
   await dataSource.manager.save(testRole);
 
   // Create test user linked to test role
   const testUser = dataSource.manager.create(User, {
-    email: "test@example.com",
-    firstName: "Test",
-    lastName: "User",
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
     // nosemgrep: generic.secrets.security.detected-generic-secret - Mock password hash for testing, not a real secret
-    passwordHash:
-      "$2b$10$rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcO", // "password"
+    passwordHash: '$2b$10$rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcGRZ8eZVKvw8rK8JcO', // "password"
     roleId: testRole.id,
     isActive: true,
   });
@@ -102,12 +91,10 @@ export const createTestFixtures = async (dataSource: DataSource) => {
  * Database health check for test environment
  * Verifies PostgreSQL connection and required extensions
  */
-export const checkTestDatabaseHealth = async (
-  dataSource: DataSource,
-): Promise<boolean> => {
+export const checkTestDatabaseHealth = async (dataSource: DataSource): Promise<boolean> => {
   try {
     // Basic connection test
-    await dataSource.query("SELECT 1");
+    await dataSource.query('SELECT 1');
 
     // Check for required PostgreSQL extensions
     const extensions = await dataSource.query(`
@@ -115,23 +102,19 @@ export const checkTestDatabaseHealth = async (
       WHERE extname IN ('uuid-ossp', 'pgcrypto')
     `);
 
-    const hasUuidOssp = extensions.some(
-      (ext: { extname: string }) => ext.extname === "uuid-ossp",
-    );
-    const hasPgCrypto = extensions.some(
-      (ext: { extname: string }) => ext.extname === "pgcrypto",
-    );
+    const hasUuidOssp = extensions.some((ext: { extname: string }) => ext.extname === 'uuid-ossp');
+    const hasPgCrypto = extensions.some((ext: { extname: string }) => ext.extname === 'pgcrypto');
 
     if (!hasUuidOssp || !hasPgCrypto) {
       // eslint-disable-next-line no-console
-      console.warn("Missing required PostgreSQL extensions for testing");
+      console.warn('Missing required PostgreSQL extensions for testing');
       return false;
     }
 
     return true;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Test database health check failed:", error);
+    console.error('Test database health check failed:', error);
     return false;
   }
 };
@@ -145,20 +128,18 @@ export const cleanTestData = async (dataSource: DataSource): Promise<void> => {
 
   try {
     // Disable foreign key checks temporarily
-    await dataSource.query("SET session_replication_role = replica;");
+    await dataSource.query('SET session_replication_role = replica;');
 
     // Truncate all tables
     for (const entity of entities) {
-      await dataSource.query(
-        `TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE;`,
-      );
+      await dataSource.query(`TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE;`);
     }
 
     // Re-enable foreign key checks
-    await dataSource.query("SET session_replication_role = DEFAULT;");
+    await dataSource.query('SET session_replication_role = DEFAULT;');
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Failed to clean test data:", error);
+    console.error('Failed to clean test data:', error);
     throw error;
   }
 };
@@ -178,7 +159,7 @@ export const setupTestDatabase = async (): Promise<{
     // Verify database health
     const isHealthy = await checkTestDatabaseHealth(dataSource);
     if (!isHealthy) {
-      throw new Error("Test database is not properly configured");
+      throw new Error('Test database is not properly configured');
     }
 
     // Create standard test fixtures
@@ -197,15 +178,13 @@ export const setupTestDatabase = async (): Promise<{
 /**
  * Teardown test database connection
  */
-export const teardownTestDatabase = async (
-  dataSource: DataSource,
-): Promise<void> => {
+export const teardownTestDatabase = async (dataSource: DataSource): Promise<void> => {
   if (dataSource?.isInitialized) {
     try {
       await dataSource.destroy();
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("Error closing test database connection:", error);
+      console.error('Error closing test database connection:', error);
     }
   }
 };

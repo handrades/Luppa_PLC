@@ -1,7 +1,7 @@
-import { DataSource } from "typeorm";
-import { setupTestDatabase, teardownTestDatabase } from "./test-db-setup";
+import { DataSource } from 'typeorm';
+import { setupTestDatabase, teardownTestDatabase } from './test-db-setup';
 
-describe("Database Migration Tests", () => {
+describe('Database Migration Tests', () => {
   let testDataSource: DataSource;
 
   beforeAll(async () => {
@@ -15,13 +15,9 @@ describe("Database Migration Tests", () => {
       await testDataSource.runMigrations();
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn(
-        "Skipping migration tests - PostgreSQL test database not available",
-      );
+      console.warn('Skipping migration tests - PostgreSQL test database not available');
       // eslint-disable-next-line no-console
-      console.log(
-        "To run these tests, ensure PostgreSQL is running on localhost:5432",
-      );
+      console.log('To run these tests, ensure PostgreSQL is running on localhost:5432');
       // Tests will be skipped if dataSource is not set
     }
   }, 30000); // Increase timeout for database setup
@@ -32,11 +28,11 @@ describe("Database Migration Tests", () => {
     }
   });
 
-  describe("Initial Schema Migration", () => {
-    it("should create all required tables", async () => {
+  describe('Initial Schema Migration', () => {
+    it('should create all required tables', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       // Query PostgreSQL system tables to verify all expected tables exist
@@ -48,22 +44,22 @@ describe("Database Migration Tests", () => {
 
       const tableNames = tables.map((t: { tablename: string }) => t.tablename);
 
-      expect(tableNames).toContain("users");
-      expect(tableNames).toContain("roles");
-      expect(tableNames).toContain("sites");
-      expect(tableNames).toContain("cells");
-      expect(tableNames).toContain("equipment");
-      expect(tableNames).toContain("plcs");
-      expect(tableNames).toContain("tags");
-      expect(tableNames).toContain("audit_logs");
-      expect(tableNames).toContain("notifications");
-      expect(tableNames).toContain("migration_history");
+      expect(tableNames).toContain('users');
+      expect(tableNames).toContain('roles');
+      expect(tableNames).toContain('sites');
+      expect(tableNames).toContain('cells');
+      expect(tableNames).toContain('equipment');
+      expect(tableNames).toContain('plcs');
+      expect(tableNames).toContain('tags');
+      expect(tableNames).toContain('audit_logs');
+      expect(tableNames).toContain('notifications');
+      expect(tableNames).toContain('migration_history');
     });
 
-    it("should create all required enum types", async () => {
+    it('should create all required enum types', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const enums = await testDataSource.query(`
@@ -74,16 +70,16 @@ describe("Database Migration Tests", () => {
 
       const enumNames = enums.map((e: { typname: string }) => e.typname);
 
-      expect(enumNames).toContain("equipment_type");
-      expect(enumNames).toContain("tag_data_type");
-      expect(enumNames).toContain("audit_action");
-      expect(enumNames).toContain("risk_level");
+      expect(enumNames).toContain('equipment_type');
+      expect(enumNames).toContain('tag_data_type');
+      expect(enumNames).toContain('audit_action');
+      expect(enumNames).toContain('risk_level');
     });
 
-    it("should create required PostgreSQL extensions", async () => {
+    it('should create required PostgreSQL extensions', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const extensions = await testDataSource.query(`
@@ -91,18 +87,16 @@ describe("Database Migration Tests", () => {
         ORDER BY extname
       `);
 
-      const extensionNames = extensions.map(
-        (e: { extname: string }) => e.extname,
-      );
+      const extensionNames = extensions.map((e: { extname: string }) => e.extname);
 
-      expect(extensionNames).toContain("uuid-ossp");
-      expect(extensionNames).toContain("pgcrypto");
+      expect(extensionNames).toContain('uuid-ossp');
+      expect(extensionNames).toContain('pgcrypto');
     });
 
-    it("should create proper foreign key constraints", async () => {
+    it('should create proper foreign key constraints', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const foreignKeys = await testDataSource.query(`
@@ -130,21 +124,21 @@ describe("Database Migration Tests", () => {
           foreign_table_name: string;
           foreign_column_name: string;
         }) =>
-          `${fk.table_name}.${fk.column_name} -> ${fk.foreign_table_name}.${fk.foreign_column_name}`,
+          `${fk.table_name}.${fk.column_name} -> ${fk.foreign_table_name}.${fk.foreign_column_name}`
       );
 
-      expect(fkNames).toContain("users.role_id -> roles.id");
-      expect(fkNames).toContain("cells.site_id -> sites.id");
-      expect(fkNames).toContain("equipment.cell_id -> cells.id");
-      expect(fkNames).toContain("plcs.equipment_id -> equipment.id");
-      expect(fkNames).toContain("tags.plc_id -> plcs.id");
-      expect(fkNames).toContain("audit_logs.user_id -> users.id");
+      expect(fkNames).toContain('users.role_id -> roles.id');
+      expect(fkNames).toContain('cells.site_id -> sites.id');
+      expect(fkNames).toContain('equipment.cell_id -> cells.id');
+      expect(fkNames).toContain('plcs.equipment_id -> equipment.id');
+      expect(fkNames).toContain('tags.plc_id -> plcs.id');
+      expect(fkNames).toContain('audit_logs.user_id -> users.id');
     });
 
-    it("should create proper unique constraints", async () => {
+    it('should create proper unique constraints', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const constraints = await testDataSource.query(`
@@ -163,26 +157,21 @@ describe("Database Migration Tests", () => {
       `);
 
       const uniqueConstraints = constraints
-        .filter(
-          (c: { constraint_type: string }) => c.constraint_type === "UNIQUE",
-        )
-        .map(
-          (c: { table_name: string; columns: string }) =>
-            `${c.table_name}(${c.columns})`,
-        );
+        .filter((c: { constraint_type: string }) => c.constraint_type === 'UNIQUE')
+        .map((c: { table_name: string; columns: string }) => `${c.table_name}(${c.columns})`);
 
-      expect(uniqueConstraints).toContain("users(email)");
-      expect(uniqueConstraints).toContain("roles(name)");
-      expect(uniqueConstraints).toContain("sites(name)");
-      expect(uniqueConstraints).toContain("cells(site_id, line_number)");
-      expect(uniqueConstraints).toContain("plcs(tag_id)");
-      expect(uniqueConstraints).toContain("tags(plc_id, name)");
+      expect(uniqueConstraints).toContain('users(email)');
+      expect(uniqueConstraints).toContain('roles(name)');
+      expect(uniqueConstraints).toContain('sites(name)');
+      expect(uniqueConstraints).toContain('cells(site_id, line_number)');
+      expect(uniqueConstraints).toContain('plcs(tag_id)');
+      expect(uniqueConstraints).toContain('tags(plc_id, name)');
     });
 
-    it("should create proper indexes for performance", async () => {
+    it('should create proper indexes for performance', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const indexes = await testDataSource.query(`
@@ -200,20 +189,20 @@ describe("Database Migration Tests", () => {
       const indexNames = indexes.map((i: { indexname: string }) => i.indexname);
 
       // Check for key performance indexes
-      expect(indexNames).toContain("idx_users_email");
-      expect(indexNames).toContain("idx_users_role");
-      expect(indexNames).toContain("idx_cells_site_id");
-      expect(indexNames).toContain("idx_equipment_cell_id");
-      expect(indexNames).toContain("idx_plcs_equipment_id");
-      expect(indexNames).toContain("idx_tags_plc_id");
-      expect(indexNames).toContain("idx_audit_logs_table_record");
-      expect(indexNames).toContain("idx_audit_logs_user_timestamp");
+      expect(indexNames).toContain('idx_users_email');
+      expect(indexNames).toContain('idx_users_role');
+      expect(indexNames).toContain('idx_cells_site_id');
+      expect(indexNames).toContain('idx_equipment_cell_id');
+      expect(indexNames).toContain('idx_plcs_equipment_id');
+      expect(indexNames).toContain('idx_tags_plc_id');
+      expect(indexNames).toContain('idx_audit_logs_table_record');
+      expect(indexNames).toContain('idx_audit_logs_user_timestamp');
     });
 
-    it("should create database views", async () => {
+    it('should create database views', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const views = await testDataSource.query(`
@@ -224,17 +213,17 @@ describe("Database Migration Tests", () => {
 
       const viewNames = views.map((v: { viewname: string }) => v.viewname);
 
-      expect(viewNames).toContain("v_plc_hierarchy");
-      expect(viewNames).toContain("v_plc_hierarchy_with_tag_rows");
-      expect(viewNames).toContain("v_plc_summary");
-      expect(viewNames).toContain("v_site_plc_counts");
-      expect(viewNames).toContain("v_recent_audit_events");
+      expect(viewNames).toContain('v_plc_hierarchy');
+      expect(viewNames).toContain('v_plc_hierarchy_with_tag_rows');
+      expect(viewNames).toContain('v_plc_summary');
+      expect(viewNames).toContain('v_site_plc_counts');
+      expect(viewNames).toContain('v_recent_audit_events');
     });
 
-    it("should create database functions and triggers", async () => {
+    it('should create database functions and triggers', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       // Check for functions
@@ -245,11 +234,9 @@ describe("Database Migration Tests", () => {
         ORDER BY routine_name
       `);
 
-      const functionNames = functions.map(
-        (f: { routine_name: string }) => f.routine_name,
-      );
-      expect(functionNames).toContain("update_updated_at_column");
-      expect(functionNames).toContain("audit_trigger_function");
+      const functionNames = functions.map((f: { routine_name: string }) => f.routine_name);
+      expect(functionNames).toContain('update_updated_at_column');
+      expect(functionNames).toContain('audit_trigger_function');
 
       // Check for triggers
       const triggers = await testDataSource.query(`
@@ -261,23 +248,23 @@ describe("Database Migration Tests", () => {
 
       const triggerInfo = triggers.map(
         (t: { event_object_table: string; trigger_name: string }) =>
-          `${t.event_object_table}.${t.trigger_name}`,
+          `${t.event_object_table}.${t.trigger_name}`
       );
 
       // Check for update timestamp triggers
-      expect(triggerInfo).toContain("users.update_users_updated_at");
-      expect(triggerInfo).toContain("sites.update_sites_updated_at");
+      expect(triggerInfo).toContain('users.update_users_updated_at');
+      expect(triggerInfo).toContain('sites.update_sites_updated_at');
 
       // Check for audit triggers
-      expect(triggerInfo).toContain("users.audit_users");
-      expect(triggerInfo).toContain("sites.audit_sites");
-      expect(triggerInfo).toContain("plcs.audit_plcs");
+      expect(triggerInfo).toContain('users.audit_users');
+      expect(triggerInfo).toContain('sites.audit_sites');
+      expect(triggerInfo).toContain('plcs.audit_plcs');
     });
 
-    it("should populate initial role data", async () => {
+    it('should populate initial role data', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const roles = await testDataSource.query(`
@@ -289,18 +276,18 @@ describe("Database Migration Tests", () => {
 
       const roleNames = roles.map((r: { name: string }) => r.name);
 
-      expect(roleNames).toContain("Admin");
-      expect(roleNames).toContain("Engineer");
-      expect(roleNames).toContain("Viewer");
+      expect(roleNames).toContain('Admin');
+      expect(roleNames).toContain('Engineer');
+      expect(roleNames).toContain('Viewer');
       expect(roles).toHaveLength(3);
     });
   });
 
-  describe("Migration Rollback", () => {
-    it("should successfully rollback initial migration", async () => {
+  describe('Migration Rollback', () => {
+    it('should successfully rollback initial migration', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       // Record initial state
@@ -337,10 +324,10 @@ describe("Database Migration Tests", () => {
       await testDataSource.runMigrations();
     });
 
-    it("should maintain data integrity during rollback and re-migration", async () => {
+    it('should maintain data integrity during rollback and re-migration', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       // Insert test data
@@ -374,11 +361,11 @@ describe("Database Migration Tests", () => {
     });
   });
 
-  describe("Migration History", () => {
-    it("should track migration execution in migration_history table", async () => {
+  describe('Migration History', () => {
+    it('should track migration execution in migration_history table', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const migrationRecords = await testDataSource.query(`
@@ -388,30 +375,28 @@ describe("Database Migration Tests", () => {
       `);
 
       expect(migrationRecords).toHaveLength(1);
-      expect(migrationRecords[0].name).toBe("InitialSchema20250729082147");
+      expect(migrationRecords[0].name).toBe('InitialSchema20250729082147');
       expect(migrationRecords[0].timestamp).toBeInstanceOf(Date);
     });
 
-    it("should show migration status correctly", async () => {
+    it('should show migration status correctly', async () => {
       if (!testDataSource) {
         // eslint-disable-next-line no-console
-        console.log("Skipping test: PostgreSQL not available");
+        console.log('Skipping test: PostgreSQL not available');
         return;
       }
       const pendingMigrations = await testDataSource.showMigrations();
 
       // Should be no pending migrations after successful run
       const hasPending = Array.isArray(pendingMigrations)
-        ? pendingMigrations.some((migration) => {
+        ? pendingMigrations.some(migration => {
             // Handle both string[] and object[] types
-            if (typeof migration === "string") {
+            if (typeof migration === 'string') {
               // If it's a string array, presence indicates pending migration
               return true;
             }
             // If it's an object, check the isRun property
-            return typeof migration === "object" &&
-              migration !== null &&
-              "isRun" in migration
+            return typeof migration === 'object' && migration !== null && 'isRun' in migration
               ? !(migration as { isRun: boolean }).isRun
               : false;
           })

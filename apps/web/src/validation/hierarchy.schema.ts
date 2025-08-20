@@ -45,7 +45,7 @@ export const createSiteSchema = siteSchema.extend({
     async name => {
       try {
         return await hierarchyService.validateSiteUniqueness(name);
-      } catch (error) {
+      } catch {
         // If validation service fails, allow the value to pass client validation
         // Server validation will catch any issues
         return true;
@@ -78,7 +78,7 @@ export const updateSiteSchema = z
     async data => {
       try {
         return await hierarchyService.validateSiteUniqueness(data.name, data.excludeId);
-      } catch (error) {
+      } catch {
         return true;
       }
     },
@@ -114,7 +114,7 @@ export const createCellSchema = cellSchema.refine(
   async data => {
     try {
       return await hierarchyService.validateCellUniqueness(data.siteId, data.lineNumber);
-    } catch (error) {
+    } catch {
       return true;
     }
   },
@@ -157,7 +157,7 @@ export const updateCellSchema = z
           data.lineNumber,
           data.excludeId
         );
-      } catch (error) {
+      } catch {
         return true;
       }
     },
@@ -182,7 +182,7 @@ export const hierarchyLocationSchema = z
         // Validate that the cell belongs to the selected site
         const cell = await hierarchyService.getCellById(data.cellId);
         return cell.siteId === data.siteId;
-      } catch (error) {
+      } catch {
         return false;
       }
     },
@@ -281,7 +281,7 @@ export async function validateSiteUniqueness(name: string, excludeId?: string): 
 
   try {
     return await hierarchyService.validateSiteUniqueness(name.trim(), excludeId);
-  } catch (error) {
+  } catch {
     // Site uniqueness validation failed
     return false;
   }
@@ -303,7 +303,7 @@ export async function validateCellUniqueness(
       lineNumber.trim().toUpperCase(),
       excludeId
     );
-  } catch (error) {
+  } catch {
     // Cell uniqueness validation failed
     return false;
   }
@@ -318,7 +318,7 @@ export async function validateCellBelongsToSite(cellId: string, siteId: string):
   try {
     const cell = await hierarchyService.getCellById(cellId);
     return cell.siteId === siteId;
-  } catch (error) {
+  } catch {
     // Cell-site relationship validation failed
     return false;
   }
@@ -380,7 +380,7 @@ export async function checkForOrphanedRecords(): Promise<{
       orphanedCells,
       orphanedEquipment,
     };
-  } catch (error) {
+  } catch {
     // Orphaned records check failed - log error for debugging
     return {
       hasOrphans: null,

@@ -20,6 +20,10 @@ module.exports = {
     'no-unused-vars': 'off', // Disable base rule to avoid conflicts
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 
+    // Quote preferences (should match Prettier config)
+    quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+    'jsx-quotes': ['error', 'prefer-single'],
+
     // Import rules
     'sort-imports': [
       'error',
