@@ -57,7 +57,7 @@ export const serializeFiltersToURL = (filters: AdvancedFilters): string => {
 
     return compressed;
   } catch (error) {
-    console.warn('Failed to serialize filters to URL:', error);
+    // Failed to serialize filters to URL
     return '';
   }
 };
@@ -83,11 +83,11 @@ export const deserializeFiltersFromURL = (urlParam: string): AdvancedFilters | n
     if (validation.success) {
       return validation.data!;
     } else {
-      console.warn('Invalid filters from URL:', validation.fieldErrors);
+      // Invalid filters from URL
       return null;
     }
   } catch (error) {
-    console.warn('Failed to deserialize filters from URL:', error);
+    // Failed to deserialize filters from URL
     return null;
   }
 };
@@ -175,7 +175,7 @@ export const generateFilterURL = (
 
   // Check URL length limit
   if (finalUrl.length > MAX_URL_LENGTH) {
-    console.warn(`Generated URL exceeds maximum length (${finalUrl.length}/${MAX_URL_LENGTH})`);
+    // Generated URL exceeds maximum length
     // Fallback to preset-only or no filters
     url.searchParams.delete(URL_PARAMS.FILTERS);
     if (!presetId) {
@@ -226,7 +226,7 @@ export const updateBrowserURL = (
       window.history.pushState(null, '', newUrl);
     }
   } catch (error) {
-    console.warn('Failed to update browser URL:', error);
+    // Failed to update browser URL
   }
 };
 
@@ -289,7 +289,7 @@ export const copyShareableLinkToClipboard = async (
 
     return true;
   } catch (error) {
-    console.error('Failed to copy shareable link:', error);
+    // Failed to copy shareable link
     return false;
   }
 };
@@ -339,7 +339,7 @@ export const generateQRCodeDataURL = async (
 
     return null;
   } catch (error) {
-    console.error('Failed to generate QR code:', error);
+    // Failed to generate QR code
     return null;
   }
 };
@@ -459,7 +459,7 @@ export const encryptFilterData = (data: string): string => {
     }
     return btoa(encrypted);
   } catch (error) {
-    console.warn('Failed to encrypt filter data:', error);
+    // Failed to encrypt filter data
     return data;
   }
 };
@@ -478,7 +478,7 @@ export const decryptFilterData = (encryptedData: string): string => {
     }
     return decrypted;
   } catch (error) {
-    console.warn('Failed to decrypt filter data:', error);
+    // Failed to decrypt filter data
     return encryptedData;
   }
 };

@@ -810,7 +810,7 @@ export class FilterResultStreamer<T> {
         try {
           callback(data);
         } catch (error) {
-          console.error('Error in filter result stream callback:', error);
+          // Error in filter result stream callback
         }
       });
     }

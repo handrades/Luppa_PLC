@@ -280,7 +280,7 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
   /**
    * Current URL
    */
-  const currentURL = useMemo(() => window.location.href, [location]);
+  const currentURL = useMemo(() => window.location.href, []);
 
   /**
    * Whether URL contains filter parameters
@@ -293,9 +293,9 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
   /**
    * Bookmark detection
    */
-  const isBookmarked = useMemo(() => isBookmarkedFilter(), [location]);
+  const isBookmarked = useMemo(() => isBookmarkedFilter(), []);
 
-  const bookmarkSuggestion = useMemo(() => suggestPresetFromBookmark(), [location]);
+  const bookmarkSuggestion = useMemo(() => suggestPresetFromBookmark(), []);
 
   // =============================================================================
   // URL SYNCHRONIZATION
@@ -345,7 +345,14 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
         }
       }, currentConfig.debounceDelay);
     },
-    [currentConfig, replaceHistory, historyIndex, onURLChange, onError]
+    [
+      currentConfig.debounceDelay,
+      currentConfig.syncEnabled,
+      replaceHistory,
+      historyIndex,
+      onURLChange,
+      onError,
+    ]
   );
 
   /**

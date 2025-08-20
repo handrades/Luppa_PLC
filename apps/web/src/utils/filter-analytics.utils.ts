@@ -648,7 +648,7 @@ export class FilterAnalyticsTracker {
         }));
       }
     } catch (error) {
-      console.warn('Failed to load stored analytics events:', error);
+      // Failed to load stored analytics events
     }
   }
 
@@ -662,16 +662,16 @@ export class FilterAnalyticsTracker {
       const toStore = this.events.slice(-this.config.maxStoredEvents * 0.8);
       localStorage.setItem('filter-analytics-events', JSON.stringify(toStore));
     } catch (error) {
-      console.warn('Failed to save analytics events to storage:', error);
+      // Failed to save analytics events to storage
     }
   }
 
   /**
    * Sends events to analytics service (placeholder)
    */
-  private sendToAnalyticsService(events: FilterAnalyticsEvent[]): void {
+  private sendToAnalyticsService(_events: FilterAnalyticsEvent[]): void {
     // Placeholder for sending to external analytics service
-    console.debug('Analytics events:', events);
+    // Analytics events logged
   }
 
   /**
