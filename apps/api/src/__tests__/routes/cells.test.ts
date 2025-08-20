@@ -256,8 +256,9 @@ describe('Cells Routes', () => {
           ...testCellData,
           name: `Cell A ${timestamp}`,
           lineNumber: `A${timestamp}`,
-        });
-      cellAId = cellAResponse.body.data.id;
+        })
+        .expect(201);
+      cellAId = cellAResponse.body.cell.id;
 
       const cellBResponse = await request(app)
         .post('/api/v1/cells')
@@ -266,8 +267,9 @@ describe('Cells Routes', () => {
           ...testCellData,
           name: `Cell B ${timestamp}`,
           lineNumber: `B${timestamp}`,
-        });
-      cellBId = cellBResponse.body.data.id;
+        })
+        .expect(201);
+      cellBId = cellBResponse.body.cell.id;
     });
 
     it('should return paginated cells list', async () => {
@@ -1055,7 +1057,7 @@ describe('Cells Routes', () => {
 
   describe('Rate Limiting', () => {
     it('should enforce rate limits on create operations', async () => {
-      const requests = [];
+      const requests: Promise<{ status: number }>[] = [];
 
       // Make multiple rapid requests (assuming rate limit is 5 per minute)
       for (let i = 0; i < 10; i++) {
