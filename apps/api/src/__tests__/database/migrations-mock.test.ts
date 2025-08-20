@@ -138,7 +138,9 @@ describe('Database Migration Tests (Mock)', () => {
     it('should create indexes for performance', async () => {
       await migration.up(mockQueryRunner);
 
-      const indexQueries = executedQueries.filter(query => /CREATE\s+(UNIQUE\s+)?INDEX/i.test(query));
+      const indexQueries = executedQueries.filter(query =>
+        /CREATE\s+(UNIQUE\s+)?INDEX/i.test(query)
+      );
 
       // Should create multiple indexes
       expect(indexQueries.length).toBeGreaterThan(0);

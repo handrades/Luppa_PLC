@@ -6,6 +6,8 @@
  * caching, query optimization, and performance monitoring.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { AdvancedFilters } from '../types/advanced-filters';
 import { debounce } from 'lodash-es';
 
@@ -751,8 +753,8 @@ export class FilterBatchProcessor {
             item.reject(new Error('No result for filter'));
           }
         });
-      } catch (error) {
-        batch.forEach(item => item.reject(error));
+      } catch (_error) {
+        batch.forEach(item => item.reject(_error));
       }
     }
 
@@ -809,8 +811,8 @@ export class FilterResultStreamer<T> {
       callbacks.forEach(callback => {
         try {
           callback(data);
-        } catch (error) {
-          // Error in filter result stream callback
+        } catch (_error) {
+          // console.error('Error in filter result stream callback:', error);
         }
       });
     }

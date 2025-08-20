@@ -613,7 +613,10 @@ export const useFilterPerformance = (
 
         if (finalConfig.enableMonitoring) {
           // Log performance measurement
-          // Performance measurement recorded
+          // Debug logging disabled in production
+          if (process.env.NODE_ENV === 'development') {
+            // console.debug('Performance measurement:', { duration, metadata });
+          }
         }
 
         return { result, duration };

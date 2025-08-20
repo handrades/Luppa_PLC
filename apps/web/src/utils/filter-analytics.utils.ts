@@ -6,6 +6,8 @@
  * and providing optimization insights.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { AdvancedFilters } from '../types/advanced-filters';
 // import type { FilterPreset, FilterHistoryEntry } from '../types/advanced-filters';
 import { analyzeFilterComplexity } from './filter-performance.utils';
@@ -647,8 +649,10 @@ export class FilterAnalyticsTracker {
           timestamp: new Date(event.timestamp as string | number | Date),
         }));
       }
-    } catch (error) {
-      // Failed to load stored analytics events
+    } catch (_error) {
+      if (process.env.NODE_ENV === 'development') {
+        // console.warn('Failed to load stored analytics events:', _error);
+      }
     }
   }
 
@@ -661,8 +665,10 @@ export class FilterAnalyticsTracker {
     try {
       const toStore = this.events.slice(-this.config.maxStoredEvents * 0.8);
       localStorage.setItem('filter-analytics-events', JSON.stringify(toStore));
-    } catch (error) {
-      // Failed to save analytics events to storage
+    } catch (_error) {
+      if (process.env.NODE_ENV === 'development') {
+        // console.warn('Failed to save analytics events to storage:', _error);
+      }
     }
   }
 
@@ -671,7 +677,9 @@ export class FilterAnalyticsTracker {
    */
   private sendToAnalyticsService(_events: FilterAnalyticsEvent[]): void {
     // Placeholder for sending to external analytics service
-    // Analytics events logged
+    if (process.env.NODE_ENV === 'development') {
+      // console.debug('Analytics events:', _events);
+    }
   }
 
   /**

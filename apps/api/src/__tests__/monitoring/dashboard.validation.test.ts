@@ -171,7 +171,7 @@ describe('Grafana Dashboard Validation', () => {
 
               if (!hasValidPrefix) {
                 // Panel has query that might not match our metrics
-                // (Query validation warning suppressed for tests)
+                // Potentially invalid query warning (console disabled in tests)
               }
               // Don't fail the test, but warn about potentially invalid queries
             });

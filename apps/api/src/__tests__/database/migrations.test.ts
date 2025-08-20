@@ -376,8 +376,8 @@ describe('Database Migration Tests', () => {
       expect(migrationRecords.length).toBeGreaterThanOrEqual(1);
       expect(migrationRecords[0].name).toMatch(/InitialSchema/);
       expect(
-        migrationRecords[0].timestamp instanceof Date || 
-        !isNaN(Date.parse(migrationRecords[0].timestamp))
+        migrationRecords[0].timestamp instanceof Date ||
+          !isNaN(Date.parse(migrationRecords[0].timestamp))
       ).toBe(true);
     });
 
@@ -390,10 +390,13 @@ describe('Database Migration Tests', () => {
       const pendingMigrations = await testDataSource.showMigrations();
 
       // Handle TypeORM 0.3.x where showMigrations returns boolean
-      const hasPending = typeof pendingMigrations === 'boolean' 
-        ? pendingMigrations 
-        : (Array.isArray(pendingMigrations) ? pendingMigrations.length > 0 : Boolean(pendingMigrations));
-      
+      const hasPending =
+        typeof pendingMigrations === 'boolean'
+          ? pendingMigrations
+          : Array.isArray(pendingMigrations)
+            ? pendingMigrations.length > 0
+            : Boolean(pendingMigrations);
+
       expect(hasPending).toBe(false);
     });
   });

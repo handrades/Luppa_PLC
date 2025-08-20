@@ -6,6 +6,8 @@
  * enabling shareable links and browser navigation.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { AdvancedFilters } from '../types/advanced-filters';
 // import type { FilterPreset } from '../types/advanced-filters';
 import { validateAdvancedFilters } from '../validation/filter.schemas';
@@ -52,12 +54,22 @@ export const serializeFiltersToURL = (filters: AdvancedFilters): string => {
     // Convert to JSON string
     const jsonString = JSON.stringify(cleanFilters);
 
-    // Compress using simple base64 encoding
-    const compressed = btoa(jsonString);
+    // UTF-8 safe base64 helpers
+    const toBase64Utf8 = (str: string): string => {
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(str);
+      return btoa(String.fromCharCode(...bytes));
+    };
+
+    // Compress using UTF-8 safe base64 encoding
+    const compressed = toBase64Utf8(jsonString);
 
     return compressed;
   } catch (error) {
-    // Failed to serialize filters to URL
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to serialize filters to URL:', error);
+    }
     return '';
   }
 };
@@ -71,8 +83,23 @@ export const deserializeFiltersFromURL = (urlParam: string): AdvancedFilters | n
       return null;
     }
 
-    // Decompress from base64
-    const decompressed = atob(urlParam);
+    // UTF-8 safe base64 helpers
+    const fromBase64Utf8 = (base64: string): string => {
+      try {
+        const bytes = new Uint8Array(
+          atob(base64)
+            .split('')
+            .map(c => c.charCodeAt(0))
+        );
+        const decoder = new TextDecoder();
+        return decoder.decode(bytes);
+      } catch {
+        throw new Error('Invalid base64 UTF-8 string');
+      }
+    };
+
+    // Decompress from UTF-8 safe base64
+    const decompressed = fromBase64Utf8(urlParam);
 
     // Parse JSON
     const parsed = JSON.parse(decompressed);
@@ -83,11 +110,11 @@ export const deserializeFiltersFromURL = (urlParam: string): AdvancedFilters | n
     if (validation.success) {
       return validation.data!;
     } else {
-      // Invalid filters from URL
+      // console.warn('Invalid filters from URL:', validation.fieldErrors);
       return null;
     }
-  } catch (error) {
-    // Failed to deserialize filters from URL
+  } catch (_error) {
+    // console.warn('Failed to deserialize filters from URL:', error);
     return null;
   }
 };
@@ -175,7 +202,7 @@ export const generateFilterURL = (
 
   // Check URL length limit
   if (finalUrl.length > MAX_URL_LENGTH) {
-    // Generated URL exceeds maximum length
+    // console.warn(`Generated URL exceeds maximum length (${finalUrl.length}/${MAX_URL_LENGTH})`);
     // Fallback to preset-only or no filters
     url.searchParams.delete(URL_PARAMS.FILTERS);
     if (!presetId) {
@@ -225,8 +252,8 @@ export const updateBrowserURL = (
     } else {
       window.history.pushState(null, '', newUrl);
     }
-  } catch (error) {
-    // Failed to update browser URL
+  } catch (_error) {
+    // console.warn('Failed to update browser URL:', error);
   }
 };
 
@@ -288,8 +315,8 @@ export const copyShareableLinkToClipboard = async (
     }
 
     return true;
-  } catch (error) {
-    // Failed to copy shareable link
+  } catch (_error) {
+    // console.error('Failed to copy shareable link:', error);
     return false;
   }
 };
@@ -338,8 +365,8 @@ export const generateQRCodeDataURL = async (
     }
 
     return null;
-  } catch (error) {
-    // Failed to generate QR code
+  } catch (_error) {
+    // console.error('Failed to generate QR code:', error);
     return null;
   }
 };
@@ -459,8 +486,11 @@ export const encryptFilterData = (data: string): string => {
     }
     return btoa(encrypted);
   } catch (error) {
-    // Failed to encrypt filter data
-    return data;
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to encrypt filter data:', error);
+    }
+    return 'INVALID_ENCRYPTED_FILTER';
   }
 };
 
@@ -478,8 +508,11 @@ export const decryptFilterData = (encryptedData: string): string => {
     }
     return decrypted;
   } catch (error) {
-    // Failed to decrypt filter data
-    return encryptedData;
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to decrypt filter data:', error);
+    }
+    return 'INVALID_ENCRYPTED_FILTER';
   }
 };
 
