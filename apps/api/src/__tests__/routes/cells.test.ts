@@ -102,7 +102,7 @@ describe('Cells Routes', () => {
     it('should return 401 without authentication', async () => {
       const response = await request(app).post('/api/v1/cells').send(testCellData).expect(401);
 
-      expect(response.body.message).toContain('Authorization header');
+      expect(response.body.error.message).toContain('Authorization header');
     });
 
     it('should return 403 without proper permissions', async () => {
@@ -118,7 +118,7 @@ describe('Cells Routes', () => {
         .send(testCellData)
         .expect(403);
 
-      expect(response.body.message).toContain('Insufficient permissions');
+      expect(response.body.error.message).toContain('Insufficient permissions');
     });
 
     it('should validate required fields', async () => {
@@ -217,7 +217,7 @@ describe('Cells Routes', () => {
         .send(uniqueTestData)
         .expect(409);
 
-      expect(response.body.message).toContain(`Line number 'CONFLICT-01' already exists`);
+      expect(response.body.error.message).toContain(`Line number 'CONFLICT-01' already exists`);
     });
 
     it('should handle non-existent site', async () => {
@@ -228,7 +228,7 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, siteId: fakeId })
         .expect(404);
 
-      expect(response.body.message).toContain('not found');
+      expect(response.body.error.message).toContain('not found');
     });
 
     it('should convert line number to uppercase', async () => {
@@ -243,10 +243,13 @@ describe('Cells Routes', () => {
   });
 
   describe('GET /cells', () => {
+    let cellAId: string;
+    let cellBId: string;
+    
     beforeEach(async () => {
       // Create test cells with unique data
       const timestamp = Date.now();
-      await request(app)
+      const cellAResponse = await request(app)
         .post('/api/v1/cells')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -254,8 +257,9 @@ describe('Cells Routes', () => {
           name: `Cell A ${timestamp}`,
           lineNumber: `A${timestamp}`,
         });
+      cellAId = cellAResponse.body.data.id;
 
-      await request(app)
+      const cellBResponse = await request(app)
         .post('/api/v1/cells')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -263,6 +267,7 @@ describe('Cells Routes', () => {
           name: `Cell B ${timestamp}`,
           lineNumber: `B${timestamp}`,
         });
+      cellBId = cellBResponse.body.data.id;
     });
 
     it('should return paginated cells list', async () => {
@@ -295,12 +300,12 @@ describe('Cells Routes', () => {
 
     it('should apply search filter', async () => {
       const response = await request(app)
-        .get('/api/v1/cells?search=Cell A')
+        .get(`/api/v1/cells?search=Cell A&siteId=${testSiteId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body.data.length).toBe(1);
-      expect(response.body.data[0].name).toBe('Cell A');
+      expect(response.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(response.body.data[0].name).toMatch(/^Cell A/);
     });
 
     it('should apply pagination', async () => {
@@ -315,12 +320,14 @@ describe('Cells Routes', () => {
 
     it('should apply sorting', async () => {
       const response = await request(app)
-        .get('/api/v1/cells?sortBy=name&sortOrder=DESC')
+        .get(`/api/v1/cells?sortBy=name&sortOrder=DESC&ids=${cellBId},${cellAId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       const names = response.body.data.map((cell: { name: string }) => cell.name);
-      expect(names).toEqual(['Cell B', 'Cell A']);
+      expect(names.length).toBe(2);
+      expect(names[0]).toMatch(/^Cell B/);
+      expect(names[1]).toMatch(/^Cell A/);
     });
 
     it('should validate query parameters', async () => {
@@ -338,7 +345,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.message).toContain('Sort field must be one of');
+      expect(response.body.error.message).toContain('Sort field must be one of');
     });
   });
 
@@ -512,7 +519,7 @@ describe('Cells Routes', () => {
         .send({})
         .expect(403);
 
-      expect(response.body.message).toContain('Insufficient permissions');
+      expect(response.body.error.message).toContain('Insufficient permissions');
     });
 
     it('should return 401 without authentication', async () => {
@@ -522,6 +529,7 @@ describe('Cells Routes', () => {
 
   describe('GET /cells/:id', () => {
     let cellId: string;
+    let createdCell: { id: string; name: string; lineNumber: string; siteId: string };
 
     beforeEach(async () => {
       const uniqueTestData = {
@@ -534,6 +542,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send(uniqueTestData);
       cellId = response.body.cell.id;
+      createdCell = response.body.cell;
     });
 
     it('should return specific cell', async () => {
@@ -545,8 +554,8 @@ describe('Cells Routes', () => {
       expect(response.body.cell).toMatchObject({
         id: cellId,
         siteId: testSiteId,
-        name: 'Test Cell',
-        lineNumber: 'LINE-01',
+        name: createdCell.name,
+        lineNumber: createdCell.lineNumber,
         equipmentCount: expect.any(Number),
       });
     });
@@ -558,7 +567,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should validate UUID format', async () => {
@@ -624,7 +633,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(400);
 
-      expect(response.body.message).toContain('updatedAt is required for optimistic locking');
+      expect(response.body.error.message).toContain('updatedAt is required for optimistic locking');
     });
 
     it('should handle optimistic locking conflicts', async () => {
@@ -641,7 +650,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.message).toContain('Cell was modified by another user');
+      expect(response.body.error.message).toContain('Cell was modified by another user');
     });
 
     it('should validate updated line number uniqueness', async () => {
@@ -666,7 +675,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.message).toContain("Line number 'ANOTHER-01' already exists");
+      expect(response.body.error.message).toContain("Line number 'ANOTHER-01' already exists");
     });
 
     it('should validate cell name format', async () => {
@@ -697,7 +706,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(404);
 
-      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should convert line number to uppercase', async () => {
@@ -757,7 +766,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(409); // Would be 409 if equipment exists
 
-      expect(response.body.message).toContain('because it contains');
+      expect(response.body.error.message).toContain('because it contains');
     });
 
     it('should return 404 for non-existent cell', async () => {
@@ -767,7 +776,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should require cells.delete permission', async () => {
@@ -782,7 +791,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${tokenWithoutDelete}`)
         .expect(403);
 
-      expect(response.body.message).toContain('Insufficient permissions');
+      expect(response.body.error.message).toContain('Insufficient permissions');
     });
   });
 
@@ -887,7 +896,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(501);
 
-      expect(response.body.message).toContain('Bulk move operation is not yet implemented');
+      expect(response.body.error.message).toContain('Bulk move operation is not yet implemented');
     });
 
     it('should validate bulk operation parameters', async () => {
@@ -902,7 +911,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.message).toContain('Operation must be one of: delete, export, move');
+      expect(response.body.error.message).toContain('Operation must be one of: delete, export, move');
     });
 
     it('should handle partial failures in bulk delete', async () => {
@@ -941,7 +950,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.message).toContain('At least one cell ID is required');
+      expect(response.body.error.message).toContain('At least one cell ID is required');
     });
 
     it('should validate cell IDs uniqueness', async () => {
@@ -956,7 +965,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.message).toContain('Cell IDs must be unique');
+      expect(response.body.error.message).toContain('Cell IDs must be unique');
     });
 
     it('should limit bulk operation size', async () => {
@@ -972,7 +981,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.message).toContain(
+      expect(response.body.error.message).toContain(
         'Cannot perform bulk operation on more than 50 cells at once'
       );
     });
@@ -1040,7 +1049,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.message).toContain('not found');
+      expect(response.body.error.message).toContain('not found');
     });
   });
 

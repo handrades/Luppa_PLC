@@ -171,6 +171,7 @@ describe('Grafana Dashboard Validation', () => {
 
               if (!hasValidPrefix) {
                 // Panel has query that might not match our metrics
+                console.warn(`Potentially invalid query in panel "${(panel as { title: string }).title}": ${expr}`);
               }
               // Don't fail the test, but warn about potentially invalid queries
             });

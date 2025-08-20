@@ -51,9 +51,17 @@ describe('Database Entities Validation', () => {
     // Clean data between tests but keep fixtures
     await cleanTestData(dataSource);
 
-    // Recreate fixtures after cleanup
-    const testSetup = await setupTestDatabase();
-    testUser = testSetup.fixtures.testUser;
+    // Recreate fixtures using existing connection
+    const userRepository = dataSource.getRepository(User);
+    testUser = userRepository.create({
+      email: 'test@example.com',
+      passwordHash: '$2b$10$hashedpassword',
+      firstName: 'Test',
+      lastName: 'User',
+      roleId: '550e8400-e29b-41d4-a716-446655440000', // Default role ID
+      isActive: true,
+    });
+    await userRepository.save(testUser);
   });
 
   describe('Site Entity', () => {

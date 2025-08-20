@@ -1,11 +1,11 @@
-import { Express } from 'express';
+import { Application } from 'express';
 import request from 'supertest';
 import { createApp } from '../../app';
 import { register } from '../../config/prometheus';
 import { MetricsService } from '../../services/MetricsService';
 
 describe('Monitoring Integration Tests', () => {
-  let app: Express.Application;
+  let app: Application;
 
   beforeAll(() => {
     app = createApp();
@@ -136,7 +136,7 @@ describe('Monitoring Integration Tests', () => {
           // Metric line should have format: metric_name{labels} value timestamp?
           // Allow NaN and Infinity values which are valid in Prometheus
           expect(line).toMatch(
-            /^[a-zA-Z_][a-zA-Z0-9_]*(\{.*\})?\s+([+-]?([\d.]+|[\d.]+e[+-]?\d+|NaN|Nan|Infinity))(\s+\d+)?$/
+            /^[a-zA-Z_][a-zA-Z0-9_]*(\{.*\})?\s+([+-]?(\d*\.?\d+([eE][+-]?\d+)?|[Nn]a[Nn]|[+-]?Inf))(\s+\d+)?$/
           );
         }
       }
