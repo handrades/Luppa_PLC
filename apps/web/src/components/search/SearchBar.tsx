@@ -272,8 +272,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               }}
             />
           )}
-          renderOption={(props, option) => (
-            <ListItem {...props} dense>
+          renderOption={(props, option) => {
+            const { key, ...listItemProps } = props;
+            return (
+            <ListItem key={key} {...listItemProps} dense>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                 {option.type === 'recent' ? (
                   <HistoryIcon fontSize='small' color='action' />
@@ -297,7 +299,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 )}
               </Box>
             </ListItem>
-          )}
+            );
+          }}
           noOptionsText={
             inputValue.length > 0 ? 'No suggestions found' : 'Start typing to search...'
           }

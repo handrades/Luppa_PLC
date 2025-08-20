@@ -25,6 +25,20 @@ jest.mock('react-window', () => ({
   ),
 }));
 
+// Mock the useToast hook
+jest.mock('../../../hooks/useToast', () => ({
+  useToast: () => ({
+    showError: jest.fn(),
+    showSuccess: jest.fn(),
+    showWarning: jest.fn(),
+  }),
+}));
+
+// Mock the exportSearchResults utility
+jest.mock('../../../utils/searchExport', () => ({
+  exportSearchResults: jest.fn(),
+}));
+
 describe('SearchResults', () => {
   const mockResults: SearchResultItem[] = [
     {
