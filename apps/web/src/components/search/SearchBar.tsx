@@ -210,7 +210,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           renderInput={params => (
             <TextField
               {...params}
-              ref={inputRef}
+              inputRef={inputRef}
               placeholder={placeholder}
               size={size}
               fullWidth={fullWidth}
@@ -275,30 +275,30 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           renderOption={(props, option) => {
             const { key, ...listItemProps } = props;
             return (
-            <ListItem key={key} {...listItemProps} dense>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                {option.type === 'recent' ? (
-                  <HistoryIcon fontSize='small' color='action' />
-                ) : (
-                  <SearchIcon fontSize='small' color='action' />
-                )}
-                <ListItemText
-                  primary={option.label}
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    noWrap: true,
-                  }}
-                />
-                {option.type === 'recent' && (
-                  <Chip
-                    label='Recent'
-                    size='small'
-                    variant='outlined'
-                    sx={{ fontSize: '0.75rem', height: 20 }}
+              <ListItem key={key} {...listItemProps} dense>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  {option.type === 'recent' ? (
+                    <HistoryIcon fontSize='small' color='action' />
+                  ) : (
+                    <SearchIcon fontSize='small' color='action' />
+                  )}
+                  <ListItemText
+                    primary={option.label}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      noWrap: true,
+                    }}
                   />
-                )}
-              </Box>
-            </ListItem>
+                  {option.type === 'recent' && (
+                    <Chip
+                      label='Recent'
+                      size='small'
+                      variant='outlined'
+                      sx={{ fontSize: '0.75rem', height: 20 }}
+                    />
+                  )}
+                </Box>
+              </ListItem>
             );
           }}
           noOptionsText={
