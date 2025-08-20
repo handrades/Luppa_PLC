@@ -144,7 +144,7 @@ const CellCreateDialog: React.FC<CellCreateDialogProps> = ({
       setLineNumber('');
       setNameError('');
       setLineError('');
-    } catch (error) {
+    } catch {
       setNameError('Failed to create cell');
     }
   };

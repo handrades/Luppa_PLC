@@ -422,7 +422,7 @@ class HierarchyService {
         }
       );
       return response.data.data;
-    } catch (error) {
+    } catch {
       // For autocomplete, return empty array on error rather than throwing
       // Failed to fetch site suggestions - returning empty array
       return [];
@@ -445,7 +445,7 @@ class HierarchyService {
         }
       );
       return response.data.data;
-    } catch (error) {
+    } catch {
       // For autocomplete, return empty array on error rather than throwing
       // Failed to fetch cell suggestions - returning empty array
       return [];

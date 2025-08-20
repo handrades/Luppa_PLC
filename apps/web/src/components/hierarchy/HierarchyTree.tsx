@@ -513,7 +513,7 @@ export const HierarchyTree: React.FC<HierarchyTreeProps> = ({
         entityIds: Array.from(selectedNodeIds),
         params: { format: 'json', includeEquipment: true },
       });
-    } catch (error) {
+    } catch {
       // Export operation failed
     }
   }, [performBulkOperation, selectedNodeIds]);

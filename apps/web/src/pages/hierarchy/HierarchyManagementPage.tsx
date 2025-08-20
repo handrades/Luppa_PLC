@@ -467,7 +467,7 @@ export const HierarchyManagementPage: React.FC = () => {
 
       setDeleteDialog({ open: false, node: null });
       clearSelection();
-    } catch (error) {
+    } catch {
       // Delete operation failed
     }
   }, [deleteDialog.node, deleteSite, deleteCell, clearSelection]);
@@ -481,7 +481,7 @@ export const HierarchyManagementPage: React.FC = () => {
         // Bulk operation logic would go here
         // console.log('Bulk action:', action, 'on nodes:', selectedNodes);
         clearSelection();
-      } catch (error) {
+      } catch {
         // Bulk operation failed
       }
 

@@ -45,6 +45,10 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-undef': 'off', // TypeScript handles this better
       'no-console': 'warn',
+
+      // Quote preferences (should match Prettier config)
+      quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+      'jsx-quotes': ['error', 'prefer-single'],
     },
   },
   {

@@ -111,7 +111,7 @@ const SiteCreateDialog: React.FC<SiteCreateDialogProps> = ({
       await onConfirm({ name: siteName.trim() });
       setSiteName('');
       setNameError('');
-    } catch (error) {
+    } catch {
       setNameError('Failed to create site');
     }
   };
