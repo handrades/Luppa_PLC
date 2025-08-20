@@ -102,7 +102,7 @@ describe('Cells Routes', () => {
     it('should return 401 without authentication', async () => {
       const response = await request(app).post('/api/v1/cells').send(testCellData).expect(401);
 
-      expect(response.body.error.message).toContain('Authorization header');
+      expect(response.body.message).toContain('Authorization header');
     });
 
     it('should return 403 without proper permissions', async () => {
@@ -118,7 +118,7 @@ describe('Cells Routes', () => {
         .send(testCellData)
         .expect(403);
 
-      expect(response.body.error.message).toContain('Insufficient permissions');
+      expect(response.body.message).toContain('Insufficient permissions');
     });
 
     it('should validate required fields', async () => {
@@ -128,10 +128,10 @@ describe('Cells Routes', () => {
         .send({}) // Missing required fields
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.siteId).toContain('Site ID is required');
-      expect(response.body.error.details.name).toContain('Cell name is required');
-      expect(response.body.error.details.lineNumber).toContain('Line number is required');
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.siteId).toContain('Site ID is required');
+      expect(response.body.details.name).toContain('Cell name is required');
+      expect(response.body.details.lineNumber).toContain('Line number is required');
     });
 
     it('should validate site ID format', async () => {
@@ -141,8 +141,8 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, siteId: 'invalid-uuid' })
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.siteId).toContain('Must be a valid UUID');
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.siteId).toContain('Must be a valid UUID');
     });
 
     it('should validate cell name format', async () => {
@@ -152,8 +152,8 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, name: 'Invalid@Name#' })
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.name).toContain(
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.name).toContain(
         'Cell name can only contain letters, numbers, spaces, hyphens, and underscores'
       );
     });
@@ -165,8 +165,8 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, lineNumber: 'invalid@line' })
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.lineNumber).toContain(
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.lineNumber).toContain(
         'Line number must be uppercase alphanumeric with hyphens only'
       );
     });
@@ -179,8 +179,8 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, name: longName })
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.name).toContain('Cell name cannot exceed 100 characters');
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.name).toContain('Cell name cannot exceed 100 characters');
     });
 
     it('should validate line number length', async () => {
@@ -191,8 +191,8 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, lineNumber: longLineNumber })
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
-      expect(response.body.error.details.lineNumber).toContain(
+      expect(response.body.message).toContain('Validation failed');
+      expect(response.body.details.lineNumber).toContain(
         'Line number cannot exceed 50 characters'
       );
     });
@@ -217,7 +217,7 @@ describe('Cells Routes', () => {
         .send(uniqueTestData)
         .expect(409);
 
-      expect(response.body.error.message).toContain(`Line number 'CONFLICT-01' already exists`);
+      expect(response.body.message).toContain(`Line number 'CONFLICT-01' already exists`);
     });
 
     it('should handle non-existent site', async () => {
@@ -228,7 +228,7 @@ describe('Cells Routes', () => {
         .send({ ...testCellData, siteId: fakeId })
         .expect(404);
 
-      expect(response.body.error.message).toContain('not found');
+      expect(response.body.message).toContain('not found');
     });
 
     it('should convert line number to uppercase', async () => {
@@ -245,7 +245,7 @@ describe('Cells Routes', () => {
   describe('GET /cells', () => {
     let cellAId: string;
     let cellBId: string;
-    
+
     beforeEach(async () => {
       // Create test cells with unique data
       const timestamp = Date.now();
@@ -338,7 +338,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
 
     it('should validate sort parameters', async () => {
@@ -347,7 +347,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Sort field must be one of');
+      expect(response.body.message).toContain('Sort field must be one of');
     });
   });
 
@@ -401,7 +401,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
 
     it('should validate site ID parameter', async () => {
@@ -410,7 +410,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
 
     it('should limit suggestions', async () => {
@@ -495,7 +495,7 @@ describe('Cells Routes', () => {
         .send({}) // Missing required parameters
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
   });
 
@@ -521,7 +521,7 @@ describe('Cells Routes', () => {
         .send({})
         .expect(403);
 
-      expect(response.body.error.message).toContain('Insufficient permissions');
+      expect(response.body.message).toContain('Insufficient permissions');
     });
 
     it('should return 401 without authentication', async () => {
@@ -569,7 +569,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should validate UUID format', async () => {
@@ -578,7 +578,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
   });
 
@@ -635,7 +635,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(400);
 
-      expect(response.body.error.message).toContain('updatedAt is required for optimistic locking');
+      expect(response.body.message).toContain('updatedAt is required for optimistic locking');
     });
 
     it('should handle optimistic locking conflicts', async () => {
@@ -652,7 +652,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.error.message).toContain('Cell was modified by another user');
+      expect(response.body.message).toContain('Cell was modified by another user');
     });
 
     it('should validate updated line number uniqueness', async () => {
@@ -677,7 +677,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(409);
 
-      expect(response.body.error.message).toContain("Line number 'ANOTHER-01' already exists");
+      expect(response.body.message).toContain("Line number 'ANOTHER-01' already exists");
     });
 
     it('should validate cell name format', async () => {
@@ -692,7 +692,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
 
     it('should return 404 for non-existent cell', async () => {
@@ -708,7 +708,7 @@ describe('Cells Routes', () => {
         .send(updateData)
         .expect(404);
 
-      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should convert line number to uppercase', async () => {
@@ -768,7 +768,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(409); // Would be 409 if equipment exists
 
-      expect(response.body.error.message).toContain('because it contains');
+      expect(response.body.message).toContain('because it contains');
     });
 
     it('should return 404 for non-existent cell', async () => {
@@ -778,7 +778,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.error.message).toContain(`Cell with ID '${fakeId}' not found`);
+      expect(response.body.message).toContain(`Cell with ID '${fakeId}' not found`);
     });
 
     it('should require cells.delete permission', async () => {
@@ -793,7 +793,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${tokenWithoutDelete}`)
         .expect(403);
 
-      expect(response.body.error.message).toContain('Insufficient permissions');
+      expect(response.body.message).toContain('Insufficient permissions');
     });
   });
 
@@ -898,7 +898,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(501);
 
-      expect(response.body.error.message).toContain('Bulk move operation is not yet implemented');
+      expect(response.body.message).toContain('Bulk move operation is not yet implemented');
     });
 
     it('should validate bulk operation parameters', async () => {
@@ -913,7 +913,9 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Operation must be one of: delete, export, move');
+      expect(response.body.message).toContain(
+        'Operation must be one of: delete, export, move'
+      );
     });
 
     it('should handle partial failures in bulk delete', async () => {
@@ -952,7 +954,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.error.message).toContain('At least one cell ID is required');
+      expect(response.body.message).toContain('At least one cell ID is required');
     });
 
     it('should validate cell IDs uniqueness', async () => {
@@ -967,7 +969,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Cell IDs must be unique');
+      expect(response.body.message).toContain('Cell IDs must be unique');
     });
 
     it('should limit bulk operation size', async () => {
@@ -983,7 +985,7 @@ describe('Cells Routes', () => {
         .send(bulkData)
         .expect(400);
 
-      expect(response.body.error.message).toContain(
+      expect(response.body.message).toContain(
         'Cannot perform bulk operation on more than 50 cells at once'
       );
     });
@@ -1041,7 +1043,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
 
-      expect(response.body.error.message).toContain('Validation failed');
+      expect(response.body.message).toContain('Validation failed');
     });
 
     it('should return 404 for non-existent site', async () => {
@@ -1051,7 +1053,7 @@ describe('Cells Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
-      expect(response.body.error.message).toContain('not found');
+      expect(response.body.message).toContain('not found');
     });
   });
 

@@ -278,9 +278,12 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
   }, [location.search, onError]);
 
   /**
-   * Current URL
+   * Current URL from react-router location
    */
-  const currentURL = useMemo(() => window.location.href, [location]);
+  const currentURL = useMemo(
+    () => window.location.origin + location.pathname + location.search,
+    [location.pathname, location.search]
+  );
 
   /**
    * Whether URL contains filter parameters
@@ -293,9 +296,9 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
   /**
    * Bookmark detection
    */
-  const isBookmarked = useMemo(() => isBookmarkedFilter(), [location]);
+  const isBookmarked = useMemo(() => isBookmarkedFilter(), []);
 
-  const bookmarkSuggestion = useMemo(() => suggestPresetFromBookmark(), [location]);
+  const bookmarkSuggestion = useMemo(() => suggestPresetFromBookmark(), []);
 
   // =============================================================================
   // URL SYNCHRONIZATION

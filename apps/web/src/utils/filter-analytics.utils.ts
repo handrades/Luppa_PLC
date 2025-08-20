@@ -6,6 +6,8 @@
  * and providing optimization insights.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { AdvancedFilters } from '../types/advanced-filters';
 // import type { FilterPreset, FilterHistoryEntry } from '../types/advanced-filters';
 import { analyzeFilterComplexity } from './filter-performance.utils';
@@ -647,8 +649,10 @@ export class FilterAnalyticsTracker {
           timestamp: new Date(event.timestamp as string | number | Date),
         }));
       }
-    } catch (error) {
-      console.warn('Failed to load stored analytics events:', error);
+    } catch (_error) {
+      if (process.env.NODE_ENV === 'development') {
+        // console.warn('Failed to load stored analytics events:', _error);
+      }
     }
   }
 
@@ -661,17 +665,21 @@ export class FilterAnalyticsTracker {
     try {
       const toStore = this.events.slice(-this.config.maxStoredEvents * 0.8);
       localStorage.setItem('filter-analytics-events', JSON.stringify(toStore));
-    } catch (error) {
-      console.warn('Failed to save analytics events to storage:', error);
+    } catch (_error) {
+      if (process.env.NODE_ENV === 'development') {
+        // console.warn('Failed to save analytics events to storage:', _error);
+      }
     }
   }
 
   /**
    * Sends events to analytics service (placeholder)
    */
-  private sendToAnalyticsService(events: FilterAnalyticsEvent[]): void {
+  private sendToAnalyticsService(_events: FilterAnalyticsEvent[]): void {
     // Placeholder for sending to external analytics service
-    console.debug('Analytics events:', events);
+    if (process.env.NODE_ENV === 'development') {
+      // console.debug('Analytics events:', _events);
+    }
   }
 
   /**

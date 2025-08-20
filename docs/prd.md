@@ -714,7 +714,7 @@ so that I can find equipment without knowing exact field values.
 5: Search performance under 100ms for 10,000 records
 6: Recent searches saved and suggested in dropdown
 7: Search syntax guide accessible via help icon
-8: API endpoint GET /api/equipment/search with pagination
+8: API endpoint GET /api/v1/search/equipment with pagination
 
 ### Story 5.3: Bulk Import/Export Operations
 

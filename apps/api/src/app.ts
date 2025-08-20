@@ -26,6 +26,7 @@ import auditRouter from './routes/audit';
 import usersRouter from './routes/users';
 import equipmentRouter from './routes/equipment';
 import metricsRouter from './routes/metrics';
+import searchRouter from './routes/search';
 
 // Extend Express Request interface for raw body support
 // Express Request interface augmented in types/express.d.ts
@@ -137,6 +138,7 @@ export const createApp = (): express.Application => {
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/equipment', equipmentRouter);
+  app.use('/api/v1/search', searchRouter);
   app.use('/api/v1', auditRouter);
 
   // 11. 404 not found handler (must come after all routes)
