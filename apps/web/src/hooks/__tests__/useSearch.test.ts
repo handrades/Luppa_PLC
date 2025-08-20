@@ -347,7 +347,7 @@ describe('useSearch', () => {
   describe('state consistency', () => {
     it('should maintain state consistency across rerenders', () => {
       const mockResults = [{ id: '1', name: 'Test' }];
-      
+
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreState,
         query: 'consistent query',

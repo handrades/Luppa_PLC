@@ -292,7 +292,7 @@ export class SearchService {
 
     try {
       // Set DB-side timeout to prevent long-running queries
-      await queryRunner.query("SET LOCAL statement_timeout = '5000'");
+      await queryRunner.query("SET statement_timeout = '5000'");
 
       // Convert query to tsquery format
       const tsQuery = this.buildTsQuery(query);
@@ -329,7 +329,7 @@ export class SearchService {
 
     try {
       // Set DB-side timeout to prevent long-running queries
-      await queryRunner.query("SET LOCAL statement_timeout = '5000'");
+      await queryRunner.query("SET statement_timeout = '5000'");
 
       const sql = `
         SELECT 
@@ -685,9 +685,9 @@ export class SearchService {
         const batchData = await this.redis.mget(...batch);
 
         for (let j = 0; j < batch.length; j++) {
-          if (!batchData || j >= batchData.length) continue;
+          if (!batchData || !Array.isArray(batchData) || j >= batchData.length) continue;
           const data = batchData[j];
-          if (!data) continue;
+          if (!data || typeof data !== 'string') continue;
 
           try {
             const parsed = JSON.parse(data);

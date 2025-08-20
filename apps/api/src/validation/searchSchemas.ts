@@ -77,13 +77,12 @@ const sortBySchema = Joi.string()
     'site_name',
     'cell_name',
     'equipment_name',
-    'equipment_type',
-    'created_at'
+    'equipment_type'
   )
   .default('relevance')
   .messages({
     'any.only':
-      'Sort field must be one of: relevance, tag_id, make, model, site_name, cell_name, equipment_name, equipment_type, created_at',
+      'Sort field must be one of: relevance, tag_id, make, model, site_name, cell_name, equipment_name, equipment_type',
   });
 
 const sortOrderSchema = Joi.string()

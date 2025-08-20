@@ -1,6 +1,6 @@
 /**
  * SearchService Tests
- * 
+ *
  * Comprehensive tests for search functionality including performance benchmarks
  */
 
@@ -110,8 +110,20 @@ describe('SearchService', () => {
     it('should handle cached results', async () => {
       const cachedResult = {
         data: [],
-        pagination: { page: 1, pageSize: 50, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
-        searchMetadata: { query: 'cached', searchType: 'fulltext', totalMatches: 0, executionTimeMs: 5 },
+        pagination: {
+          page: 1,
+          pageSize: 50,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+        searchMetadata: {
+          query: 'cached',
+          searchType: 'fulltext',
+          totalMatches: 0,
+          executionTimeMs: 5,
+        },
       };
 
       mockRedis.get.mockResolvedValue(JSON.stringify(cachedResult));
@@ -128,30 +140,28 @@ describe('SearchService', () => {
 
     it('should sanitize malicious input', async () => {
       const maliciousQuery = "'; DROP TABLE plcs; --";
-      
-      await expect(
-        searchService.search({ q: maliciousQuery })
-      ).rejects.toThrow();
+
+      await expect(searchService.search({ q: maliciousQuery })).rejects.toThrow();
     });
 
     it('should handle empty query', async () => {
-      await expect(
-        searchService.search({ q: '' })
-      ).rejects.toThrow('Search query must be at least 1 character long');
+      await expect(searchService.search({ q: '' })).rejects.toThrow(
+        'Search query must be at least 1 character long'
+      );
     });
 
     it('should determine correct search type', async () => {
       // Test different query types based on actual SearchService logic
       const testCases = [
         { query: 'a', expectedType: 'similarity' }, // <= 3 chars
-        { query: 'PLC', expectedType: 'similarity' }, // <= 3 chars  
+        { query: 'PLC', expectedType: 'similarity' }, // <= 3 chars
         { query: 'Siemens S7', expectedType: 'hybrid' }, // 2 words, > 3 chars
         { query: 'Siemens S7 1200 PLC', expectedType: 'fulltext' }, // >= 3 words
       ];
 
       for (const testCase of testCases) {
         mockQueryRunner.query.mockResolvedValue([]);
-        
+
         const result = await searchService.search({
           q: testCase.query,
           page: 1,
@@ -224,7 +234,7 @@ describe('SearchService', () => {
       );
 
       const startTime = Date.now();
-      
+
       await searchService.search({
         q: 'test',
         page: 1,
@@ -295,10 +305,10 @@ describe('SearchService', () => {
 
       // Cache keys should be identical
       expect(firstCacheKey).toBe(secondCacheKey);
-      
+
       // Cache key should start with prefix and contain SHA256 hash
       expect(firstCacheKey).toMatch(/^search:[a-f0-9]{64}$/i);
-      
+
       // Verify it matches the expected hash of the canonicalized query (as the service normalizes it)
       const normalizedKey = {
         q: 'test', // Service normalizes to lowercase
@@ -321,9 +331,9 @@ describe('SearchService', () => {
     it('should handle database connection errors', async () => {
       mockQueryRunner.query.mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(
-        searchService.search({ q: 'test' })
-      ).rejects.toThrow('Database connection failed');
+      await expect(searchService.search({ q: 'test' })).rejects.toThrow(
+        'Database connection failed'
+      );
     });
 
     it('should handle Redis cache errors gracefully', async () => {
@@ -338,10 +348,10 @@ describe('SearchService', () => {
     it('should handle Redis initialization failure gracefully', async () => {
       // Test Redis connection failure during initialization
       mockRedis.connect.mockRejectedValue(new Error('Redis connection failed'));
-      
+
       // Create new service instance to trigger initialization error
       const failingService = new SearchService();
-      
+
       // Should still work without Redis
       mockQueryRunner.query.mockResolvedValue([]);
       const result = await failingService.search({ q: 'test' });
@@ -359,17 +369,11 @@ describe('SearchService', () => {
     });
 
     it('should validate search parameters', async () => {
-      await expect(
-        searchService.search({ q: '', page: 0 })
-      ).rejects.toThrow();
+      await expect(searchService.search({ q: '', page: 0 })).rejects.toThrow();
 
-      await expect(
-        searchService.search({ q: 'test', pageSize: 0 })
-      ).rejects.toThrow();
+      await expect(searchService.search({ q: 'test', pageSize: 0 })).rejects.toThrow();
 
-      await expect(
-        searchService.search({ q: 'test', pageSize: 101 })
-      ).rejects.toThrow();
+      await expect(searchService.search({ q: 'test', pageSize: 101 })).rejects.toThrow();
     });
   });
 
@@ -405,17 +409,13 @@ describe('SearchService', () => {
 
       await searchService.refreshSearchView();
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        'SELECT refresh_equipment_search_view()'
-      );
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SELECT refresh_equipment_search_view()');
     });
 
     it('should handle refresh errors', async () => {
       mockQueryRunner.query.mockRejectedValue(new Error('Refresh failed'));
 
-      await expect(
-        searchService.refreshSearchView()
-      ).rejects.toThrow('Refresh failed');
+      await expect(searchService.refreshSearchView()).rejects.toThrow('Refresh failed');
     });
   });
 
@@ -431,53 +431,54 @@ describe('SearchService', () => {
       ];
 
       // Mock scanIterator to return the keys
-      mockRedis.scanIterator = jest.fn().mockImplementation(function*() {
+      mockRedis.scanIterator = jest.fn().mockImplementation(function* () {
         yield 'search_analytics:1';
         yield 'search_analytics:2';
       });
-      
+
       // Mock mget to return the values
-      mockRedis.mget.mockResolvedValue([
-        JSON.stringify(mockAnalytics[0]),
-        null,
-      ]);
+      mockRedis.mget.mockResolvedValue([JSON.stringify(mockAnalytics[0]), null]);
 
       const metrics = await searchService.getSearchMetrics();
 
-      expect(metrics).toEqual([{
-        ...mockAnalytics[0],
-        timestamp: new Date(mockAnalytics[0].timestamp),
-      }]);
+      expect(metrics).toEqual([
+        {
+          ...mockAnalytics[0],
+          timestamp: new Date(mockAnalytics[0].timestamp),
+        },
+      ]);
     });
   });
 
   describe('security', () => {
     it('should sanitize highlighted fields to prevent XSS', async () => {
-      const mockResult = [{
-        plc_id: '1',
-        tag_id: 'test',
-        plc_description: 'test description',
-        make: 'test',
-        model: 'test',
-        ip_address: null,
-        firmware_version: null,
-        equipment_id: '1',
-        equipment_name: 'test',
-        equipment_type: 'test',
-        cell_id: '1',
-        cell_name: 'test',
-        line_number: '1',
-        site_id: '1',
-        site_name: 'test',
-        hierarchy_path: 'test',
-        relevance_score: 1.0,
-        highlighted_fields: {
-          description: '<script>alert(1)</script><mark>test</mark>',
-          make: '<img src=x onerror=alert(1)><b>test</b>',
-          model: '<mark>safe content</mark>',
+      const mockResult = [
+        {
+          plc_id: '1',
+          tag_id: 'test',
+          plc_description: 'test description',
+          make: 'test',
+          model: 'test',
+          ip_address: null,
+          firmware_version: null,
+          equipment_id: '1',
+          equipment_name: 'test',
+          equipment_type: 'test',
+          cell_id: '1',
+          cell_name: 'test',
+          line_number: '1',
+          site_id: '1',
+          site_name: 'test',
+          hierarchy_path: 'test',
+          relevance_score: 1.0,
+          highlighted_fields: {
+            description: '<script>alert(1)</script><mark>test</mark>',
+            make: '<img src=x onerror=alert(1)><b>test</b>',
+            model: '<mark>safe content</mark>',
+          },
+          tags_text: 'test',
         },
-        tags_text: 'test',
-      }];
+      ];
 
       mockQueryRunner.query.mockResolvedValue(mockResult);
       mockRedis.get.mockResolvedValue(null);
@@ -491,7 +492,7 @@ describe('SearchService', () => {
       expect(result.data[0].highlighted_fields?.description).toBe('<mark>test</mark>');
       expect(result.data[0].highlighted_fields?.make).toBe('<b>test</b>');
       expect(result.data[0].highlighted_fields?.model).toBe('<mark>safe content</mark>');
-      
+
       // Verify dangerous content was stripped
       expect(result.data[0].highlighted_fields?.description).not.toContain('<script>');
       expect(result.data[0].highlighted_fields?.make).not.toContain('onerror=');

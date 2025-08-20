@@ -46,28 +46,28 @@ describe('SearchBar', () => {
   describe('basic rendering', () => {
     it('should render search input with placeholder', () => {
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       expect(input).toBeInTheDocument();
     });
 
     it('should render search icon', () => {
       render(<SearchBar />);
-      
+
       const searchIcon = screen.getByTestId('SearchIcon');
       expect(searchIcon).toBeInTheDocument();
     });
 
     it('should render help icon when showHelp is true', () => {
       render(<SearchBar showHelp={true} />);
-      
+
       const helpIcon = screen.getByLabelText('Search help');
       expect(helpIcon).toBeInTheDocument();
     });
 
     it('should not render help icon when showHelp is false', () => {
       render(<SearchBar showHelp={false} />);
-      
+
       const helpIcon = screen.queryByLabelText('Search help');
       expect(helpIcon).not.toBeInTheDocument();
     });
@@ -77,50 +77,50 @@ describe('SearchBar', () => {
     it('should update input value when typing', async () => {
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'Siemens');
-      
+
       expect(input).toHaveValue('Siemens');
     });
 
     it('should call onSearch when Enter is pressed', async () => {
       const mockOnSearch = jest.fn();
       const user = userEvent.setup();
-      
+
       render(<SearchBar onSearch={mockOnSearch} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'test query');
       await user.keyboard('{Enter}');
-      
+
       expect(mockOnSearch).toHaveBeenCalledWith('test query');
     });
 
     it('should not call onSearch for empty query', async () => {
       const mockOnSearch = jest.fn();
       const user = userEvent.setup();
-      
+
       render(<SearchBar onSearch={mockOnSearch} />);
-      
+
       // Get input but don't need to use it
-      
+
       await user.keyboard('{Enter}');
-      
+
       expect(mockOnSearch).not.toHaveBeenCalled();
     });
 
     it('should call store actions when search is executed', async () => {
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'test query');
       await user.keyboard('{Enter}');
-      
+
       expect(mockSetQuery).toHaveBeenCalledWith('test query');
       expect(mockAddToHistory).toHaveBeenCalledWith('test query');
     });
@@ -130,11 +130,11 @@ describe('SearchBar', () => {
     it('should show clear button when input has value', async () => {
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'test');
-      
+
       const clearButton = screen.getByLabelText('Clear search');
       expect(clearButton).toBeInTheDocument();
     });
@@ -142,30 +142,30 @@ describe('SearchBar', () => {
     it('should clear input when clear button is clicked', async () => {
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'test');
-      
+
       const clearButton = screen.getByLabelText('Clear search');
       await user.click(clearButton);
-      
+
       expect(input).toHaveValue('');
     });
 
     it('should call onClear callback when clear button is clicked', async () => {
       const mockOnClear = jest.fn();
       const user = userEvent.setup();
-      
+
       render(<SearchBar onClear={mockOnClear} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       await user.type(input, 'test');
-      
+
       const clearButton = screen.getByLabelText('Clear search');
       await user.click(clearButton);
-      
+
       expect(mockOnClear).toHaveBeenCalled();
     });
   });
@@ -184,10 +184,10 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       await user.click(input);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Siemens PLC')).toBeInTheDocument();
         expect(screen.getByText('S7-1200')).toBeInTheDocument();
@@ -204,10 +204,10 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       await user.type(input, 'Siem');
-      
+
       await waitFor(() => {
         suggestions.forEach(suggestion => {
           expect(screen.getByText(suggestion)).toBeInTheDocument();
@@ -226,16 +226,16 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar onSearch={mockOnSearch} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       await user.type(input, 'Siem');
-      
+
       await waitFor(() => {
         expect(screen.getByText('Siemens S7')).toBeInTheDocument();
       });
-      
+
       await user.click(screen.getByText('Siemens S7'));
-      
+
       expect(mockOnSearch).toHaveBeenCalledWith('Siemens S7');
     });
   });
@@ -249,7 +249,7 @@ describe('SearchBar', () => {
       } as ReturnType<typeof useSearchStore>);
 
       render(<SearchBar />);
-      
+
       const spinner = screen.getByRole('progressbar');
       expect(spinner).toBeInTheDocument();
     });
@@ -266,16 +266,16 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       await user.type(input, 'Siem');
-      
+
       await waitFor(() => {
         expect(screen.getByText('Siemens S7')).toBeInTheDocument();
       });
-      
+
       await user.keyboard('{Escape}');
-      
+
       await waitFor(() => {
         expect(screen.queryByText('Siemens S7')).not.toBeInTheDocument();
       });
@@ -286,10 +286,10 @@ describe('SearchBar', () => {
     it('should open help modal when help icon is clicked', async () => {
       const user = userEvent.setup();
       render(<SearchBar showHelp={true} />);
-      
+
       const helpButton = screen.getByLabelText('Search help');
       await user.click(helpButton);
-      
+
       expect(screen.getByText('Search Help')).toBeInTheDocument();
       expect(screen.getByText('Search Tips:')).toBeInTheDocument();
     });
@@ -297,13 +297,13 @@ describe('SearchBar', () => {
     it('should close help modal when close button is clicked', async () => {
       const user = userEvent.setup();
       render(<SearchBar showHelp={true} />);
-      
+
       const helpButton = screen.getByLabelText('Search help');
       await user.click(helpButton);
-      
+
       const closeButton = screen.getByLabelText('Close help');
       await user.click(closeButton);
-      
+
       expect(screen.queryByText('Search Help')).not.toBeInTheDocument();
     });
 
@@ -320,10 +320,10 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar showHelp={true} />);
-      
+
       const helpButton = screen.getByLabelText('Search help');
       await user.click(helpButton);
-      
+
       expect(screen.getByText('Recent Searches:')).toBeInTheDocument();
       expect(screen.getByText('Siemens PLC')).toBeInTheDocument();
       expect(screen.getByText('S7-1200')).toBeInTheDocument();
@@ -333,10 +333,10 @@ describe('SearchBar', () => {
   describe('accessibility', () => {
     it('should have proper ARIA labels', () => {
       render(<SearchBar />);
-      
+
       const input = screen.getByLabelText('Equipment search');
       expect(input).toBeInTheDocument();
-      
+
       const searchButton = screen.getByLabelText('Search help');
       expect(searchButton).toBeInTheDocument();
     });
@@ -344,17 +344,17 @@ describe('SearchBar', () => {
     it('should support keyboard navigation', async () => {
       const user = userEvent.setup();
       render(<SearchBar />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
-      
+
       // Tab to input
       await user.tab();
       expect(input).toHaveFocus();
-      
+
       // Type and press Enter
       await user.type(input, 'test');
       await user.keyboard('{Enter}');
-      
+
       expect(mockSetQuery).toHaveBeenCalledWith('test');
     });
   });
@@ -362,21 +362,21 @@ describe('SearchBar', () => {
   describe('props handling', () => {
     it('should respect disabled prop', () => {
       render(<SearchBar disabled={true} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       expect(input).toBeDisabled();
     });
 
     it('should use custom placeholder', () => {
       render(<SearchBar placeholder='Custom placeholder' />);
-      
+
       const input = screen.getByPlaceholderText('Custom placeholder');
       expect(input).toBeInTheDocument();
     });
 
     it('should apply autoFocus when specified', () => {
       render(<SearchBar autoFocus={true} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       expect(input).toHaveFocus();
     });
@@ -391,10 +391,10 @@ describe('SearchBar', () => {
 
       const user = userEvent.setup();
       render(<SearchBar maxSuggestions={5} />);
-      
+
       const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
       await user.type(input, 'test');
-      
+
       // Should call getSuggestions with limit of 5
       expect(mockGetSuggestions).toHaveBeenCalledWith('test', 5);
     });

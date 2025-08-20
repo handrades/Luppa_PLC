@@ -278,9 +278,12 @@ export const useFilterURL = (options: UseFilterURLOptions = {}): UseFilterURLRet
   }, [location.search, onError]);
 
   /**
-   * Current URL
+   * Current URL from react-router location
    */
-  const currentURL = useMemo(() => window.location.href, []);
+  const currentURL = useMemo(
+    () => window.location.origin + location.pathname + location.search,
+    [location.pathname, location.search]
+  );
 
   /**
    * Whether URL contains filter parameters

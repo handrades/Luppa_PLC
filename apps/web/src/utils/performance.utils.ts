@@ -184,7 +184,8 @@ const requestIdleCallback =
 
 export function useIdleCallback(callback: () => void, deps: React.DependencyList) {
   useEffect(() => {
-    const handle = requestIdleCallback(callback);
+    const wrappedCallback = () => callback();
+    const handle = requestIdleCallback(wrappedCallback);
     return () => {
       if (typeof handle === 'number') {
         clearTimeout(handle);
@@ -192,14 +193,17 @@ export function useIdleCallback(callback: () => void, deps: React.DependencyList
         (handle as { cancel: () => void }).cancel();
       }
     };
-  }, [callback, deps]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callback, ...deps]);
 }
 
 /**
  * Web Worker utilities for heavy computations
  */
 export function createWorker(workerFunction: () => void): Worker {
-  const blob = new Blob([`(${workerFunction.toString()})()`], { type: 'application/javascript' });
+  const blob = new Blob([`(${workerFunction.toString()})()`], {
+    type: 'application/javascript',
+  });
 
   return new Worker(URL.createObjectURL(blob));
 }

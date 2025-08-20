@@ -1,7 +1,7 @@
 /**
  * Search Routes
  *
- * Provides full-text search capabilities for equipment and PLCs with 
+ * Provides full-text search capabilities for equipment and PLCs with
  * comprehensive filtering, pagination, and performance optimization.
  */
 
@@ -132,16 +132,21 @@ router.get(
     const processedMetrics = {
       timeRange,
       totalSearches: metrics.length,
-      averageExecutionTime: metrics.length > 0 
-        ? metrics.reduce((sum, m) => sum + m.executionTime, 0) / metrics.length 
-        : 0,
-      averageResultCount: metrics.length > 0 
-        ? metrics.reduce((sum, m) => sum + m.resultCount, 0) / metrics.length 
-        : 0,
-      searchTypes: metrics.reduce((acc, m) => {
-        acc[m.searchType] = (acc[m.searchType] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
+      averageExecutionTime:
+        metrics.length > 0
+          ? metrics.reduce((sum, m) => sum + m.executionTime, 0) / metrics.length
+          : 0,
+      averageResultCount:
+        metrics.length > 0
+          ? metrics.reduce((sum, m) => sum + m.resultCount, 0) / metrics.length
+          : 0,
+      searchTypes: metrics.reduce(
+        (acc, m) => {
+          acc[m.searchType] = (acc[m.searchType] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
       ...(includeDetails && { details: metrics }),
     };
 
@@ -187,7 +192,7 @@ router.get(
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Search health check failed', { error: errorMessage });
-      
+
       res.status(503).json({
         status: 'unhealthy',
         service: 'search',

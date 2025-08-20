@@ -129,7 +129,7 @@ export function useSearchSuggestions(
     }
 
     // Add AI-generated suggestions
-    const remainingSlots = maxSuggestions - combined.length;
+    const remainingSlots = Math.max(0, maxSuggestions - combined.length);
     const filteredSuggestions = suggestions
       .filter(
         suggestion => !combined.some(item => item.label === suggestion) && suggestion !== query

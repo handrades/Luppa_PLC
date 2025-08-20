@@ -54,12 +54,22 @@ export const serializeFiltersToURL = (filters: AdvancedFilters): string => {
     // Convert to JSON string
     const jsonString = JSON.stringify(cleanFilters);
 
-    // Compress using simple base64 encoding
-    const compressed = btoa(jsonString);
+    // UTF-8 safe base64 helpers
+    const toBase64Utf8 = (str: string): string => {
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(str);
+      return btoa(String.fromCharCode(...bytes));
+    };
+
+    // Compress using UTF-8 safe base64 encoding
+    const compressed = toBase64Utf8(jsonString);
 
     return compressed;
-  } catch (_error) {
-    // console.warn('Failed to serialize filters to URL:', error);
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to serialize filters to URL:', error);
+    }
     return '';
   }
 };
@@ -73,8 +83,23 @@ export const deserializeFiltersFromURL = (urlParam: string): AdvancedFilters | n
       return null;
     }
 
-    // Decompress from base64
-    const decompressed = atob(urlParam);
+    // UTF-8 safe base64 helpers
+    const fromBase64Utf8 = (base64: string): string => {
+      try {
+        const bytes = new Uint8Array(
+          atob(base64)
+            .split('')
+            .map(c => c.charCodeAt(0))
+        );
+        const decoder = new TextDecoder();
+        return decoder.decode(bytes);
+      } catch {
+        throw new Error('Invalid base64 UTF-8 string');
+      }
+    };
+
+    // Decompress from UTF-8 safe base64
+    const decompressed = fromBase64Utf8(urlParam);
 
     // Parse JSON
     const parsed = JSON.parse(decompressed);
@@ -460,9 +485,12 @@ export const encryptFilterData = (data: string): string => {
       encrypted += String.fromCharCode(dataChar ^ keyChar);
     }
     return btoa(encrypted);
-  } catch (_error) {
-    // console.warn('Failed to encrypt filter data:', error);
-    return data;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to encrypt filter data:', error);
+    }
+    return 'INVALID_ENCRYPTED_FILTER';
   }
 };
 
@@ -479,9 +507,12 @@ export const decryptFilterData = (encryptedData: string): string => {
       decrypted += String.fromCharCode(dataChar ^ keyChar);
     }
     return decrypted;
-  } catch (_error) {
-    // console.warn('Failed to decrypt filter data:', error);
-    return encryptedData;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to decrypt filter data:', error);
+    }
+    return 'INVALID_ENCRYPTED_FILTER';
   }
 };
 

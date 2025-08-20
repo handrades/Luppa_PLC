@@ -4,10 +4,7 @@ import { exportDataToCSV } from './exportToCSV';
 /**
  * Export search results to CSV format
  */
-export const exportSearchResultsToCSV = (
-  results: SearchResultItem[],
-  filename?: string
-): void => {
+export const exportSearchResultsToCSV = (results: SearchResultItem[], filename?: string): void => {
   const columns = [
     { id: 'tag_id', label: 'Tag ID' },
     { id: 'plc_description', label: 'Description' },
@@ -21,13 +18,13 @@ export const exportSearchResultsToCSV = (
     { id: 'line_number', label: 'Line Number' },
     { id: 'site_name', label: 'Site Name' },
     { id: 'hierarchy_path', label: 'Hierarchy Path' },
-    { 
-      id: 'relevance_score', 
+    {
+      id: 'relevance_score',
       label: 'Relevance Score',
       format: (value: unknown) => {
         const score = value as number;
         return score ? score.toFixed(3) : '0.000';
-      }
+      },
     },
   ];
 
@@ -42,10 +39,7 @@ export const exportSearchResultsToCSV = (
 /**
  * Export search results to JSON format
  */
-export const exportSearchResultsToJSON = (
-  results: SearchResultItem[],
-  filename?: string
-): void => {
+export const exportSearchResultsToJSON = (results: SearchResultItem[], filename?: string): void => {
   // Create clean export data without highlighted fields for cleaner JSON
   const exportData = results.map(result => ({
     tag_id: result.tag_id,
@@ -67,15 +61,20 @@ export const exportSearchResultsToJSON = (
     tags_text: result.tags_text,
   }));
 
-  const exportFilename = filename || `search_results_${new Date().toISOString().split('T')[0]}.json`;
-  const jsonContent = JSON.stringify({
-    export_info: {
-      generated_at: new Date().toISOString(),
-      total_results: exportData.length,
-      version: '1.0',
+  const exportFilename =
+    filename || `search_results_${new Date().toISOString().split('T')[0]}.json`;
+  const jsonContent = JSON.stringify(
+    {
+      export_info: {
+        generated_at: new Date().toISOString(),
+        total_results: exportData.length,
+        version: '1.0',
+      },
+      results: exportData,
     },
-    results: exportData,
-  }, null, 2);
+    null,
+    2
+  );
 
   // Create and download JSON file
   const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
@@ -83,7 +82,10 @@ export const exportSearchResultsToJSON = (
   const url = URL.createObjectURL(blob);
 
   link.setAttribute('href', url);
-  link.setAttribute('download', exportFilename.endsWith('.json') ? exportFilename : `${exportFilename}.json`);
+  link.setAttribute(
+    'download',
+    exportFilename.endsWith('.json') ? exportFilename : `${exportFilename}.json`
+  );
   link.style.visibility = 'hidden';
 
   document.body.appendChild(link);
@@ -127,6 +129,8 @@ export const exportSearchResults = (
     }
   } catch (error) {
     // console.error('Export failed:', error);
-    throw new Error(`Failed to export search results: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to export search results: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 };
