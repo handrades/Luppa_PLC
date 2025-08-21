@@ -117,5 +117,8 @@
     "overrides": {
       "tmp": ">=0.2.4"
     }
+  },
+  "dependencies": {
+    "prom-client": "^15.1.3"
   }
 }

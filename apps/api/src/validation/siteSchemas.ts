@@ -83,8 +83,8 @@ export const siteSearchSchema = Joi.object({
     .messages({
       'any.only': 'Sort field must be one of: name, createdAt, cellCount, equipmentCount',
     }),
-  sortOrder: Joi.string().valid('ASC', 'DESC').optional().default('ASC').messages({
-    'any.only': 'Sort order must be either ASC or DESC',
+  sortOrder: Joi.string().valid('ASC', 'DESC', 'asc', 'desc').optional().default('ASC').messages({
+    'any.only': 'Sort order must be either ASC/asc or DESC/desc',
   }),
 });
 
@@ -92,10 +92,8 @@ export const siteSearchSchema = Joi.object({
  * Site suggestions validation
  */
 export const siteSuggestionsSchema = Joi.object({
-  q: Joi.string().trim().min(1).max(100).required().messages({
-    'string.min': 'Query must be at least 1 character',
+  q: Joi.string().trim().min(0).max(100).optional().allow('').default('').messages({
     'string.max': 'Query cannot exceed 100 characters',
-    'any.required': 'Query parameter (q) is required',
   }),
   limit: Joi.number().integer().min(1).max(50).optional().default(10).messages({
     'number.min': 'Limit must be at least 1',

@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { User } from './User';
 
-@Entity('notifications')
+@Entity('notifications', { schema: 'core' })
 export class Notification extends BaseEntity {
   @Column({
     type: 'uuid',

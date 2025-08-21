@@ -6,6 +6,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
+import { AuthServiceSimple } from '../services/AuthServiceSimple';
 import { logger } from '../config/logger';
 
 /**
@@ -43,17 +44,23 @@ export const authenticate = async (
       return;
     }
 
-    // Validate token using AuthService
+    // Validate token using AuthServiceSimple temporarily (due to schema mismatch)
     if (!req.auditEntityManager) {
       throw new Error(
         'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth middleware.'
       );
     }
-    const authService = new AuthService(req.auditEntityManager);
+    // Using simplified service temporarily
+    const authService = new AuthServiceSimple(req.auditEntityManager);
     const decoded = await authService.validateToken(token);
 
     // Populate request with user information
-    req.user = decoded;
+    // Cast the decoded token to the expected user type
+    if (typeof decoded === 'object' && 'sub' in decoded) {
+      req.user = decoded as typeof req.user;
+    } else {
+      throw new Error('Invalid token payload');
+    }
 
     next();
   } catch (error) {

@@ -7,6 +7,7 @@
 import { Request, Response, Router } from 'express';
 import Joi from 'joi';
 import { AuthService, LoginCredentials } from '../services/AuthService';
+import { AuthServiceSimple } from '../services/AuthServiceSimple';
 import { PasswordResetService } from '../services/PasswordResetService';
 import { authRateLimit, strictAuthRateLimit } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/auth';
@@ -64,7 +65,11 @@ const getPasswordResetService = (req: Request): PasswordResetService => {
  * Validation schemas
  */
 const loginSchema = Joi.object({
-  email: Joi.string().email().required().trim().lowercase(),
+  email: Joi.string()
+    .email({ tlds: { allow: ['com', 'net', 'org', 'local'] } })
+    .required()
+    .trim()
+    .lowercase(),
   password: Joi.string().min(8).max(128).required(),
 }).unknown(false);
 
@@ -101,8 +106,12 @@ router.post('/login', authRateLimit, strictAuthRateLimit, async (req: Request, r
     const ipAddress = getClientIP(req);
     const userAgent = getUserAgent(req);
 
-    // Attempt login
-    const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
+    // Attempt login - using simplified service temporarily
+    // const result = await getAuthService(req).login({ email, password }, ipAddress, userAgent);
+    const authServiceSimple = new AuthServiceSimple(
+      req.auditEntityManager || req.app.locals.AppDataSource.manager
+    );
+    const result = await authServiceSimple.login(email, password);
 
     // Log successful login
     logger.info('Successful login', {

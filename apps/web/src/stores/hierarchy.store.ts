@@ -7,6 +7,7 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import { hierarchyService } from '../services/hierarchy.service';
 import {
   Cell,
@@ -31,6 +32,9 @@ import {
   UpdateCellDto,
   UpdateSiteDto,
 } from '../types/hierarchy';
+
+// Enable MapSet plugin for Immer to handle Sets
+enableMapSet();
 
 /**
  * Hierarchy store state interface
@@ -99,135 +103,178 @@ interface HierarchyState {
   sitesPagination: {
     page: number;
     pageSize: number;
-    totalItems: number;
+    total: number;
     totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
   };
   cellsPagination: {
     page: number;
     pageSize: number;
-    totalItems: number;
+    total: number;
     totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
   };
 
-  // User preferences (persisted)
-  preferences: {
-    defaultExpandLevel: number;
-    defaultPageSize: number;
-    showEmptyNodes: boolean;
-    autoRefresh: boolean;
-    savedFilters: Array<{ name: string; filters: HierarchyFilters }>;
+  // Cache management
+  lastFetch: {
+    sites: number;
+    cells: number;
+    tree: number;
+    statistics: number;
   };
+  cacheTimeout: number; // milliseconds
 }
 
 /**
  * Hierarchy store actions interface
  */
 interface HierarchyActions {
-  // Data loading actions
-  loadSites: (params?: { page?: number; search?: string; includeEmpty?: boolean }) => Promise<void>;
-  loadCells: (params?: { siteId?: string; page?: number; search?: string }) => Promise<void>;
-  loadHierarchyTree: (params?: {
-    expandLevel?: number;
-    siteId?: string;
+  // Site operations
+  fetchSites: (params?: {
     search?: string;
+    includeEmpty?: boolean;
+    page?: number;
+    pageSize?: number;
   }) => Promise<void>;
-  refreshHierarchy: () => Promise<void>;
-
-  // Selection actions
-  selectSite: (siteId: string | null) => void;
-  selectCell: (cellId: string | null) => void;
-  selectNode: (nodeId: string) => void;
-  selectMultipleNodes: (nodeIds: string[]) => void;
-  clearSelection: () => void;
-  setCurrentLocation: (location: HierarchyLocation | null) => void;
-
-  // Tree navigation actions
-  toggleNodeExpansion: (nodeId: string) => void;
-  expandNode: (nodeId: string) => void;
-  collapseNode: (nodeId: string) => void;
-  expandToLevel: (level: number) => void;
-  expandAll: () => void;
-  collapseAll: () => void;
-
-  // Filter and search actions
-  setFilters: (filters: Partial<HierarchyFilters>) => void;
-  updateFilter: (key: keyof HierarchyFilters, value: unknown) => void;
-  clearFilters: () => void;
-  applyFilters: () => void;
-  setSearchQuery: (query: string) => void;
-  saveFilterPreset: (name: string, filters: HierarchyFilters) => void;
-  loadFilterPreset: (name: string) => void;
-  deleteFilterPreset: (name: string) => void;
-
-  // Site CRUD actions
+  fetchSiteById: (id: string) => Promise<SiteWithDetails>;
   createSite: (data: CreateSiteDto) => Promise<Site>;
   updateSite: (id: string, data: UpdateSiteDto) => Promise<Site>;
   deleteSite: (id: string) => Promise<void>;
-  getSiteById: (id: string) => Promise<SiteWithDetails>;
-  loadSiteStatistics: (id: string) => Promise<SiteStatistics>;
+  fetchSiteStatistics: (id: string) => Promise<SiteStatistics>;
+  checkSiteInUse: (id: string) => Promise<boolean>;
+  fetchSiteSuggestions: (query: string, limit?: number) => Promise<void>;
+  validateSiteUniqueness: (name: string, excludeId?: string) => Promise<boolean>;
 
-  // Cell CRUD actions
+  // Cell operations
+  fetchCells: (params?: {
+    siteId?: string;
+    search?: string;
+    includeEmpty?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<void>;
+  fetchCellById: (id: string) => Promise<CellWithDetails>;
+  fetchCellsBySite: (siteId: string) => Promise<void>;
   createCell: (data: CreateCellDto) => Promise<Cell>;
   updateCell: (id: string, data: UpdateCellDto) => Promise<Cell>;
   deleteCell: (id: string) => Promise<void>;
-  getCellById: (id: string) => Promise<CellWithDetails>;
-  loadCellStatistics: (id: string) => Promise<CellStatistics>;
-  getCellsBySite: (siteId: string) => Promise<Cell[]>;
-
-  // Validation actions
-  validateHierarchy: () => Promise<HierarchyValidationResult>;
-  detectOrphanedRecords: () => Promise<OrphanedRecord[]>;
-  validateSiteName: (name: string, excludeId?: string) => Promise<boolean>;
-  validateCellLineNumber: (
+  fetchCellStatistics: (id: string) => Promise<CellStatistics>;
+  checkCellInUse: (id: string) => Promise<boolean>;
+  fetchCellSuggestions: (siteId: string, query: string, limit?: number) => Promise<void>;
+  validateCellUniqueness: (
     siteId: string,
     lineNumber: string,
     excludeId?: string
   ) => Promise<boolean>;
 
-  // Autocomplete actions
-  searchSiteSuggestions: (query: string) => Promise<SiteSuggestion[]>;
-  searchCellSuggestions: (siteId: string, query: string) => Promise<CellSuggestion[]>;
+  // Hierarchy tree operations
+  fetchHierarchyTree: (params?: {
+    expandLevel?: number;
+    siteId?: string;
+    cellId?: string;
+    includeEmpty?: boolean;
+    search?: string;
+  }) => Promise<void>;
+  fetchHierarchyStatistics: () => Promise<void>;
+  validateHierarchy: (options?: {
+    checkOrphans?: boolean;
+    checkConstraints?: boolean;
+    checkCounts?: boolean;
+  }) => Promise<void>;
+  detectOrphanedRecords: () => Promise<void>;
 
   // Bulk operations
   performBulkOperation: (operation: HierarchyBulkOperation) => Promise<HierarchyBulkResult>;
-  bulkDeleteSites: (siteIds: string[]) => Promise<HierarchyBulkResult>;
-  bulkDeleteCells: (cellIds: string[]) => Promise<HierarchyBulkResult>;
 
-  // Statistics actions
-  loadHierarchyStatistics: () => Promise<void>;
-  refreshStatistics: () => Promise<void>;
+  // Export/Import operations
+  exportHierarchy: (
+    format: 'json' | 'csv' | 'xlsx',
+    params?: {
+      siteIds?: string[];
+      includeEquipment?: boolean;
+      includePlcs?: boolean;
+    }
+  ) => Promise<Blob>;
+  importHierarchy: (
+    file: File,
+    options: {
+      format: 'json' | 'csv' | 'xlsx';
+      validateOnly?: boolean;
+      skipDuplicates?: boolean;
+    }
+  ) => Promise<{
+    success: boolean;
+    importedCount: number;
+    skippedCount: number;
+    errors: Array<{ row: number; field: string; message: string }>;
+  }>;
 
-  // Error handling
-  setError: (error: HierarchyServiceError | null) => void;
-  clearError: () => void;
-  setSiteError: (siteId: string, error: string) => void;
-  clearSiteError: (siteId: string) => void;
-  setCellError: (cellId: string, error: string) => void;
-  clearCellError: (cellId: string) => void;
+  // Tree state management
+  toggleNodeExpansion: (nodeId: string) => void;
+  selectNode: (nodeId: string, multiSelect?: boolean) => void;
+  clearSelection: () => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+  expandToLevel: (level: number) => void;
+
+  // Filter and search management
+  setFilters: (filters: Partial<HierarchyFilters>) => void;
+  setSearchQuery: (query: string) => void;
+  applyFilters: () => void;
+  clearFilters: () => void;
+
+  // Navigation and selection
+  setSelectedSite: (siteId: string | null) => void;
+  setSelectedCell: (cellId: string | null) => void;
+  navigateToLocation: (location: HierarchyLocation) => void;
 
   // Utility actions
-  reset: () => void;
-  updatePreferences: (preferences: Partial<HierarchyState['preferences']>) => void;
+  clearError: () => void;
+  clearCache: () => void;
+  refreshData: () => Promise<void>;
 
-  // Computed selectors
-  getSelectedSite: () => Site | null;
-  getSelectedCell: () => Cell | null;
-  getSitesBySearch: (query: string) => Site[];
-  getCellsBySearch: (query: string) => Cell[];
-  getFilteredTree: () => HierarchyNode[];
-  getHierarchyPath: (siteId?: string, cellId?: string) => string;
-  getTotalSelectedNodes: () => number;
+  // Convenience methods for components
+  getCellById: (id: string) => Promise<CellWithDetails>;
+  getCellsBySite: (siteId: string) => Promise<void>;
+  loadSites: (params?: {
+    search?: string;
+    includeEmpty?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<void>;
+  loadCells: (params?: {
+    siteId?: string;
+    search?: string;
+    includeEmpty?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<void>;
+  loadHierarchyTree: (params?: {
+    expandLevel?: number;
+    siteId?: string;
+    cellId?: string;
+    includeEmpty?: boolean;
+    search?: string;
+  }) => Promise<void>;
+  loadHierarchyStatistics: () => Promise<void>;
+  validateCellLineNumber: (
+    siteId: string,
+    lineNumber: string,
+    excludeId?: string
+  ) => Promise<boolean>;
+  searchCellSuggestions: (siteId: string, query: string, limit?: number) => Promise<void>;
+
+  // Preferences (stub for now)
+  preferences: {
+    savedFilters?: Array<{ name: string; filters: Partial<HierarchyFilters> }>;
+  };
+  saveFilterPreset: (name: string, filters: Partial<HierarchyFilters>) => Promise<void>;
+  loadFilterPreset: (presetName: string) => Promise<void>;
   hasUnsavedChanges: () => boolean;
 }
 
 /**
- * Combined store interface
+ * Complete hierarchy store type
  */
-type HierarchyStore = HierarchyState & HierarchyActions;
+export type HierarchyStore = HierarchyState & HierarchyActions;
 
 /**
  * Initial state values
@@ -241,15 +288,15 @@ const initialState: HierarchyState = {
   // Current selection state
   selectedSiteId: null,
   selectedCellId: null,
-  selectedNodeIds: new Set(),
+  selectedNodeIds: new Set<string>(),
   currentLocation: null,
 
   // Tree state
-  expandedNodes: new Set(),
+  expandedNodes: new Set<string>(),
   treeState: {
     nodes: [],
-    expandedNodes: new Set(),
-    selectedNodes: new Set(),
+    expandedNodes: new Set<string>(),
+    selectedNodes: new Set<string>(),
     isLoading: false,
     error: null,
     searchQuery: '',
@@ -297,32 +344,28 @@ const initialState: HierarchyState = {
   sitesPagination: {
     page: 1,
     pageSize: 50,
-    totalItems: 0,
+    total: 0,
     totalPages: 0,
-    hasNext: false,
-    hasPrev: false,
   },
   cellsPagination: {
     page: 1,
     pageSize: 50,
-    totalItems: 0,
+    total: 0,
     totalPages: 0,
-    hasNext: false,
-    hasPrev: false,
   },
 
-  // User preferences (persisted)
-  preferences: {
-    defaultExpandLevel: 1,
-    defaultPageSize: 50,
-    showEmptyNodes: false,
-    autoRefresh: false,
-    savedFilters: [],
+  // Cache management
+  lastFetch: {
+    sites: 0,
+    cells: 0,
+    tree: 0,
+    statistics: 0,
   },
+  cacheTimeout: 5 * 60 * 1000, // 5 minutes
 };
 
 /**
- * Create the hierarchy store with middleware
+ * Hierarchy store instance
  */
 export const useHierarchyStore = create<HierarchyStore>()(
   devtools(
@@ -331,349 +374,56 @@ export const useHierarchyStore = create<HierarchyStore>()(
         immer((set, get) => ({
           ...initialState,
 
-          // Data loading actions
-          loadSites: async (params = {}) => {
-            set(state => ({
-              ...state,
-              isLoadingSites: true,
-              error: null,
-            }));
-
-            try {
-              const response = await hierarchyService.getSites({
-                page: params.page || get().sitesPagination.page,
-                pageSize: get().preferences.defaultPageSize,
-                search: params.search || get().searchQuery,
-                includeEmpty: params.includeEmpty ?? get().preferences.showEmptyNodes,
-              });
-
-              set(state => ({
-                ...state,
-                sites: response.data,
-                sitesPagination: response.pagination,
-                isLoadingSites: false,
-              }));
-            } catch (error) {
-              set(state => ({
-                ...state,
-                error: error as HierarchyServiceError,
-                isLoadingSites: false,
-              }));
-            }
-          },
-
-          loadCells: async (params = {}) => {
+          // Site operations
+          fetchSites: async params => {
             set(state => {
-              state.isLoadingCells = true;
+              state.isLoadingSites = true;
               state.error = null;
             });
 
             try {
-              const response = await hierarchyService.getCells({
-                siteId: params.siteId || get().selectedSiteId || undefined,
-                page: params.page || get().cellsPagination.page,
-                pageSize: get().preferences.defaultPageSize,
-                search: params.search || get().searchQuery,
-              });
-
+              const response = await hierarchyService.getSites(params);
               set(state => {
-                state.cells = response.data;
-                state.cellsPagination = response.pagination;
-                state.isLoadingCells = false;
+                state.sites = response.data;
+                state.sitesPagination = {
+                  page: response.pagination.page,
+                  pageSize: response.pagination.pageSize,
+                  total: response.pagination.totalItems,
+                  totalPages: response.pagination.totalPages,
+                };
+                state.lastFetch.sites = Date.now();
+                state.isLoadingSites = false;
               });
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
-                state.isLoadingCells = false;
+                state.isLoadingSites = false;
               });
+              throw error;
             }
           },
 
-          loadHierarchyTree: async (params = {}) => {
+          fetchSiteById: async id => {
             set(state => {
-              state.isLoadingTree = true;
+              state.isLoadingSites = true;
               state.error = null;
             });
 
             try {
-              const response = await hierarchyService.getHierarchyTree({
-                expandLevel: params.expandLevel || get().preferences.defaultExpandLevel,
-                siteId: params.siteId || get().selectedSiteId || undefined,
-                search: params.search || get().searchQuery,
-                includeEmpty: get().preferences.showEmptyNodes,
-                includeCounts: true,
-              });
-
+              const site = await hierarchyService.getSiteById(id);
               set(state => {
-                state.hierarchyTree = response.tree;
-                state.hierarchyStatistics = {
-                  ...response.statistics,
-                  totalPlcs: 0, // TODO: Calculate from equipment data
-                  avgCellsPerSite:
-                    response.statistics.totalSites > 0
-                      ? response.statistics.totalCells / response.statistics.totalSites
-                      : 0,
-                  avgEquipmentPerCell:
-                    response.statistics.totalCells > 0
-                      ? response.statistics.totalEquipment / response.statistics.totalCells
-                      : 0,
-                };
-                state.isLoadingTree = false;
-
-                // Update tree state
-                state.treeState.nodes = response.tree;
-                state.treeState.isLoading = false;
+                state.isLoadingSites = false;
               });
+              return site;
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
-                state.isLoadingTree = false;
-                state.treeState.error = (error as HierarchyServiceError).message;
-                state.treeState.isLoading = false;
+                state.isLoadingSites = false;
               });
+              throw error;
             }
           },
 
-          refreshHierarchy: async () => {
-            const actions = get();
-            await Promise.all([
-              actions.loadSites(),
-              actions.loadCells(),
-              actions.loadHierarchyTree(),
-            ]);
-          },
-
-          // Selection actions
-          selectSite: siteId => {
-            set(state => {
-              state.selectedSiteId = siteId;
-              // Clear cell selection when site changes
-              if (state.selectedCellId) {
-                state.selectedCellId = null;
-                state.currentLocation = null;
-              }
-              // Update current location if site is selected
-              if (siteId) {
-                const site = state.sites.find(s => s.id === siteId);
-                if (site && !state.selectedCellId) {
-                  state.currentLocation = {
-                    site: { id: site.id, name: site.name },
-                    cell: { id: '', name: '', lineNumber: '' },
-                    path: site.name,
-                  };
-                }
-              } else {
-                state.currentLocation = null;
-              }
-            });
-
-            // Auto-load cells for selected site
-            if (siteId) {
-              get().loadCells({ siteId });
-            }
-          },
-
-          selectCell: cellId => {
-            set(state => {
-              state.selectedCellId = cellId;
-
-              // Update current location
-              if (cellId) {
-                const cell = state.cells.find(c => c.id === cellId);
-                const site = state.sites.find(s => s.id === cell?.siteId);
-
-                if (cell && site) {
-                  state.currentLocation = {
-                    site: { id: site.id, name: site.name },
-                    cell: {
-                      id: cell.id,
-                      name: cell.name,
-                      lineNumber: cell.lineNumber,
-                    },
-                    path: `${site.name} / ${cell.name}`,
-                  };
-                  // Also set site selection
-                  state.selectedSiteId = site.id;
-                }
-              }
-            });
-          },
-
-          selectNode: nodeId => {
-            set(state => {
-              if (state.selectedNodeIds.has(nodeId)) {
-                state.selectedNodeIds.delete(nodeId);
-              } else {
-                state.selectedNodeIds.add(nodeId);
-              }
-              state.treeState.selectedNodes = new Set(state.selectedNodeIds);
-            });
-          },
-
-          selectMultipleNodes: nodeIds => {
-            set(state => {
-              nodeIds.forEach(id => state.selectedNodeIds.add(id));
-              state.treeState.selectedNodes = new Set(state.selectedNodeIds);
-            });
-          },
-
-          clearSelection: () => {
-            set(state => {
-              state.selectedSiteId = null;
-              state.selectedCellId = null;
-              state.selectedNodeIds.clear();
-              state.currentLocation = null;
-              state.treeState.selectedNodes.clear();
-            });
-          },
-
-          setCurrentLocation: location => {
-            set(state => {
-              state.currentLocation = location;
-              if (location) {
-                state.selectedSiteId = location.site.id;
-                state.selectedCellId = location.cell.id;
-              }
-            });
-          },
-
-          // Tree navigation actions
-          toggleNodeExpansion: nodeId => {
-            set(state => {
-              if (state.expandedNodes.has(nodeId)) {
-                state.expandedNodes.delete(nodeId);
-              } else {
-                state.expandedNodes.add(nodeId);
-              }
-              state.treeState.expandedNodes = new Set(state.expandedNodes);
-            });
-          },
-
-          expandNode: nodeId => {
-            set(state => {
-              state.expandedNodes.add(nodeId);
-              state.treeState.expandedNodes = new Set(state.expandedNodes);
-            });
-          },
-
-          collapseNode: nodeId => {
-            set(state => {
-              state.expandedNodes.delete(nodeId);
-              state.treeState.expandedNodes = new Set(state.expandedNodes);
-            });
-          },
-
-          expandToLevel: level => {
-            set(state => {
-              const expandNodes = (nodes: HierarchyNode[], currentLevel: number) => {
-                nodes.forEach(node => {
-                  if (currentLevel < level) {
-                    state.expandedNodes.add(node.id);
-                    if (node.children) {
-                      expandNodes(node.children, currentLevel + 1);
-                    }
-                  }
-                });
-              };
-
-              expandNodes(state.hierarchyTree, 0);
-              state.treeState.expandedNodes = new Set(state.expandedNodes);
-            });
-          },
-
-          expandAll: () => {
-            set(state => {
-              const expandAllNodes = (nodes: HierarchyNode[]) => {
-                nodes.forEach(node => {
-                  state.expandedNodes.add(node.id);
-                  if (node.children) {
-                    expandAllNodes(node.children);
-                  }
-                });
-              };
-
-              expandAllNodes(state.hierarchyTree);
-              state.treeState.expandedNodes = new Set(state.expandedNodes);
-            });
-          },
-
-          collapseAll: () => {
-            set(state => {
-              state.expandedNodes.clear();
-              state.treeState.expandedNodes.clear();
-            });
-          },
-
-          // Filter and search actions
-          setFilters: filters => {
-            set(state => {
-              state.filters = { ...state.filters, ...filters };
-            });
-          },
-
-          updateFilter: (key, value) => {
-            set(state => {
-              (state.filters as Record<string, unknown>)[key] = value;
-            });
-          },
-
-          clearFilters: () => {
-            set(state => {
-              state.filters = {};
-              state.appliedFilters = {};
-              state.searchQuery = '';
-              state.treeState.searchQuery = '';
-            });
-          },
-
-          applyFilters: () => {
-            set(state => {
-              state.appliedFilters = { ...state.filters };
-              state.treeState.filters = { ...state.filters };
-            });
-
-            // Reload data with applied filters
-            get().loadHierarchyTree();
-          },
-
-          setSearchQuery: query => {
-            set(state => {
-              state.searchQuery = query;
-              state.treeState.searchQuery = query;
-            });
-          },
-
-          saveFilterPreset: (name, filters) => {
-            set(state => {
-              const existingIndex = state.preferences.savedFilters.findIndex(f => f.name === name);
-              if (existingIndex >= 0) {
-                state.preferences.savedFilters[existingIndex] = {
-                  name,
-                  filters,
-                };
-              } else {
-                state.preferences.savedFilters.push({ name, filters });
-              }
-            });
-          },
-
-          loadFilterPreset: name => {
-            const preset = get().preferences.savedFilters.find(f => f.name === name);
-            if (preset) {
-              get().setFilters(preset.filters);
-              get().applyFilters();
-            }
-          },
-
-          deleteFilterPreset: name => {
-            set(state => {
-              state.preferences.savedFilters = state.preferences.savedFilters.filter(
-                f => f.name !== name
-              );
-            });
-          },
-
-          // Site CRUD actions
           createSite: async data => {
             set(state => {
               state.isCreatingSite = true;
@@ -682,15 +432,10 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               const site = await hierarchyService.createSite(data);
-
               set(state => {
                 state.sites.push(site);
                 state.isCreatingSite = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
-
               return site;
             } catch (error) {
               set(state => {
@@ -709,18 +454,13 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               const site = await hierarchyService.updateSite(id, data);
-
               set(state => {
                 const index = state.sites.findIndex(s => s.id === id);
-                if (index >= 0) {
+                if (index !== -1) {
                   state.sites[index] = site;
                 }
                 state.isUpdatingSite = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
-
               return site;
             } catch (error) {
               set(state => {
@@ -739,20 +479,13 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               await hierarchyService.deleteSite(id);
-
               set(state => {
                 state.sites = state.sites.filter(s => s.id !== id);
-                // Clear selection if deleted site was selected
+                state.isDeletingSite = false;
                 if (state.selectedSiteId === id) {
                   state.selectedSiteId = null;
-                  state.selectedCellId = null;
-                  state.currentLocation = null;
                 }
-                state.isDeletingSite = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
@@ -762,17 +495,31 @@ export const useHierarchyStore = create<HierarchyStore>()(
             }
           },
 
-          getSiteById: async id => {
-            return hierarchyService.getSiteById(id);
-          },
+          fetchSiteStatistics: async id => {
+            set(state => {
+              state.isLoadingStatistics = true;
+              state.error = null;
+            });
 
-          loadSiteStatistics: async id => {
             try {
-              const stats = await hierarchyService.getSiteStatistics(id);
+              const statistics = await hierarchyService.getSiteStatistics(id);
               set(state => {
-                state.siteStatistics[id] = stats;
+                state.siteStatistics[id] = statistics;
+                state.isLoadingStatistics = false;
               });
-              return stats;
+              return statistics;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingStatistics = false;
+              });
+              throw error;
+            }
+          },
+
+          checkSiteInUse: async id => {
+            try {
+              return await hierarchyService.checkSiteInUse(id);
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
@@ -781,7 +528,102 @@ export const useHierarchyStore = create<HierarchyStore>()(
             }
           },
 
-          // Cell CRUD actions
+          fetchSiteSuggestions: async (query, limit = 10) => {
+            try {
+              const suggestions = await hierarchyService.getSiteSuggestions(query, limit);
+              set(state => {
+                state.siteSuggestions = suggestions;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.siteSuggestions = [];
+              });
+            }
+          },
+
+          validateSiteUniqueness: async (name, excludeId) => {
+            try {
+              return await hierarchyService.validateSiteUniqueness(name, excludeId);
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              return false;
+            }
+          },
+
+          // Cell operations
+          fetchCells: async params => {
+            set(state => {
+              state.isLoadingCells = true;
+              state.error = null;
+            });
+
+            try {
+              const response = await hierarchyService.getCells(params);
+              set(state => {
+                state.cells = response.data;
+                state.cellsPagination = {
+                  page: response.pagination.page,
+                  pageSize: response.pagination.pageSize,
+                  total: response.pagination.totalItems,
+                  totalPages: response.pagination.totalPages,
+                };
+                state.lastFetch.cells = Date.now();
+                state.isLoadingCells = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingCells = false;
+              });
+              throw error;
+            }
+          },
+
+          fetchCellById: async id => {
+            set(state => {
+              state.isLoadingCells = true;
+              state.error = null;
+            });
+
+            try {
+              const cell = await hierarchyService.getCellById(id);
+              set(state => {
+                state.isLoadingCells = false;
+              });
+              return cell;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingCells = false;
+              });
+              throw error;
+            }
+          },
+
+          fetchCellsBySite: async siteId => {
+            set(state => {
+              state.isLoadingCells = true;
+              state.error = null;
+            });
+
+            try {
+              const cells = await hierarchyService.getCellsBySite(siteId);
+              set(state => {
+                state.cells = cells;
+                state.isLoadingCells = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingCells = false;
+              });
+              throw error;
+            }
+          },
+
           createCell: async data => {
             set(state => {
               state.isCreatingCell = true;
@@ -790,15 +632,10 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               const cell = await hierarchyService.createCell(data);
-
               set(state => {
                 state.cells.push(cell);
                 state.isCreatingCell = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
-
               return cell;
             } catch (error) {
               set(state => {
@@ -817,18 +654,13 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               const cell = await hierarchyService.updateCell(id, data);
-
               set(state => {
                 const index = state.cells.findIndex(c => c.id === id);
-                if (index >= 0) {
+                if (index !== -1) {
                   state.cells[index] = cell;
                 }
                 state.isUpdatingCell = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
-
               return cell;
             } catch (error) {
               set(state => {
@@ -847,28 +679,13 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               await hierarchyService.deleteCell(id);
-
               set(state => {
                 state.cells = state.cells.filter(c => c.id !== id);
-                // Clear selection if deleted cell was selected
+                state.isDeletingCell = false;
                 if (state.selectedCellId === id) {
                   state.selectedCellId = null;
-                  state.currentLocation = state.selectedSiteId
-                    ? {
-                        site: state.currentLocation?.site || {
-                          id: '',
-                          name: '',
-                        },
-                        cell: { id: '', name: '', lineNumber: '' },
-                        path: state.currentLocation?.site.name || '',
-                      }
-                    : null;
                 }
-                state.isDeletingCell = false;
               });
-
-              // Refresh hierarchy tree
-              get().loadHierarchyTree();
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
@@ -878,48 +695,129 @@ export const useHierarchyStore = create<HierarchyStore>()(
             }
           },
 
-          getCellById: async id => {
-            return hierarchyService.getCellById(id);
-          },
-
-          loadCellStatistics: async id => {
-            try {
-              const stats = await hierarchyService.getCellStatistics(id);
-              set(state => {
-                state.cellStatistics[id] = stats;
-              });
-              return stats;
-            } catch (error) {
-              set(state => {
-                state.error = error as HierarchyServiceError;
-              });
-              throw error;
-            }
-          },
-
-          getCellsBySite: async siteId => {
-            return hierarchyService.getCellsBySite(siteId);
-          },
-
-          // Validation actions
-          validateHierarchy: async () => {
+          fetchCellStatistics: async id => {
             set(state => {
-              state.isValidating = true;
+              state.isLoadingStatistics = true;
+              state.error = null;
             });
 
             try {
-              const result = await hierarchyService.validateHierarchy({
-                checkOrphans: true,
-                checkConstraints: true,
-                checkCounts: true,
-              });
-
+              const statistics = await hierarchyService.getCellStatistics(id);
               set(state => {
-                state.validationResults = result;
+                state.cellStatistics[id] = statistics;
+                state.isLoadingStatistics = false;
+              });
+              return statistics;
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingStatistics = false;
+              });
+              throw error;
+            }
+          },
+
+          checkCellInUse: async id => {
+            try {
+              return await hierarchyService.checkCellInUse(id);
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              throw error;
+            }
+          },
+
+          fetchCellSuggestions: async (siteId, query, limit = 10) => {
+            try {
+              const suggestions = await hierarchyService.getCellSuggestions(siteId, query, limit);
+              set(state => {
+                state.cellSuggestions = suggestions;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.cellSuggestions = [];
+              });
+            }
+          },
+
+          validateCellUniqueness: async (siteId, lineNumber, excludeId) => {
+            try {
+              return await hierarchyService.validateCellUniqueness(siteId, lineNumber, excludeId);
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              return false;
+            }
+          },
+
+          // Hierarchy tree operations
+          fetchHierarchyTree: async params => {
+            set(state => {
+              state.isLoadingTree = true;
+              state.treeState.isLoading = true;
+              state.treeState.error = null;
+              state.error = null;
+            });
+
+            try {
+              const response = await hierarchyService.getHierarchyTree(params);
+              set(state => {
+                state.hierarchyTree = response.tree;
+                state.treeState.nodes = response.tree;
+                state.treeState.isLoading = false;
+                state.treeState.error = null;
+                state.lastFetch.tree = Date.now();
+                state.isLoadingTree = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.treeState.isLoading = false;
+                state.treeState.error =
+                  (error as HierarchyServiceError).message || 'Failed to load hierarchy tree';
+                state.isLoadingTree = false;
+              });
+              throw error;
+            }
+          },
+
+          fetchHierarchyStatistics: async () => {
+            set(state => {
+              state.isLoadingStatistics = true;
+              state.error = null;
+            });
+
+            try {
+              const statistics = await hierarchyService.getHierarchyStatistics();
+              set(state => {
+                state.hierarchyStatistics = statistics;
+                state.lastFetch.statistics = Date.now();
+                state.isLoadingStatistics = false;
+              });
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+                state.isLoadingStatistics = false;
+              });
+              throw error;
+            }
+          },
+
+          validateHierarchy: async options => {
+            set(state => {
+              state.isValidating = true;
+              state.error = null;
+            });
+
+            try {
+              const results = await hierarchyService.validateHierarchy(options);
+              set(state => {
+                state.validationResults = results;
                 state.isValidating = false;
               });
-
-              return result;
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
@@ -930,52 +828,23 @@ export const useHierarchyStore = create<HierarchyStore>()(
           },
 
           detectOrphanedRecords: async () => {
+            set(state => {
+              state.isValidating = true;
+              state.error = null;
+            });
+
             try {
               const orphans = await hierarchyService.detectOrphanedRecords();
               set(state => {
                 state.orphanedRecords = orphans;
+                state.isValidating = false;
               });
-              return orphans;
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
+                state.isValidating = false;
               });
               throw error;
-            }
-          },
-
-          validateSiteName: async (name, excludeId) => {
-            return hierarchyService.validateSiteUniqueness(name, excludeId);
-          },
-
-          validateCellLineNumber: async (siteId, lineNumber, excludeId) => {
-            return hierarchyService.validateCellUniqueness(siteId, lineNumber, excludeId);
-          },
-
-          // Autocomplete actions
-          searchSiteSuggestions: async query => {
-            try {
-              const suggestions = await hierarchyService.getSiteSuggestions(query);
-              set(state => {
-                state.siteSuggestions = suggestions;
-              });
-              return suggestions;
-            } catch {
-              // Don't set error for autocomplete failures
-              return [];
-            }
-          },
-
-          searchCellSuggestions: async (siteId, query) => {
-            try {
-              const suggestions = await hierarchyService.getCellSuggestions(siteId, query);
-              set(state => {
-                state.cellSuggestions = suggestions;
-              });
-              return suggestions;
-            } catch {
-              // Don't set error for autocomplete failures
-              return [];
             }
           },
 
@@ -988,13 +857,15 @@ export const useHierarchyStore = create<HierarchyStore>()(
 
             try {
               const result = await hierarchyService.performBulkOperation(operation);
-
               set(state => {
                 state.isBulkOperating = false;
               });
 
-              // Refresh data after bulk operation
-              await get().refreshHierarchy();
+              // Refresh relevant data based on operation type
+              if (operation.operation === 'delete') {
+                await get().fetchSites();
+                await get().fetchCells();
+              }
 
               return result;
             } catch (error) {
@@ -1006,199 +877,337 @@ export const useHierarchyStore = create<HierarchyStore>()(
             }
           },
 
-          bulkDeleteSites: async siteIds => {
-            return get().performBulkOperation({
-              operation: 'delete',
-              entityType: 'site',
-              entityIds: siteIds,
-            });
-          },
-
-          bulkDeleteCells: async cellIds => {
-            return get().performBulkOperation({
-              operation: 'delete',
-              entityType: 'cell',
-              entityIds: cellIds,
-            });
-          },
-
-          // Statistics actions
-          loadHierarchyStatistics: async () => {
-            set(state => {
-              state.isLoadingStatistics = true;
-            });
-
+          // Export/Import operations
+          exportHierarchy: async (format, params) => {
             try {
-              const stats = await hierarchyService.getHierarchyStatistics();
-              set(state => {
-                state.hierarchyStatistics = stats;
-                state.isLoadingStatistics = false;
-              });
+              return await hierarchyService.exportHierarchy(format, params);
             } catch (error) {
               set(state => {
                 state.error = error as HierarchyServiceError;
-                state.isLoadingStatistics = false;
               });
+              throw error;
             }
           },
 
-          refreshStatistics: async () => {
-            await get().loadHierarchyStatistics();
+          importHierarchy: async (file, options) => {
+            try {
+              return await hierarchyService.importHierarchy(file, options);
+            } catch (error) {
+              set(state => {
+                state.error = error as HierarchyServiceError;
+              });
+              throw error;
+            }
           },
 
-          // Error handling
-          setError: error => {
+          // Tree state management
+          toggleNodeExpansion: nodeId => {
             set(state => {
-              state.error = error;
+              if (state.expandedNodes.has(nodeId)) {
+                state.expandedNodes.delete(nodeId);
+              } else {
+                state.expandedNodes.add(nodeId);
+              }
             });
           },
 
-          clearError: () => {
+          selectNode: (nodeId, multiSelect = false) => {
             set(state => {
-              state.error = null;
+              if (multiSelect) {
+                if (state.selectedNodeIds.has(nodeId)) {
+                  state.selectedNodeIds.delete(nodeId);
+                } else {
+                  state.selectedNodeIds.add(nodeId);
+                }
+              } else {
+                state.selectedNodeIds.clear();
+                state.selectedNodeIds.add(nodeId);
+              }
             });
           },
 
-          setSiteError: (siteId, error) => {
+          clearSelection: () => {
             set(state => {
-              state.siteErrors[siteId] = error;
+              state.selectedNodeIds.clear();
+              state.selectedSiteId = null;
+              state.selectedCellId = null;
             });
           },
 
-          clearSiteError: siteId => {
+          expandAll: () => {
             set(state => {
-              delete state.siteErrors[siteId];
+              const collectNodeIds = (nodes: HierarchyNode[]): string[] => {
+                return nodes.reduce((acc: string[], node) => {
+                  acc.push(node.id);
+                  if (node.children) {
+                    acc.push(...collectNodeIds(node.children));
+                  }
+                  return acc;
+                }, []);
+              };
+
+              const allNodeIds = collectNodeIds(state.hierarchyTree);
+              state.expandedNodes = new Set(allNodeIds);
             });
           },
 
-          setCellError: (cellId, error) => {
+          collapseAll: () => {
             set(state => {
-              state.cellErrors[cellId] = error;
+              state.expandedNodes.clear();
             });
           },
 
-          clearCellError: cellId => {
+          expandToLevel: level => {
             set(state => {
-              delete state.cellErrors[cellId];
+              const collectNodeIdsToLevel = (
+                nodes: HierarchyNode[],
+                currentLevel: number,
+                targetLevel: number
+              ): string[] => {
+                if (currentLevel >= targetLevel) return [];
+
+                return nodes.reduce((acc: string[], node) => {
+                  acc.push(node.id);
+                  if (node.children) {
+                    acc.push(
+                      ...collectNodeIdsToLevel(node.children, currentLevel + 1, targetLevel)
+                    );
+                  }
+                  return acc;
+                }, []);
+              };
+
+              const nodeIds = collectNodeIdsToLevel(state.hierarchyTree, 0, level);
+              state.expandedNodes = new Set(nodeIds);
+            });
+          },
+
+          // Filter and search management
+          setFilters: filters => {
+            set(state => {
+              state.filters = { ...state.filters, ...filters };
+            });
+          },
+
+          setSearchQuery: query => {
+            set(state => {
+              state.searchQuery = query;
+            });
+          },
+
+          applyFilters: () => {
+            set(state => {
+              state.appliedFilters = { ...state.filters };
+            });
+          },
+
+          clearFilters: () => {
+            set(state => {
+              state.filters = {};
+              state.appliedFilters = {};
+              state.searchQuery = '';
+            });
+          },
+
+          // Navigation and selection
+          setSelectedSite: siteId => {
+            set(state => {
+              state.selectedSiteId = siteId;
+              if (siteId) {
+                const site = state.sites.find(s => s.id === siteId);
+                if (site) {
+                  state.currentLocation = {
+                    site: {
+                      id: site.id,
+                      name: site.name,
+                    },
+                    cell: {
+                      id: '',
+                      name: '',
+                      lineNumber: '',
+                    },
+                    path: site.name,
+                  };
+                }
+              }
+            });
+          },
+
+          setSelectedCell: cellId => {
+            set(state => {
+              state.selectedCellId = cellId;
+              if (cellId) {
+                const cell = state.cells.find(c => c.id === cellId);
+                if (cell) {
+                  const site = state.sites.find(s => s.id === cell.siteId);
+                  state.currentLocation = {
+                    site: {
+                      id: cell.siteId,
+                      name: site?.name || '',
+                    },
+                    cell: {
+                      id: cell.id,
+                      name: cell.name,
+                      lineNumber: cell.lineNumber,
+                    },
+                    path: `${site?.name || ''} / ${cell.name}`,
+                  };
+                }
+              }
+            });
+          },
+
+          navigateToLocation: location => {
+            set(state => {
+              state.currentLocation = location;
+              if (location.cell.id) {
+                state.selectedSiteId = location.site.id;
+                state.selectedCellId = location.cell.id;
+              } else if (location.site.id) {
+                state.selectedSiteId = location.site.id;
+                state.selectedCellId = null;
+              }
             });
           },
 
           // Utility actions
-          reset: () => {
-            set(initialState);
-          },
-
-          updatePreferences: preferences => {
+          clearError: () => {
             set(state => {
-              state.preferences = { ...state.preferences, ...preferences };
+              state.error = null;
+              state.siteErrors = {};
+              state.cellErrors = {};
             });
           },
 
-          // Computed selectors
-          getSelectedSite: () => {
-            const state = get();
-            return state.selectedSiteId
-              ? state.sites.find(s => s.id === state.selectedSiteId) || null
-              : null;
+          clearCache: () => {
+            set(state => {
+              state.lastFetch = {
+                sites: 0,
+                cells: 0,
+                tree: 0,
+                statistics: 0,
+              };
+            });
           },
 
-          getSelectedCell: () => {
+          refreshData: async () => {
             const state = get();
-            return state.selectedCellId
-              ? state.cells.find(c => c.id === state.selectedCellId) || null
-              : null;
-          },
+            const promises: Promise<void>[] = [];
 
-          getSitesBySearch: query => {
-            const state = get();
-            if (!query.trim()) return state.sites;
-            const lowerQuery = query.toLowerCase();
-            return state.sites.filter(site => site.name.toLowerCase().includes(lowerQuery));
-          },
-
-          getCellsBySearch: query => {
-            const state = get();
-            if (!query.trim()) return state.cells;
-            const lowerQuery = query.toLowerCase();
-            return state.cells.filter(
-              cell =>
-                cell.name.toLowerCase().includes(lowerQuery) ||
-                cell.lineNumber.toLowerCase().includes(lowerQuery) ||
-                cell.siteName?.toLowerCase().includes(lowerQuery)
-            );
-          },
-
-          getFilteredTree: () => {
-            const state = get();
-            // This would implement tree filtering logic based on current filters
-            // For now, return the full tree
-            return state.hierarchyTree;
-          },
-
-          getHierarchyPath: (siteId, cellId) => {
-            const state = get();
-            const site = siteId ? state.sites.find(s => s.id === siteId) : null;
-            const cell = cellId ? state.cells.find(c => c.id === cellId) : null;
-
-            if (site && cell) {
-              return `${site.name} / ${cell.name}`;
-            } else if (site) {
-              return site.name;
+            // Refresh sites if loaded
+            if (state.sites.length > 0 || state.lastFetch.sites > 0) {
+              promises.push(state.fetchSites());
             }
-            return '';
+
+            // Refresh cells if loaded
+            if (state.cells.length > 0 || state.lastFetch.cells > 0) {
+              promises.push(state.fetchCells());
+            }
+
+            // Refresh tree if loaded
+            if (state.hierarchyTree.length > 0 || state.lastFetch.tree > 0) {
+              promises.push(state.fetchHierarchyTree());
+            }
+
+            // Refresh statistics if loaded
+            if (state.hierarchyStatistics || state.lastFetch.statistics > 0) {
+              promises.push(state.fetchHierarchyStatistics());
+            }
+
+            await Promise.all(promises);
           },
 
-          getTotalSelectedNodes: () => {
-            return get().selectedNodeIds.size;
-          },
+          // Convenience methods that map to existing actions
+          getCellById: async (id: string) => get().fetchCellById(id),
+          getCellsBySite: async (siteId: string) => get().fetchCellsBySite(siteId),
+          loadSites: async (params?: {
+            search?: string;
+            includeEmpty?: boolean;
+            page?: number;
+            pageSize?: number;
+          }) => get().fetchSites(params),
+          loadCells: async (params?: {
+            siteId?: string;
+            search?: string;
+            includeEmpty?: boolean;
+            page?: number;
+            pageSize?: number;
+          }) => get().fetchCells(params),
+          loadHierarchyTree: async (params?: {
+            expandLevel?: number;
+            siteId?: string;
+            cellId?: string;
+            includeEmpty?: boolean;
+            search?: string;
+          }) => get().fetchHierarchyTree(params),
+          loadHierarchyStatistics: async () => get().fetchHierarchyStatistics(),
+          validateCellLineNumber: async (siteId: string, lineNumber: string, excludeId?: string) =>
+            get().validateCellUniqueness(siteId, lineNumber, excludeId),
+          searchCellSuggestions: async (siteId: string, query: string, limit?: number) =>
+            get().fetchCellSuggestions(siteId, query, limit),
 
+          // Preferences stub
+          preferences: {},
+          saveFilterPreset: async (_name: string, _filters: Partial<HierarchyFilters>) => {
+            /* TODO: Implement */
+          },
+          loadFilterPreset: async (_presetName: string) => {
+            /* TODO: Implement */
+          },
           hasUnsavedChanges: () => {
             const state = get();
-            return JSON.stringify(state.filters) !== JSON.stringify(state.appliedFilters);
+            return (
+              state.isCreatingSite ||
+              state.isUpdatingSite ||
+              state.isCreatingCell ||
+              state.isUpdatingCell ||
+              state.isBulkOperating
+            );
           },
         }))
       ),
       {
         name: 'hierarchy-store',
         partialize: state => ({
-          // Only persist user preferences and some UI state
-          preferences: state.preferences,
-          expandedNodes: Array.from(state.expandedNodes),
+          selectedSiteId: state.selectedSiteId,
+          selectedCellId: state.selectedCellId,
+          expandedNodes: state.expandedNodes,
           filters: state.filters,
+          currentLocation: state.currentLocation,
         }),
-        onRehydrateStorage: () => state => {
-          if (state) {
-            // Convert persisted arrays back to Sets
-            state.expandedNodes = new Set(state.expandedNodes || []);
-            state.selectedNodeIds = new Set();
-            state.treeState.expandedNodes = new Set(state.expandedNodes);
-            state.treeState.selectedNodes = new Set();
-          }
-        },
       }
     ),
     {
-      name: 'hierarchy-store',
+      name: 'HierarchyStore',
     }
   )
 );
 
-/**
- * Selector hooks for common use cases
- */
-export const useSelectedSite = () => useHierarchyStore(state => state.getSelectedSite());
-export const useSelectedCell = () => useHierarchyStore(state => state.getSelectedCell());
+// Helper selectors
+export const selectSiteById = (id: string | null) => (state: HierarchyStore) =>
+  id ? state.sites.find(site => site.id === id) : null;
+
+export const selectCellById = (id: string | null) => (state: HierarchyStore) =>
+  id ? state.cells.find(cell => cell.id === id) : null;
+
+export const selectCellsBySite = (siteId: string | null) => (state: HierarchyStore) =>
+  siteId ? state.cells.filter(cell => cell.siteId === siteId) : [];
+
+export const selectIsNodeExpanded = (nodeId: string) => (state: HierarchyStore) =>
+  state.expandedNodes.has(nodeId);
+
+export const selectIsNodeSelected = (nodeId: string) => (state: HierarchyStore) =>
+  state.selectedNodeIds.has(nodeId);
+
+export const selectHasUnsavedChanges = (state: HierarchyStore) =>
+  state.isCreatingSite ||
+  state.isUpdatingSite ||
+  state.isCreatingCell ||
+  state.isUpdatingCell ||
+  state.isBulkOperating;
+
+// Export type for external usage
+export type { HierarchyState, HierarchyActions };
+
+// Export a hook for components that depend on currentLocation
 export const useCurrentLocation = () => useHierarchyStore(state => state.currentLocation);
-export const useHierarchyFilters = () => useHierarchyStore(state => state.filters);
-export const useHierarchyTree = () => useHierarchyStore(state => state.hierarchyTree);
-export const useHierarchyStatistics = () => useHierarchyStore(state => state.hierarchyStatistics);
-
-/**
- * Shallow selectors for performance
- */
-export const useHierarchyStoreShallow = () => useHierarchyStore();
-
-/**
- * Default export
- */
-export default useHierarchyStore;

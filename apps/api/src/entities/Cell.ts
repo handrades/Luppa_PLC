@@ -4,7 +4,7 @@ import { User } from './User';
 import { Site } from './Site';
 import { Equipment } from './Equipment';
 
-@Entity('cells')
+@Entity('cells', { schema: 'plc_inventory' })
 @Index(['siteId', 'lineNumber'], { unique: true })
 export class Cell extends BaseEntity {
   @Column({
