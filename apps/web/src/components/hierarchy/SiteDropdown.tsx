@@ -92,7 +92,7 @@ const SiteCreateDialog: React.FC<SiteCreateDialogProps> = ({
 }) => {
   const [siteName, setSiteName] = useState('');
   const [nameError, setNameError] = useState('');
-  const { validateSiteName } = useHierarchyStore();
+  const { validateSiteUniqueness } = useHierarchyStore();
 
   const handleSubmit = async () => {
     if (!siteName.trim()) {
@@ -102,7 +102,7 @@ const SiteCreateDialog: React.FC<SiteCreateDialogProps> = ({
 
     try {
       // Validate uniqueness
-      const isUnique = await validateSiteName(siteName.trim());
+      const isUnique = await validateSiteUniqueness(siteName.trim());
       if (!isUnique) {
         setNameError('Site name already exists');
         return;
@@ -239,8 +239,8 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
     isLoadingSites,
     isCreatingSite,
     error: storeError,
-    loadSites,
-    searchSiteSuggestions,
+    fetchSites,
+    fetchSiteSuggestions,
     createSite,
   } = useHierarchyStore();
 
@@ -255,24 +255,24 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
 
   // Load sites on mount
   useEffect(() => {
-    if (sites.length === 0) {
-      loadSites();
+    if (!sites || sites.length === 0) {
+      fetchSites();
     }
-  }, [sites.length, loadSites]);
+  }, [sites, fetchSites]);
 
   // Search for site suggestions when input changes
   useEffect(() => {
     if (debouncedInputValue && open) {
-      searchSiteSuggestions(debouncedInputValue);
+      fetchSiteSuggestions(debouncedInputValue);
       onSearchChange?.(debouncedInputValue);
     }
-  }, [debouncedInputValue, open, searchSiteSuggestions, onSearchChange]);
+  }, [debouncedInputValue, open, fetchSiteSuggestions, onSearchChange]);
 
   // Update local options based on search
   useEffect(() => {
     let options: Site[] = [];
 
-    if (debouncedInputValue && siteSuggestions.length > 0) {
+    if (debouncedInputValue && siteSuggestions && siteSuggestions.length > 0) {
       // Use search suggestions when actively searching
       options = siteSuggestions.map(suggestion => ({
         id: suggestion.id,
@@ -286,7 +286,7 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
       }));
     } else {
       // Use all sites when not searching
-      options = sites;
+      options = sites || [];
     }
 
     // Apply custom filter if provided
@@ -328,7 +328,7 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
   );
 
   // Render loading skeleton
-  if (isLoadingSites && sites.length === 0) {
+  if (isLoadingSites && (!sites || sites.length === 0)) {
     return (
       <Box sx={{ width: fullWidth ? '100%' : 200 }}>
         <Typography variant='body2' sx={{ mb: 1 }}>
@@ -340,7 +340,7 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
   }
 
   // Show error alert if there's a critical error
-  if (storeError && sites.length === 0) {
+  if (storeError && (!sites || sites.length === 0)) {
     return (
       <Box sx={{ width: fullWidth ? '100%' : 200 }}>
         <Alert severity='error' sx={{ mb: 1 }}>
@@ -348,7 +348,7 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
         </Alert>
         <Button
           variant='outlined'
-          onClick={() => loadSites()}
+          onClick={() => fetchSites()}
           startIcon={<SearchIcon />}
           fullWidth={fullWidth}
         >
@@ -403,11 +403,42 @@ export const SiteDropdown: React.FC<SiteDropdownProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <li {...props} key={option.id}>
-            <SiteOption site={option} showCounts={showCounts} inputValue={inputValue} />
-          </li>
-        )}
+        renderOption={(props, option, state) => {
+          // Check if this is the last option and we should show create button
+          const isLastOption = state.index === localOptions.length - 1;
+          return (
+            <>
+              <li {...props} key={option.id}>
+                <SiteOption site={option} showCounts={showCounts} inputValue={inputValue} />
+              </li>
+              {isLastOption && allowCreate && (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    borderTop: 1,
+                    borderColor: 'divider',
+                    mt: 1,
+                  }}
+                >
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<AddIcon />}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setCreateDialogOpen(true);
+                      setOpen(false);
+                    }}
+                    fullWidth
+                  >
+                    Create New Site
+                  </Button>
+                </Box>
+              )}
+            </>
+          );
+        }}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip

@@ -8,6 +8,18 @@
 import request from 'supertest';
 import { Express, NextFunction, Request, Response } from 'express';
 import { createApp } from '../../app';
+import { AppDataSource } from '../../config/database';
+
+interface MockAppDataSource {
+  getRepository: jest.Mock;
+  createQueryRunner: jest.Mock;
+  manager: {
+    findOne: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+  };
+  initialize: jest.Mock;
+}
 
 jest.mock('../../config/logger');
 
@@ -96,17 +108,18 @@ jest.mock('../../middleware/auth', () => ({
 
 describe('Import/Export Routes', () => {
   let app: Express;
-  let mockAppDataSource: any;
+  let mockAppDataSource: MockAppDataSource;
 
   beforeAll(async () => {
     app = createApp();
+    // Set up mockAppDataSource reference
+    mockAppDataSource = AppDataSource as unknown as MockAppDataSource;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset mock behavior
-    const { AppDataSource } = require('../../config/database');
-    mockAppDataSource = AppDataSource;
+    mockAppDataSource = AppDataSource as unknown as MockAppDataSource;
     mockAppDataSource.getRepository().findOne.mockResolvedValue(null);
   });
 

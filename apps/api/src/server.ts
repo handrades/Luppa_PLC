@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import 'reflect-metadata';
-import { createApp } from './app-minimal';
+import { createApp } from './app';
 import { logger } from './config/logger';
 import { config, validateEnvironment } from './config/env';
-import { closeDatabase } from './config/database';
-import { closeRedis } from './config/redis';
+import { closeDatabase, initializeDatabase } from './config/database';
+import { closeRedis, initializeRedis } from './config/redis';
 import { Server } from 'http';
 
 // Validate environment variables early
@@ -34,13 +34,12 @@ let server: Server;
 // Start server
 const startServer = async (): Promise<void> => {
   try {
-    logger.info('Starting server without database/Redis for debugging...');
+    logger.info('Starting server with database and Redis connections...');
 
-    // TODO: Re-enable after basic server works
-    // await initializeDatabase();
-    // logger.info('Database initialized successfully');
-    // await initializeRedis();
-    // logger.info('Redis initialized successfully');
+    await initializeDatabase();
+    logger.info('Database initialized successfully');
+    await initializeRedis();
+    logger.info('Redis initialized successfully');
 
     server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {

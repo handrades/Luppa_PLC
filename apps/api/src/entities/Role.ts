@@ -20,7 +20,7 @@ export interface ActionPermissions {
   monitoring?: boolean;
 }
 
-@Entity('roles')
+@Entity('roles', { schema: 'core' })
 export class Role extends BaseEntity {
   @Column({
     type: 'varchar',

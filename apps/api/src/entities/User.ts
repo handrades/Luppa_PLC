@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { Role } from './Role';
 
-@Entity('users')
+@Entity('users', { schema: 'core' })
 @Index(['email'], { unique: true })
 export class User extends BaseEntity {
   @Column({

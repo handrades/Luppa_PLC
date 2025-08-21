@@ -751,13 +751,13 @@ export const HierarchyFilterPanel: React.FC<HierarchyFilterPanelProps> = ({
           Save Current Filters
         </MenuItem>
         <Divider />
-        {preferences.savedFilters.map((preset: { name: string; filters: unknown }) => (
+        {(preferences.savedFilters || []).map((preset: { name: string; filters: unknown }) => (
           <MenuItem key={preset.name} onClick={() => handleLoadPreset(preset.name)}>
             <BookmarkIcon fontSize='small' sx={{ mr: 1 }} />
             {preset.name}
           </MenuItem>
         ))}
-        {preferences.savedFilters.length === 0 && (
+        {(!preferences.savedFilters || preferences.savedFilters.length === 0) && (
           <MenuItem disabled>
             <Typography variant='body2' color='text.secondary'>
               No saved presets
@@ -771,7 +771,7 @@ export const HierarchyFilterPanel: React.FC<HierarchyFilterPanelProps> = ({
         open={presetDialog}
         onClose={() => setPresetDialog(false)}
         onSave={handleSavePreset}
-        existingNames={preferences.savedFilters.map(
+        existingNames={(preferences.savedFilters || []).map(
           (p: { name: string; filters: unknown }) => p.name
         )}
       />

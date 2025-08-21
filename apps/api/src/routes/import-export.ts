@@ -5,25 +5,25 @@
  * template generation, and import history management.
  */
 
-import { NextFunction, Request, Response, Router } from "express";
-import multer from "multer";
-import Joi from "joi";
+import { NextFunction, Request, Response, Router } from 'express';
+import multer from 'multer';
+import Joi from 'joi';
 import {
   ExportOptions,
   ImportExportService,
   ImportOptions,
   PLCFilters,
-} from "../services/ImportExportService";
-import { SiteService } from "../services/SiteService";
-import { CellService } from "../services/CellService";
-import { EquipmentService } from "../services/EquipmentService";
-import { AuditService } from "../services/AuditService";
-import { authenticate } from "../middleware/auth";
-import { validate } from "../middleware/validationMiddleware";
-import { logger } from "../config/logger";
-import { AppDataSource } from "../config/database";
-import { ImportHistory } from "../entities/ImportHistory";
-import { EquipmentType } from "../entities/Equipment";
+} from '../services/ImportExportService';
+import { SiteService } from '../services/SiteService';
+import { CellService } from '../services/CellService';
+import { EquipmentService } from '../services/EquipmentService';
+import { AuditService } from '../services/AuditService';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validationMiddleware';
+import { logger } from '../config/logger';
+import { AppDataSource } from '../config/database';
+import { ImportHistory } from '../entities/ImportHistory';
+import { EquipmentType } from '../entities/Equipment';
 
 const router: Router = Router();
 
@@ -35,53 +35,58 @@ const upload = multer({
     files: 1,
   },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+    const allowedMimeTypes = [
+      'text/csv',
+      'text/plain',
+      'application/csv',
+      'application/vnd.ms-excel',
+      'application/octet-stream',
+    ];
+    if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
       cb(null, true);
     } else {
-      cb(new Error("Only CSV files are allowed"));
+      cb(new Error('Only CSV files are allowed'));
     }
   },
 });
 
 // Multer error handler middleware
-const handleMulterError = (error: any, _req: Request, res: Response, next: NextFunction) => {
+const handleMulterError = (error: unknown, _req: Request, res: Response, next: NextFunction) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({
         success: false,
-        error: 'File too large'
+        error: 'File too large',
       });
     }
     if (error.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
         success: false,
-        error: 'Too many files'
+        error: 'Too many files',
       });
     }
     if (error.code === 'LIMIT_UNEXPECTED_FILE') {
       return res.status(400).json({
         success: false,
-        error: 'Unexpected file field'
+        error: 'Unexpected file field',
       });
     }
   }
-  
-  if (error.message === 'Only CSV files are allowed') {
+
+  if (error instanceof Error && error.message === 'Only CSV files are allowed') {
     return res.status(400).json({
       success: false,
-      error: 'Only CSV files are allowed'
+      error: 'Only CSV files are allowed',
     });
   }
-  
+
   next(error);
 };
 
 // Validation schemas
 const importOptionsSchema = Joi.object({
   createMissing: Joi.boolean().default(false),
-  duplicateHandling: Joi.string()
-    .valid("skip", "overwrite", "merge")
-    .default("skip"),
+  duplicateHandling: Joi.string().valid('skip', 'overwrite', 'merge').default('skip'),
   backgroundThreshold: Joi.number().integer().min(100).max(10000).default(1000),
   validateOnly: Joi.boolean().default(false),
 });
@@ -102,7 +107,7 @@ const exportFiltersSchema = Joi.object({
 const exportOptionsSchema = Joi.object({
   includeHierarchy: Joi.boolean().default(true),
   includeTags: Joi.boolean().default(false),
-  format: Joi.string().valid("csv").default("csv"),
+  format: Joi.string().valid('csv').default('csv'),
 });
 
 // Service factory function to avoid circular dependencies
@@ -118,7 +123,7 @@ const createImportExportService = () => {
     siteService,
     cellService,
     equipmentService,
-    auditService,
+    auditService
   );
 };
 
@@ -127,7 +132,7 @@ const createImportExportService = () => {
  * Download CSV template with all required fields
  */
 router.get(
-  "/import/template",
+  '/import/template',
   authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -135,21 +140,21 @@ router.get(
       const template = await service.generateTemplate();
 
       res.set({
-        "Content-Type": "text/csv",
-        "Content-Disposition": 'attachment; filename="plc-import-template.csv"',
-        "Content-Length": template.length.toString(),
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="plc-import-template.csv"',
+        'Content-Length': template.length.toString(),
       });
 
       res.send(template);
 
-      logger.info("CSV template downloaded", {
+      logger.info('CSV template downloaded', {
         userId: req.user?.sub,
         userEmail: req.user?.email,
       });
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -157,9 +162,9 @@ router.get(
  * Import PLCs from CSV file with options
  */
 router.post(
-  "/import/plcs",
+  '/import/plcs',
   authenticate,
-  upload.single("file"),
+  upload.single('file'),
   handleMulterError,
   validate({ body: importOptionsSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -167,14 +172,14 @@ router.post(
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: "No CSV file provided",
+          error: 'No CSV file provided',
         });
       }
 
       const options: ImportOptions = req.body;
       const userId = req.user!.sub;
 
-      logger.info("Starting CSV import", {
+      logger.info('Starting CSV import', {
         userId,
         filename: req.file.originalname,
         fileSize: req.file.size,
@@ -196,7 +201,7 @@ router.post(
           options,
           errors: result.errors,
           createdEntities: result.createdEntities,
-          status: result.success ? "completed" : "failed",
+          status: result.success ? 'completed' : 'failed',
           startedAt: new Date(),
           completedAt: new Date(),
         });
@@ -207,7 +212,7 @@ router.post(
       const statusCode = result.success ? 200 : 400;
       res.status(statusCode).json(result);
 
-      logger.info("CSV import completed", {
+      logger.info('CSV import completed', {
         userId,
         importId: result.importId,
         success: result.success,
@@ -216,14 +221,14 @@ router.post(
         failedRows: result.failedRows,
       });
     } catch (error) {
-      logger.error("CSV import failed", {
+      logger.error('CSV import failed', {
         userId: req.user?.sub,
         filename: req.file?.originalname,
         error: error instanceof Error ? error.message : error,
       });
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -231,7 +236,7 @@ router.post(
  * Export PLCs to CSV with filters
  */
 router.post(
-  "/export/plcs",
+  '/export/plcs',
   authenticate,
   validate({
     body: Joi.object({
@@ -241,12 +246,9 @@ router.post(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const {
-        filters,
-        options,
-      }: { filters: PLCFilters; options: ExportOptions } = req.body;
+      const { filters, options }: { filters: PLCFilters; options: ExportOptions } = req.body;
 
-      logger.info("Starting CSV export", {
+      logger.info('Starting CSV export', {
         userId: req.user!.sub,
         filters,
         options,
@@ -256,36 +258,32 @@ router.post(
       const csvBuffer = await service.exportPLCs(filters, options);
 
       // Generate filename with timestamp and filters
-      const timestamp = new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:.]/g, "-");
-      const sitesFilter =
-        filters.sites && filters.sites.length > 0 ? `-${filters.sites[0]}` : "";
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      const sitesFilter = filters.sites && filters.sites.length > 0 ? `-${filters.sites[0]}` : '';
       const filename = `plc-export${sitesFilter}-${timestamp}.csv`;
 
       res.set({
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": csvBuffer.length.toString(),
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': csvBuffer.length.toString(),
       });
 
       res.send(csvBuffer);
 
-      logger.info("CSV export completed", {
+      logger.info('CSV export completed', {
         userId: req.user!.sub,
         filename,
         size: csvBuffer.length,
         filters,
       });
     } catch (error) {
-      logger.error("CSV export failed", {
+      logger.error('CSV export failed', {
         userId: req.user?.sub,
         error: error instanceof Error ? error.message : error,
       });
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -293,7 +291,7 @@ router.post(
  * Rollback a specific import (placeholder for future implementation)
  */
 router.post(
-  "/import/:importId/rollback",
+  '/import/:importId/rollback',
   authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -309,14 +307,14 @@ router.post(
       if (!importRecord) {
         return res.status(404).json({
           success: false,
-          error: "Import record not found",
+          error: 'Import record not found',
         });
       }
 
-      if (importRecord.status !== "completed") {
+      if (importRecord.status !== 'completed') {
         return res.status(400).json({
           success: false,
-          error: "Only completed imports can be rolled back",
+          error: 'Only completed imports can be rolled back',
         });
       }
 
@@ -326,17 +324,17 @@ router.post(
 
       res.status(501).json({
         success: false,
-        error: "Rollback functionality not yet implemented",
+        error: 'Rollback functionality not yet implemented',
       });
 
-      logger.info("Rollback requested (not implemented)", {
+      logger.info('Rollback requested (not implemented)', {
         userId,
         importId,
       });
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -344,23 +342,20 @@ router.post(
  * Get import history for the authenticated user
  */
 router.get(
-  "/import/history",
+  '/import/history',
   authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.sub;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(
-        parseInt(req.query.pageSize as string) || 20,
-        100,
-      );
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 100);
       const skip = (page - 1) * pageSize;
 
       const importHistoryRepo = AppDataSource.getRepository(ImportHistory);
 
       const [imports, total] = await importHistoryRepo.findAndCount({
         where: { userId },
-        order: { startedAt: "DESC" },
+        order: { startedAt: 'DESC' },
         skip,
         take: pageSize,
       });
@@ -375,7 +370,7 @@ router.get(
         },
       });
 
-      logger.info("Import history retrieved", {
+      logger.info('Import history retrieved', {
         userId,
         page,
         pageSize,
@@ -384,7 +379,7 @@ router.get(
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -392,16 +387,16 @@ router.get(
  * Validate CSV file without importing
  */
 router.post(
-  "/import/validate",
+  '/import/validate',
   authenticate,
-  upload.single("file"),
+  upload.single('file'),
   handleMulterError,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: "No CSV file provided",
+          error: 'No CSV file provided',
         });
       }
 
@@ -413,7 +408,7 @@ router.post(
         validation,
       });
 
-      logger.info("CSV validation completed", {
+      logger.info('CSV validation completed', {
         userId: req.user!.sub,
         filename: req.file.originalname,
         isValid: validation.isValid,
@@ -421,14 +416,14 @@ router.post(
         rowErrors: validation.rowErrors.length,
       });
     } catch (error) {
-      logger.error("CSV validation failed", {
+      logger.error('CSV validation failed', {
         userId: req.user?.sub,
         filename: req.file?.originalname,
         error: error instanceof Error ? error.message : error,
       });
       next(error);
     }
-  },
+  }
 );
 
 export default router;

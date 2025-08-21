@@ -25,6 +25,8 @@ import authRouter from './routes/auth';
 import auditRouter from './routes/audit';
 import usersRouter from './routes/users';
 import equipmentRouter from './routes/equipment';
+import sitesRouter from './routes/sites';
+import cellsRouter from './routes/cells';
 import metricsRouter from './routes/metrics';
 import searchRouter from './routes/search';
 import importExportRouter from './routes/import-export';
@@ -139,6 +141,8 @@ export const createApp = (): express.Application => {
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/equipment', equipmentRouter);
+  app.use('/api/v1/sites', sitesRouter);
+  app.use('/api/v1/cells', cellsRouter);
   app.use('/api/v1/search', searchRouter);
   app.use('/api/v1', importExportRouter);
   app.use('/api/v1', auditRouter);

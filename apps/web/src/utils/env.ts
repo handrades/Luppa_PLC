@@ -30,7 +30,7 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
 
 export const env = {
   // API Configuration
-  API_URL: getEnvVar('VITE_API_URL', '/api'),
+  API_URL: getEnvVar('VITE_API_URL', '/api/v1'),
   API_TIMEOUT: getNumberEnvVar('VITE_API_TIMEOUT', 10000),
 
   // Development Settings

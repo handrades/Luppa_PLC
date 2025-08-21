@@ -5,6 +5,9 @@
  * connection errors, constraint violations, and transaction failures.
  */
 
+import { EntityNotFoundError, QueryFailedError } from 'typeorm';
+import { ValidationError } from './ValidationError';
+
 /**
  * Custom database error class for consistent error handling
  */
@@ -36,18 +39,58 @@ export class DatabaseError extends Error {
     let statusCode = 500;
 
     // Handle specific TypeORM error types
-    if (error.name === 'QueryFailedError') {
-      message = 'Database query failed';
-      statusCode = 400;
-    } else if (error.name === 'EntityNotFoundError') {
+    if (error instanceof QueryFailedError) {
+      const driverError = error.driverError as { code?: string; detail?: string };
+      const code = driverError?.code;
+
+      if (code) {
+        // Map PostgreSQL error codes
+        switch (code) {
+          case '23505': // unique_violation
+            message = 'Duplicate record detected';
+            statusCode = 409;
+            break;
+          case '23503': // foreign_key_violation
+            message = 'Foreign key constraint violation';
+            statusCode = 409;
+            break;
+          case '23502': // not_null_violation
+            message = 'Required field is missing';
+            statusCode = 400;
+            break;
+          case '23514': // check_violation
+            message = 'Data validation constraint violation';
+            statusCode = 400;
+            break;
+          case '08006': // connection_failure
+          case '08001': // sqlclient_unable_to_establish_sqlconnection
+          case '08003': // connection_does_not_exist
+            message = 'Database connection error';
+            statusCode = 503;
+            break;
+          default:
+            message = 'Database query failed';
+            statusCode = 400;
+        }
+      } else {
+        // Fallback to message inspection if no driver code available
+        if (error.message.includes('duplicate key value')) {
+          message = 'Duplicate record detected';
+          statusCode = 409;
+        } else if (error.message.includes('foreign key constraint')) {
+          message = 'Foreign key constraint violation';
+          statusCode = 409;
+        } else if (error.message.includes('connection')) {
+          message = 'Database connection error';
+          statusCode = 503;
+        } else {
+          message = 'Database query failed';
+          statusCode = 400;
+        }
+      }
+    } else if (error instanceof EntityNotFoundError) {
       message = 'Record not found';
       statusCode = 404;
-    } else if (error.message.includes('duplicate key value')) {
-      message = 'Duplicate record detected';
-      statusCode = 409;
-    } else if (error.message.includes('foreign key constraint')) {
-      message = 'Foreign key constraint violation';
-      statusCode = 409;
     } else if (error.message.includes('connection')) {
       message = 'Database connection error';
       statusCode = 503;
@@ -95,20 +138,4 @@ export class DatabaseError extends Error {
 /**
  * Re-export ValidationError for compatibility
  */
-export class ValidationError extends Error {
-  public readonly statusCode: number = 400;
-  public readonly errorType: string = 'Validation error';
-
-  constructor(message: string, _originalError?: Error) {
-    super(message);
-    this.name = 'ValidationError';
-
-    // Ensure proper prototype chain for instanceof checks
-    Object.setPrototypeOf(this, ValidationError.prototype);
-
-    // Capture stack trace if available (Node.js)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ValidationError);
-    }
-  }
-}
+export { ValidationError };

@@ -3,7 +3,7 @@ import { BaseEntity } from './BaseEntity';
 import { User } from './User';
 import { Cell } from './Cell';
 
-@Entity('sites')
+@Entity('sites', { schema: 'plc_inventory' })
 @Index(['name'], { unique: true })
 export class Site extends BaseEntity {
   @Column({
