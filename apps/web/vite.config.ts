@@ -20,10 +20,21 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        // Default to 3010 (repo default) - set API_PORT env var for non-default ports
-        target: `http://localhost:${process.env.API_PORT || '3010'}`,
+        // Always use the api service name in Docker environment
+        target: `http://api:3010`,
         changeOrigin: true,
         secure: false,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${options.target}${req.url}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log(`[Proxy Response] ${proxyRes.statusCode} from ${req.url}`);
+          });
+          proxy.on('error', (err, _req, _res) => {
+            console.error('[Proxy Error]', err);
+          });
+        },
       },
     },
   },

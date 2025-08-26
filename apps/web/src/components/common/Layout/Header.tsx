@@ -19,6 +19,7 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '../../../stores/authStore';
 
@@ -38,6 +39,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
 
   const { user, isLoading, logout, loadUser } = useAuthStore();
 
@@ -56,7 +58,8 @@ export function Header({ onMenuClick }: HeaderProps) {
   const handleLogout = useCallback(() => {
     handleProfileMenuClose();
     logout();
-  }, [handleProfileMenuClose, logout]);
+    navigate('/login');
+  }, [handleProfileMenuClose, logout, navigate]);
 
   const getUserInitials = useMemo(() => {
     if (!user) return '';

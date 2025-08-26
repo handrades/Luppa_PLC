@@ -458,7 +458,7 @@ class HierarchyService {
   async validateSiteUniqueness(name: string, excludeId?: string): Promise<boolean> {
     try {
       const response: AxiosResponse<ApiResponse<{ isUnique: boolean; conflictingSite?: Site }>> =
-        await apiClient.post('/sites/validate-name', {
+        await apiClient.post('/sites/validate-uniqueness', {
           name,
           excludeId,
         });
@@ -478,7 +478,7 @@ class HierarchyService {
   ): Promise<boolean> {
     try {
       const response: AxiosResponse<ApiResponse<{ isUnique: boolean; conflictingCell?: Cell }>> =
-        await apiClient.post('/cells/validate-line-number', {
+        await apiClient.post('/cells/validate-uniqueness', {
           siteId,
           lineNumber,
           excludeId,

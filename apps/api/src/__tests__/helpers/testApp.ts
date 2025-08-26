@@ -378,6 +378,96 @@ jest.mock('../../services/CellService', () => {
   };
 });
 
+// Mock ImportExportService
+jest.mock('../../services/ImportExportService', () => {
+  return {
+    ImportExportService: jest.fn().mockImplementation(() => ({
+      generateTemplate: jest.fn().mockResolvedValue(Buffer.from('site_name,cell_name,equipment_name,tag_id,description,make,model\nTest Site,Cell 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix')),
+      validateCSV: jest.fn().mockImplementation((buffer) => {
+        const content = buffer.toString();
+        // Check if this is an invalid CSV (missing required headers)
+        if (content.includes('site_name,cell_name') && !content.includes('tag_id')) {
+          return Promise.resolve({
+            headers: ['site_name', 'cell_name'],
+            totalRows: 1,
+            rows: [['Test Site', 'Cell 1']],
+            validationErrors: [{
+              row: 0,
+              column: 'headers',
+              value: 'site_name,cell_name',
+              message: 'Missing required headers: equipment_name, tag_id, description, make, model',
+              severity: 'error'
+            }]
+          });
+        }
+        return Promise.resolve({
+          headers: ['site_name', 'cell_name', 'equipment_name', 'tag_id', 'description', 'make', 'model'],
+          totalRows: 1,
+          rows: [['Test Site', 'Cell 1', 'Equipment 1', 'PLC-001', 'Test PLC', 'Allen-Bradley', 'ControlLogix']],
+          validationErrors: []
+        });
+      }),
+      importPLCs: jest.fn().mockImplementation((buffer, _options) => {
+        // Check if file is provided - if buffer is empty, service would handle that
+        if (!buffer || buffer.length === 0) {
+          const error = new Error('No file provided');
+          error.name = 'ValidationError';
+          return Promise.reject(error);
+        }
+        return Promise.resolve({
+          success: true,
+          totalRows: 1,
+          processedRows: 1,
+          skippedRows: 0,
+          errors: [],
+          warnings: [],
+          importId: 'test-import-id',
+          duration: 1000
+        });
+      }),
+      exportPLCs: jest.fn().mockImplementation((_filters, options) => {
+        if (options.format === 'json') {
+          return Promise.resolve(Buffer.from(JSON.stringify([{
+            tagId: 'PLC-001',
+            description: 'Test PLC',
+            site: { name: 'Test Site' }
+          }])));
+        }
+        return Promise.resolve(Buffer.from('site_name,tag_id\nTest Site,PLC-001'));
+      }),
+      getImportHistory: jest.fn().mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 20
+      }),
+      getImportLog: jest.fn().mockResolvedValue(null),
+      rollbackImport: jest.fn().mockResolvedValue({
+        success: true,
+        rollbackId: 'test-rollback-id'
+      })
+    }))
+  };
+});
+
+// Mock AuditService
+jest.mock('../../services/AuditService', () => {
+  return {
+    AuditService: jest.fn().mockImplementation(() => ({
+      logAction: jest.fn().mockResolvedValue(undefined)
+    }))
+  };
+});
+
+// Mock AppDataSource
+jest.mock('../../config/database', () => ({
+  AppDataSource: {
+    isInitialized: true,
+    manager: {},
+    destroy: jest.fn().mockResolvedValue(undefined)
+  }
+}));
+
 /**
  * Mock authentication middleware that decodes test tokens
  */
@@ -469,9 +559,11 @@ export async function createTestApp(): Promise<Express> {
   // Import and use real routes
   const sitesRouter = (await import('../../routes/sites')).default;
   const cellsRouter = (await import('../../routes/cells')).default;
+  const importExportRouter = (await import('../../routes/import-export')).default;
 
   app.use('/api/v1/sites', sitesRouter);
   app.use('/api/v1/cells', cellsRouter);
+  app.use('/api/v1', importExportRouter);
 
   // Error handling middleware
   app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {

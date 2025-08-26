@@ -1,11 +1,16 @@
 import 'dotenv/config';
 import 'reflect-metadata';
-import { createApp } from './app-minimal';
+import { Server } from 'http';
+
+console.log('Server.ts: Starting imports...');
+
+import { createApp } from './app';
 import { logger } from './config/logger';
 import { config, validateEnvironment } from './config/env';
 import { closeDatabase } from './config/database';
-import { closeRedis } from './config/redis';
-import { Server } from 'http';
+import { closeRedis, initializeRedis } from './config/redis';
+
+console.log('Server.ts: Imports completed');
 
 // Validate environment variables early
 validateEnvironment();
@@ -28,19 +33,43 @@ process.on('unhandledRejection', (reason: unknown) => {
 });
 
 // Create Express application
+console.log('Server.ts: Creating app...');
 const app = createApp();
+console.log('Server.ts: App created');
 let server: Server;
 
 // Start server
 const startServer = async (): Promise<void> => {
   try {
-    logger.info('Starting server without database/Redis for debugging...');
+    logger.info('Starting server...');
 
-    // TODO: Re-enable after basic server works
-    // await initializeDatabase();
-    // logger.info('Database initialized successfully');
-    // await initializeRedis();
-    // logger.info('Redis initialized successfully');
+    // Initialize database with timeout
+    logger.info('Initializing database connection...');
+    const { initializeDatabase } = await import('./config/database');
+
+    // Add a timeout to prevent hanging
+    const dbInitPromise = initializeDatabase();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Database initialization timed out after 10 seconds')),
+        10000
+      )
+    );
+
+    try {
+      await Promise.race([dbInitPromise, timeoutPromise]);
+      logger.info('Database initialized successfully');
+    } catch (error) {
+      logger.error('Database initialization failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      // Continue without database for now
+      logger.warn('Starting server without database connection');
+    }
+
+    // Initialize Redis (this works)
+    await initializeRedis();
+    logger.info('Redis initialized successfully');
 
     server = app.listen(config.port, config.host, () => {
       logger.info('Server started successfully', {

@@ -1,5 +1,7 @@
 // Environment configuration utilities
 
+// Use Vite's built-in env types
+
 // Helper function to get environment variables with fallback for Jest
 function getEnvVar(key: string, defaultValue?: string): string {
   // For Jest/Node.js environment
@@ -7,15 +9,17 @@ function getEnvVar(key: string, defaultValue?: string): string {
     return process.env[key] || defaultValue || '';
   }
 
-  // For Vite/browser environment
-  if (typeof window !== 'undefined' || typeof process === 'undefined') {
-    // Use dynamic import to avoid static analysis issues in Jest
-    const meta = (globalThis as { __VITE_ENV__?: Record<string, string> }).__VITE_ENV__ || {};
-    return meta[key] || defaultValue || '';
+  // For Vite/browser environment - use import.meta.env
+  if (typeof window !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env) {
+    return (import.meta.env as Record<string, string>)[key] || defaultValue || '';
   }
 
   // Fallback to process.env for Node.js environments
-  return process.env[key] || defaultValue || '';
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key] || defaultValue || '';
+  }
+
+  return defaultValue || '';
 }
 
 function getBooleanEnvVar(key: string, defaultValue = false): boolean {
@@ -30,7 +34,7 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
 
 export const env = {
   // API Configuration
-  API_URL: getEnvVar('VITE_API_URL', '/api'),
+  API_URL: getEnvVar('VITE_API_URL', '/api/v1'),
   API_TIMEOUT: getNumberEnvVar('VITE_API_TIMEOUT', 10000),
 
   // Development Settings

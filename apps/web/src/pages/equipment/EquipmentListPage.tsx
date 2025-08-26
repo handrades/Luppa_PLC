@@ -23,11 +23,18 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Clear as ClearIcon, Search as SearchIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Clear as ClearIcon,
+  Search as SearchIcon,
+  Upload as UploadIcon,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Column, DataGrid } from '../../components/common/DataDisplay/DataGrid';
 import { EquipmentEmptyState } from '../../components/equipment/EquipmentEmptyState';
 import { EquipmentActions } from '../../components/equipment/EquipmentActions';
+import { ImportDialog } from '../../components/import-export/ImportDialog';
+import { ExportDialog } from '../../components/import-export/ExportDialog';
 import { useEquipmentSearch } from '../../hooks/useEquipmentSearch';
 import { useEquipment } from '../../hooks/useEquipment';
 import { useToast } from '../../hooks/useToast';
@@ -57,9 +64,11 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
-  // Local state for delete confirmation dialog
+  // Local state for dialogs
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Store selectors - using individual selectors to prevent infinite loops
   const equipment = useEquipmentData();
@@ -183,16 +192,27 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
     navigate('/equipment/new');
   }, [navigate]);
 
-  // Export handler (placeholder for future functionality)
-  const handleExport = useCallback(() => {
-    // TODO: Implement export functionality
-    // Future implementation will call equipmentService.exportEquipment
-    if (selection.selectedIds.size === 0) return;
+  // Import handler
+  const handleImport = useCallback(() => {
+    setImportDialogOpen(true);
+  }, []);
 
-    // Placeholder for export logic
-    // Future implementation will call equipmentService.exportEquipment with selected IDs
-    // Export service call would go here
-  }, [selection.selectedIds]);
+  // Export handler
+  const handleExport = useCallback(() => {
+    setExportDialogOpen(true);
+  }, []);
+
+  // Close import dialog and refresh data if needed
+  const handleImportClose = useCallback(() => {
+    setImportDialogOpen(false);
+    // Refresh equipment list after successful import
+    fetchEquipment();
+  }, [fetchEquipment]);
+
+  // Close export dialog
+  const handleExportClose = useCallback(() => {
+    setExportDialogOpen(false);
+  }, []);
 
   // Delete handler with confirmation dialog
   const handleDelete = useCallback(() => {
@@ -277,6 +297,14 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
         <Typography variant='h4' component='h1'>
           Equipment
         </Typography>
+        <Stack direction='row' spacing={2}>
+          <Button variant='outlined' startIcon={<UploadIcon />} onClick={handleImport}>
+            Import
+          </Button>
+          <Button variant='contained' startIcon={<AddIcon />} onClick={handleAddEquipment}>
+            Add Equipment
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Search Input */}
@@ -436,6 +464,12 @@ export const EquipmentListPage: React.FC<EquipmentListPageProps> = ({ initialFil
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Import Dialog */}
+      <ImportDialog open={importDialogOpen} onClose={handleImportClose} />
+
+      {/* Export Dialog */}
+      <ExportDialog open={exportDialogOpen} onClose={handleExportClose} />
     </Box>
   );
 };

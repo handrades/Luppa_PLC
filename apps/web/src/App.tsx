@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { EquipmentListPage } from './pages/equipment/EquipmentListPage';
 import EquipmentCreatePage from './pages/equipment/EquipmentCreatePage';
 import EquipmentEditPage from './pages/equipment/EquipmentEditPage';
+import { ImportExportPage } from './pages/import-export/ImportExportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -71,6 +72,17 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <EquipmentListPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path='/import-export'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ImportExportPage />
               </AppLayout>
             </ProtectedRoute>
           }

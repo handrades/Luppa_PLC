@@ -164,8 +164,24 @@ const createDataSource = (customConfig?: {
 
 /**
  * DataSource instance for the application
+ * IMPORTANT: Do not access this directly during module import
+ * Use initializeDatabase() first to ensure proper connection
  */
-export const AppDataSource = createDataSource();
+export let AppDataSource: DataSource;
+
+/**
+ * Get or create AppDataSource instance
+ * Used by tests and other modules that need access to DataSource
+ */
+export const getAppDataSource = (): DataSource => {
+  if (!AppDataSource) {
+    AppDataSource = createDataSource();
+  }
+  return AppDataSource;
+};
+
+// Initialize AppDataSource for immediate use (backwards compatibility)
+AppDataSource = createDataSource();
 
 /**
  * Initialize database connection
@@ -174,7 +190,25 @@ export const AppDataSource = createDataSource();
  */
 export const initializeDatabase = async (): Promise<void> => {
   try {
+    // Create DataSource if not already created
+    if (!AppDataSource) {
+      AppDataSource = createDataSource();
+    }
+
     if (!AppDataSource.isInitialized) {
+      console.log('Starting database initialization...');
+      const pgOptions = AppDataSource.options as {
+        host?: string;
+        port?: number;
+        database?: string;
+        username?: string;
+      };
+      console.log('Database config:', {
+        host: pgOptions.host,
+        port: pgOptions.port,
+        database: pgOptions.database,
+        username: pgOptions.username,
+      });
       await AppDataSource.initialize();
       // eslint-disable-next-line no-console
       console.log('Database connection initialized successfully');
@@ -204,7 +238,7 @@ export const initializeDatabase = async (): Promise<void> => {
  */
 export const closeDatabase = async (): Promise<void> => {
   try {
-    if (AppDataSource.isInitialized) {
+    if (AppDataSource && AppDataSource.isInitialized) {
       await AppDataSource.destroy();
       // eslint-disable-next-line no-console
       console.log('Database connection closed successfully');
@@ -223,7 +257,7 @@ export const closeDatabase = async (): Promise<void> => {
  */
 export const isDatabaseHealthy = async (): Promise<boolean> => {
   try {
-    if (!AppDataSource.isInitialized) {
+    if (!AppDataSource || !AppDataSource.isInitialized) {
       return false;
     }
 
@@ -255,11 +289,14 @@ export const getConnectionPoolStats = async (): Promise<{
   };
 }> => {
   // Handle SQLite/test environment - no connection pooling
-  if (process.env.NODE_ENV === 'test' || AppDataSource.options.type === 'better-sqlite3') {
+  if (
+    process.env.NODE_ENV === 'test' ||
+    (AppDataSource && AppDataSource.options.type === 'better-sqlite3')
+  ) {
     return {
-      isConnected: AppDataSource.isInitialized,
-      totalConnections: AppDataSource.isInitialized ? 1 : 0,
-      idleConnections: AppDataSource.isInitialized ? 1 : 0,
+      isConnected: AppDataSource && AppDataSource.isInitialized,
+      totalConnections: AppDataSource && AppDataSource.isInitialized ? 1 : 0,
+      idleConnections: AppDataSource && AppDataSource.isInitialized ? 1 : 0,
       runningConnections: 0,
       poolConfig: {
         min: 1,
@@ -273,7 +310,7 @@ export const getConnectionPoolStats = async (): Promise<{
   const dbConfig = createDatabaseConfig();
 
   try {
-    if (!AppDataSource.isInitialized) {
+    if (!AppDataSource || !AppDataSource.isInitialized) {
       return {
         isConnected: false,
         poolConfig: dbConfig.pool,

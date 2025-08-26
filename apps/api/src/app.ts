@@ -20,13 +20,27 @@ import { config as appConfig } from './config/env';
 import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 
 // Import routes
+console.log('App: Starting route imports...');
 import healthRouter from './routes/health';
+console.log('App: health imported');
 import authRouter from './routes/auth';
+console.log('App: auth imported');
 import auditRouter from './routes/audit';
+console.log('App: audit imported');
 import usersRouter from './routes/users';
+console.log('App: users imported');
 import equipmentRouter from './routes/equipment';
+console.log('App: equipment imported');
 import metricsRouter from './routes/metrics';
+console.log('App: metrics imported');
 import searchRouter from './routes/search';
+console.log('App: search imported');
+// import importExportRouter from './routes/import-export';
+// console.log('App: import-export imported');
+import sitesRouter from './routes/sites';
+console.log('App: sites imported');
+import cellsRouter from './routes/cells';
+console.log('App: cells imported');
 
 // Extend Express Request interface for raw body support
 // Express Request interface augmented in types/express.d.ts
@@ -137,8 +151,12 @@ export const createApp = (): express.Application => {
   app.use('/api/v1', metricsRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
+  app.use('/api/v1/sites', sitesRouter);
+  app.use('/api/v1/cells', cellsRouter);
   app.use('/api/v1/equipment', equipmentRouter);
   app.use('/api/v1/search', searchRouter);
+  // app.use('/api/v1/import', importExportRouter);
+  // app.use('/api/v1/export', importExportRouter);
   app.use('/api/v1', auditRouter);
 
   // 11. 404 not found handler (must come after all routes)
