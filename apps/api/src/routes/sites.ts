@@ -25,6 +25,14 @@ import { logger } from '../config/logger';
 import { getClientIP } from '../utils/ip';
 import { asyncHandler } from '../utils/errorHandler';
 
+/**
+ * Environment flag to control authentication requirement
+ * In development/testing, auth can be disabled via SKIP_SITES_AUTH=true
+ */
+const shouldSkipAuth = () => {
+  return process.env.SKIP_SITES_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+};
+
 const router: Router = Router();
 
 /**
@@ -57,9 +65,8 @@ const getSiteServiceSimple = (req: Request): SiteServiceSimple => {
  */
 router.post(
   '/',
-  // TEMPORARILY DISABLED FOR TESTING
-  // authenticate,
-  // authorize(['sites.create']),
+  // Conditional authentication based on environment
+  ...(shouldSkipAuth() ? [] : [authenticate, authorize(['sites.create'])]),
   writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Validate request body
@@ -67,11 +74,11 @@ router.post(
 
     // Using simplified service temporarily
     const siteService = getSiteServiceSimple(req);
-    const site = await siteService.createSite(siteData);
+    const site = await siteService.createSite(siteData, req.user?.sub);
 
     logger.info('Site created successfully', {
       siteId: site.id,
-      name: site.site_name,
+      name: site.name,
       createdBy: req.user?.sub,
       ipAddress: getClientIP(req),
     });
@@ -80,10 +87,12 @@ router.post(
       message: 'Site created successfully',
       site: {
         id: site.id,
-        name: site.site_name,
+        name: site.name,
         description: site.description,
         createdAt: site.created_at,
         updatedAt: site.updated_at,
+        createdBy: site.created_by,
+        updatedBy: site.updated_by,
       },
     });
   }, 'Failed to create site')
@@ -95,9 +104,8 @@ router.post(
  */
 router.get(
   '/',
-  // TEMPORARILY DISABLED FOR TESTING
-  // authenticate,
-  // authorize(['sites.read']),
+  // Conditional authentication based on environment
+  ...(shouldSkipAuth() ? [] : [authenticate, authorize(['sites.read'])]),
   asyncHandler(async (req: Request, res: Response) => {
     // Validate query parameters
     const filters = validateSchema(siteSearchSchema)(req.query);
@@ -136,9 +144,8 @@ router.get(
  */
 router.get(
   '/suggestions',
-  // TEMPORARILY DISABLED FOR TESTING
-  // authenticate,
-  // authorize(['sites.read']),
+  // Conditional authentication based on environment
+  ...(shouldSkipAuth() ? [] : [authenticate, authorize(['sites.read'])]),
   asyncHandler(async (req: Request, res: Response) => {
     // Validate query parameters
     const params = validateSchema(siteSuggestionsSchema)(req.query);

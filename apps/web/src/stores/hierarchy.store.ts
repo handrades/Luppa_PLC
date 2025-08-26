@@ -5,7 +5,7 @@
  */
 
 import { create } from 'zustand';
-import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
+import { createJSONStorage, devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { enableMapSet } from 'immer';
 import { hierarchyService } from '../services/hierarchy.service';
@@ -103,13 +103,13 @@ interface HierarchyState {
   sitesPagination: {
     page: number;
     pageSize: number;
-    total: number;
+    totalItems: number;
     totalPages: number;
   };
   cellsPagination: {
     page: number;
     pageSize: number;
-    total: number;
+    totalItems: number;
     totalPages: number;
   };
 
@@ -344,13 +344,13 @@ const initialState: HierarchyState = {
   sitesPagination: {
     page: 1,
     pageSize: 50,
-    total: 0,
+    totalItems: 0,
     totalPages: 0,
   },
   cellsPagination: {
     page: 1,
     pageSize: 50,
-    total: 0,
+    totalItems: 0,
     totalPages: 0,
   },
 
@@ -388,7 +388,7 @@ export const useHierarchyStore = create<HierarchyStore>()(
                 state.sitesPagination = {
                   page: response.pagination.page,
                   pageSize: response.pagination.pageSize,
-                  total: response.pagination.totalItems,
+                  totalItems: response.pagination.totalItems,
                   totalPages: response.pagination.totalPages,
                 };
                 state.lastFetch.sites = Date.now();
@@ -567,7 +567,7 @@ export const useHierarchyStore = create<HierarchyStore>()(
                 state.cellsPagination = {
                   page: response.pagination.page,
                   pageSize: response.pagination.pageSize,
-                  total: response.pagination.totalItems,
+                  totalItems: response.pagination.totalItems,
                   totalPages: response.pagination.totalPages,
                 };
                 state.lastFetch.cells = Date.now();
@@ -1174,6 +1174,22 @@ export const useHierarchyStore = create<HierarchyStore>()(
           expandedNodes: state.expandedNodes,
           filters: state.filters,
           currentLocation: state.currentLocation,
+        }),
+        storage: createJSONStorage(() => localStorage, {
+          replacer: (_key, value) => {
+            // Serialize Sets as arrays
+            if (value instanceof Set) {
+              return Array.from(value);
+            }
+            return value;
+          },
+          reviver: (key, value) => {
+            // Deserialize arrays back to Sets for specific keys
+            if (key === 'expandedNodes' && Array.isArray(value)) {
+              return new Set(value);
+            }
+            return value;
+          },
         }),
       }
     ),

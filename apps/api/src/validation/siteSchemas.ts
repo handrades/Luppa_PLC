@@ -83,9 +83,17 @@ export const siteSearchSchema = Joi.object({
     .messages({
       'any.only': 'Sort field must be one of: name, createdAt, cellCount, equipmentCount',
     }),
-  sortOrder: Joi.string().valid('ASC', 'DESC', 'asc', 'desc').optional().default('ASC').messages({
-    'any.only': 'Sort order must be either ASC/asc or DESC/desc',
-  }),
+  sortOrder: Joi.string()
+    .valid('ASC', 'DESC', 'asc', 'desc')
+    .optional()
+    .default('ASC')
+    .custom((value, _helpers) => {
+      // Normalize to uppercase
+      return value.toUpperCase();
+    })
+    .messages({
+      'any.only': 'Sort order must be either ASC/asc or DESC/desc',
+    }),
 });
 
 /**

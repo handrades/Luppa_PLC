@@ -32,11 +32,15 @@ const uuidSchema = Joi.string().uuid().messages({
 /**
  * Email validation schema
  */
-const emailSchema = Joi.string().email().max(255).required().messages({
-  'string.email': 'Must be a valid email address',
-  'string.max': 'Email address cannot exceed 255 characters',
-  'any.required': 'Email is required',
-});
+const emailSchema = Joi.string()
+  .email({ tlds: { allow: false } })
+  .max(255)
+  .required()
+  .messages({
+    'string.email': 'Must be a valid email address',
+    'string.max': 'Email address cannot exceed 255 characters',
+    'any.required': 'Email is required',
+  });
 
 /**
  * Name validation schema (for firstName and lastName)
@@ -89,9 +93,16 @@ const sortBySchema = Joi.string()
     'any.only': 'Sort field must be one of: firstName, lastName, email, createdAt',
   });
 
-const sortOrderSchema = Joi.string().valid('ASC', 'DESC').default('ASC').messages({
-  'any.only': 'Sort order must be either ASC or DESC',
-});
+const sortOrderSchema = Joi.string()
+  .valid('ASC', 'DESC', 'asc', 'desc')
+  .default('ASC')
+  .custom((value, _helpers) => {
+    // Normalize to uppercase
+    return value.toUpperCase();
+  })
+  .messages({
+    'any.only': 'Sort order must be either ASC or DESC',
+  });
 
 /**
  * Create user validation schema

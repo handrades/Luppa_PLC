@@ -2,12 +2,19 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { User } from './User';
 import {
+  CreatedEntityIds,
   CreatedEntitySummary,
   ImportOptions,
   ValidationError,
 } from '../services/ImportExportService';
 
-export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type ImportStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'error'
+  | 'cleaned_up';
 
 @Entity('import_history')
 @Index('idx_import_history_user', ['userId'])
@@ -59,6 +66,13 @@ export class ImportHistory extends BaseEntity {
     name: 'created_entities',
   })
   createdEntities?: CreatedEntitySummary;
+
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    name: 'created_entity_ids',
+  })
+  createdEntityIds?: CreatedEntityIds;
 
   @Column({
     type: 'varchar',

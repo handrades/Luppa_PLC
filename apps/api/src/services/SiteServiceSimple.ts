@@ -8,12 +8,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface SimpleSite {
   id: string;
-  site_name: string;
+  name: string;
   description?: string;
   location?: string;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
+  created_by: string;
+  updated_by: string;
 }
 
 export class SiteServiceSimple {
@@ -23,14 +25,18 @@ export class SiteServiceSimple {
     this.manager = entityManager;
   }
 
-  async createSite(data: { name: string; description?: string; location?: string }): Promise<SimpleSite> {
+  async createSite(
+    data: { name: string; description?: string; location?: string },
+    userId?: string
+  ): Promise<SimpleSite> {
     const id = uuidv4();
 
-    // Insert site directly
+    // Insert site directly (using correct schema and column names from migration)
+    const createdBy = userId || uuidv4(); // Use provided userId or dummy UUID
     await this.manager.query(
-      `INSERT INTO plc_inventory.sites (id, site_name, description, location) 
-       VALUES ($1, $2, $3, $4)`,
-      [id, data.name, data.description || null, data.location || null]
+      `INSERT INTO plc_inventory.sites (id, name, description, created_by, updated_by) 
+       VALUES ($1, $2, $3, $4, $4)`,
+      [id, data.name, data.description || null, createdBy]
     );
 
     // Fetch and return the created site
@@ -69,7 +75,7 @@ export class SiteServiceSimple {
     const queryParams: Array<string | number> = [];
 
     if (params.search) {
-      whereClause = 'WHERE site_name ILIKE $1';
+      whereClause = 'WHERE name ILIKE $1';
       queryParams.push(`%${params.search}%`);
     }
 
@@ -77,7 +83,7 @@ export class SiteServiceSimple {
     const sites = await this.manager.query(
       `SELECT * FROM plc_inventory.sites 
        ${whereClause}
-       ORDER BY site_name ASC 
+       ORDER BY name ASC 
        LIMIT ${pageSize} OFFSET ${offset}`,
       queryParams
     );
@@ -124,8 +130,8 @@ export class SiteServiceSimple {
   > {
     const result = await this.manager.query(
       `SELECT * FROM plc_inventory.sites 
-       WHERE site_name ILIKE $1
-       ORDER BY site_name ASC 
+       WHERE name ILIKE $1
+       ORDER BY name ASC 
        LIMIT $2`,
       [`%${query}%`, limit]
     );
@@ -133,7 +139,7 @@ export class SiteServiceSimple {
     // Return simple site suggestions
     return result.map((site: SimpleSite) => ({
       id: site.id,
-      name: site.site_name,
+      name: site.name,
       cellCount: 0,
     }));
   }
@@ -141,7 +147,7 @@ export class SiteServiceSimple {
   async updateSite(
     id: string,
     data: {
-      site_name?: string;
+      name?: string;
       description?: string;
       location?: string;
     }
@@ -150,9 +156,9 @@ export class SiteServiceSimple {
     const values: Array<string | number | null> = [];
     let paramIndex = 1;
 
-    if (data.site_name !== undefined) {
-      updates.push(`site_name = $${paramIndex++}`);
-      values.push(data.site_name);
+    if (data.name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(data.name);
     }
     if (data.description !== undefined) {
       updates.push(`description = $${paramIndex++}`);
@@ -186,7 +192,7 @@ export class SiteServiceSimple {
 
   async validateSiteUniqueness(name: string, excludeId?: string): Promise<boolean> {
     const params: Array<string> = [name];
-    let query = `SELECT COUNT(*) as count FROM plc_inventory.sites WHERE site_name = $1`;
+    let query = `SELECT COUNT(*) as count FROM plc_inventory.sites WHERE name = $1`;
 
     if (excludeId) {
       query += ` AND id != $2`;

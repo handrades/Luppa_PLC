@@ -9,6 +9,7 @@ import request from 'supertest';
 import { Express, NextFunction, Request, Response } from 'express';
 import { createApp } from '../../app';
 import { AppDataSource } from '../../config/database';
+import { ImportExportService } from '../../services/ImportExportService';
 
 interface MockAppDataSource {
   getRepository: jest.Mock;
@@ -317,29 +318,56 @@ describe('Import/Export Routes', () => {
   });
 
   describe('POST /api/v1/import/:importId/rollback', () => {
-    it('should return not implemented error', async () => {
-      // This test needs an existing import record
-      mockAppDataSource.getRepository().findOne.mockResolvedValueOnce({
-        id: 'test-uuid-123',
-        userId: 'test-user-id',
-        status: 'completed'
-      });
+    it('should successfully rollback completed import', async () => {
+      // Reset and set up mock for this test
+      const mockRepository = {
+        findOne: jest.fn().mockResolvedValue({
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          userId: 'test-user-id',
+          status: 'completed'
+        }),
+        create: jest.fn(),
+        save: jest.fn(),
+        findAndCount: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      };
+      mockAppDataSource.getRepository.mockReturnValue(mockRepository);
+
+      // Mock the rollback method to succeed
+      const mockRollback = jest.fn().mockResolvedValueOnce(undefined);
+      jest.spyOn(ImportExportService.prototype, 'rollbackImport').mockImplementation(mockRollback);
 
       const response = await request(app)
-        .post('/api/v1/import/test-uuid-123/rollback');
+        .post('/api/v1/import/123e4567-e89b-12d3-a456-426614174000/rollback');
 
-      // The rollback functionality is not yet fully implemented
-      // Accepting either 404 (route not found) or 501 (not implemented)
-      expect([404, 501]).toContain(response.status);
-      
-      if (response.status === 501) {
-        expect(response.body.error).toBe('Rollback functionality not yet implemented');
+      if (response.status !== 200) {
+        // eslint-disable-next-line no-console
+        console.log('Response body:', response.body);
+        // eslint-disable-next-line no-console
+        console.log('Status:', response.status);
       }
+      expect(response.status).toBe(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Import rollback completed successfully');
+      expect(mockRollback).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000', 'test-user-id');
     });
 
     it('should return 404 for non-existent import', async () => {
+      // Mock repository to return null for non-existent import
+      const mockRepository = {
+        findOne: jest.fn().mockResolvedValue(null),
+        create: jest.fn(),
+        save: jest.fn(),
+        findAndCount: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      };
+      mockAppDataSource.getRepository.mockReturnValue(mockRepository);
+      
       const response = await request(app)
-        .post('/api/v1/import/non-existent-id/rollback')
+        .post('/api/v1/import/550e8400-e29b-41d4-a716-446655440000/rollback')
         .expect(404);
 
       expect(response.body.error).toBe('Import record not found');

@@ -20,6 +20,7 @@ import { EquipmentService } from '../services/EquipmentService';
 import { AuditService } from '../services/AuditService';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validationMiddleware';
+import { bulkExportLimiter, bulkImportLimiter, rollbackLimiter } from '../middleware/rateLimiter';
 import { logger } from '../config/logger';
 import { AppDataSource } from '../config/database';
 import { ImportHistory } from '../entities/ImportHistory';
@@ -35,14 +36,8 @@ const upload = multer({
     files: 1,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedMimeTypes = [
-      'text/csv',
-      'text/plain',
-      'application/csv',
-      'application/vnd.ms-excel',
-      'application/octet-stream',
-    ];
-    if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
+    // Only allow CSV files by extension
+    if (file.originalname.toLowerCase().endsWith('.csv')) {
       cb(null, true);
     } else {
       cb(new Error('Only CSV files are allowed'));
@@ -164,6 +159,7 @@ router.get(
 router.post(
   '/import/plcs',
   authenticate,
+  bulkImportLimiter,
   upload.single('file'),
   handleMulterError,
   validate({ body: importOptionsSchema }),
@@ -201,6 +197,7 @@ router.post(
           options,
           errors: result.errors,
           createdEntities: result.createdEntities,
+          createdEntityIds: result.createdEntityIds,
           status: result.success ? 'completed' : 'failed',
           startedAt: new Date(),
           completedAt: new Date(),
@@ -238,6 +235,7 @@ router.post(
 router.post(
   '/export/plcs',
   authenticate,
+  bulkExportLimiter,
   validate({
     body: Joi.object({
       filters: exportFiltersSchema.default({}),
@@ -293,6 +291,12 @@ router.post(
 router.post(
   '/import/:importId/rollback',
   authenticate,
+  rollbackLimiter,
+  validate({
+    params: Joi.object({
+      importId: Joi.string().uuid().required(),
+    }),
+  }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { importId } = req.params;
@@ -318,16 +322,15 @@ router.post(
         });
       }
 
-      // TODO: Implement actual rollback logic
-      // This would require tracking which records were created during import
-      // and removing them in reverse order while respecting foreign key constraints
+      const service = createImportExportService();
+      await service.rollbackImport(importId, userId);
 
-      res.status(501).json({
-        success: false,
-        error: 'Rollback functionality not yet implemented',
+      res.json({
+        success: true,
+        message: 'Import rollback completed successfully',
       });
 
-      logger.info('Rollback requested (not implemented)', {
+      logger.info('Rollback completed successfully', {
         userId,
         importId,
       });
@@ -383,6 +386,73 @@ router.get(
 );
 
 /**
+ * GET /api/v1/import/:importId/status
+ * Get import status and progress
+ */
+router.get(
+  '/import/:importId/status',
+  authenticate,
+  validate({
+    params: Joi.object({
+      importId: Joi.string().uuid().required(),
+    }),
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { importId } = req.params;
+      const userId = req.user!.sub;
+
+      const importHistoryRepo = AppDataSource.getRepository(ImportHistory);
+      const importRecord = await importHistoryRepo.findOne({
+        where: { id: importId, userId },
+      });
+
+      if (!importRecord) {
+        return res.status(404).json({
+          success: false,
+          error: 'Import not found',
+        });
+      }
+
+      // Calculate progress percentage
+      const progress =
+        importRecord.totalRows > 0
+          ? Math.round(
+              ((importRecord.successfulRows + importRecord.failedRows) / importRecord.totalRows) *
+                100
+            )
+          : 0;
+
+      res.json({
+        success: true,
+        data: {
+          importId: importRecord.id,
+          status: importRecord.status,
+          progress,
+          totalRows: importRecord.totalRows,
+          successfulRows: importRecord.successfulRows,
+          failedRows: importRecord.failedRows,
+          filename: importRecord.filename,
+          startedAt: importRecord.startedAt,
+          completedAt: importRecord.completedAt,
+          errors: importRecord.errors,
+          createdEntities: importRecord.createdEntities,
+        },
+      });
+
+      logger.info('Import status retrieved', {
+        userId,
+        importId,
+        status: importRecord.status,
+        progress,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
  * POST /api/v1/import/validate
  * Validate CSV file without importing
  */
@@ -421,6 +491,90 @@ router.post(
         filename: req.file?.originalname,
         error: error instanceof Error ? error.message : error,
       });
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/import/:importId/cleanup
+ * Cleanup failed import data and temporary resources
+ */
+router.post(
+  '/import/:importId/cleanup',
+  authenticate,
+  validate({
+    params: Joi.object({
+      importId: Joi.string().uuid().required(),
+    }),
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { importId } = req.params;
+      const userId = req.user!.sub;
+
+      const service = new ImportExportService(
+        AppDataSource,
+        new SiteService(AppDataSource.manager),
+        new CellService(AppDataSource.manager),
+        new EquipmentService(AppDataSource.manager),
+        new AuditService(AppDataSource.manager)
+      );
+
+      // Verify user owns this import
+      const importHistoryRepo = AppDataSource.getRepository(ImportHistory);
+      const importRecord = await importHistoryRepo.findOne({
+        where: { id: importId, userId },
+      });
+
+      if (!importRecord) {
+        return res.status(404).json({
+          success: false,
+          error: 'Import not found',
+        });
+      }
+
+      await service.cleanupFailedImport(importId);
+
+      res.json({
+        success: true,
+        message: 'Import cleanup completed successfully',
+        data: { importId },
+      });
+
+      logger.info('Import cleanup completed', { userId, importId });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/import/cleanup/stats
+ * Get cleanup statistics
+ */
+router.get(
+  '/import/cleanup/stats',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const service = new ImportExportService(
+        AppDataSource,
+        new SiteService(AppDataSource.manager),
+        new CellService(AppDataSource.manager),
+        new EquipmentService(AppDataSource.manager),
+        new AuditService(AppDataSource.manager)
+      );
+
+      const stats = await service.getCleanupStats();
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+
+      logger.info('Cleanup stats retrieved', { userId: req.user!.sub, stats });
+    } catch (error) {
       next(error);
     }
   }

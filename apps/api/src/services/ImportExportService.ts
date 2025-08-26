@@ -57,6 +57,13 @@ export interface CreatedEntitySummary {
   plcs: number;
 }
 
+export interface CreatedEntityIds {
+  sites: string[];
+  cells: string[];
+  equipment: string[];
+  plcs: string[];
+}
+
 export interface ImportResult {
   success: boolean;
   importId: string;
@@ -65,6 +72,7 @@ export interface ImportResult {
   failedRows: number;
   errors: ValidationError[];
   createdEntities: CreatedEntitySummary;
+  createdEntityIds?: CreatedEntityIds;
   isBackground: boolean;
 }
 
@@ -78,6 +86,7 @@ export interface ImportHistoryItem {
   options: ImportOptions;
   errors: ValidationError[];
   createdEntities: CreatedEntitySummary;
+  createdEntityIds?: CreatedEntityIds;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   startedAt: Date;
   completedAt?: Date;
@@ -489,6 +498,12 @@ export class ImportExportService {
       equipment: 0,
       plcs: 0,
     };
+    const createdEntityIds: CreatedEntityIds = {
+      sites: [],
+      cells: [],
+      equipment: [],
+      plcs: [],
+    };
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -543,7 +558,15 @@ export class ImportExportService {
         const rowNumber = i + 2; // +2 for header and 1-based indexing
 
         try {
-          await this.processRow(row, options, userId, queryRunner, createdEntities, rowNumber);
+          await this.processRow(
+            row,
+            options,
+            userId,
+            queryRunner,
+            createdEntities,
+            createdEntityIds,
+            rowNumber
+          );
           successfulRows++;
         } catch (error) {
           failedRows++;
@@ -589,6 +612,7 @@ export class ImportExportService {
         failedRows,
         errors,
         createdEntities,
+        createdEntityIds,
         isBackground: totalRows > options.backgroundThreshold,
       };
     } catch (error) {
@@ -625,6 +649,7 @@ export class ImportExportService {
     userId: string,
     queryRunner: QueryRunner,
     createdEntities: CreatedEntitySummary,
+    createdEntityIds: CreatedEntityIds,
     rowNumber: number
   ): Promise<void> {
     // Find or create site
@@ -641,8 +666,10 @@ export class ImportExportService {
         });
         site = await queryRunner.manager.save(site);
         createdEntities.sites++;
+        createdEntityIds.sites.push(site.id);
         logger.debug('Created new site', {
           siteName: row.site_name,
+          siteId: site.id,
           rowNumber,
         });
       } else {
@@ -669,8 +696,10 @@ export class ImportExportService {
         });
         cell = await queryRunner.manager.save(cell);
         createdEntities.cells++;
+        createdEntityIds.cells.push(cell.id);
         logger.debug('Created new cell', {
           cellName: row.cell_name,
+          cellId: cell.id,
           lineNumber: row.line_number,
           rowNumber,
         });
@@ -700,8 +729,10 @@ export class ImportExportService {
         });
         equipment = await queryRunner.manager.save(equipment);
         createdEntities.equipment++;
+        createdEntityIds.equipment.push(equipment.id);
         logger.debug('Created new equipment', {
           equipmentName: row.equipment_name,
+          equipmentId: equipment.id,
           rowNumber,
         });
       } else {
@@ -751,7 +782,108 @@ export class ImportExportService {
 
     await queryRunner.manager.save(plc);
     createdEntities.plcs++;
-    logger.debug('Created new PLC', { tagId: row.tag_id, rowNumber });
+    createdEntityIds.plcs.push(plc.id);
+    logger.debug('Created new PLC', { tagId: row.tag_id, plcId: plc.id, rowNumber });
+  }
+
+  /**
+   * Rollback an import by deleting created entities in reverse order
+   */
+  async rollbackImport(importId: string, userId: string): Promise<void> {
+    logger.info('Starting import rollback', { importId, userId });
+
+    // Get import record with created entity IDs
+    const importHistoryRepo = this.dataSource.getRepository(ImportHistory);
+    const importRecord = await importHistoryRepo.findOne({
+      where: { id: importId, userId },
+    });
+
+    if (!importRecord) {
+      throw new Error('Import record not found');
+    }
+
+    if (importRecord.status !== 'completed') {
+      throw new Error('Only completed imports can be rolled back');
+    }
+
+    if (!importRecord.createdEntityIds) {
+      throw new Error('No entity IDs tracked for this import');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { createdEntityIds } = importRecord;
+
+      // Delete entities in reverse order to respect foreign key constraints
+      // Order: PLCs -> Equipment -> Cells -> Sites
+
+      // Delete PLCs
+      if (createdEntityIds.plcs.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(PLC)
+          .where('id IN (:...plcIds)', { plcIds: createdEntityIds.plcs })
+          .execute();
+        logger.info(`Deleted ${createdEntityIds.plcs.length} PLCs`, { importId });
+      }
+
+      // Delete Equipment
+      if (createdEntityIds.equipment.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Equipment)
+          .where('id IN (:...equipmentIds)', { equipmentIds: createdEntityIds.equipment })
+          .execute();
+        logger.info(`Deleted ${createdEntityIds.equipment.length} equipment records`, { importId });
+      }
+
+      // Delete Cells
+      if (createdEntityIds.cells.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Cell)
+          .where('id IN (:...cellIds)', { cellIds: createdEntityIds.cells })
+          .execute();
+        logger.info(`Deleted ${createdEntityIds.cells.length} cells`, { importId });
+      }
+
+      // Delete Sites
+      if (createdEntityIds.sites.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Site)
+          .where('id IN (:...siteIds)', { siteIds: createdEntityIds.sites })
+          .execute();
+        logger.info(`Deleted ${createdEntityIds.sites.length} sites`, { importId });
+      }
+
+      // Update import record status to indicate rollback
+      importRecord.status = 'failed'; // or create a new status like 'rolled_back'
+      await importHistoryRepo.save(importRecord);
+
+      await queryRunner.commitTransaction();
+
+      logger.info('Import rollback completed successfully', { importId });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      logger.error('Import rollback failed', {
+        importId,
+        error: error instanceof Error ? error.message : error,
+      });
+      throw new DatabaseError(
+        'Rollback failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
@@ -951,5 +1083,172 @@ export class ImportExportService {
         }
       );
     });
+  }
+
+  /**
+   * Cleanup failed import data and temporary resources
+   */
+  async cleanupFailedImport(importId: string): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    try {
+      await queryRunner.startTransaction();
+
+      // Get import history record
+      const importHistoryRepo = queryRunner.manager.getRepository(ImportHistory);
+      const importRecord = await importHistoryRepo.findOne({
+        where: { id: importId },
+      });
+
+      if (!importRecord) {
+        throw new DatabaseError(`Import record not found: ${importId}`);
+      }
+
+      // Only cleanup if import failed or is in error state
+      if (importRecord.status !== 'failed' && importRecord.status !== 'error') {
+        logger.warn('Attempted to cleanup non-failed import', {
+          importId,
+          status: importRecord.status,
+        });
+        return;
+      }
+
+      // If import partially succeeded but failed, we might have created entities
+      // In this case, use the rollback mechanism instead of direct cleanup
+      if (importRecord.createdEntityIds) {
+        logger.info('Using rollback for cleanup of failed import with created entities', {
+          importId,
+        });
+        await this.rollbackImport(importId, importRecord.userId);
+        return;
+      }
+
+      // Mark import as cleaned up
+      importRecord.status = 'cleaned_up';
+      importRecord.completedAt = new Date();
+      await importHistoryRepo.save(importRecord);
+
+      await queryRunner.commitTransaction();
+
+      logger.info('Failed import cleaned up successfully', {
+        importId,
+        originalStatus: importRecord.status,
+      });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      logger.error('Failed to cleanup import', {
+        importId,
+        error: error instanceof Error ? error.message : error,
+      });
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Cleanup old temporary files and import history records
+   * Should be called periodically (e.g., daily cron job)
+   */
+  async cleanupOldImports(maxAgeDays: number = 30): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
+
+    try {
+      const importHistoryRepo = this.dataSource.getRepository(ImportHistory);
+
+      // Find old completed/failed imports older than cutoff date
+      const oldImports = await importHistoryRepo
+        .createQueryBuilder('import')
+        .where('import.completedAt < :cutoffDate', { cutoffDate })
+        .andWhere('import.status IN (:...statuses)', {
+          statuses: ['completed', 'failed', 'cleaned_up'],
+        })
+        .getMany();
+
+      let cleanedCount = 0;
+
+      for (const importRecord of oldImports) {
+        try {
+          // Remove the import history record
+          await importHistoryRepo.remove(importRecord);
+          cleanedCount++;
+
+          logger.info('Cleaned up old import record', {
+            importId: importRecord.id,
+            age: Math.floor(
+              (Date.now() - importRecord.completedAt!.getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          });
+        } catch (error) {
+          logger.error('Failed to cleanup old import record', {
+            importId: importRecord.id,
+            error: error instanceof Error ? error.message : error,
+          });
+        }
+      }
+
+      logger.info('Completed cleanup of old imports', {
+        maxAgeDays,
+        totalCleaned: cleanedCount,
+        cutoffDate,
+      });
+
+      return cleanedCount;
+    } catch (error) {
+      logger.error('Failed to cleanup old imports', {
+        maxAgeDays,
+        error: error instanceof Error ? error.message : error,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get cleanup statistics
+   */
+  async getCleanupStats(): Promise<{
+    totalImports: number;
+    completedImports: number;
+    failedImports: number;
+    cleanedUpImports: number;
+    oldestImport: Date | null;
+    newestImport: Date | null;
+  }> {
+    try {
+      const importHistoryRepo = this.dataSource.getRepository(ImportHistory);
+
+      const [totalImports, completedImports, failedImports, cleanedUpImports] = await Promise.all([
+        importHistoryRepo.count(),
+        importHistoryRepo.count({ where: { status: 'completed' } }),
+        importHistoryRepo.count({ where: { status: 'failed' } }),
+        importHistoryRepo.count({ where: { status: 'cleaned_up' } }),
+      ]);
+
+      // Get oldest and newest import dates
+      const oldestResult = await importHistoryRepo.findOne({
+        order: { startedAt: 'ASC' },
+        select: ['startedAt'],
+      });
+
+      const newestResult = await importHistoryRepo.findOne({
+        order: { startedAt: 'DESC' },
+        select: ['startedAt'],
+      });
+
+      return {
+        totalImports,
+        completedImports,
+        failedImports,
+        cleanedUpImports,
+        oldestImport: oldestResult?.startedAt || null,
+        newestImport: newestResult?.startedAt || null,
+      };
+    } catch (error) {
+      logger.error('Failed to get cleanup stats', {
+        error: error instanceof Error ? error.message : error,
+      });
+      throw error;
+    }
   }
 }

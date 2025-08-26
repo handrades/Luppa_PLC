@@ -6,7 +6,6 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
-import { AuthServiceSimple } from '../services/AuthServiceSimple';
 import { logger } from '../config/logger';
 
 /**
@@ -22,20 +21,20 @@ export const authenticate = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  // Extract token from Authorization header
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({
+      error: 'Authentication required',
+      message: 'Missing or invalid Authorization header',
+    });
+    return;
+  }
+
+  const token = authHeader.substring(7); // Remove "Bearer " prefix
+
   try {
-    // Extract token from Authorization header
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
-        error: 'Authentication required',
-        message: 'Missing or invalid Authorization header',
-      });
-      return;
-    }
-
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
-
     if (!token) {
       res.status(401).json({
         error: 'Authentication required',
@@ -44,14 +43,19 @@ export const authenticate = async (
       return;
     }
 
-    // Validate token using AuthServiceSimple temporarily (due to schema mismatch)
-    if (!req.auditEntityManager) {
-      throw new Error(
-        'auditEntityManager is not available on request. Ensure auditContext middleware is registered before auth middleware.'
-      );
+    // Validate token using full AuthService
+    // auditEntityManager is optional for health checks and non-database operations
+    const entityManager = req.auditEntityManager || req.app.locals.AppDataSource?.manager;
+
+    if (!entityManager) {
+      logger.warn('No EntityManager available for auth middleware', {
+        hasAuditEntityManager: !!req.auditEntityManager,
+        hasAppDataSource: !!req.app.locals.AppDataSource,
+      });
+      throw new Error('EntityManager is required for authentication');
     }
-    // Using simplified service temporarily
-    const authService = new AuthServiceSimple(req.auditEntityManager);
+
+    const authService = new AuthService(entityManager);
     const decoded = await authService.validateToken(token);
 
     // Populate request with user information
@@ -64,7 +68,16 @@ export const authenticate = async (
 
     next();
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Authentication failed';
+    // Log error server-side without exposing internal details
+    const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+    logger.warn('Authentication failed', {
+      error: errorMessage,
+      hasToken: !!token,
+      userAgent: req.get('User-Agent'),
+      ip: req.ip,
+    });
+
+    const message = 'Authentication failed'; // Generic message for client
 
     // Map specific error messages to appropriate status codes
     let statusCode = 401;
@@ -108,10 +121,14 @@ export const optionalAuthenticate = async (
     }
 
     // Try to validate token, but don't fail if invalid
-    if (!req.auditEntityManager) {
-      return next(); // Skip auth for optional auth if no EntityManager available
+    const entityManager = req.auditEntityManager || req.app.locals.AppDataSource?.manager;
+
+    if (!entityManager) {
+      // Skip optional auth if no EntityManager available
+      return next();
     }
-    const authService = new AuthService(req.auditEntityManager);
+
+    const authService = new AuthService(entityManager);
     try {
       const decoded = await authService.validateToken(token);
       req.user = decoded;

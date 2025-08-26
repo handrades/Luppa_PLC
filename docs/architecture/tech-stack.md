@@ -6,11 +6,11 @@ This is the DEFINITIVE technology selection for the entire project. All developm
 
 | Category             | Technology          | Version           | Purpose                            | Rationale                                                     |
 | -------------------- | ------------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------- |
-| Frontend Language    | TypeScript          | 5.8.3             | Type-safe frontend development     | Latest stable, catches errors early, improves maintainability |
+| Frontend Language    | TypeScript          | ~5.5.4            | Type-safe frontend development     | Latest stable, catches errors early, improves maintainability |
 | Frontend Framework   | React               | 19.1.0            | UI component framework             | Latest with server components, improved performance           |
 | UI Component Library | Material-UI (MUI)   | 7.0.0             | Pre-built industrial UI components | CSS layers support, better Tailwind integration               |
 | State Management     | Zustand             | 5.0.2             | Client state management            | Latest stable, TypeScript-first, simple API                   |
-| Backend Language     | TypeScript          | 5.8.3             | Type-safe backend development      | Code sharing with frontend, consistent DX                     |
+| Backend Language     | TypeScript          | ~5.5.4            | Type-safe backend development      | Code sharing with frontend, consistent DX                     |
 | Backend Framework    | Express             | 5.1.0             | HTTP server framework              | Latest LTS, improved security, Node 18+ support               |
 | API Style            | REST                | OpenAPI 3.1       | API communication protocol         | Latest spec, better JSON Schema support                       |
 | Database             | PostgreSQL          | 17.5              | Primary data storage               | Latest with major performance improvements                    |

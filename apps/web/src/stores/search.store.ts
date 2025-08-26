@@ -170,7 +170,7 @@ export const useSearchStore = create<SearchStore>()(
 
             state.currentPage = response.pagination.page;
             state.pageSize = response.pagination.pageSize;
-            state.totalResults = response.pagination.total;
+            state.totalResults = response.pagination.totalItems;
             state.totalPages = response.pagination.totalPages;
             state.hasNext = response.pagination.hasNext;
             state.hasPrev = response.pagination.hasPrev;
@@ -184,14 +184,14 @@ export const useSearchStore = create<SearchStore>()(
           // Add to search history
           get().addToHistory(
             query.trim(),
-            response.pagination.total,
+            response.pagination.totalItems,
             response.searchMetadata.executionTimeMs
           );
 
           // Log search metrics
           logger.info('Search executed', {
             query: query.trim(),
-            resultCount: response.pagination.total,
+            resultCount: response.pagination.totalItems,
             executionTime: response.searchMetadata.executionTimeMs,
             searchType: response.searchMetadata.searchType,
           });

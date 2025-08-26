@@ -38,7 +38,7 @@ export interface SearchResponse {
   pagination: {
     page: number;
     pageSize: number;
-    total: number;
+    totalItems: number;
     totalPages: number;
     hasNext: boolean;
     hasPrev: boolean;

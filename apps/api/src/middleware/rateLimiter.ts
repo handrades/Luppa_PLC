@@ -127,3 +127,110 @@ export const writeOpsRateLimit = rateLimit({
   // Do not skip successful requests for write operations
   skipSuccessfulRequests: false,
 });
+
+/**
+ * Rate limiter for bulk import operations
+ * More restrictive to prevent system overload
+ */
+export const bulkImportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'test' ? 1000 : 5, // Limit each user to 5 import requests per windowMs
+  message: {
+    error: 'Too many import attempts',
+    message: 'Too many import attempts. Please wait before trying again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    // Rate limit by user ID if authenticated, otherwise by IP
+    return req.user?.sub || getClientIP(req);
+  },
+  skip: (req: Request) => {
+    // Skip rate limiting for validation-only requests
+    const options = req.body?.options;
+    return options?.validateOnly === true;
+  },
+  handler: (req: Request, res: Response) => {
+    logger.warn(`Bulk import rate limit exceeded`, {
+      userId: req.user?.sub,
+      ip: getClientIP(req),
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(429).json({
+      success: false,
+      error: 'Too many import attempts. Please wait before trying again.',
+      retryAfter: 15 * 60, // 15 minutes in seconds
+    });
+  },
+});
+
+/**
+ * Rate limiter for export operations
+ * Slightly less restrictive than imports
+ */
+export const bulkExportLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: process.env.NODE_ENV === 'test' ? 1000 : 10, // Limit each user to 10 export requests per windowMs
+  message: {
+    error: 'Too many export attempts',
+    message: 'Too many export attempts. Please wait before trying again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    return req.user?.sub || getClientIP(req);
+  },
+  handler: (req: Request, res: Response) => {
+    logger.warn(`Bulk export rate limit exceeded`, {
+      userId: req.user?.sub,
+      ip: getClientIP(req),
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(429).json({
+      success: false,
+      error: 'Too many export attempts. Please wait before trying again.',
+      retryAfter: 10 * 60, // 10 minutes in seconds
+    });
+  },
+});
+
+/**
+ * Rate limiter for rollback operations
+ * Very restrictive as rollbacks should be rare and careful operations
+ */
+export const rollbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: process.env.NODE_ENV === 'test' ? 1000 : 3, // Limit each user to 3 rollback requests per hour
+  message: {
+    error: 'Too many rollback attempts',
+    message:
+      'Too many rollback attempts. Please contact administrator if you need to perform more rollbacks.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    return req.user?.sub || getClientIP(req);
+  },
+  handler: (req: Request, res: Response) => {
+    logger.error(`Rollback rate limit exceeded`, {
+      userId: req.user?.sub,
+      ip: getClientIP(req),
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(429).json({
+      success: false,
+      error:
+        'Too many rollback attempts. Please contact administrator if you need to perform more rollbacks.',
+      retryAfter: 60 * 60, // 1 hour in seconds
+    });
+  },
+});

@@ -6,7 +6,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { EntityManager } from 'typeorm';
-import { jwtConfig } from '../config/jwt';
+import { v4 as uuidv4 } from 'uuid';
+import { TokenType, jwtConfig } from '../config/jwt';
 
 export interface SimpleLoginResult {
   tokens: {
@@ -55,25 +56,60 @@ export class AuthServiceSimple {
     }
 
     // Generate simple tokens
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      // Hardcode admin permissions for testing
-      permissions: {
+    // Environment-gated permissions approach
+    const isAdminGranted =
+      process.env.SIMPLE_AUTH_GRANT_ADMIN === 'true' && process.env.NODE_ENV !== 'production';
+
+    let permissions: Record<string, Record<string, boolean>>;
+
+    if (isAdminGranted) {
+      // Full admin permissions only in non-production with explicit flag
+      permissions = {
         sites: { create: true, read: true, update: true, delete: true },
         cells: { create: true, read: true, update: true, delete: true },
         equipment: { create: true, read: true, update: true, delete: true },
-      },
+      };
+    } else {
+      // Minimal permissions (least privilege)
+      permissions = {
+        sites: { create: false, read: true, update: false, delete: false },
+        cells: { create: false, read: true, update: false, delete: false },
+        equipment: { create: false, read: true, update: false, delete: false },
+      };
+    }
+
+    // Generate unique JTI for each token
+    const accessJti = uuidv4();
+    const refreshJti = uuidv4();
+
+    const accessPayload = {
+      sub: user.id,
+      email: user.email,
+      permissions,
+      type: TokenType.ACCESS,
+      jti: accessJti,
     };
 
-    const accessToken = jwt.sign(payload, jwtConfig.secret, {
-      expiresIn: '1h',
+    const refreshPayload = {
+      sub: user.id,
+      email: user.email,
+      permissions,
+      type: TokenType.REFRESH,
+      jti: refreshJti,
+    };
+
+    const accessToken = jwt.sign(accessPayload, jwtConfig.secret, {
+      expiresIn: jwtConfig.expiresIn,
       algorithm: jwtConfig.algorithm as jwt.Algorithm,
+      issuer: jwtConfig.issuer,
+      audience: jwtConfig.audience,
     });
 
-    const refreshToken = jwt.sign(payload, jwtConfig.secret, {
-      expiresIn: '7d',
+    const refreshToken = jwt.sign(refreshPayload, jwtConfig.secret, {
+      expiresIn: jwtConfig.refreshExpiresIn,
       algorithm: jwtConfig.algorithm as jwt.Algorithm,
+      issuer: jwtConfig.issuer,
+      audience: jwtConfig.audience,
     });
 
     // Update last login
@@ -100,6 +136,8 @@ export class AuthServiceSimple {
     try {
       const decoded = jwt.verify(token, jwtConfig.secret, {
         algorithms: [jwtConfig.algorithm as jwt.Algorithm],
+        issuer: jwtConfig.issuer,
+        audience: jwtConfig.audience,
       });
       return decoded;
     } catch (error) {

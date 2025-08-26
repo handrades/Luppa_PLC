@@ -66,7 +66,7 @@ const getPasswordResetService = (req: Request): PasswordResetService => {
  */
 const loginSchema = Joi.object({
   email: Joi.string()
-    .email({ tlds: { allow: ['com', 'net', 'org', 'local'] } })
+    .email({ tlds: { allow: false } }) // Allow any TLD for flexibility
     .required()
     .trim()
     .lowercase(),

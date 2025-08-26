@@ -24,7 +24,7 @@ The project is designed for solo development with a focus on open-source technol
 
 ## Technology Stack
 
-- **Frontend**: React 19.1.0 + TypeScript 5.8.3 + Material-UI 7.0 + Vite 6.0
+- **Frontend**: React 19.1.0 + TypeScript ~5.5.4 + Material-UI 7.0 + Vite 6.0
 - **Backend**: Node.js + Express 5.1.0 + TypeORM + PostgreSQL 17.5
 - **Database**: PostgreSQL (primary) + Redis 8.0 (caching/sessions)
 - **Infrastructure**: Docker Swarm, Nginx reverse proxy

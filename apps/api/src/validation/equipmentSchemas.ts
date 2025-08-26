@@ -143,9 +143,16 @@ const sortBySchema = Joi.string()
       'Sort field must be one of: name, equipmentType, createdAt, siteName, cellName, make, model',
   });
 
-const sortOrderSchema = Joi.string().valid('ASC', 'DESC').default('ASC').messages({
-  'any.only': 'Sort order must be either ASC or DESC',
-});
+const sortOrderSchema = Joi.string()
+  .valid('ASC', 'DESC', 'asc', 'desc')
+  .default('ASC')
+  .custom((value, _helpers) => {
+    // Normalize to uppercase
+    return value.toUpperCase();
+  })
+  .messages({
+    'any.only': 'Sort order must be either ASC or DESC',
+  });
 
 /**
  * PLC data validation schema for creation

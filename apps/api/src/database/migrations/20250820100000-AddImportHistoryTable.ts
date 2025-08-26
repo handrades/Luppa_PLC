@@ -126,12 +126,27 @@ export class AddImportHistoryTable20250820100000 implements MigrationInterface {
       $$ LANGUAGE plpgsql;
     `);
 
-    // Create trigger for import_history
-    await queryRunner.query(`
-      CREATE TRIGGER update_import_history_updated_at 
-      BEFORE UPDATE ON import_history
-      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
-    `);
+    // Create update triggers for all tables with updated_at columns
+    const tablesToAddTriggers = [
+      'import_history',
+      'tags',
+      'plcs',
+      'equipment',
+      'cells',
+      'sites',
+      'audit_logs',
+      'users',
+      'roles',
+      'notifications',
+    ];
+
+    for (const table of tablesToAddTriggers) {
+      await queryRunner.query(`
+        CREATE TRIGGER update_${table}_updated_at 
+        BEFORE UPDATE ON ${table}
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+      `);
+    }
 
     await queryRunner.query(`ALTER TABLE "roles" DROP COLUMN "is_system_role"`);
     await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "users_username_key"`);
@@ -233,9 +248,23 @@ export class AddImportHistoryTable20250820100000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop import_history table and related objects
-    await queryRunner.query(
-      `DROP TRIGGER IF EXISTS update_import_history_updated_at ON import_history`
-    );
+    // Drop all update triggers we created
+    const tablesToDropTriggers = [
+      'import_history',
+      'tags',
+      'plcs',
+      'equipment',
+      'cells',
+      'sites',
+      'audit_logs',
+      'users',
+      'roles',
+      'notifications',
+    ];
+
+    for (const table of tablesToDropTriggers) {
+      await queryRunner.query(`DROP TRIGGER IF EXISTS update_${table}_updated_at ON ${table}`);
+    }
     await queryRunner.query(`DROP INDEX IF EXISTS idx_import_history_started_at`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_import_history_status`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_import_history_user`);
