@@ -155,8 +155,7 @@ export const createApp = (): express.Application => {
   app.use('/api/v1/cells', cellsRouter);
   app.use('/api/v1/equipment', equipmentRouter);
   app.use('/api/v1/search', searchRouter);
-  // app.use('/api/v1/import', importExportRouter);
-  // app.use('/api/v1/export', importExportRouter);
+  // app.use('/api/v1', importExportRouter);
   app.use('/api/v1', auditRouter);
 
   // 11. 404 not found handler (must come after all routes)
