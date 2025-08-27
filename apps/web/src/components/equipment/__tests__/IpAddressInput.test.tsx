@@ -26,7 +26,13 @@ describe('IpAddressInput', () => {
           mockOnChange(newValue);
         };
 
-        return <IpAddressInput value={value} onChange={handleChange} label='IP Address' />;
+        return (
+          <IpAddressInput
+            value={value}
+            onChange={handleChange}
+            label='IP Address'
+          />
+        );
       };
 
       renderWithProviders(<ControlledWrapper />);

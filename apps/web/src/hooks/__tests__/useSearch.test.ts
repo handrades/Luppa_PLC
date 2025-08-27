@@ -10,7 +10,9 @@ import { useSearchStore } from '../../stores/search.store';
 
 // Mock the search store
 jest.mock('../../stores/search.store');
-const mockUseSearchStore = useSearchStore as jest.MockedFunction<typeof useSearchStore>;
+const mockUseSearchStore = useSearchStore as jest.MockedFunction<
+  typeof useSearchStore
+>;
 
 // Mock debounce hook
 jest.mock('../useDebounce', () => ({
@@ -159,8 +161,9 @@ describe('useSearch', () => {
   describe('auto-search functionality', () => {
     it('should auto-search when debounced query changes', async () => {
       const { rerender } = renderHook(
-        ({ query: _query }: { query: string }) => useSearch({ autoSearch: true }),
-        { initialProps: { query: '' } }
+        ({ query: _query }: { query: string }) =>
+          useSearch({ autoSearch: true }),
+        { initialProps: { query: '' } },
       );
 
       // Update store to simulate query change
@@ -178,8 +181,9 @@ describe('useSearch', () => {
 
     it('should not auto-search when autoSearch is disabled', () => {
       const { rerender } = renderHook(
-        ({ query: _query }: { query: string }) => useSearch({ autoSearch: false }),
-        { initialProps: { query: '' } }
+        ({ query: _query }: { query: string }) =>
+          useSearch({ autoSearch: false }),
+        { initialProps: { query: '' } },
       );
 
       mockUseSearchStore.mockReturnValue({

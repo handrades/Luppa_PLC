@@ -27,6 +27,9 @@ import usersRouter from './routes/users';
 import equipmentRouter from './routes/equipment';
 import metricsRouter from './routes/metrics';
 import searchRouter from './routes/search';
+import importExportRouter from './routes/import-export';
+import sitesRouter from './routes/sites';
+import cellsRouter from './routes/cells';
 
 // Extend Express Request interface for raw body support
 // Express Request interface augmented in types/express.d.ts
@@ -40,6 +43,9 @@ declare module 'http' {
 
 export const createApp = (): express.Application => {
   const app = express();
+
+  // Log route imports
+  logger.debug('App: All routes imported successfully');
 
   // Initialize middleware logging
   initializeSecurityMiddleware();
@@ -137,8 +143,11 @@ export const createApp = (): express.Application => {
   app.use('/api/v1', metricsRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
+  app.use('/api/v1/sites', sitesRouter);
+  app.use('/api/v1/cells', cellsRouter);
   app.use('/api/v1/equipment', equipmentRouter);
   app.use('/api/v1/search', searchRouter);
+  app.use('/api/v1', importExportRouter);
   app.use('/api/v1', auditRouter);
 
   // 11. 404 not found handler (must come after all routes)

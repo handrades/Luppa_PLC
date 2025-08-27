@@ -171,7 +171,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     const filteredSuggestions = suggestions
       .filter(suggestion => !options.some(opt => opt.label === suggestion))
       .slice(0, maxSuggestions - options.length)
-      .map(suggestion => ({ label: suggestion, type: 'suggestion' as const }));
+      .map(suggestion => ({
+        label: suggestion,
+        type: 'suggestion' as const,
+      }));
 
     options.push(...filteredSuggestions);
 
@@ -276,7 +279,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             const { key, ...listItemProps } = props;
             return (
               <ListItem key={key} {...listItemProps} dense>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    width: '100%',
+                  }}
+                >
                   {option.type === 'recent' ? (
                     <HistoryIcon fontSize='small' color='action' />
                   ) : (
@@ -327,7 +337,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         >
           <CardContent>
             <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
             >
               <Typography id='search-help-title' variant='h6' component='h2'>
                 Search Help

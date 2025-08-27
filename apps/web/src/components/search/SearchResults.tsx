@@ -124,7 +124,12 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
       <CardContent sx={{ pb: 1 }}>
         {/* Header with equipment name and relevance score */}
         <Box
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            mb: 1,
+          }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant='h6' component='h3' sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -397,7 +402,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   // Loading state
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          py: 4,
+        }}
+      >
         <CircularProgress />
         <Typography variant='body1' sx={{ ml: 2 }}>
           Searching...
@@ -448,7 +460,15 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
   // Controls bar
   const renderControls = () => (
-    <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 2,
+        mb: 2,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+      }}
+    >
       <Typography variant='body2' color='text.secondary'>
         {totalResults} result{totalResults !== 1 ? 's' : ''} found
         {searchQuery && ` for "${searchQuery}"`}

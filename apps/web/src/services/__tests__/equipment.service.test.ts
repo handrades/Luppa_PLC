@@ -79,7 +79,7 @@ describe('EquipmentService', () => {
       const result = await equipmentService.getEquipment(filters);
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test&siteName=Test+Site&page=2&pageSize=25&sortBy=name&sortOrder=DESC'
+        '/api/v1/equipment?search=test&siteName=Test+Site&page=2&pageSize=25&sortBy=name&sortOrder=DESC',
       );
       expect(result).toEqual(mockResponse);
     });
@@ -94,7 +94,9 @@ describe('EquipmentService', () => {
 
       await equipmentService.getEquipment(filters);
 
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/api/v1/equipment?siteName=Test+Site');
+      expect(mockedApiClient.get).toHaveBeenCalledWith(
+        '/api/v1/equipment?siteName=Test+Site',
+      );
     });
 
     it('should handle API errors', async () => {
@@ -138,7 +140,9 @@ describe('EquipmentService', () => {
 
       const result = await equipmentService.searchEquipment('test search');
 
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/api/v1/equipment?search=test+search');
+      expect(mockedApiClient.get).toHaveBeenCalledWith(
+        '/api/v1/equipment?search=test+search',
+      );
       expect(result).toEqual(mockResponse);
     });
 
@@ -156,7 +160,7 @@ describe('EquipmentService', () => {
       });
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
-        '/api/v1/equipment?search=test&siteName=Site+A&pageSize=25'
+        '/api/v1/equipment?search=test&siteName=Site+A&pageSize=25',
       );
       expect(result).toEqual(mockResponse);
     });
@@ -189,7 +193,9 @@ describe('EquipmentService', () => {
       };
       mockedApiClient.get.mockRejectedValue(axiosError);
 
-      await expect(equipmentService.getEquipmentById('999')).rejects.toMatchObject({
+      await expect(
+        equipmentService.getEquipmentById('999'),
+      ).rejects.toMatchObject({
         message: 'Equipment not found',
         status: 404,
       });
@@ -205,12 +211,12 @@ describe('EquipmentService', () => {
         {
           siteName: 'Test Site',
         },
-        'csv'
+        'csv',
       );
 
       expect(mockedApiClient.get).toHaveBeenCalledWith(
         '/api/v1/equipment/export?siteName=Test+Site&format=csv',
-        { responseType: 'blob' }
+        { responseType: 'blob' },
       );
       expect(result).toEqual(mockBlob);
     });
@@ -226,7 +232,11 @@ describe('equipmentQueryKeys', () => {
       'list',
       { search: 'test' },
     ]);
-    expect(equipmentQueryKeys.detail('123')).toEqual(['equipment', 'detail', '123']);
+    expect(equipmentQueryKeys.detail('123')).toEqual([
+      'equipment',
+      'detail',
+      '123',
+    ]);
     expect(equipmentQueryKeys.stats()).toEqual(['equipment', 'stats']);
   });
 });

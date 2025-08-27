@@ -13,7 +13,9 @@ jest.mock('../../stores/equipment.store', () => ({
   useEquipmentStore: jest.fn(),
 }));
 
-const mockedUseEquipmentStore = useEquipmentStore as jest.MockedFunction<typeof useEquipmentStore>;
+const mockedUseEquipmentStore = useEquipmentStore as jest.MockedFunction<
+  typeof useEquipmentStore
+>;
 
 describe('useEquipmentSearch', () => {
   const mockSearchEquipment = jest.fn();
@@ -24,17 +26,19 @@ describe('useEquipmentSearch', () => {
     jest.useFakeTimers();
 
     // Mock the store selectors and actions
-    mockedUseEquipmentStore.mockImplementation((selector: (state: EquipmentStore) => unknown) => {
-      const mockState = {
-        isSearching: false,
-        filters: { search: '' },
-        searchEquipment: mockSearchEquipment,
-        setFilters: mockSetFilters,
-        fetchEquipment: jest.fn(),
-      } as Partial<EquipmentStore> as EquipmentStore;
+    mockedUseEquipmentStore.mockImplementation(
+      (selector: (state: EquipmentStore) => unknown) => {
+        const mockState = {
+          isSearching: false,
+          filters: { search: '' },
+          searchEquipment: mockSearchEquipment,
+          setFilters: mockSetFilters,
+          fetchEquipment: jest.fn(),
+        } as Partial<EquipmentStore> as EquipmentStore;
 
-      return selector(mockState);
-    });
+        return selector(mockState);
+      },
+    );
   });
 
   afterEach(() => {
@@ -134,16 +138,18 @@ describe('useEquipmentSearch', () => {
   describe('search triggering', () => {
     beforeEach(() => {
       // Mock store to return empty search initially
-      mockedUseEquipmentStore.mockImplementation((selector: (state: EquipmentStore) => unknown) => {
-        const mockState = {
-          isSearching: false,
-          filters: { search: '' },
-          searchEquipment: mockSearchEquipment,
-          setFilters: mockSetFilters,
-          fetchEquipment: jest.fn(),
-        } as Partial<EquipmentStore> as EquipmentStore;
-        return selector(mockState);
-      });
+      mockedUseEquipmentStore.mockImplementation(
+        (selector: (state: EquipmentStore) => unknown) => {
+          const mockState = {
+            isSearching: false,
+            filters: { search: '' },
+            searchEquipment: mockSearchEquipment,
+            setFilters: mockSetFilters,
+            fetchEquipment: jest.fn(),
+          } as Partial<EquipmentStore> as EquipmentStore;
+          return selector(mockState);
+        },
+      );
     });
 
     it('should trigger search when debounced term changes', () => {
@@ -176,16 +182,18 @@ describe('useEquipmentSearch', () => {
 
     it('should clear search when empty term is provided', () => {
       // Mock store to have a search term initially
-      mockedUseEquipmentStore.mockImplementation((selector: (state: EquipmentStore) => unknown) => {
-        const mockState = {
-          isSearching: false,
-          filters: { search: 'test' },
-          searchEquipment: mockSearchEquipment,
-          setFilters: mockSetFilters,
-          fetchEquipment: jest.fn(),
-        } as Partial<EquipmentStore> as EquipmentStore;
-        return selector(mockState);
-      });
+      mockedUseEquipmentStore.mockImplementation(
+        (selector: (state: EquipmentStore) => unknown) => {
+          const mockState = {
+            isSearching: false,
+            filters: { search: 'test' },
+            searchEquipment: mockSearchEquipment,
+            setFilters: mockSetFilters,
+            fetchEquipment: jest.fn(),
+          } as Partial<EquipmentStore> as EquipmentStore;
+          return selector(mockState);
+        },
+      );
 
       const { result } = renderHook(() => useEquipmentSearch());
 
@@ -203,16 +211,18 @@ describe('useEquipmentSearch', () => {
 
     it('should not trigger search if term matches current filter', () => {
       // Mock store to return existing search
-      mockedUseEquipmentStore.mockImplementation((selector: (state: EquipmentStore) => unknown) => {
-        const mockState = {
-          isSearching: false,
-          filters: { search: 'existing' },
-          searchEquipment: mockSearchEquipment,
-          setFilters: mockSetFilters,
-          fetchEquipment: jest.fn(),
-        } as Partial<EquipmentStore> as EquipmentStore;
-        return selector(mockState);
-      });
+      mockedUseEquipmentStore.mockImplementation(
+        (selector: (state: EquipmentStore) => unknown) => {
+          const mockState = {
+            isSearching: false,
+            filters: { search: 'existing' },
+            searchEquipment: mockSearchEquipment,
+            setFilters: mockSetFilters,
+            fetchEquipment: jest.fn(),
+          } as Partial<EquipmentStore> as EquipmentStore;
+          return selector(mockState);
+        },
+      );
 
       const { result } = renderHook(() => useEquipmentSearch());
 

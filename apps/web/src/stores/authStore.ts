@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import authService, { User } from '../services/authService';
+import { type User, authService } from '../services/auth.service';
 
 export interface LoginCredentials {
   email: string;
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
           const user = authService.getCurrentUser();
           set({
             user,
-            token: response.access_token,
+            token: response.accessToken, // Changed from access_token to accessToken
             isLoading: false,
             error: null,
           });
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>()(
           const user = authService.getCurrentUser();
           set({
             user,
-            token: response.access_token,
+            token: response.accessToken, // Changed from access_token to accessToken
             isLoading: false,
             error: null,
           });
@@ -76,7 +76,7 @@ export const useAuthStore = create<AuthState>()(
 
       loadUser: () => {
         const user = authService.getCurrentUser();
-        const token = authService.getAccessToken();
+        const token = authService.getToken(); // Changed from getAccessToken to getToken
         set({ user, token });
       },
 

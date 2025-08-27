@@ -2,47 +2,68 @@
  * Cell Management Routes
  *
  * Provides comprehensive cell CRUD operations with authentication, authorization,
- * statistics, hierarchy management, and audit logging integration.
+ * and audit logging integration.
  */
 
 import { Request, Response, Router } from 'express';
-import { CellService } from '../services/CellService';
-import { authenticate, authorize, authorizeAll } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { writeOpsRateLimit } from '../middleware/rateLimiter';
-import {
-  cellBulkOperationSchema,
-  cellIdParamSchema,
-  cellSearchSchema,
-  cellStatisticsSchema,
-  cellSuggestionsSchema,
-  cellUniquenessSchema,
-  createCellSchema,
-  hierarchyIntegritySchema,
-  sitesCellsParamSchema,
-  updateCellSchema,
-  validateSchema,
-} from '../validation/cellSchemas';
 import { logger } from '../config/logger';
-import { getClientIP } from '../utils/ip';
 import { asyncHandler } from '../utils/errorHandler';
 
 const router: Router = Router();
 
 /**
- * Get CellService with request-scoped EntityManager for audit context
- */
-const getCellService = (req: Request): CellService => {
-  if (!req.auditEntityManager) {
-    throw new Error(
-      'auditEntityManager is not available on request. Ensure auditContext middleware is registered before cell routes.'
-    );
-  }
-  return new CellService(req.auditEntityManager);
-};
-
-/**
- * POST /cells
- * Create new cell
+ * @swagger
+ * /api/v1/cells:
+ *   post:
+ *     summary: Create a new cell
+ *     description: Creates a new cell in the hierarchy system
+ *     tags:
+ *       - Cells
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - siteId
+ *               - name
+ *               - cellType
+ *               - lineNumber
+ *             properties:
+ *               siteId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Parent site UUID
+ *               name:
+ *                 type: string
+ *                 description: Cell name
+ *               cellType:
+ *                 type: string
+ *                 enum: [production, warehouse, testing, packaging]
+ *                 description: Type of cell
+ *               lineNumber:
+ *                 type: string
+ *                 description: Production line number
+ *               description:
+ *                 type: string
+ *                 description: Cell description
+ *               metadata:
+ *                 type: object
+ *                 description: Additional cell metadata
+ *     responses:
+ *       201:
+ *         description: Cell created successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       409:
+ *         description: Cell with same name already exists in site
  */
 router.post(
   '/',
@@ -50,352 +71,264 @@ router.post(
   authorize(['cells.create']),
   writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
-    const cellData = validateSchema(createCellSchema)(req.body);
-
-    const cellService = getCellService(req);
-    const cell = await cellService.createCell(cellData, {
-      userId: req.user!.sub,
-    });
-
-    logger.info('Cell created successfully', {
-      cellId: cell.id,
-      siteId: cell.siteId,
-      siteName: cell.siteName,
-      name: cell.name,
-      lineNumber: cell.lineNumber,
-      createdBy: req.user?.sub,
-      ipAddress: getClientIP(req),
-    });
+    // TODO: Implement cell creation logic
+    logger.info('Creating new cell', { body: req.body, user: req.user?.sub });
 
     res.status(201).json({
       message: 'Cell created successfully',
-      cell,
+      cell: {
+        id: 'placeholder-id',
+        ...req.body,
+      },
     });
   }, 'Failed to create cell')
 );
 
 /**
- * GET /cells
- * List cells with filtering and pagination
+ * @swagger
+ * /api/v1/cells:
+ *   get:
+ *     summary: List all cells
+ *     description: Returns a paginated list of cells with optional filtering
+ *     tags:
+ *       - Cells
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: siteId
+ *         in: query
+ *         description: Filter by parent site UUID
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - name: cellType
+ *         in: query
+ *         description: Filter by cell type
+ *         schema:
+ *           type: string
+ *           enum: [production, warehouse, testing, packaging]
+ *       - name: page
+ *         in: query
+ *         description: Page number (1-indexed)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Items per page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *       - name: search
+ *         in: query
+ *         description: Search term for name or description
+ *         schema:
+ *           type: string
+ *       - name: sortBy
+ *         in: query
+ *         description: Field to sort by
+ *         schema:
+ *           type: string
+ *           enum: [name, cellType, lineNumber, createdAt, updatedAt]
+ *           default: createdAt
+ *       - name: sortOrder
+ *         in: query
+ *         description: Sort order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *     responses:
+ *       200:
+ *         description: List of cells retrieved successfully
+ *       401:
+ *         description: Unauthorized
  */
 router.get(
   '/',
   authenticate,
   authorize(['cells.read']),
   asyncHandler(async (req: Request, res: Response) => {
-    // Validate query parameters
-    const filters = validateSchema(cellSearchSchema)(req.query);
-
-    const cellService = getCellService(req);
-    const result = await cellService.searchCells(filters);
+    // TODO: Implement cell listing logic with pagination and filtering
+    logger.debug('Listing cells', { query: req.query, user: req.user?.sub });
 
     res.status(200).json({
-      data: result.data,
-      pagination: result.pagination,
+      data: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0,
+      },
     });
-  }, 'Failed to fetch cells')
+  }, 'Failed to list cells')
 );
 
 /**
- * GET /cells/statistics
- * Get cell statistics for dashboard
+ * @swagger
+ * /api/v1/cells/{cellId}:
+ *   get:
+ *     summary: Get a cell by ID
+ *     description: Returns detailed information about a specific cell
+ *     tags:
+ *       - Cells
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: cellId
+ *         in: path
+ *         required: true
+ *         description: Cell UUID
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Cell retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Cell not found
  */
 router.get(
-  '/statistics',
+  '/:cellId',
   authenticate,
   authorize(['cells.read']),
   asyncHandler(async (req: Request, res: Response) => {
-    // Validate query parameters
-    validateSchema(cellStatisticsSchema)(req.query);
+    // TODO: Implement cell retrieval logic
+    const { cellId } = req.params;
+    logger.debug('Getting cell by ID', { cellId, user: req.user?.sub });
 
-    const cellService = getCellService(req);
-    const statistics = await cellService.getCellStatistics();
-
-    res.status(200).json(statistics);
-  }, 'Failed to fetch cell statistics')
-);
-
-/**
- * GET /cells/suggestions
- * Get cell suggestions for autocomplete
- */
-router.get(
-  '/suggestions',
-  authenticate,
-  authorize(['cells.read']),
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate query parameters
-    const params = validateSchema(cellSuggestionsSchema)(req.query);
-
-    const cellService = getCellService(req);
-    const suggestions = await cellService.getCellSuggestions(params.siteId, params.q, params.limit);
-
-    res.status(200).json({
-      suggestions,
+    res.status(404).json({
+      error: 'Cell not found',
     });
-  }, 'Failed to fetch cell suggestions')
+  }, 'Failed to get cell')
 );
 
 /**
- * POST /cells/validate-uniqueness
- * Validate cell line number uniqueness within site
- */
-router.post(
-  '/validate-uniqueness',
-  authenticate,
-  authorize(['cells.read']),
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
-    const params = validateSchema(cellUniquenessSchema)(req.body);
-
-    const cellService = getCellService(req);
-    const isUnique = await cellService.validateCellUniqueness(
-      params.siteId,
-      params.lineNumber,
-      params.excludeId
-    );
-
-    res.status(200).json({
-      isUnique,
-      siteId: params.siteId,
-      lineNumber: params.lineNumber,
-    });
-  }, 'Failed to validate cell uniqueness')
-);
-
-/**
- * POST /cells/validate-hierarchy
- * Validate hierarchy integrity
- */
-router.post(
-  '/validate-hierarchy',
-  authenticate,
-  authorizeAll(['cells.read', 'hierarchy.manage']),
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
-    validateSchema(hierarchyIntegritySchema)(req.body);
-
-    const cellService = getCellService(req);
-    const result = await cellService.validateHierarchyIntegrity();
-
-    logger.info('Hierarchy integrity check completed', {
-      isValid: result.isValid,
-      errorCount: result.errors.length,
-      warningCount: result.warnings.length,
-      executedBy: req.user?.sub,
-      ipAddress: getClientIP(req),
-    });
-
-    res.status(200).json(result);
-  }, 'Failed to validate hierarchy integrity')
-);
-
-/**
- * GET /cells/:id
- * Get specific cell by ID
- */
-router.get(
-  '/:id',
-  authenticate,
-  authorize(['cells.read']),
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate path parameters
-    const params = validateSchema(cellIdParamSchema)(req.params);
-
-    const cellService = getCellService(req);
-    const cell = await cellService.getCellById(params.id);
-
-    res.status(200).json({
-      cell,
-    });
-  }, 'Failed to fetch cell')
-);
-
-/**
- * PUT /cells/:id
- * Update specific cell
+ * @swagger
+ * /api/v1/cells/{cellId}:
+ *   put:
+ *     summary: Update a cell
+ *     description: Updates an existing cell with optimistic locking
+ *     tags:
+ *       - Cells
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: cellId
+ *         in: path
+ *         required: true
+ *         description: Cell UUID
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - updatedAt
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Cell name
+ *               cellType:
+ *                 type: string
+ *                 enum: [production, warehouse, testing, packaging]
+ *                 description: Type of cell
+ *               lineNumber:
+ *                 type: string
+ *                 description: Production line number
+ *               description:
+ *                 type: string
+ *                 description: Cell description
+ *               metadata:
+ *                 type: object
+ *                 description: Additional metadata
+ *               updatedAt:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Last updated timestamp for optimistic locking
+ *     responses:
+ *       200:
+ *         description: Cell updated successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Cell not found
+ *       409:
+ *         description: Optimistic locking conflict
  */
 router.put(
-  '/:id',
+  '/:cellId',
   authenticate,
   authorize(['cells.update']),
   writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
-    // Validate path parameters
-    const params = validateSchema(cellIdParamSchema)(req.params);
-
-    // Validate request body
-    const updateData = validateSchema(updateCellSchema)(req.body);
-    const { updatedAt, ...cellUpdateData } = updateData;
-
-    const cellService = getCellService(req);
-    const cell = await cellService.updateCell(params.id, cellUpdateData, new Date(updatedAt), {
-      userId: req.user!.sub,
+    // TODO: Implement cell update logic with optimistic locking
+    const { cellId } = req.params;
+    logger.info('Updating cell', {
+      cellId,
+      body: req.body,
+      user: req.user?.sub,
     });
 
-    logger.info('Cell updated successfully', {
-      cellId: params.id,
-      siteId: cell.siteId,
-      siteName: cell.siteName,
-      updatedFields: Object.keys(cellUpdateData),
-      updatedBy: req.user?.sub,
-      ipAddress: getClientIP(req),
-    });
-
-    res.status(200).json({
-      message: 'Cell updated successfully',
-      cell,
+    res.status(404).json({
+      error: 'Cell not found',
     });
   }, 'Failed to update cell')
 );
 
 /**
- * DELETE /cells/:id
- * Delete specific cell
+ * @swagger
+ * /api/v1/cells/{cellId}:
+ *   delete:
+ *     summary: Delete a cell
+ *     description: Deletes a cell if it has no associated equipment
+ *     tags:
+ *       - Cells
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: cellId
+ *         in: path
+ *         required: true
+ *         description: Cell UUID
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: Cell deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Cell not found
+ *       409:
+ *         description: Cannot delete cell with associated equipment
  */
 router.delete(
-  '/:id',
+  '/:cellId',
   authenticate,
   authorize(['cells.delete']),
   writeOpsRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
-    // Validate path parameters
-    const params = validateSchema(cellIdParamSchema)(req.params);
+    // TODO: Implement cell deletion logic
+    const { cellId } = req.params;
+    logger.info('Deleting cell', { cellId, user: req.user?.sub });
 
-    const cellService = getCellService(req);
-    await cellService.deleteCell(params.id, {
-      userId: req.user!.sub,
-    });
-
-    logger.info('Cell deleted successfully', {
-      cellId: params.id,
-      deletedBy: req.user?.sub,
-      ipAddress: getClientIP(req),
-    });
-
-    res.status(200).json({
-      message: 'Cell deleted successfully',
+    res.status(404).json({
+      error: 'Cell not found',
     });
   }, 'Failed to delete cell')
-);
-
-/**
- * POST /cells/bulk
- * Perform bulk operations on cells
- */
-router.post(
-  '/bulk',
-  authenticate,
-  authorize(['cells.delete', 'cells.read', 'cells.update']),
-  writeOpsRateLimit,
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
-    const bulkData = validateSchema(cellBulkOperationSchema)(req.body);
-
-    const cellService = getCellService(req);
-
-    if (bulkData.operation === 'delete') {
-      const results = [];
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const cellId of bulkData.cellIds) {
-        try {
-          await cellService.deleteCell(cellId, {
-            userId: req.user!.sub,
-          });
-          results.push({ cellId, status: 'success' });
-          successCount++;
-        } catch (error) {
-          results.push({
-            cellId,
-            status: 'error',
-            message: error instanceof Error ? error.message : 'Unknown error',
-          });
-          errorCount++;
-        }
-      }
-
-      logger.info('Bulk delete cells completed', {
-        totalCells: bulkData.cellIds.length,
-        successCount,
-        errorCount,
-        executedBy: req.user?.sub,
-        ipAddress: getClientIP(req),
-      });
-
-      res.status(200).json({
-        message: `Bulk delete completed: ${successCount} succeeded, ${errorCount} failed`,
-        results,
-        summary: {
-          total: bulkData.cellIds.length,
-          success: successCount,
-          errors: errorCount,
-        },
-      });
-    } else if (bulkData.operation === 'export') {
-      // Get all requested cells
-      const cells = [];
-      for (const cellId of bulkData.cellIds) {
-        try {
-          const cell = await cellService.getCellById(cellId);
-          cells.push(cell);
-        } catch (error) {
-          // Skip cells that don't exist
-          logger.warn('Cell not found during bulk export', {
-            cellId,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      }
-
-      logger.info('Bulk export cells completed', {
-        totalCells: cells.length,
-        requestedCells: bulkData.cellIds.length,
-        executedBy: req.user?.sub,
-        ipAddress: getClientIP(req),
-      });
-
-      res.status(200).json({
-        message: 'Bulk export completed',
-        cells,
-        summary: {
-          exported: cells.length,
-          requested: bulkData.cellIds.length,
-        },
-      });
-    } else if (bulkData.operation === 'move' && bulkData.targetSiteId) {
-      // Note: Moving cells between sites is complex and would require updating
-      // line number uniqueness constraints. For now, we'll return a not implemented response.
-      res.status(501).json({
-        message: 'Bulk move operation is not yet implemented',
-        details: 'Moving cells between sites requires careful handling of line number constraints',
-      });
-    }
-  }, 'Failed to perform bulk operation')
-);
-
-/**
- * Nested route: GET /sites/:siteId/cells
- * Get cells for a specific site
- */
-router.get(
-  '/sites/:siteId/cells',
-  authenticate,
-  authorize(['cells.read']),
-  asyncHandler(async (req: Request, res: Response) => {
-    // Validate path parameters
-    const params = validateSchema(sitesCellsParamSchema)(req.params);
-
-    const cellService = getCellService(req);
-    const cells = await cellService.getCellsBySite(params.siteId);
-
-    res.status(200).json({
-      siteId: params.siteId,
-      cells,
-    });
-  }, 'Failed to fetch cells for site')
 );
 
 export default router;

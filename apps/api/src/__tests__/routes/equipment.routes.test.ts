@@ -75,7 +75,50 @@ jest.mock('../../middleware/auditContext', () => ({
 jest.mock('../../middleware/rateLimiter', () => ({
   authRateLimit: jest.fn((req, res, next) => next()),
   strictAuthRateLimit: jest.fn((req, res, next) => next()),
+  writeOpsRateLimit: jest.fn((req, res, next) => next()),
 }));
+
+// Mock auth middleware
+jest.mock('../../middleware/auth', () => ({
+  authenticate: jest.fn((req, res, next) => {
+    // Check for Authorization header to simulate real auth behavior
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    req.user = { sub: 'test-user-id', email: 'test@example.com' };
+    next();
+  }),
+  authorize: jest.fn(() => (req, res, next) => next()),
+}));
+
+// Mock validation middleware
+jest.mock('../../middleware/validationMiddleware', () => ({
+  validateBody: jest.fn(() => (req, res, next) => next()),
+  validateQuery: jest.fn(() => (req, res, next) => next()),
+}));
+
+// Mock multer for file uploads
+jest.mock('multer', () => {
+  const multerMock = {
+    single: jest.fn(() => (req, res, next) => {
+      req.file = {
+        buffer: Buffer.from('test'),
+        originalname: 'test.csv',
+        mimetype: 'text/csv',
+      };
+      next();
+    }),
+    array: jest.fn(() => (req, res, next) => next()),
+    fields: jest.fn(() => (req, res, next) => next()),
+    none: jest.fn(() => (req, res, next) => next()),
+    any: jest.fn(() => (req, res, next) => next()),
+  };
+  const multer = jest.fn(() => multerMock);
+  multer.memoryStorage = jest.fn(() => ({}));
+  multer.diskStorage = jest.fn(() => ({}));
+  return multer;
+});
 
 // Mock TypeORM to ensure entities work in test environment
 jest.mock('typeorm', () => {

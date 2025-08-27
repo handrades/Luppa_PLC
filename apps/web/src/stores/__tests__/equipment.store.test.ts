@@ -89,7 +89,7 @@ describe('useEquipmentStore', () => {
     it('should handle loading state', async () => {
       // Create a promise we can control
       let resolvePromise: (value: EquipmentListResponse) => void;
-      const promise = new Promise<EquipmentListResponse>(resolve => {
+      const promise = new Promise<EquipmentListResponse>((resolve) => {
         resolvePromise = resolve;
       });
       mockedService.getEquipment.mockReturnValue(promise);
@@ -171,13 +171,16 @@ describe('useEquipmentStore', () => {
 
       expect(result.current.filters.page).toBe(1);
       expect(result.current.filters.search).toBe('test search');
-      expect(mockedService.searchEquipment).toHaveBeenCalledWith('test search', {
-        page: 1,
-        limit: 50,
-        sortBy: 'name',
-        sortOrder: 'asc',
-        search: 'test search',
-      });
+      expect(mockedService.searchEquipment).toHaveBeenCalledWith(
+        'test search',
+        {
+          page: 1,
+          limit: 50,
+          sortBy: 'name',
+          sortOrder: 'asc',
+          search: 'test search',
+        },
+      );
     });
   });
 
@@ -297,7 +300,7 @@ describe('useEquipmentStore', () => {
         expect.objectContaining({
           siteName: 'New Site',
           page: 2,
-        })
+        }),
       );
     });
   });

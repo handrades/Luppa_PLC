@@ -40,7 +40,7 @@ jest.mock('../../hierarchy/SiteDropdown', () => ({
       <input
         data-testid='site-input'
         value={value || ''}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         required={required}
         placeholder={helperText}
@@ -72,7 +72,9 @@ jest.mock('../../hierarchy/CellSelector', () => ({
       <input
         data-testid='cell-input'
         value={value || ''}
-        onChange={e => onChange(e.target.value, { id: e.target.value, name: 'Test Cell' })}
+        onChange={(e) =>
+          onChange(e.target.value, { id: e.target.value, name: 'Test Cell' })
+        }
         disabled={disabled}
         required={required}
         placeholder={helperText}
@@ -86,19 +88,35 @@ jest.mock('../../hierarchy/CellSelector', () => ({
 // Mock other components
 jest.mock('../TagInput', () => ({
   __esModule: true,
-  default: ({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) => (
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string[];
+    onChange: (value: string[]) => void;
+  }) => (
     <input
       data-testid='tag-input'
       value={value.join(',')}
-      onChange={e => onChange(e.target.value.split(',').filter(Boolean))}
+      onChange={(e) => onChange(e.target.value.split(',').filter(Boolean))}
     />
   ),
 }));
 
 jest.mock('../IpAddressInput', () => ({
   __esModule: true,
-  default: ({ value, onChange }: { value?: string; onChange: (value: string) => void }) => (
-    <input data-testid='ip-input' value={value || ''} onChange={e => onChange(e.target.value)} />
+  default: ({
+    value,
+    onChange,
+  }: {
+    value?: string;
+    onChange: (value: string) => void;
+  }) => (
+    <input
+      data-testid='ip-input'
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+    />
   ),
 }));
 
@@ -192,7 +210,11 @@ describe('EquipmentForm Hierarchy Integration', () => {
     };
 
     render(
-      <EquipmentForm {...defaultProps} mode={EquipmentFormMode.EDIT} initialData={initialData} />
+      <EquipmentForm
+        {...defaultProps}
+        mode={EquipmentFormMode.EDIT}
+        initialData={initialData}
+      />,
     );
 
     await waitFor(() => {

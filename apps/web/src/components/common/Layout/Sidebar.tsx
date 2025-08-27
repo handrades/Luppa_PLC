@@ -12,6 +12,7 @@ import {
 import {
   Computer as ComputerIcon,
   Dashboard as DashboardIcon,
+  SwapVert as ImportExportIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ interface SidebarProps {
 const navigationItems = [
   { label: 'Dashboard', path: '/', icon: DashboardIcon },
   { label: 'Equipment', path: '/equipment', icon: ComputerIcon },
+  { label: 'Import/Export', path: '/import-export', icon: ImportExportIcon },
   { label: 'Settings', path: '/settings', icon: SettingsIcon },
 ];
 

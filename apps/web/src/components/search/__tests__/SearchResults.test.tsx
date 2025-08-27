@@ -19,7 +19,7 @@ jest.mock('react-window', () => ({
   }) => (
     <div data-testid='virtual-list'>
       {Array.from({ length: itemCount }, (_, index) =>
-        React.createElement('div', { key: index, style: {} }, `Item ${index}`)
+        React.createElement('div', { key: index, style: {} }, `Item ${index}`),
       )}
     </div>
   ),
@@ -106,7 +106,9 @@ describe('SearchResults', () => {
     it('should show result count', () => {
       render(<SearchResults {...defaultProps} />);
 
-      expect(screen.getByText('2 results found for "Siemens"')).toBeInTheDocument();
+      expect(
+        screen.getByText('2 results found for "Siemens"'),
+      ).toBeInTheDocument();
     });
 
     it('should render equipment type chips', () => {
@@ -120,10 +122,14 @@ describe('SearchResults', () => {
       render(<SearchResults {...defaultProps} />);
 
       expect(
-        screen.getByText('📍 Factory A > Assembly Cell 1 > Assembly Robot > PLC-001')
+        screen.getByText(
+          '📍 Factory A > Assembly Cell 1 > Assembly Robot > PLC-001',
+        ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText('📍 Factory A > Packaging Cell > Conveyor System > PLC-002')
+        screen.getByText(
+          '📍 Factory A > Packaging Cell > Conveyor System > PLC-002',
+        ),
       ).toBeInTheDocument();
     });
   });
@@ -142,7 +148,9 @@ describe('SearchResults', () => {
       render(<SearchResults error='Search service unavailable' results={[]} />);
 
       expect(screen.getByText('Search Error')).toBeInTheDocument();
-      expect(screen.getByText('Search service unavailable')).toBeInTheDocument();
+      expect(
+        screen.getByText('Search service unavailable'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -150,9 +158,13 @@ describe('SearchResults', () => {
     it('should show no results message when no results found', () => {
       render(<SearchResults results={[]} searchQuery='nonexistent' />);
 
-      expect(screen.getByText('No results found for "nonexistent"')).toBeInTheDocument();
       expect(
-        screen.getByText('Try adjusting your search terms or check the search help for tips.')
+        screen.getByText('No results found for "nonexistent"'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Try adjusting your search terms or check the search help for tips.',
+        ),
       ).toBeInTheDocument();
     });
 
@@ -160,9 +172,15 @@ describe('SearchResults', () => {
       render(<SearchResults results={[]} searchQuery='xyz' />);
 
       expect(screen.getByText('Search suggestions:')).toBeInTheDocument();
-      expect(screen.getByText('• Use shorter, more general terms')).toBeInTheDocument();
-      expect(screen.getByText('• Check for spelling mistakes')).toBeInTheDocument();
-      expect(screen.getByText('• Try searching by make, model, or location')).toBeInTheDocument();
+      expect(
+        screen.getByText('• Use shorter, more general terms'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('• Check for spelling mistakes'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('• Try searching by make, model, or location'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -171,9 +189,13 @@ describe('SearchResults', () => {
       const mockOnResultClick = jest.fn();
       const user = userEvent.setup();
 
-      render(<SearchResults {...defaultProps} onResultClick={mockOnResultClick} />);
+      render(
+        <SearchResults {...defaultProps} onResultClick={mockOnResultClick} />,
+      );
 
-      const firstResult = screen.getByText('PLC-001').closest('div[role="button"], .MuiCard-root');
+      const firstResult = screen
+        .getByText('PLC-001')
+        .closest('div[role="button"], .MuiCard-root');
       expect(firstResult).toBeInTheDocument();
 
       await user.click(firstResult!);
@@ -228,7 +250,7 @@ describe('SearchResults', () => {
       // Check for the presence of sort and filter controls via data-testid
       expect(screen.getByTestId('SortIcon')).toBeInTheDocument();
       expect(screen.getByTestId('FilterListIcon')).toBeInTheDocument();
-      
+
       // Check for the text content
       expect(screen.getByText('Relevance')).toBeInTheDocument();
       expect(screen.getByText('All Types')).toBeInTheDocument();
@@ -351,7 +373,7 @@ describe('SearchResults', () => {
           results={largeResults}
           enableVirtualization={true}
           virtualizationThreshold={100}
-        />
+        />,
       );
 
       expect(screen.getByTestId('virtual-list')).toBeInTheDocument();
@@ -363,7 +385,7 @@ describe('SearchResults', () => {
           {...defaultProps}
           enableVirtualization={true}
           virtualizationThreshold={100}
-        />
+        />,
       );
 
       expect(screen.queryByTestId('virtual-list')).not.toBeInTheDocument();
@@ -402,7 +424,9 @@ describe('SearchResults', () => {
       const mockOnResultClick = jest.fn();
       const user = userEvent.setup();
 
-      render(<SearchResults {...defaultProps} onResultClick={mockOnResultClick} />);
+      render(
+        <SearchResults {...defaultProps} onResultClick={mockOnResultClick} />,
+      );
 
       // Tab navigation should work
       await user.tab();

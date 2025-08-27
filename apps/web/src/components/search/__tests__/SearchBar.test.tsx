@@ -9,7 +9,9 @@ import { useSearchStore } from '../../../stores/search.store';
 
 // Mock the search store
 jest.mock('../../../stores/search.store');
-const mockUseSearchStore = useSearchStore as jest.MockedFunction<typeof useSearchStore>;
+const mockUseSearchStore = useSearchStore as jest.MockedFunction<
+  typeof useSearchStore
+>;
 
 // Mock debounce hook
 jest.mock('../../../hooks/useDebounce', () => ({
@@ -36,7 +38,9 @@ describe('SearchBar', () => {
   };
 
   beforeEach(() => {
-    mockUseSearchStore.mockReturnValue(defaultStoreValues as ReturnType<typeof useSearchStore>);
+    mockUseSearchStore.mockReturnValue(
+      defaultStoreValues as ReturnType<typeof useSearchStore>,
+    );
   });
 
   afterEach(() => {
@@ -47,7 +51,9 @@ describe('SearchBar', () => {
     it('should render search input with placeholder', () => {
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       expect(input).toBeInTheDocument();
     });
 
@@ -78,7 +84,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'Siemens');
 
@@ -91,7 +99,9 @@ describe('SearchBar', () => {
 
       render(<SearchBar onSearch={mockOnSearch} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'test query');
       await user.keyboard('{Enter}');
@@ -116,7 +126,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'test query');
       await user.keyboard('{Enter}');
@@ -131,7 +143,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'test');
 
@@ -143,7 +157,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'test');
 
@@ -159,7 +175,9 @@ describe('SearchBar', () => {
 
       render(<SearchBar onClear={mockOnClear} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       await user.type(input, 'test');
 
@@ -173,8 +191,18 @@ describe('SearchBar', () => {
   describe('suggestions', () => {
     it('should show recent searches when input is empty', async () => {
       const recentSearches = [
-        { query: 'Siemens PLC', timestamp: new Date(), resultCount: 5, executionTime: 50 },
-        { query: 'S7-1200', timestamp: new Date(), resultCount: 3, executionTime: 30 },
+        {
+          query: 'Siemens PLC',
+          timestamp: new Date(),
+          resultCount: 5,
+          executionTime: 50,
+        },
+        {
+          query: 'S7-1200',
+          timestamp: new Date(),
+          resultCount: 3,
+          executionTime: 30,
+        },
       ];
 
       mockUseSearchStore.mockReturnValue({
@@ -185,7 +213,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       await user.click(input);
 
       await waitFor(() => {
@@ -205,11 +235,13 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       await user.type(input, 'Siem');
 
       await waitFor(() => {
-        suggestions.forEach(suggestion => {
+        suggestions.forEach((suggestion) => {
           expect(screen.getByText(suggestion)).toBeInTheDocument();
         });
       });
@@ -227,7 +259,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar onSearch={mockOnSearch} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       await user.type(input, 'Siem');
 
       await waitFor(() => {
@@ -267,7 +301,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       await user.type(input, 'Siem');
 
       await waitFor(() => {
@@ -309,8 +345,18 @@ describe('SearchBar', () => {
 
     it('should show recent searches in help modal', async () => {
       const recentSearches = [
-        { query: 'Siemens PLC', timestamp: new Date(), resultCount: 5, executionTime: 50 },
-        { query: 'S7-1200', timestamp: new Date(), resultCount: 3, executionTime: 30 },
+        {
+          query: 'Siemens PLC',
+          timestamp: new Date(),
+          resultCount: 5,
+          executionTime: 50,
+        },
+        {
+          query: 'S7-1200',
+          timestamp: new Date(),
+          resultCount: 3,
+          executionTime: 30,
+        },
       ];
 
       mockUseSearchStore.mockReturnValue({
@@ -345,7 +391,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
 
       // Tab to input
       await user.tab();
@@ -363,7 +411,9 @@ describe('SearchBar', () => {
     it('should respect disabled prop', () => {
       render(<SearchBar disabled={true} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       expect(input).toBeDisabled();
     });
 
@@ -377,12 +427,17 @@ describe('SearchBar', () => {
     it('should apply autoFocus when specified', () => {
       render(<SearchBar autoFocus={true} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       expect(input).toHaveFocus();
     });
 
     it('should respect maxSuggestions prop', async () => {
-      const suggestions = Array.from({ length: 20 }, (_, i) => `Suggestion ${i}`);
+      const suggestions = Array.from(
+        { length: 20 },
+        (_, i) => `Suggestion ${i}`,
+      );
 
       mockUseSearchStore.mockReturnValue({
         ...defaultStoreValues,
@@ -392,7 +447,9 @@ describe('SearchBar', () => {
       const user = userEvent.setup();
       render(<SearchBar maxSuggestions={5} />);
 
-      const input = screen.getByPlaceholderText('Search equipment, PLCs, sites...');
+      const input = screen.getByPlaceholderText(
+        'Search equipment, PLCs, sites...',
+      );
       await user.type(input, 'test');
 
       // Should call getSuggestions with limit of 5

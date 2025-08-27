@@ -1,25 +1,113 @@
 // Environment configuration utilities
 
+// Use Vite's built-in env types
+
+// Define interface for globalThis with import.meta support
+interface GlobalWithImportMeta {
+  import?: {
+    meta?: {
+      env?: Record<string, unknown>;
+    };
+  };
+  __VITE_ENV__?: Record<string, unknown>;
+}
+
 // Helper function to get environment variables with fallback for Jest
 function getEnvVar(key: string, defaultValue?: string): string {
-  // For Jest/Node.js environment
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-    return process.env[key] || defaultValue || '';
+  // Try multiple approaches to access import.meta.env for maximum compatibility
+
+  // Approach 1: Direct check with try-catch (works in Vite builds)
+  try {
+    const g = globalThis as GlobalWithImportMeta;
+    const hasImportMeta = typeof g?.import?.meta?.env !== 'undefined';
+    if (hasImportMeta) {
+      const value = g.import!.meta!.env![key];
+      if (value !== undefined) {
+        return String(value);
+      }
+    }
+  } catch {
+    // import.meta not available via direct access
   }
 
-  // For Vite/browser environment
-  if (typeof window !== 'undefined' || typeof process === 'undefined') {
-    // Use dynamic import to avoid static analysis issues in Jest
-    const meta = (globalThis as { __VITE_ENV__?: Record<string, string> }).__VITE_ENV__ || {};
-    return meta[key] || defaultValue || '';
+  // Approach 2: Check globalThis.__VITE_ENV__ for test environments
+  const g = globalThis as GlobalWithImportMeta;
+  if (typeof globalThis !== 'undefined' && g.__VITE_ENV__) {
+    const value = g.__VITE_ENV__[key];
+    if (value !== undefined) {
+      return String(value);
+    }
   }
 
-  // Fallback to process.env for Node.js environments
-  return process.env[key] || defaultValue || '';
+  // Approach 4: Fall back to process.env (Jest/Node.js environment)
+  if (typeof process !== 'undefined' && process.env) {
+    const value = process.env[key];
+    if (value !== undefined && value !== '') {
+      return value;
+    }
+  }
+
+  return defaultValue || '';
 }
 
 function getBooleanEnvVar(key: string, defaultValue = false): boolean {
-  return getEnvVar(key) === 'true' || defaultValue;
+  // Try multiple approaches to check for boolean values in import.meta.env
+
+  // Approach 1: Check import.meta.env for both boolean and string values
+  try {
+    const g = globalThis as GlobalWithImportMeta;
+    const hasImportMeta = typeof g?.import?.meta?.env !== 'undefined';
+    if (hasImportMeta) {
+      const value = g.import!.meta!.env![key];
+      if (value !== undefined) {
+        // If it's already a boolean, return it
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        // If it's a string, parse "true"/"false" (case-insensitive)
+        if (typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'true') return true;
+          if (lowerValue === 'false') return false;
+        }
+      }
+    }
+  } catch {
+    // import.meta not available via direct access
+  }
+
+  // Approach 2: Check globalThis.__VITE_ENV__ for both boolean and string values (test environments)
+  const g = globalThis as GlobalWithImportMeta;
+  if (typeof globalThis !== 'undefined' && g.__VITE_ENV__) {
+    const value = g.__VITE_ENV__[key];
+    if (value !== undefined) {
+      // If it's already a boolean, return it
+      if (typeof value === 'boolean') {
+        return value;
+      }
+      // If it's a string, parse "true"/"false" (case-insensitive)
+      if (typeof value === 'string') {
+        const lowerValue = value.toLowerCase();
+        if (lowerValue === 'true') return true;
+        if (lowerValue === 'false') return false;
+      }
+    }
+  }
+
+  // Fall back to string value using getEnvVar
+  const value = getEnvVar(key);
+
+  // Handle explicit "true" and "false" strings (case-insensitive)
+  if (value !== '') {
+    const lowerValue = value.toLowerCase();
+    if (lowerValue === 'true') return true;
+    if (lowerValue === 'false') return false;
+    // If it's any other non-empty string, treat as truthy
+    return true;
+  }
+
+  // Fall back to default
+  return defaultValue;
 }
 
 function getNumberEnvVar(key: string, defaultValue: number): number {
@@ -30,7 +118,7 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
 
 export const env = {
   // API Configuration
-  API_URL: getEnvVar('VITE_API_URL', '/api'),
+  API_URL: getEnvVar('VITE_API_URL', '/api/v1'),
   API_TIMEOUT: getNumberEnvVar('VITE_API_TIMEOUT', 10000),
 
   // Development Settings

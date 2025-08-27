@@ -39,8 +39,45 @@ const getSiteService = (req: Request): SiteService => {
 };
 
 /**
- * POST /sites
- * Create new site
+ * @swagger
+ * /api/v1/sites:
+ *   post:
+ *     summary: Create a new site
+ *     description: Creates a new site in the hierarchy system
+ *     tags:
+ *       - Sites
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Unique site name
+ *               description:
+ *                 type: string
+ *                 description: Site description
+ *               location:
+ *                 type: string
+ *                 description: Physical location of the site
+ *               metadata:
+ *                 type: object
+ *                 description: Additional site metadata
+ *     responses:
+ *       201:
+ *         description: Site created successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       409:
+ *         description: Site with same name already exists
  */
 router.post(
   '/',
@@ -71,8 +108,57 @@ router.post(
 );
 
 /**
- * GET /sites
- * List sites with filtering and pagination
+ * @swagger
+ * /api/v1/sites:
+ *   get:
+ *     summary: List all sites
+ *     description: Returns a paginated list of sites with optional filtering and sorting
+ *     tags:
+ *       - Sites
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: Page number (1-indexed)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - name: pageSize
+ *         in: query
+ *         description: Items per page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - name: search
+ *         in: query
+ *         description: Search term for name or description
+ *         schema:
+ *           type: string
+ *       - name: sortBy
+ *         in: query
+ *         description: Field to sort by
+ *         schema:
+ *           type: string
+ *           enum: [name, createdAt, updatedAt]
+ *           default: createdAt
+ *       - name: sortOrder
+ *         in: query
+ *         description: Sort order (case-insensitive)
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc, ASC, DESC]
+ *           default: desc
+ *     responses:
+ *       200:
+ *         description: List of sites retrieved successfully
+ *       400:
+ *         description: Invalid query parameters or validation error
+ *       401:
+ *         description: Unauthorized
  */
 router.get(
   '/',
@@ -176,8 +262,59 @@ router.get(
 );
 
 /**
- * PUT /sites/:siteId
- * Update specific site
+ * @swagger
+ * /api/v1/sites/{siteId}:
+ *   put:
+ *     summary: Update a site
+ *     description: Updates an existing site with optimistic locking
+ *     tags:
+ *       - Sites
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: siteId
+ *         in: path
+ *         required: true
+ *         description: Site UUID
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - updatedAt
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Site name
+ *               description:
+ *                 type: string
+ *                 description: Site description
+ *               location:
+ *                 type: string
+ *                 description: Physical location
+ *               metadata:
+ *                 type: object
+ *                 description: Additional metadata
+ *               updatedAt:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Last updated timestamp for optimistic locking
+ *     responses:
+ *       200:
+ *         description: Site updated successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Site not found
+ *       409:
+ *         description: Optimistic locking conflict
  */
 router.put(
   '/:siteId',
