@@ -36,11 +36,11 @@ WHERE risk_level IN ('HIGH', 'CRITICAL');
 // Database connection configuration
 const dbConfig = {
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || "5432"),
+  port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  type: "postgres" as const,
+  type: 'postgres' as const,
 
   // Performance optimization settings
   pool: {
@@ -53,13 +53,13 @@ const dbConfig = {
   // Query optimization
   extra: {
     connectionLimit: 10,
-    statement_timeout: "30s", // Prevent long-running queries
-    lock_timeout: "10s", // Prevent lock contention
-    idle_in_transaction_session_timeout: "5min",
+    statement_timeout: '30s', // Prevent long-running queries
+    lock_timeout: '10s', // Prevent lock contention
+    idle_in_transaction_session_timeout: '5min',
   },
 
   // Enable query logging for performance monitoring
-  logging: process.env.NODE_ENV === "development" ? "all" : ["error", "warn"],
+  logging: process.env.NODE_ENV === 'development' ? 'all' : ['error', 'warn'],
 };
 ```
 
@@ -68,41 +68,39 @@ const dbConfig = {
 ```typescript
 // Optimized PLC search with hierarchy
 export class PLCService {
-  async searchPLCsOptimized(
-    filters: PLCSearchFilters,
-  ): Promise<PLCWithHierarchy[]> {
+  async searchPLCsOptimized(filters: PLCSearchFilters): Promise<PLCWithHierarchy[]> {
     const queryBuilder = this.plcRepository
-      .createQueryBuilder("plc")
-      .leftJoinAndSelect("plc.equipment", "equipment")
-      .leftJoinAndSelect("equipment.cell", "cell")
-      .leftJoinAndSelect("cell.site", "site")
+      .createQueryBuilder('plc')
+      .leftJoinAndSelect('plc.equipment', 'equipment')
+      .leftJoinAndSelect('equipment.cell', 'cell')
+      .leftJoinAndSelect('cell.site', 'site')
       .select([
-        "plc.id",
-        "plc.tagId",
-        "plc.description",
-        "plc.make",
-        "plc.model",
-        "plc.ipAddress",
-        "equipment.id",
-        "equipment.name",
-        "equipment.equipmentType",
-        "cell.id",
-        "cell.name",
-        "cell.lineNumber",
-        "site.id",
-        "site.name",
+        'plc.id',
+        'plc.tagId',
+        'plc.description',
+        'plc.make',
+        'plc.model',
+        'plc.ipAddress',
+        'equipment.id',
+        'equipment.name',
+        'equipment.equipmentType',
+        'cell.id',
+        'cell.name',
+        'cell.lineNumber',
+        'site.id',
+        'site.name',
       ]);
 
     // Apply filters with optimized WHERE conditions
     if (filters.siteId) {
-      queryBuilder.andWhere("site.id = :siteId", { siteId: filters.siteId });
+      queryBuilder.andWhere('site.id = :siteId', { siteId: filters.siteId });
     }
 
     if (filters.search) {
       queryBuilder.andWhere(
         `to_tsvector('english', plc.description || ' ' || plc.make || ' ' || plc.model) 
          @@ plainto_tsquery('english', :search)`,
-        { search: filters.search },
+        { search: filters.search }
       );
     }
 
@@ -110,9 +108,9 @@ export class PLCService {
     queryBuilder
       .limit(filters.limit || 50)
       .offset(filters.offset || 0)
-      .orderBy("site.name", "ASC")
-      .addOrderBy("cell.lineNumber", "ASC")
-      .addOrderBy("plc.tagId", "ASC");
+      .orderBy('site.name', 'ASC')
+      .addOrderBy('cell.lineNumber', 'ASC')
+      .addOrderBy('plc.tagId', 'ASC');
 
     return queryBuilder.getMany();
   }
@@ -132,7 +130,7 @@ export class CacheService {
     this.redis = createClient({
       socket: {
         host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT || "6379"),
+        port: parseInt(process.env.REDIS_PORT || '6379'),
       },
 
       // Performance settings
@@ -145,17 +143,13 @@ export class CacheService {
   }
 
   // Equipment search results caching
-  async cacheSearchResults(
-    key: string,
-    results: any[],
-    ttl: number = 300,
-  ): Promise<void> {
+  async cacheSearchResults(key: string, results: any[], ttl: number = 300): Promise<void> {
     await this.redis.setEx(key, ttl, JSON.stringify(results));
   }
 
   // Hierarchy data caching with longer TTL
   async cacheHierarchy(hierarchy: any[], ttl: number = 1800): Promise<void> {
-    await this.redis.setEx("hierarchy:full", ttl, JSON.stringify(hierarchy));
+    await this.redis.setEx('hierarchy:full', ttl, JSON.stringify(hierarchy));
   }
 
   // Invalidation strategy for data consistency
@@ -179,14 +173,14 @@ export const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes stale time
       cacheTime: 10 * 60 * 1000, // 10 minutes cache time
       retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
 
       // Network mode for air-gapped environments
-      networkMode: "offlineFirst",
+      networkMode: 'offlineFirst',
     },
     mutations: {
       retry: 1,
-      networkMode: "offlineFirst",
+      networkMode: 'offlineFirst',
     },
   },
 });
@@ -194,13 +188,13 @@ export const queryClient = new QueryClient({
 // Custom hooks with optimized caching
 export const usePLCSearch = (filters: PLCFilters) => {
   return useQuery({
-    queryKey: ["plcs", "search", filters],
+    queryKey: ['plcs', 'search', filters],
     queryFn: () => plcService.searchPLCs(filters),
     enabled: Boolean(Object.keys(filters).length),
     staleTime: 2 * 60 * 1000, // 2 minutes for search results
-    select: useCallback((data) => {
+    select: useCallback(data => {
       // Transform data for UI optimization
-      return data.map((plc) => ({
+      return data.map(plc => ({
         ...plc,
         displayName: `${plc.tagId} - ${plc.description}`,
         hierarchyPath: `${plc.site.name} > ${plc.cell.name} > ${plc.equipment.name}`,
@@ -290,8 +284,8 @@ export const usePLCStore = create<PLCState>((set, get) => ({
   isLoading: false,
 
   // Optimized actions
-  setFilters: (newFilters) => {
-    set((state) => {
+  setFilters: newFilters => {
+    set(state => {
       const filters = { ...state.filters, ...newFilters };
       return {
         filters,
@@ -301,8 +295,8 @@ export const usePLCStore = create<PLCState>((set, get) => ({
   },
 
   // Bulk operations for performance
-  updatePLCs: (plcs) => {
-    set((state) => ({
+  updatePLCs: plcs => {
+    set(state => ({
       plcs,
       filteredPLCs: applyFilters(plcs, state.filters),
     }));
@@ -311,8 +305,8 @@ export const usePLCStore = create<PLCState>((set, get) => ({
 
 // Selector hooks for optimal re-renders
 export const usePLCSelectors = () => ({
-  plcCount: usePLCStore((state) => state.filteredPLCs.length),
-  isLoading: usePLCStore((state) => state.isLoading),
-  hasData: usePLCStore((state) => state.filteredPLCs.length > 0),
+  plcCount: usePLCStore(state => state.filteredPLCs.length),
+  isLoading: usePLCStore(state => state.isLoading),
+  hasData: usePLCStore(state => state.filteredPLCs.length > 0),
 });
 ```

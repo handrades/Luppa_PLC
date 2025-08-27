@@ -78,23 +78,23 @@ We will use **TypeORM 0.3+** as the primary database access layer and ORM for th
 
 ```typescript
 // Entity example for PLC inventory
-@Entity("plcs")
+@Entity('plcs')
 export class PlcEntity extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   description: string;
 
-  @Column({ type: "varchar", length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   make: string;
 
-  @Column({ type: "inet", nullable: true })
-  @Index({ unique: true, where: "ip_address IS NOT NULL" })
+  @Column({ type: 'inet', nullable: true })
+  @Index({ unique: true, where: 'ip_address IS NOT NULL' })
   ipAddress?: string;
 
-  @Column("text", { array: true, default: [] })
-  @Index("idx_plcs_tags", { using: "gin" })
+  @Column('text', { array: true, default: [] })
+  @Index('idx_plcs_tags', { using: 'gin' })
   tags: string[];
 
   @CreateDateColumn()
@@ -112,16 +112,14 @@ export class PlcEntity extends BaseEntity {
 @Injectable()
 export class PlcRepository extends Repository<PlcEntity> {
   async findByTags(tags: string[]): Promise<PlcEntity[]> {
-    return this.createQueryBuilder("plc")
-      .where("plc.tags && :tags", { tags })
-      .getMany();
+    return this.createQueryBuilder('plc').where('plc.tags && :tags', { tags }).getMany();
   }
 
   async getInventoryStats(): Promise<InventoryStats> {
-    return this.createQueryBuilder("plc")
-      .select("COUNT(*)", "total")
-      .addSelect("COUNT(CASE WHEN status = :online THEN 1 END)", "online")
-      .setParameter("online", PlcStatus.ONLINE)
+    return this.createQueryBuilder('plc')
+      .select('COUNT(*)', 'total')
+      .addSelect('COUNT(CASE WHEN status = :online THEN 1 END)', 'online')
+      .setParameter('online', PlcStatus.ONLINE)
       .getRawOne();
   }
 }
@@ -132,7 +130,7 @@ export class PlcRepository extends Repository<PlcEntity> {
 ```typescript
 // Connection configuration for industrial workloads
 const dataSource = new DataSource({
-  type: "postgres",
+  type: 'postgres',
   // ... connection details
   extra: {
     max: 20, // Maximum connections
@@ -141,14 +139,14 @@ const dataSource = new DataSource({
     idleTimeoutMillis: 600000,
   },
   cache: {
-    type: "redis", // Optional Redis caching
+    type: 'redis', // Optional Redis caching
     options: {
-      host: "localhost",
+      host: 'localhost',
       port: 6379,
     },
   },
-  logging: ["query", "error", "warn"],
-  logger: "advanced-console",
+  logging: ['query', 'error', 'warn'],
+  logger: 'advanced-console',
 });
 ```
 
@@ -159,7 +157,7 @@ const dataSource = new DataSource({
 ```typescript
 // Base entity with common audit fields
 export abstract class BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @CreateDateColumn()
@@ -168,10 +166,10 @@ export abstract class BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: "uuid", nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   createdBy?: string;
 
-  @Column({ type: "uuid", nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   updatedBy?: string;
 }
 
@@ -192,12 +190,12 @@ export class AuditSubscriber implements EntitySubscriberInterface {
 
 ```typescript
 // App-specific entities can use different schemas
-@Entity("inventory_plcs", { schema: "inventory" })
+@Entity('inventory_plcs', { schema: 'inventory' })
 export class PlcEntity extends BaseEntity {
   // PLC-specific fields
 }
 
-@Entity("maintenance_schedules", { schema: "maintenance" })
+@Entity('maintenance_schedules', { schema: 'maintenance' })
 export class MaintenanceEntity extends BaseEntity {
   // Maintenance-specific fields
 }
@@ -277,11 +275,11 @@ export class AddPlcTags1642680000000 implements MigrationInterface {
 ```typescript
 // Use query builder for complex queries
 const results = await this.plcRepository
-  .createQueryBuilder("plc")
-  .leftJoinAndSelect("plc.site", "site")
-  .where("plc.status = :status", { status: "online" })
-  .andWhere("plc.tags && :tags", { tags: ["critical"] })
-  .orderBy("plc.lastSeen", "DESC")
+  .createQueryBuilder('plc')
+  .leftJoinAndSelect('plc.site', 'site')
+  .where('plc.status = :status', { status: 'online' })
+  .andWhere('plc.tags && :tags', { tags: ['critical'] })
+  .orderBy('plc.lastSeen', 'DESC')
   .take(50)
   .getMany();
 
@@ -301,10 +299,10 @@ const stats = await this.dataSource.query(`
 
 ```typescript
 // Use transactions for data consistency
-await this.dataSource.transaction(async (manager) => {
+await this.dataSource.transaction(async manager => {
   const plc = await manager.save(PlcEntity, plcData);
   await manager.save(AuditLogEntity, {
-    action: "CREATE",
+    action: 'CREATE',
     entityId: plc.id,
     changes: plcData,
   });

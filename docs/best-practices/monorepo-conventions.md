@@ -15,7 +15,7 @@ export type PLCFilters = {
 };
 
 // apps/api/src/types/api.ts
-import type { PLCRecord } from "@shared-types/plc";
+import type { PLCRecord } from '@shared-types/plc';
 
 export interface ApiResponse<T> {
   data: T;
@@ -37,8 +37,8 @@ Leverage consistent path mapping:
 
 ```typescript
 // tsconfig.json paths configuration enables clean imports
-import { PLCRecord } from "@shared-types/plc";
-import { ApiResponse } from "@/types/api";
-import { PlcService } from "@/services/PlcService";
-import { CONFIG } from "@config/database";
+import { PLCRecord } from '@shared-types/plc';
+import { ApiResponse } from '@/types/api';
+import { PlcService } from '@/services/PlcService';
+import { CONFIG } from '@config/database';
 ```

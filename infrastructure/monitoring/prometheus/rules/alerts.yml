@@ -2,7 +2,7 @@
 # Critical alerts for production system monitoring
 
 groups:
-  - name: "system.rules"
+  - name: 'system.rules'
     rules:
       # Service availability alerts
       - alert: ServiceDown
@@ -11,8 +11,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Service {{ $labels.job }} is down"
-          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+          summary: 'Service {{ $labels.job }} is down'
+          description: 'Service {{ $labels.job }} has been down for more than 1 minute.'
 
       - alert: ApiServiceDown
         expr: up{job="api"} == 0
@@ -20,8 +20,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "API service is down"
-          description: "The API service has been down for more than 30 seconds."
+          summary: 'API service is down'
+          description: 'The API service has been down for more than 30 seconds.'
 
       - alert: DatabaseConnectionFailure
         expr: up{job="postgres"} == 0
@@ -29,8 +29,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Database connection failed"
-          description: "Unable to connect to PostgreSQL database for more than 1 minute."
+          summary: 'Database connection failed'
+          description: 'Unable to connect to PostgreSQL database for more than 1 minute.'
 
       - alert: RedisConnectionFailure
         expr: up{job="redis"} == 0
@@ -38,10 +38,10 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Redis connection failed"
-          description: "Unable to connect to Redis cache for more than 1 minute."
+          summary: 'Redis connection failed'
+          description: 'Unable to connect to Redis cache for more than 1 minute.'
 
-  - name: "performance.rules"
+  - name: 'performance.rules'
     rules:
       # API Error Rate Alerts (Story 2.3 AC 7)
       - alert: HighAPIErrorRate
@@ -51,8 +51,8 @@ groups:
           severity: warning
           service: api
         annotations:
-          summary: "High API error rate detected"
-          description: "API error rate is {{ $value }}% over the last 5 minutes, exceeding the 5% threshold"
+          summary: 'High API error rate detected'
+          description: 'API error rate is {{ $value }}% over the last 5 minutes, exceeding the 5% threshold'
 
       - alert: CriticalAPIErrorRate
         expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 10
@@ -61,8 +61,8 @@ groups:
           severity: critical
           service: api
         annotations:
-          summary: "Critical API error rate detected"
-          description: "API server error rate is {{ $value }}% over the last 2 minutes, exceeding the 10% threshold"
+          summary: 'Critical API error rate detected'
+          description: 'API server error rate is {{ $value }}% over the last 2 minutes, exceeding the 10% threshold'
 
       # High response time alerts
       - alert: HighResponseTime
@@ -71,8 +71,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High response time detected"
-          description: "95th percentile response time is {{ $value }}s for more than 5 minutes."
+          summary: 'High response time detected'
+          description: '95th percentile response time is {{ $value }}s for more than 5 minutes.'
 
       - alert: HighErrorRate
         expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
@@ -80,8 +80,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value }} requests/second for more than 2 minutes."
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value }} requests/second for more than 2 minutes.'
 
       # Memory usage alerts
       - alert: HighMemoryUsage
@@ -90,8 +90,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High memory usage on {{ $labels.name }}"
-          description: "Memory usage is {{ $value | humanizePercentage }} for more than 10 minutes."
+          summary: 'High memory usage on {{ $labels.name }}'
+          description: 'Memory usage is {{ $value | humanizePercentage }} for more than 10 minutes.'
 
       - alert: CriticalMemoryUsage
         expr: (sum by (name) (container_memory_usage_bytes) / on (name) group_left() sum by (name) (container_spec_memory_limit_bytes > 0)) > 0.95
@@ -99,10 +99,10 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Critical memory usage on {{ $labels.name }}"
-          description: "Memory usage is {{ $value | humanizePercentage }} for more than 2 minutes."
+          summary: 'Critical memory usage on {{ $labels.name }}'
+          description: 'Memory usage is {{ $value | humanizePercentage }} for more than 2 minutes.'
 
-  - name: "database.rules"
+  - name: 'database.rules'
     rules:
       # Database Connection Pool Alerts (Story 2.3 AC 7)
       - alert: DatabasePoolExhaustion
@@ -112,8 +112,8 @@ groups:
           severity: warning
           service: database
         annotations:
-          summary: "Database connection pool utilization high"
-          description: "Database connection pool utilization is {{ $value }}%, exceeding 80% threshold"
+          summary: 'Database connection pool utilization high'
+          description: 'Database connection pool utilization is {{ $value }}%, exceeding 80% threshold'
 
       - alert: DatabasePoolCritical
         expr: database_pool_utilization > 95
@@ -122,8 +122,8 @@ groups:
           severity: critical
           service: database
         annotations:
-          summary: "Database connection pool near exhaustion"
-          description: "Database connection pool utilization is {{ $value }}%, approaching 100%"
+          summary: 'Database connection pool near exhaustion'
+          description: 'Database connection pool utilization is {{ $value }}%, approaching 100%'
 
       # Database-specific alerts
       - alert: DatabaseHighConnections
@@ -132,8 +132,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High database connection usage"
-          description: "Database connection usage is {{ $value | humanizePercentage }} for more than 5 minutes."
+          summary: 'High database connection usage'
+          description: 'Database connection usage is {{ $value | humanizePercentage }} for more than 5 minutes.'
 
       - alert: DatabaseSlowQueries
         expr: rate(pg_stat_statements_total_time[5m]) / rate(pg_stat_statements_calls[5m]) > 1000
@@ -141,8 +141,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Database slow queries detected"
-          description: "Average query time is {{ $value }}ms for more than 10 minutes."
+          summary: 'Database slow queries detected'
+          description: 'Average query time is {{ $value }}ms for more than 10 minutes.'
 
       - alert: DatabaseLockWait
         expr: pg_stat_activity_waiting_count > 10
@@ -150,10 +150,10 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Database lock contention detected"
-          description: "{{ $value }} queries are waiting for locks for more than 2 minutes."
+          summary: 'Database lock contention detected'
+          description: '{{ $value }} queries are waiting for locks for more than 2 minutes.'
 
-  - name: "redis.rules"
+  - name: 'redis.rules'
     rules:
       # Redis Memory Usage Alerts (Story 2.3 AC 7)
       - alert: RedisHighMemoryUsage
@@ -163,8 +163,8 @@ groups:
           severity: warning
           service: redis
         annotations:
-          summary: "Redis memory usage high"
-          description: "Redis memory usage is {{ $value }}% of 256MB limit, exceeding 80% threshold"
+          summary: 'Redis memory usage high'
+          description: 'Redis memory usage is {{ $value }}% of 256MB limit, exceeding 80% threshold'
 
       - alert: RedisCriticalMemoryUsage
         expr: redis_memory_used_bytes / (256 * 1024 * 1024) * 100 > 95
@@ -173,8 +173,8 @@ groups:
           severity: critical
           service: redis
         annotations:
-          summary: "Redis memory usage critical"
-          description: "Redis memory usage is {{ $value }}% of 256MB limit, approaching memory limit"
+          summary: 'Redis memory usage critical'
+          description: 'Redis memory usage is {{ $value }}% of 256MB limit, approaching memory limit'
 
       # Redis Cache Performance Alert
       - alert: LowRedisCacheHitRatio
@@ -184,10 +184,10 @@ groups:
           severity: warning
           service: redis
         annotations:
-          summary: "Low Redis cache hit ratio"
-          description: "Redis cache hit ratio is {{ $value }}%, below 70% threshold for 10 minutes"
+          summary: 'Low Redis cache hit ratio'
+          description: 'Redis cache hit ratio is {{ $value }}%, below 70% threshold for 10 minutes'
 
-  - name: "application.rules"
+  - name: 'application.rules'
     rules:
       # Application-specific alerts
       - alert: PLCConnectionFailures
@@ -196,8 +196,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "PLC connection failures detected"
-          description: "{{ $value }} PLC connection failures in the last 5 minutes."
+          summary: 'PLC connection failures detected'
+          description: '{{ $value }} PLC connection failures in the last 5 minutes.'
 
       - alert: InventoryDataStale
         expr: time() - inventory_last_update_timestamp > 3600
@@ -205,7 +205,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Inventory data is stale"
+          summary: 'Inventory data is stale'
           description: "Inventory data hasn't been updated for {{ $value | humanizeDuration }}."
 
       - alert: AuthenticationFailures
@@ -214,8 +214,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High authentication failure rate"
-          description: "{{ $value }} authentication failures in the last 5 minutes."
+          summary: 'High authentication failure rate'
+          description: '{{ $value }} authentication failures in the last 5 minutes.'
 
       - alert: DiskSpaceHigh
         expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
@@ -223,10 +223,10 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Disk space critically low on {{ $labels.mountpoint }}"
-          description: "Only {{ $value | humanizePercentage }} disk space remaining."
+          summary: 'Disk space critically low on {{ $labels.mountpoint }}'
+          description: 'Only {{ $value | humanizePercentage }} disk space remaining.'
 
-  - name: "security.rules"
+  - name: 'security.rules'
     rules:
       # Security-related alerts
       - alert: UnusualAPIUsage
@@ -235,8 +235,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Unusual API usage pattern detected"
-          description: "API request rate is {{ $value }} requests/second for more than 10 minutes."
+          summary: 'Unusual API usage pattern detected'
+          description: 'API request rate is {{ $value }} requests/second for more than 10 minutes.'
 
       - alert: MultipleFailedLogins
         expr: increase(failed_login_attempts_total[5m]) > 20
@@ -244,8 +244,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Multiple failed login attempts detected"
-          description: "{{ $value }} failed login attempts in the last 5 minutes."
+          summary: 'Multiple failed login attempts detected'
+          description: '{{ $value }} failed login attempts in the last 5 minutes.'
 
       - alert: SSLCertificateExpiringSoon
         expr: ssl_certificate_expiry_days < 30
@@ -253,5 +253,5 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "SSL certificate expiring soon"
-          description: "SSL certificate will expire in {{ $value }} days."
+          summary: 'SSL certificate expiring soon'
+          description: 'SSL certificate will expire in {{ $value }} days.'

@@ -56,10 +56,7 @@ interface UsePlcDataOptions {
   refreshInterval?: number;
 }
 
-const usePlcData = (
-  filters: PlcQueryOptions,
-  options: UsePlcDataOptions = {},
-) => {
+const usePlcData = (filters: PlcQueryOptions, options: UsePlcDataOptions = {}) => {
   const { autoRefresh = false, refreshInterval = 30000 } = options;
   const [data, setData] = useState<PLCRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +69,7 @@ const usePlcData = (
       setData(response.data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }

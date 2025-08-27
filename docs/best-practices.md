@@ -100,11 +100,7 @@ Keep functions small and focused (5-10 lines ideal for pure functions):
 
 ```typescript
 // ✅ Good - Single responsibility, pure function
-const calculatePlcHealthScore = (
-  uptime: number,
-  errorCount: number,
-  lastResponseTime: number,
-): number => {
+const calculatePlcHealthScore = (uptime: number, errorCount: number, lastResponseTime: number): number => {
   const uptimeScore = Math.min(uptime / 100, 1);
   const errorScore = Math.max(1 - errorCount / 10, 0);
   const responseScore = lastResponseTime < 1000 ? 1 : 0.5;
@@ -129,22 +125,13 @@ interface PlcQueryOptions {
   siteFilter?: string;
   cellTypeFilter?: string;
   tags?: string[];
-  sortBy?: "description" | "make" | "ip";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'description' | 'make' | 'ip';
+  sortOrder?: 'asc' | 'desc';
   limit?: number;
 }
 
-const queryPlcs = async (
-  options: PlcQueryOptions = {},
-): Promise<PLCRecord[]> => {
-  const {
-    siteFilter,
-    cellTypeFilter,
-    tags = [],
-    sortBy = "description",
-    sortOrder = "asc",
-    limit = 100,
-  } = options;
+const queryPlcs = async (options: PlcQueryOptions = {}): Promise<PLCRecord[]> => {
+  const { siteFilter, cellTypeFilter, tags = [], sortBy = 'description', sortOrder = 'asc', limit = 100 } = options;
 
   // Implementation
 };
@@ -156,7 +143,7 @@ const queryPlcs = (
   tags: string[],
   sortBy: string,
   sortOrder: string,
-  limit: number,
+  limit: number
 ) => {
   // Implementation
 };
@@ -168,23 +155,16 @@ Leverage ES2022+ features in our tech stack:
 
 ```typescript
 // ✅ Good - Template literals and destructuring
-const generatePlcReport = ({
-  description,
-  make,
-  model,
-  ip,
-}: PLCRecord): string => {
+const generatePlcReport = ({ description, make, model, ip }: PLCRecord): string => {
   return `PLC Report:
     Description: ${description}
     Make/Model: ${make} ${model}
-    IP Address: ${ip ?? "Not configured"}`;
+    IP Address: ${ip ?? 'Not configured'}`;
 };
 
 // ✅ Good - Array methods and spread operator
 const getActivePlcs = (plcs: PLCRecord[]): PLCRecord[] => {
-  return plcs
-    .filter((plc) => plc.ip !== null)
-    .map((plc) => ({ ...plc, status: "active" }));
+  return plcs.filter(plc => plc.ip !== null).map(plc => ({ ...plc, status: 'active' }));
 };
 ```
 
@@ -196,24 +176,9 @@ Create comprehensive type definitions for your industrial domain:
 
 ```typescript
 // Domain-specific types
-type PlcMake =
-  | "Allen-Bradley"
-  | "Siemens"
-  | "Schneider"
-  | "Omron"
-  | "Mitsubishi";
-type CellType =
-  | "Production"
-  | "Quality"
-  | "Packaging"
-  | "Shipping"
-  | "Maintenance";
-type EquipmentStatus =
-  | "Running"
-  | "Stopped"
-  | "Alarm"
-  | "Maintenance"
-  | "Unknown";
+type PlcMake = 'Allen-Bradley' | 'Siemens' | 'Schneider' | 'Omron' | 'Mitsubishi';
+type CellType = 'Production' | 'Quality' | 'Packaging' | 'Shipping' | 'Maintenance';
+type EquipmentStatus = 'Running' | 'Stopped' | 'Alarm' | 'Maintenance' | 'Unknown';
 
 interface PlcLocation {
   siteName: string;
@@ -242,36 +207,32 @@ Use discriminated unions for error handling:
 
 ```typescript
 // Result pattern for error handling
-type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
+type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
 // Service layer example
 class PlcService {
-  async findById(
-    id: string,
-  ): Promise<Result<PLCRecord, "NOT_FOUND" | "DATABASE_ERROR">> {
+  async findById(id: string): Promise<Result<PLCRecord, 'NOT_FOUND' | 'DATABASE_ERROR'>> {
     try {
       const plc = await this.repository.findById(id);
       if (!plc) {
-        return { success: false, error: "NOT_FOUND" };
+        return { success: false, error: 'NOT_FOUND' };
       }
       return { success: true, data: plc };
     } catch (error) {
-      logger.error("Database error finding PLC", { id, error });
-      return { success: false, error: "DATABASE_ERROR" };
+      logger.error('Database error finding PLC', { id, error });
+      return { success: false, error: 'DATABASE_ERROR' };
     }
   }
 }
 
 // Usage with type-safe error handling
-const result = await plcService.findById("plc-123");
+const result = await plcService.findById('plc-123');
 if (!result.success) {
   switch (result.error) {
-    case "NOT_FOUND":
-      return res.status(404).json({ message: "PLC not found" });
-    case "DATABASE_ERROR":
-      return res.status(500).json({ message: "Internal server error" });
+    case 'NOT_FOUND':
+      return res.status(404).json({ message: 'PLC not found' });
+    case 'DATABASE_ERROR':
+      return res.status(500).json({ message: 'Internal server error' });
   }
 }
 
@@ -284,29 +245,17 @@ const plc = result.data;
 Leverage Zod for runtime type validation (aligns with our Joi usage):
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
 const PlcCreateSchema = z.object({
   description: z.string().min(1).max(255),
-  make: z.enum([
-    "Allen-Bradley",
-    "Siemens",
-    "Schneider",
-    "Omron",
-    "Mitsubishi",
-  ]),
+  make: z.enum(['Allen-Bradley', 'Siemens', 'Schneider', 'Omron', 'Mitsubishi']),
   model: z.string().min(1).max(100),
   ip: z.string().ip().nullable(),
   tags: z.array(z.string()).max(50),
   location: z.object({
     siteName: z.string().min(1),
-    cellType: z.enum([
-      "Production",
-      "Quality",
-      "Packaging",
-      "Shipping",
-      "Maintenance",
-    ]),
+    cellType: z.enum(['Production', 'Quality', 'Packaging', 'Shipping', 'Maintenance']),
     cellId: z.string().min(1),
     equipmentId: z.string().optional(),
   }),
@@ -319,7 +268,7 @@ const createPlc = async (req: Request, res: Response) => {
   const validation = PlcCreateSchema.safeParse(req.body);
   if (!validation.success) {
     return res.status(400).json({
-      message: "Validation error",
+      message: 'Validation error',
       errors: validation.error.format(),
     });
   }
@@ -388,10 +337,7 @@ interface UsePlcDataOptions {
   refreshInterval?: number;
 }
 
-const usePlcData = (
-  filters: PlcQueryOptions,
-  options: UsePlcDataOptions = {},
-) => {
+const usePlcData = (filters: PlcQueryOptions, options: UsePlcDataOptions = {}) => {
   const { autoRefresh = false, refreshInterval = 30000 } = options;
   const [data, setData] = useState<PLCRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -404,7 +350,7 @@ const usePlcData = (
       setData(response.data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -469,17 +415,14 @@ class PlcService {
   constructor(
     private repository: IPlcRepository,
     private auditService: IAuditService,
-    private logger: ILogger,
+    private logger: ILogger
   ) {}
 
-  async createPlc(
-    data: PlcCreateInput,
-    userId: string,
-  ): Promise<Result<PLCRecord, string>> {
+  async createPlc(data: PlcCreateInput, userId: string): Promise<Result<PLCRecord, string>> {
     try {
       // Business logic validation
       if (data.ip && (await this.repository.findByIp(data.ip))) {
-        return { success: false, error: "IP address already in use" };
+        return { success: false, error: 'IP address already in use' };
       }
 
       // Create the PLC
@@ -487,14 +430,14 @@ class PlcService {
 
       // Audit logging for compliance
       await this.auditService.log({
-        action: "plc.created",
-        entityType: "plc",
+        action: 'plc.created',
+        entityType: 'plc',
         entityId: plc.id,
         userId,
         details: { description: plc.description, make: plc.make },
       });
 
-      this.logger.info("PLC created successfully", {
+      this.logger.info('PLC created successfully', {
         plcId: plc.id,
         userId,
         make: plc.make,
@@ -502,8 +445,8 @@ class PlcService {
 
       return { success: true, data: plc };
     } catch (error) {
-      this.logger.error("Error creating PLC", { error, data, userId });
-      return { success: false, error: "Failed to create PLC" };
+      this.logger.error('Error creating PLC', { error, data, userId });
+      return { success: false, error: 'Failed to create PLC' };
     }
   }
 }
@@ -517,7 +460,7 @@ Follow consistent testing patterns using Jest:
 
 ```typescript
 // Service layer testing
-describe("PlcService", () => {
+describe('PlcService', () => {
   let service: PlcService;
   let mockRepository: jest.Mocked<IPlcRepository>;
   let mockAuditService: jest.Mocked<IAuditService>;
@@ -536,25 +479,25 @@ describe("PlcService", () => {
     service = new PlcService(mockRepository, mockAuditService, mockLogger);
   });
 
-  describe("createPlc", () => {
+  describe('createPlc', () => {
     const validPlcData: PlcCreateInput = {
-      description: "Test PLC",
-      make: "Allen-Bradley",
-      model: "CompactLogix 5370",
-      ip: "192.168.1.100",
-      tags: ["production", "line1"],
+      description: 'Test PLC',
+      make: 'Allen-Bradley',
+      model: 'CompactLogix 5370',
+      ip: '192.168.1.100',
+      tags: ['production', 'line1'],
       location: {
-        siteName: "Plant A",
-        cellType: "Production",
-        cellId: "CELL-001",
+        siteName: 'Plant A',
+        cellType: 'Production',
+        cellId: 'CELL-001',
       },
     };
 
-    it("should create PLC successfully with valid data", async () => {
+    it('should create PLC successfully with valid data', async () => {
       const expectedPlc: PLCRecord = {
-        id: "plc-123",
+        id: 'plc-123',
         ...validPlcData,
-        status: "Unknown",
+        status: 'Unknown',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -562,7 +505,7 @@ describe("PlcService", () => {
       mockRepository.create.mockResolvedValue(expectedPlc);
       mockRepository.findByIp.mockResolvedValue(null);
 
-      const result = await service.createPlc(validPlcData, "user-123");
+      const result = await service.createPlc(validPlcData, 'user-123');
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -570,21 +513,21 @@ describe("PlcService", () => {
       }
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: "plc.created",
-          entityId: "plc-123",
-          userId: "user-123",
-        }),
+          action: 'plc.created',
+          entityId: 'plc-123',
+          userId: 'user-123',
+        })
       );
     });
 
-    it("should return error when IP address is already in use", async () => {
+    it('should return error when IP address is already in use', async () => {
       mockRepository.findByIp.mockResolvedValue(expectedPlc);
 
-      const result = await service.createPlc(validPlcData, "user-123");
+      const result = await service.createPlc(validPlcData, 'user-123');
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toBe("IP address already in use");
+        expect(result.error).toBe('IP address already in use');
       }
       expect(mockRepository.create).not.toHaveBeenCalled();
     });
@@ -699,33 +642,25 @@ const VirtualizedPlcList: React.FC<PlcListProps> = ({ plcs, itemHeight }) => {
 const calculatePlcHealthMetrics = useMemo(() => {
   return plcs.reduce(
     (metrics, plc) => {
-      const health = calculatePlcHealthScore(
-        plc.uptime,
-        plc.errorCount,
-        plc.lastResponseTime,
-      );
+      const health = calculatePlcHealthScore(plc.uptime, plc.errorCount, plc.lastResponseTime);
 
       return {
         ...metrics,
         [plc.id]: health,
-        averageHealth:
-          (metrics.averageHealth * metrics.count + health) /
-          (metrics.count + 1),
+        averageHealth: (metrics.averageHealth * metrics.count + health) / (metrics.count + 1),
         count: metrics.count + 1,
       };
     },
-    { averageHealth: 0, count: 0 },
+    { averageHealth: 0, count: 0 }
   );
 }, [plcs]);
 
 // Memoized filter functions
 const filteredPlcs = useMemo(() => {
-  return plcs.filter((plc) => {
+  return plcs.filter(plc => {
     const matchesSite = !filters.site || plc.location.siteName === filters.site;
     const matchesStatus = !filters.status || plc.status === filters.status;
-    const matchesTags =
-      !filters.tags?.length ||
-      filters.tags.some((tag) => plc.tags.includes(tag));
+    const matchesTags = !filters.tags?.length || filters.tags.some(tag => plc.tags.includes(tag));
 
     return matchesSite && matchesStatus && matchesTags;
   });
@@ -739,8 +674,8 @@ const filteredPlcs = useMemo(() => {
 Always sanitize inputs for industrial environments:
 
 ```typescript
-import DOMPurify from "dompurify";
-import { escape } from "html-escaper";
+import DOMPurify from 'dompurify';
+import { escape } from 'html-escaper';
 
 // Sanitize user inputs
 const sanitizePlcDescription = (description: string): string => {
@@ -751,8 +686,7 @@ const sanitizePlcDescription = (description: string): string => {
 
 // Validate IP addresses
 const isValidPlcIpAddress = (ip: string): boolean => {
-  const ipRegex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   return ipRegex.test(ip);
 };
 
@@ -760,7 +694,7 @@ const isValidPlcIpAddress = (ip: string): boolean => {
 const createPlcRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many PLC creation requests",
+  message: 'Too many PLC creation requests',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -776,7 +710,7 @@ interface AuditLogEntry {
   timestamp: Date;
   userId: string;
   action: string;
-  entityType: "plc" | "user" | "system";
+  entityType: 'plc' | 'user' | 'system';
   entityId: string;
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
@@ -786,30 +720,30 @@ interface AuditLogEntry {
 
 class AuditService {
   async logPlcChange(
-    action: "create" | "update" | "delete",
+    action: 'create' | 'update' | 'delete',
     plcId: string,
     userId: string,
     oldValues?: Partial<PLCRecord>,
     newValues?: Partial<PLCRecord>,
-    request?: Request,
+    request?: Request
   ): Promise<void> {
     const auditEntry: AuditLogEntry = {
       id: generateId(),
       timestamp: new Date(),
       userId,
       action: `plc.${action}`,
-      entityType: "plc",
+      entityType: 'plc',
       entityId: plcId,
       oldValues,
       newValues,
-      ipAddress: request?.ip || "unknown",
-      userAgent: request?.headers["user-agent"] || "unknown",
+      ipAddress: request?.ip || 'unknown',
+      userAgent: request?.headers['user-agent'] || 'unknown',
     };
 
     await this.repository.createAuditLog(auditEntry);
 
     // Also log to Winston for external monitoring
-    logger.info("PLC audit event", {
+    logger.info('PLC audit event', {
       auditId: auditEntry.id,
       action: auditEntry.action,
       entityId: auditEntry.entityId,
@@ -836,7 +770,7 @@ export type PLCFilters = {
 };
 
 // apps/api/src/types/api.ts
-import type { PLCRecord } from "@shared-types/plc";
+import type { PLCRecord } from '@shared-types/plc';
 
 export interface ApiResponse<T> {
   data: T;
@@ -858,10 +792,10 @@ Leverage consistent path mapping:
 
 ```typescript
 // tsconfig.json paths configuration enables clean imports
-import { PLCRecord } from "@shared-types/plc";
-import { ApiResponse } from "@/types/api";
-import { PlcService } from "@/services/PlcService";
-import { CONFIG } from "@config/database";
+import { PLCRecord } from '@shared-types/plc';
+import { ApiResponse } from '@/types/api';
+import { PlcService } from '@/services/PlcService';
+import { CONFIG } from '@config/database';
 ```
 
 ## Industrial Context Considerations
@@ -891,7 +825,7 @@ class OfflinePlcService {
       const latestData = await this.fetchLatestData();
       this.updateLocalCache(latestData);
     } catch (error) {
-      logger.error("Sync failed", { error });
+      logger.error('Sync failed', { error });
     }
   }
 }
@@ -911,13 +845,13 @@ const validateIndustrialIP = (ip: string): boolean => {
     /^172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}$/, // Class B private
   ];
 
-  return industrialRanges.some((range) => range.test(ip));
+  return industrialRanges.some(range => range.test(ip));
 };
 
 const validatePlcTags = (tags: string[]): boolean => {
   // Industrial tag naming conventions
   const tagPattern = /^[A-Z][A-Z0-9_]*$/; // Uppercase, alphanumeric, underscores
-  return tags.every((tag) => tagPattern.test(tag) && tag.length <= 32);
+  return tags.every(tag => tagPattern.test(tag) && tag.length <= 32);
 };
 ```
 
@@ -928,34 +862,30 @@ Optimize for industrial data volumes:
 ```typescript
 // Batch operations for efficiency
 class BatchPlcOperations {
-  async bulkUpdateStatus(
-    updates: Array<{ id: string; status: EquipmentStatus }>,
-  ): Promise<Result<void, string>> {
+  async bulkUpdateStatus(updates: Array<{ id: string; status: EquipmentStatus }>): Promise<Result<void, string>> {
     const batchSize = 100;
     const batches = chunk(updates, batchSize);
 
     try {
-      await Promise.all(batches.map((batch) => this.processBatch(batch)));
+      await Promise.all(batches.map(batch => this.processBatch(batch)));
 
       return { success: true, data: undefined };
     } catch (error) {
-      return { success: false, error: "Batch update failed" };
+      return { success: false, error: 'Batch update failed' };
     }
   }
 
-  private async processBatch(
-    batch: Array<{ id: string; status: EquipmentStatus }>,
-  ): Promise<void> {
+  private async processBatch(batch: Array<{ id: string; status: EquipmentStatus }>): Promise<void> {
     const query = `
       UPDATE plc_records
       SET status = CASE id
-        ${batch.map((_, i) => `WHEN $${i * 2 + 1} THEN $${i * 2 + 2}`).join(" ")}
+        ${batch.map((_, i) => `WHEN $${i * 2 + 1} THEN $${i * 2 + 2}`).join(' ')}
       END,
       updated_at = NOW()
-      WHERE id IN (${batch.map((_, i) => `$${i * 2 + 1}`).join(", ")})
+      WHERE id IN (${batch.map((_, i) => `$${i * 2 + 1}`).join(', ')})
     `;
 
-    const params = batch.flatMap((item) => [item.id, item.status]);
+    const params = batch.flatMap(item => [item.id, item.status]);
     await this.db.query(query, params);
   }
 }

@@ -215,7 +215,7 @@ The scripts work seamlessly with the Docker development environment defined in `
 # From config/docker-compose.dev.yml
 postgres:
   ports:
-    - "5433:5432" # Maps container port 5432 to host port 5433
+    - '5433:5432' # Maps container port 5432 to host port 5433
   environment:
     POSTGRES_DB: luppa_dev
     POSTGRES_USER: postgres
