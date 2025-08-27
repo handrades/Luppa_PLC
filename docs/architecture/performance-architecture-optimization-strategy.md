@@ -52,10 +52,10 @@ const dbConfig = {
 
   // Query optimization
   extra: {
-    connectionLimit: 10,
-    statement_timeout: '30s', // Prevent long-running queries
-    lock_timeout: '10s', // Prevent lock contention
-    idle_in_transaction_session_timeout: '5min',
+    max: 10, // pg pool option for maximum connections
+    statement_timeout: 30000, // 30 seconds in milliseconds
+    lock_timeout: 10000, // 10 seconds in milliseconds
+    idle_in_transaction_session_timeout: 300000, // 5 minutes in milliseconds
   },
 
   // Enable query logging for performance monitoring
@@ -98,7 +98,11 @@ export class PLCService {
 
     if (filters.search) {
       queryBuilder.andWhere(
-        `to_tsvector('english', plc.description || ' ' || plc.make || ' ' || plc.model) 
+        `to_tsvector('english', 
+          COALESCE(plc.tag_id, '') || ' ' || 
+          COALESCE(plc.description, '') || ' ' || 
+          COALESCE(plc.make, '') || ' ' || 
+          COALESCE(plc.model, '')) 
          @@ plainto_tsquery('english', :search)`,
         { search: filters.search }
       );

@@ -5,18 +5,18 @@
  */
 
 // Set JWT_SECRET environment variable before any imports
-process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes';
+process.env.JWT_SECRET = "test-jwt-secret-that-is-at-least-32-characters-long-for-testing-purposes";
 
 // Mock all dependencies first, before importing modules that use them
-jest.mock('../../services/AuthService');
-jest.mock('../../middleware/rateLimiter', () => ({
+jest.mock("../../services/AuthService");
+jest.mock("../../middleware/rateLimiter", () => ({
   authRateLimit: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
   strictAuthRateLimit: jest.fn((req: unknown, res: unknown, next: () => void) => next()),
 }));
-jest.mock('../../utils/ip', () => ({
-  getClientIP: jest.fn(() => '127.0.0.1'),
+jest.mock("../../utils/ip", () => ({
+  getClientIP: jest.fn(() => "127.0.0.1"),
 }));
-jest.mock('../../middleware/auth', () => ({
+jest.mock("../../middleware/auth", () => ({
   authenticate: jest.fn(),
   optionalAuthenticate: jest.fn(
     (req: { auditEntityManager?: unknown }, res: unknown, next: () => void) => {
@@ -42,14 +42,14 @@ jest.mock('../../middleware/auth', () => ({
   ),
 }));
 
-import request from 'supertest';
-import express from 'express';
-import authRouter from '../../routes/auth';
-import { TokenType } from '../../config/jwt';
-import { authenticate } from '../../middleware/auth';
-import { authRateLimit, strictAuthRateLimit } from '../../middleware/rateLimiter';
-import { AuthService } from '../../services/AuthService';
-import { TEST_CREDENTIALS, TEST_JWT, TEST_USER } from '../helpers/test-constants';
+import request from "supertest";
+import express from "express";
+import authRouter from "../../routes/auth";
+import { TokenType } from "../../config/jwt";
+import { authenticate } from "../../middleware/auth";
+import { authRateLimit, strictAuthRateLimit } from "../../middleware/rateLimiter";
+import { AuthService } from "../../services/AuthService";
+import { TEST_CREDENTIALS, TEST_JWT, TEST_USER } from "../helpers/test-constants";
 
 // Create a mock AuthService instance
 const mockAuthService = {
@@ -63,7 +63,7 @@ const mockAuthService = {
   userExistsByEmail: jest.fn(),
 };
 
-describe('Auth Routes', () => {
+describe("Auth Routes", () => {
   let app: express.Application;
 
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('Auth Routes', () => {
       next();
     });
 
-    app.use('/auth', authRouter);
+    app.use("/auth", authRouter);
 
     // Reset mocks
     jest.clearAllMocks();
@@ -90,13 +90,13 @@ describe('Auth Routes', () => {
     // Reset authenticate mock to default behavior (no authentication)
     authenticate.mockImplementation((_req, res) => {
       res.status(401).json({
-        error: 'Authentication required',
-        message: 'User not authenticated',
+        error: "Authentication required",
+        message: "User not authenticated",
       });
     });
   });
 
-  describe('POST /auth/login', () => {
+  describe("POST /auth/login", () => {
     const validLoginData = {
       email: TEST_CREDENTIALS.email,
       password: TEST_CREDENTIALS.password,
@@ -104,8 +104,8 @@ describe('Auth Routes', () => {
 
     const mockLoginResult = {
       tokens: {
-        accessToken: 'access-token-123',
-        refreshToken: 'refresh-token-123',
+        accessToken: "access-token-123",
+        refreshToken: "refresh-token-123",
       },
       user: {
         ...TEST_USER,
@@ -113,26 +113,26 @@ describe('Auth Routes', () => {
       },
     };
 
-    it('should successfully login with valid credentials', async () => {
+    it("should successfully login with valid credentials", async () => {
       // Arrange
       mockAuthService.login.mockResolvedValue(mockLoginResult);
 
       // Act
-      const response = await request(app).post('/auth/login').send(validLoginData);
+      const response = await request(app).post("/auth/login").send(validLoginData);
 
       // Assert
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        message: 'Login successful',
-        accessToken: 'access-token-123',
-        refreshToken: 'refresh-token-123',
+        message: "Login successful",
+        accessToken: "access-token-123",
+        refreshToken: "refresh-token-123",
         user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          firstName: 'Test',
-          lastName: 'User',
-          roleId: 'role-123',
-          roleName: 'Admin',
+          id: "user-123",
+          email: "test@example.com",
+          firstName: "Test",
+          lastName: "User",
+          roleId: "role-123",
+          roleName: "Admin",
           permissions: { plc: { read: true } },
           isActive: true,
           // lastLogin is converted to string during JSON serialization
@@ -147,39 +147,39 @@ describe('Auth Routes', () => {
       );
     });
 
-    it('should return 401 for invalid credentials', async () => {
+    it("should return 401 for invalid credentials", async () => {
       // Arrange
-      mockAuthService.login.mockRejectedValue(new Error('Invalid credentials'));
+      mockAuthService.login.mockRejectedValue(new Error("Invalid credentials"));
 
       // Act
-      const response = await request(app).post('/auth/login').send(validLoginData);
+      const response = await request(app).post("/auth/login").send(validLoginData);
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Authentication failed',
-        message: 'Invalid credentials',
+        error: "Authentication failed",
+        message: "Invalid credentials",
       });
     });
 
-    it('should validate email format', async () => {
+    it("should validate email format", async () => {
       // Arrange
       const invalidEmailData = {
-        email: 'invalid-email',
-        password: 'password123',
+        email: "invalid-email",
+        password: "password123",
       };
 
       // Act
-      const response = await request(app).post('/auth/login').send(invalidEmailData);
+      const response = await request(app).post("/auth/login").send(invalidEmailData);
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
 
-    it('should validate password length', async () => {
+    it("should validate password length", async () => {
       // Arrange
       const shortPasswordData = {
         email: TEST_CREDENTIALS.email,
@@ -187,58 +187,58 @@ describe('Auth Routes', () => {
       };
 
       // Act
-      const response = await request(app).post('/auth/login').send(shortPasswordData);
+      const response = await request(app).post("/auth/login").send(shortPasswordData);
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
 
-    it('should require email field', async () => {
+    it("should require email field", async () => {
       // Arrange
       const missingEmailData = {
-        password: 'password123',
+        password: "password123",
       };
 
       // Act
-      const response = await request(app).post('/auth/login').send(missingEmailData);
+      const response = await request(app).post("/auth/login").send(missingEmailData);
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
 
-    it('should require password field', async () => {
+    it("should require password field", async () => {
       // Arrange
       const missingPasswordData = {
         email: TEST_CREDENTIALS.email,
       };
 
       // Act
-      const response = await request(app).post('/auth/login').send(missingPasswordData);
+      const response = await request(app).post("/auth/login").send(missingPasswordData);
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
 
-    it('should normalize email to lowercase and trim', async () => {
+    it("should normalize email to lowercase and trim", async () => {
       // Arrange
       const unnormalizedEmailData = {
-        email: '  TEST@EXAMPLE.COM  ',
+        email: "  TEST@EXAMPLE.COM  ",
         password: TEST_CREDENTIALS.password,
       };
 
       mockAuthService.login.mockResolvedValue(mockLoginResult);
 
       // Act
-      await request(app).post('/auth/login').send(unnormalizedEmailData);
+      await request(app).post("/auth/login").send(unnormalizedEmailData);
 
       // Assert
       expect(mockAuthService.login).toHaveBeenCalledWith(
@@ -249,78 +249,78 @@ describe('Auth Routes', () => {
     });
   });
 
-  describe('POST /auth/refresh', () => {
+  describe("POST /auth/refresh", () => {
     const validRefreshData = {
-      refreshToken: 'valid-refresh-token',
+      refreshToken: "valid-refresh-token",
     };
 
     const mockRefreshResult = {
-      accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
+      accessToken: "new-access-token",
+      refreshToken: "new-refresh-token",
     };
 
-    it('should successfully refresh tokens', async () => {
+    it("should successfully refresh tokens", async () => {
       // Arrange
       mockAuthService.refreshToken.mockResolvedValue(mockRefreshResult);
 
       // Act
-      const response = await request(app).post('/auth/refresh').send(validRefreshData);
+      const response = await request(app).post("/auth/refresh").send(validRefreshData);
 
       // Assert
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        message: 'Token refreshed successfully',
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
+        message: "Token refreshed successfully",
+        accessToken: "new-access-token",
+        refreshToken: "new-refresh-token",
       });
 
       expect(mockAuthService.refreshToken).toHaveBeenCalledWith(
-        'valid-refresh-token',
+        "valid-refresh-token",
         expect.any(String), // IP address
         expect.any(String) // User agent
       );
     });
 
-    it('should return 401 for invalid refresh token', async () => {
+    it("should return 401 for invalid refresh token", async () => {
       // Arrange
-      mockAuthService.refreshToken.mockRejectedValue(new Error('Invalid token'));
+      mockAuthService.refreshToken.mockRejectedValue(new Error("Invalid token"));
 
       // Act
-      const response = await request(app).post('/auth/refresh').send(validRefreshData);
+      const response = await request(app).post("/auth/refresh").send(validRefreshData);
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Token refresh failed',
-        message: 'Invalid or expired refresh token',
+        error: "Token refresh failed",
+        message: "Invalid or expired refresh token",
       });
     });
 
-    it('should require refreshToken field', async () => {
+    it("should require refreshToken field", async () => {
       // Act
-      const response = await request(app).post('/auth/refresh').send({});
+      const response = await request(app).post("/auth/refresh").send({});
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
 
-    it('should validate refreshToken as string', async () => {
+    it("should validate refreshToken as string", async () => {
       // Act
-      const response = await request(app).post('/auth/refresh').send({ refreshToken: 123 }); // Should be string
+      const response = await request(app).post("/auth/refresh").send({ refreshToken: 123 }); // Should be string
 
       // Assert
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
-        error: 'Validation error',
+        error: "Validation error",
       });
     });
   });
 
-  describe('POST /auth/logout', () => {
-    it('should successfully logout authenticated user', async () => {
+  describe("POST /auth/logout", () => {
+    it("should successfully logout authenticated user", async () => {
       // Arrange - Mock successful authentication
       authenticate.mockImplementation((req, _res, next) => {
         req.user = {
@@ -328,7 +328,7 @@ describe('Auth Routes', () => {
           email: TEST_USER.email,
           roleId: TEST_USER.roleId,
           permissions: TEST_USER.permissions,
-          type: 'ACCESS',
+          type: "ACCESS",
           jti: TEST_JWT.tokenId,
         };
         next();
@@ -338,31 +338,31 @@ describe('Auth Routes', () => {
 
       // Act
       const response = await request(app)
-        .post('/auth/logout')
-        .set('Authorization', 'Bearer valid-token');
+        .post("/auth/logout")
+        .set("Authorization", "Bearer valid-token");
 
       // Assert
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        message: 'Logout successful',
+        message: "Logout successful",
       });
 
       expect(mockAuthService.logout).toHaveBeenCalledWith(TEST_USER.id, TEST_JWT.tokenId);
     });
 
-    it('should return 401 for unauthenticated request', async () => {
+    it("should return 401 for unauthenticated request", async () => {
       // Act
-      const response = await request(app).post('/auth/logout');
+      const response = await request(app).post("/auth/logout");
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Authentication required',
+        error: "Authentication required",
       });
     });
   });
 
-  describe('GET /auth/me', () => {
+  describe("GET /auth/me", () => {
     const mockUser = {
       ...TEST_USER,
       role: {
@@ -372,7 +372,7 @@ describe('Auth Routes', () => {
       lastLogin: new Date(),
     };
 
-    it('should return user profile for authenticated user', async () => {
+    it("should return user profile for authenticated user", async () => {
       // Arrange - Mock successful authentication
       authenticate.mockImplementation((req, _res, next) => {
         req.user = {
@@ -380,7 +380,7 @@ describe('Auth Routes', () => {
           email: TEST_USER.email,
           roleId: TEST_USER.roleId,
           permissions: TEST_USER.permissions,
-          type: 'ACCESS',
+          type: "ACCESS",
           jti: TEST_JWT.tokenId,
         };
         next();
@@ -390,26 +390,26 @@ describe('Auth Routes', () => {
 
       // Act
       const response = await request(app)
-        .get('/auth/me')
-        .set('Authorization', 'Bearer valid-token');
+        .get("/auth/me")
+        .set("Authorization", "Bearer valid-token");
 
       // Assert
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          firstName: 'Test',
-          lastName: 'User',
-          roleId: 'role-123',
-          roleName: 'Admin',
+          id: "user-123",
+          email: "test@example.com",
+          firstName: "Test",
+          lastName: "User",
+          roleId: "role-123",
+          roleName: "Admin",
           permissions: { plc: { read: true } },
           isActive: true,
         },
       });
     });
 
-    it('should return 401 for inactive user', async () => {
+    it("should return 401 for inactive user", async () => {
       // Arrange - Mock successful authentication
       authenticate.mockImplementation((req, _res, next) => {
         req.user = {
@@ -417,7 +417,7 @@ describe('Auth Routes', () => {
           email: TEST_USER.email,
           roleId: TEST_USER.roleId,
           permissions: TEST_USER.permissions,
-          type: 'ACCESS',
+          type: "ACCESS",
           jti: TEST_JWT.tokenId,
         };
         next();
@@ -428,82 +428,82 @@ describe('Auth Routes', () => {
 
       // Act
       const response = await request(app)
-        .get('/auth/me')
-        .set('Authorization', 'Bearer valid-token');
+        .get("/auth/me")
+        .set("Authorization", "Bearer valid-token");
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Account inactive',
-        message: 'User account has been deactivated',
+        error: "Account inactive",
+        message: "User account has been deactivated",
       });
     });
 
-    it('should return 401 for unauthenticated request', async () => {
+    it("should return 401 for unauthenticated request", async () => {
       // Act
-      const response = await request(app).get('/auth/me');
+      const response = await request(app).get("/auth/me");
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Authentication required',
+        error: "Authentication required",
       });
     });
   });
 
-  describe('GET /auth/verify', () => {
-    it('should verify valid token', async () => {
+  describe("GET /auth/verify", () => {
+    it("should verify valid token", async () => {
       // Arrange - Mock successful authentication
       authenticate.mockImplementation((req, _res, next) => {
         req.user = {
-          sub: 'user-123',
-          email: 'test@example.com',
-          roleId: 'role-123',
+          sub: "user-123",
+          email: "test@example.com",
+          roleId: "role-123",
           permissions: { plc: { read: true } },
           type: TokenType.ACCESS,
-          jti: 'token-123',
+          jti: "token-123",
         };
         next();
       });
 
       // Act
       const response = await request(app)
-        .get('/auth/verify')
-        .set('Authorization', 'Bearer valid-token');
+        .get("/auth/verify")
+        .set("Authorization", "Bearer valid-token");
 
       // Assert
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         valid: true,
         user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          roleId: 'role-123',
+          id: "user-123",
+          email: "test@example.com",
+          roleId: "role-123",
           permissions: { plc: { read: true } },
         },
       });
     });
 
-    it('should return 401 for invalid token', async () => {
+    it("should return 401 for invalid token", async () => {
       // Act
-      const response = await request(app).get('/auth/verify');
+      const response = await request(app).get("/auth/verify");
 
       // Assert
       expect(response.status).toBe(401);
       expect(response.body).toMatchObject({
-        error: 'Authentication required',
+        error: "Authentication required",
       });
     });
   });
 
-  describe('Rate limiting', () => {
-    it('should apply rate limiting to login endpoint', async () => {
+  describe("Rate limiting", () => {
+    it("should apply rate limiting to login endpoint", async () => {
       // Assert that rate limiting middleware is mocked
       expect(authRateLimit).toBeDefined();
       expect(strictAuthRateLimit).toBeDefined();
     });
 
-    it('should apply rate limiting to refresh endpoint', async () => {
+    it("should apply rate limiting to refresh endpoint", async () => {
       // Assert that rate limiting middleware is mocked
       expect(authRateLimit).toBeDefined();
     });

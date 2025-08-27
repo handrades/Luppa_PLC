@@ -24,13 +24,22 @@ export class FixPLCIpAddressType1756780000000 implements MigrationInterface {
           AND TRIM(ip_address) = ''
       `);
 
-      // Log any potentially invalid IP addresses for debugging
+      // Drop existing partial unique indexes on ip_address before altering column type
+      await queryRunner.query(`
+        DROP INDEX IF EXISTS idx_plcs_ip_address
+      `);
+
+      // Also drop the schema-qualified index if it exists
+      await queryRunner.query(`
+        DROP INDEX IF EXISTS plc_inventory.idx_plcs_ip_address
+      `);
+
+      // Log any potentially invalid IP addresses for debugging using pg_input_is_valid
       const invalidIPs = await queryRunner.query(`
         SELECT id, ip_address 
         FROM plc_inventory.plcs 
         WHERE ip_address IS NOT NULL 
-          AND ip_address !~ '^([0-9]{1,3}.){3}[0-9]{1,3}$'
-          AND ip_address !~ '^([0-9a-fA-F]{0,4}:){7}[0-9a-fA-F]{0,4}$'
+          AND NOT pg_input_is_valid(trim(ip_address)::text, 'inet')
       `);
 
       if (invalidIPs.length > 0) {
@@ -46,8 +55,7 @@ export class FixPLCIpAddressType1756780000000 implements MigrationInterface {
           UPDATE plc_inventory.plcs 
           SET ip_address = NULL 
           WHERE ip_address IS NOT NULL 
-            AND ip_address !~ '^([0-9]{1,3}.){3}[0-9]{1,3}$'
-            AND ip_address !~ '^([0-9a-fA-F]{0,4}:){7}[0-9a-fA-F]{0,4}$'
+            AND NOT pg_input_is_valid(trim(ip_address)::text, 'inet')
         `);
       }
 
@@ -55,7 +63,14 @@ export class FixPLCIpAddressType1756780000000 implements MigrationInterface {
       await queryRunner.query(`
         ALTER TABLE plc_inventory.plcs 
         ALTER COLUMN ip_address TYPE inet 
-        USING ip_address::inet
+        USING trim(ip_address)::inet
+      `);
+
+      // Recreate the partial unique index after type conversion
+      await queryRunner.query(`
+        CREATE UNIQUE INDEX idx_plcs_ip_address 
+        ON plc_inventory.plcs(ip_address) 
+        WHERE ip_address IS NOT NULL AND deleted_at IS NULL
       `);
     }
   }

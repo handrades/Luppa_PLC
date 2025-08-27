@@ -5,11 +5,11 @@
  * Uses real routes with mock authentication and services
  */
 
-import express, { Express, NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
-import { EntityManager } from 'typeorm';
-import { TokenType, jwtConfig } from '../../config/jwt';
+import express, { Express, NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
+import { EntityManager } from "typeorm";
+import { TokenType, jwtConfig } from "../../config/jwt";
 
 // Mock authentication helper
 interface MockUser {
@@ -27,7 +27,7 @@ const testData = {
 };
 
 // Mock SiteService
-jest.mock('../../services/SiteService', () => {
+jest.mock("../../services/SiteService", () => {
   return {
     SiteService: jest.fn().mockImplementation(() => ({
       createSite: jest.fn().mockImplementation(async (data: { name: string }) => {
@@ -38,7 +38,7 @@ jest.mock('../../services/SiteService', () => {
         );
         if (duplicate) {
           const error = new Error(`Site name '${data.name}' already exists`);
-          error.name = 'ConflictError';
+          error.name = "ConflictError";
           throw error;
         }
 
@@ -58,7 +58,7 @@ jest.mock('../../services/SiteService', () => {
         let sites = Array.from(testData.sites.values());
 
         // Apply search filter
-        if (filters.search && typeof filters.search === 'string') {
+        if (filters.search && typeof filters.search === "string") {
           const searchTerm = filters.search.toLowerCase();
           sites = sites.filter((site: Record<string, unknown>) =>
             String(site.name).toLowerCase().includes(searchTerm)
@@ -66,12 +66,12 @@ jest.mock('../../services/SiteService', () => {
         }
 
         // Apply sorting
-        if (filters.sortBy && typeof filters.sortBy === 'string') {
+        if (filters.sortBy && typeof filters.sortBy === "string") {
           const sortField = filters.sortBy;
-          const sortOrder = String(filters.sortOrder || '').toUpperCase() === 'DESC' ? -1 : 1;
+          const sortOrder = String(filters.sortOrder || "").toUpperCase() === "DESC" ? -1 : 1;
           sites.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
-            const aVal = String(a[sortField] || '');
-            const bVal = String(b[sortField] || '');
+            const aVal = String(a[sortField] || "");
+            const bVal = String(b[sortField] || "");
             return aVal.localeCompare(bVal) * sortOrder;
           });
         }
@@ -154,7 +154,7 @@ jest.mock('../../services/SiteService', () => {
             // Check optimistic locking
             const siteUpdatedAt = new Date(String(site.updatedAt));
             if (siteUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
-              throw new Error('Site was modified by another user');
+              throw new Error("Site was modified by another user");
             }
 
             // Check name uniqueness if name is being changed
@@ -165,7 +165,7 @@ jest.mock('../../services/SiteService', () => {
               );
               if (duplicate) {
                 const error = new Error(`Site name '${data.name}' already exists`);
-                error.name = 'ConflictError';
+                error.name = "ConflictError";
                 throw error;
               }
             }
@@ -193,8 +193,8 @@ jest.mock('../../services/SiteService', () => {
             `Cannot delete site '${site.name}' because it contains ${siteCells.length} cell(s). Delete all cells first or use cascade delete if intended.`
           ) as Error & { statusCode?: number; code?: string };
           error.statusCode = 409;
-          error.code = 'SITE_CONFLICT';
-          error.name = 'SiteConflictError';
+          error.code = "SITE_CONFLICT";
+          error.name = "SiteConflictError";
           throw error;
         }
         testData.sites.delete(id);
@@ -204,7 +204,7 @@ jest.mock('../../services/SiteService', () => {
 });
 
 // Mock CellService
-jest.mock('../../services/CellService', () => {
+jest.mock("../../services/CellService", () => {
   return {
     CellService: jest.fn().mockImplementation(() => ({
       createCell: jest
@@ -224,7 +224,7 @@ jest.mock('../../services/CellService', () => {
           );
           if (duplicate) {
             const error = new Error(`Line number '${data.lineNumber}' already exists in this site`);
-            error.name = 'ConflictError';
+            error.name = "ConflictError";
             throw error;
           }
 
@@ -246,7 +246,7 @@ jest.mock('../../services/CellService', () => {
         let cells = Array.from(testData.cells.values());
 
         // Apply search filter
-        if (filters.search && typeof filters.search === 'string') {
+        if (filters.search && typeof filters.search === "string") {
           const searchTerm = filters.search.toLowerCase();
           cells = cells.filter(
             (cell: Record<string, unknown>) =>
@@ -261,12 +261,12 @@ jest.mock('../../services/CellService', () => {
         }
 
         // Apply sorting
-        if (filters.sortBy && typeof filters.sortBy === 'string') {
+        if (filters.sortBy && typeof filters.sortBy === "string") {
           const sortField = filters.sortBy;
-          const sortOrder = String(filters.sortOrder || '').toUpperCase() === 'DESC' ? -1 : 1;
+          const sortOrder = String(filters.sortOrder || "").toUpperCase() === "DESC" ? -1 : 1;
           cells.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
-            const aVal = String(a[sortField] || '');
-            const bVal = String(b[sortField] || '');
+            const aVal = String(a[sortField] || "");
+            const bVal = String(b[sortField] || "");
             return aVal.localeCompare(bVal) * sortOrder;
           });
         }
@@ -383,39 +383,39 @@ jest.mock('../../services/CellService', () => {
 });
 
 // Mock ImportExportService
-jest.mock('../../services/ImportExportService', () => {
+jest.mock("../../services/ImportExportService", () => {
   return {
     ImportExportService: jest.fn().mockImplementation(() => ({
-      generateTemplate: jest.fn().mockResolvedValue(Buffer.from('site_name,cell_name,equipment_name,tag_id,description,make,model\nTest Site,Cell 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix')),
+      generateTemplate: jest.fn().mockResolvedValue(Buffer.from("site_name,cell_name,equipment_name,tag_id,description,make,model\nTest Site,Cell 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix")),
       validateCSV: jest.fn().mockImplementation((buffer) => {
         const content = buffer.toString();
         // Check if this is an invalid CSV (missing required headers)
-        if (content.includes('site_name,cell_name') && !content.includes('tag_id')) {
+        if (content.includes("site_name,cell_name") && !content.includes("tag_id")) {
           return Promise.resolve({
-            headers: ['site_name', 'cell_name'],
+            headers: ["site_name", "cell_name"],
             totalRows: 1,
-            rows: [['Test Site', 'Cell 1']],
+            rows: [["Test Site", "Cell 1"]],
             validationErrors: [{
               row: 0,
-              column: 'headers',
-              value: 'site_name,cell_name',
-              message: 'Missing required headers: equipment_name, tag_id, description, make, model',
-              severity: 'error'
+              column: "headers",
+              value: "site_name,cell_name",
+              message: "Missing required headers: equipment_name, tag_id, description, make, model",
+              severity: "error"
             }]
           });
         }
         return Promise.resolve({
-          headers: ['site_name', 'cell_name', 'equipment_name', 'tag_id', 'description', 'make', 'model'],
+          headers: ["site_name", "cell_name", "equipment_name", "tag_id", "description", "make", "model"],
           totalRows: 1,
-          rows: [['Test Site', 'Cell 1', 'Equipment 1', 'PLC-001', 'Test PLC', 'Allen-Bradley', 'ControlLogix']],
+          rows: [["Test Site", "Cell 1", "Equipment 1", "PLC-001", "Test PLC", "Allen-Bradley", "ControlLogix"]],
           validationErrors: []
         });
       }),
       importPLCs: jest.fn().mockImplementation((buffer, _options) => {
         // Check if file is provided - if buffer is empty, service would handle that
         if (!buffer || buffer.length === 0) {
-          const error = new Error('No file provided');
-          error.name = 'ValidationError';
+          const error = new Error("No file provided");
+          error.name = "ValidationError";
           return Promise.reject(error);
         }
         return Promise.resolve({
@@ -425,19 +425,19 @@ jest.mock('../../services/ImportExportService', () => {
           skippedRows: 0,
           errors: [],
           warnings: [],
-          importId: 'test-import-id',
+          importId: "test-import-id",
           duration: 1000
         });
       }),
       exportPLCs: jest.fn().mockImplementation((_filters, options) => {
-        if (options.format === 'json') {
+        if (options.format === "json") {
           return Promise.resolve(Buffer.from(JSON.stringify([{
-            tagId: 'PLC-001',
-            description: 'Test PLC',
-            site: { name: 'Test Site' }
+            tagId: "PLC-001",
+            description: "Test PLC",
+            site: { name: "Test Site" }
           }])));
         }
-        return Promise.resolve(Buffer.from('site_name,tag_id\nTest Site,PLC-001'));
+        return Promise.resolve(Buffer.from("site_name,tag_id\nTest Site,PLC-001"));
       }),
       getImportHistory: jest.fn().mockResolvedValue({
         data: [],
@@ -448,14 +448,14 @@ jest.mock('../../services/ImportExportService', () => {
       getImportLog: jest.fn().mockResolvedValue(null),
       rollbackImport: jest.fn().mockResolvedValue({
         success: true,
-        rollbackId: 'test-rollback-id'
+        rollbackId: "test-rollback-id"
       })
     }))
   };
 });
 
 // Mock AuditService
-jest.mock('../../services/AuditService', () => {
+jest.mock("../../services/AuditService", () => {
   return {
     AuditService: jest.fn().mockImplementation(() => ({
       logAction: jest.fn().mockResolvedValue(undefined)
@@ -464,7 +464,7 @@ jest.mock('../../services/AuditService', () => {
 });
 
 // Mock AppDataSource
-jest.mock('../../config/database', () => ({
+jest.mock("../../config/database", () => ({
   AppDataSource: {
     isInitialized: true,
     manager: {},
@@ -478,10 +478,10 @@ jest.mock('../../config/database', () => ({
 const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
-      error: 'Authentication required',
-      message: 'Missing or invalid Authorization header',
+      error: "Authentication required",
+      message: "Missing or invalid Authorization header",
     });
   }
 
@@ -489,22 +489,22 @@ const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => 
 
   if (!token) {
     return res.status(401).json({
-      error: 'Authentication required',
-      message: 'Missing access token',
+      error: "Authentication required",
+      message: "Missing access token",
     });
   }
 
   try {
     // Handle test tokens (base64 encoded mock data)
-    if (token.startsWith('Bearer.')) {
-      const base64Data = token.split('.')[1];
-      const decoded = JSON.parse(Buffer.from(base64Data, 'base64').toString());
+    if (token.startsWith("Bearer.")) {
+      const base64Data = token.split(".")[1];
+      const decoded = JSON.parse(Buffer.from(base64Data, "base64").toString());
 
       // Convert to expected JWT payload format
       req.user = {
         sub: decoded.userId || decoded.id,
         email: decoded.email,
-        roleId: 'test-role',
+        roleId: "test-role",
         permissions: decoded.permissions || [],
         type: TokenType.ACCESS,
       };
@@ -517,8 +517,8 @@ const mockAuthMiddleware = (req: Request, res: Response, next: NextFunction) => 
     next();
   } catch (error) {
     return res.status(401).json({
-      error: 'Authentication failed',
-      message: 'Invalid token',
+      error: "Authentication failed",
+      message: "Invalid token",
     });
   }
 };
@@ -558,36 +558,36 @@ export async function createTestApp(): Promise<Express> {
 
   // Mock middleware
   app.use(mockAuditMiddleware);
-  app.use('/api/v1', mockAuthMiddleware);
+  app.use("/api/v1", mockAuthMiddleware);
 
   // Import and use real routes
-  const sitesRouter = (await import('../../routes/sites')).default;
-  const cellsRouter = (await import('../../routes/cells')).default;
-  const importExportRouter = (await import('../../routes/import-export')).default;
+  const sitesRouter = (await import("../../routes/sites")).default;
+  const cellsRouter = (await import("../../routes/cells")).default;
+  const importExportRouter = (await import("../../routes/import-export")).default;
 
-  app.use('/api/v1/sites', sitesRouter);
-  app.use('/api/v1/cells', cellsRouter);
-  app.use('/api/v1', importExportRouter);
+  app.use("/api/v1/sites", sitesRouter);
+  app.use("/api/v1/cells", cellsRouter);
+  app.use("/api/v1", importExportRouter);
 
   // Error handling middleware
   app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
     // eslint-disable-next-line no-console
-    console.error('Test app error:', error);
+    console.error("Test app error:", error);
 
     // Handle different error types
     let statusCode = 500;
     const errorMessage = error.message;
 
-    if (error.name === 'ConflictError' || error.message.includes('already exists')) {
+    if (error.name === "ConflictError" || error.message.includes("already exists")) {
       statusCode = 409;
-    } else if (error.message.includes('not found')) {
+    } else if (error.message.includes("not found")) {
       statusCode = 404;
-    } else if (error.message.includes('required') || error.message.includes('invalid')) {
+    } else if (error.message.includes("required") || error.message.includes("invalid")) {
       statusCode = 400;
     }
 
     res.status(statusCode).json({
-      error: statusCode === 500 ? 'Internal server error' : 'Request failed',
+      error: statusCode === 500 ? "Internal server error" : "Request failed",
       message: errorMessage,
     });
   });

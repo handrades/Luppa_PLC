@@ -1,21 +1,21 @@
-import request from 'supertest';
-import express from 'express';
-import { createTestApp } from '../helpers/testApp';
-import { createAuthToken } from '../helpers/auth';
-import { AppDataSource } from '../../config/database';
+import request from "supertest";
+import express from "express";
+import { createTestApp } from "../helpers/testApp";
+import { createAuthToken } from "../helpers/auth";
+import { AppDataSource } from "../../config/database";
 
-describe('Import/Export API Routes', () => {
+describe("Import/Export API Routes", () => {
   let app: express.Application;
   let authToken: string;
   let adminToken: string;
 
   beforeAll(async () => {
     app = await createTestApp();
-    authToken = createAuthToken({ id: 'user-1', email: 'user@test.com', permissions: [] });
+    authToken = createAuthToken({ id: "user-1", email: "user@test.com", permissions: [] });
     adminToken = createAuthToken({ 
-      id: 'admin-1', 
-      email: 'admin@test.com',
-      permissions: ['admin', 'data_admin']
+      id: "admin-1", 
+      email: "admin@test.com",
+      permissions: ["admin", "data_admin"]
     });
   });
 
@@ -25,112 +25,112 @@ describe('Import/Export API Routes', () => {
     }
   });
 
-  describe('GET /api/v1/import/template', () => {
-    it('should return CSV template with authentication', async () => {
+  describe("GET /api/v1/import/template", () => {
+    it("should return CSV template with authentication", async () => {
       const response = await request(app)
-        .get('/api/v1/import/template')
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/import/template")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.headers['content-type']).toContain('text/csv');
-      expect(response.headers['content-disposition']).toContain('plc_import_template.csv');
+      expect(response.headers["content-type"]).toContain("text/csv");
+      expect(response.headers["content-disposition"]).toContain("plc_import_template.csv");
       
       const csvContent = response.text;
-      expect(csvContent).toContain('site_name');
-      expect(csvContent).toContain('tag_id');
-      expect(csvContent).toContain('description');
+      expect(csvContent).toContain("site_name");
+      expect(csvContent).toContain("tag_id");
+      expect(csvContent).toContain("description");
     });
 
-    it('should return 401 without authentication', async () => {
+    it("should return 401 without authentication", async () => {
       const response = await request(app)
-        .get('/api/v1/import/template');
+        .get("/api/v1/import/template");
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('POST /api/v1/import/preview', () => {
-    it('should preview CSV file with validation', async () => {
+  describe("POST /api/v1/import/preview", () => {
+    it("should preview CSV file with validation", async () => {
       const csvContent = Buffer.from(
-        'site_name,cell_name,equipment_name,tag_id,description,make,model\n' +
-        'Test Site,Cell 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix'
+        "site_name,cell_name,equipment_name,tag_id,description,make,model\n" +
+        "Test Site,Cell 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix"
       );
 
       const response = await request(app)
-        .post('/api/v1/import/preview')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .attach('file', csvContent, 'test.csv');
+        .post("/api/v1/import/preview")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .attach("file", csvContent, "test.csv");
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('headers');
-      expect(response.body.data).toHaveProperty('rows');
-      expect(response.body.data).toHaveProperty('validationErrors');
+      expect(response.body.data).toHaveProperty("headers");
+      expect(response.body.data).toHaveProperty("rows");
+      expect(response.body.data).toHaveProperty("validationErrors");
       expect(response.body.data.totalRows).toBe(1);
     });
 
-    it('should return validation errors for invalid CSV', async () => {
+    it("should return validation errors for invalid CSV", async () => {
       const csvContent = Buffer.from(
-        'site_name,cell_name\n' + // Missing required fields
-        'Test Site,Cell 1'
+        "site_name,cell_name\n" + // Missing required fields
+        "Test Site,Cell 1"
       );
 
       const response = await request(app)
-        .post('/api/v1/import/preview')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .attach('file', csvContent, 'test.csv');
+        .post("/api/v1/import/preview")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .attach("file", csvContent, "test.csv");
 
       expect(response.status).toBe(200);
       expect(response.body.data.validationErrors.length).toBeGreaterThan(0);
     });
 
-    it('should require data_admin role', async () => {
-      const csvContent = Buffer.from('test');
+    it("should require data_admin role", async () => {
+      const csvContent = Buffer.from("test");
 
       const response = await request(app)
-        .post('/api/v1/import/preview')
-        .set('Authorization', `Bearer ${authToken}`)
-        .attach('file', csvContent, 'test.csv');
+        .post("/api/v1/import/preview")
+        .set("Authorization", `Bearer ${authToken}`)
+        .attach("file", csvContent, "test.csv");
 
       expect(response.status).toBe(403);
     });
   });
 
-  describe('POST /api/v1/import/plcs', () => {
-    it('should import PLCs with valid CSV and options', async () => {
+  describe("POST /api/v1/import/plcs", () => {
+    it("should import PLCs with valid CSV and options", async () => {
       const csvContent = Buffer.from(
-        'site_name,cell_name,equipment_name,tag_id,description,make,model\n' +
-        'Test Site,Cell 1,Equipment 1,PLC-TEST-001,Test PLC,Allen-Bradley,ControlLogix'
+        "site_name,cell_name,equipment_name,tag_id,description,make,model\n" +
+        "Test Site,Cell 1,Equipment 1,PLC-TEST-001,Test PLC,Allen-Bradley,ControlLogix"
       );
 
       const response = await request(app)
-        .post('/api/v1/import/plcs')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .field('createMissing', 'true')
-        .field('mergeStrategy', 'skip')
-        .field('validateOnly', 'false')
-        .attach('file', csvContent, 'test.csv');
+        .post("/api/v1/import/plcs")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .field("createMissing", "true")
+        .field("mergeStrategy", "skip")
+        .field("validateOnly", "false")
+        .attach("file", csvContent, "test.csv");
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success');
-      expect(response.body.data).toHaveProperty('importId');
-      expect(response.body.data).toHaveProperty('totalRows');
+      expect(response.body).toHaveProperty("success");
+      expect(response.body.data).toHaveProperty("importId");
+      expect(response.body.data).toHaveProperty("totalRows");
     });
 
-    it('should enforce rate limiting', async () => {
-      const csvContent = Buffer.from('test');
+    it("should enforce rate limiting", async () => {
+      const csvContent = Buffer.from("test");
       
       // Make multiple requests to trigger rate limiting
       const promises = [];
       for (let i = 0; i < 15; i++) {
         promises.push(
           request(app)
-            .post('/api/v1/import/plcs')
-            .set('Authorization', `Bearer ${adminToken}`)
-            .field('createMissing', 'true')
-            .field('mergeStrategy', 'skip')
-            .field('validateOnly', 'false')
-            .attach('file', csvContent, 'test.csv')
+            .post("/api/v1/import/plcs")
+            .set("Authorization", `Bearer ${adminToken}`)
+            .field("createMissing", "true")
+            .field("mergeStrategy", "skip")
+            .field("validateOnly", "false")
+            .attach("file", csvContent, "test.csv")
         );
       }
 
@@ -141,29 +141,29 @@ describe('Import/Export API Routes', () => {
       expect(responses.every(r => r.status !== 500)).toBe(true);
     });
 
-    it('should return 400 for missing file', async () => {
+    it("should return 400 for missing file", async () => {
       const response = await request(app)
-        .post('/api/v1/import/plcs')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .field('createMissing', 'true')
-        .field('mergeStrategy', 'skip')
-        .field('validateOnly', 'false');
+        .post("/api/v1/import/plcs")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .field("createMissing", "true")
+        .field("mergeStrategy", "skip")
+        .field("validateOnly", "false");
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('No file provided');
+      expect(response.body.error).toBe("No file provided");
     });
   });
 
-  describe('POST /api/v1/export/plcs', () => {
-    it('should export PLCs as CSV', async () => {
+  describe("POST /api/v1/export/plcs", () => {
+    it("should export PLCs as CSV", async () => {
       const response = await request(app)
-        .post('/api/v1/export/plcs')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/export/plcs")
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ 
-          format: 'csv',
-          includeHierarchy: 'true',
-          includeTags: 'true',
-          includeAuditInfo: 'false'
+          format: "csv",
+          includeHierarchy: "true",
+          includeTags: "true",
+          includeAuditInfo: "false"
         })
         .send({
           siteIds: [],
@@ -171,117 +171,117 @@ describe('Import/Export API Routes', () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.headers['content-type']).toContain('text/csv');
-      expect(response.headers['content-disposition']).toContain('plc_export.csv');
+      expect(response.headers["content-type"]).toContain("text/csv");
+      expect(response.headers["content-disposition"]).toContain("plc_export.csv");
     });
 
-    it('should export PLCs as JSON', async () => {
+    it("should export PLCs as JSON", async () => {
       const response = await request(app)
-        .post('/api/v1/export/plcs')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/export/plcs")
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ 
-          format: 'json',
-          includeHierarchy: 'true',
-          includeTags: 'false',
-          includeAuditInfo: 'false'
+          format: "json",
+          includeHierarchy: "true",
+          includeTags: "false",
+          includeAuditInfo: "false"
         })
         .send({});
 
       expect(response.status).toBe(200);
-      expect(response.headers['content-type']).toContain('application/json');
-      expect(response.headers['content-disposition']).toContain('plc_export.json');
+      expect(response.headers["content-type"]).toContain("application/json");
+      expect(response.headers["content-disposition"]).toContain("plc_export.json");
     });
 
-    it('should apply filters to export', async () => {
+    it("should apply filters to export", async () => {
       const response = await request(app)
-        .post('/api/v1/export/plcs')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/export/plcs")
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ 
-          format: 'csv',
-          includeHierarchy: 'true',
-          includeTags: 'true',
-          includeAuditInfo: 'false'
+          format: "csv",
+          includeHierarchy: "true",
+          includeTags: "true",
+          includeAuditInfo: "false"
         })
         .send({
-          cellTypes: ['production', 'warehouse'],
+          cellTypes: ["production", "warehouse"],
           dateRange: {
-            start: new Date('2024-01-01'),
-            end: new Date('2024-12-31'),
+            start: new Date("2024-01-01"),
+            end: new Date("2024-12-31"),
           },
-          tags: ['critical', 'maintenance'],
+          tags: ["critical", "maintenance"],
         });
 
       expect(response.status).toBe(200);
     });
   });
 
-  describe('GET /api/v1/import/history', () => {
-    it('should return import history with pagination', async () => {
+  describe("GET /api/v1/import/history", () => {
+    it("should return import history with pagination", async () => {
       const response = await request(app)
-        .get('/api/v1/import/history')
-        .set('Authorization', `Bearer ${authToken}`)
+        .get("/api/v1/import/history")
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ page: 1, pageSize: 20 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body).toHaveProperty('pagination');
-      expect(response.body.pagination).toHaveProperty('total');
-      expect(response.body.pagination).toHaveProperty('page');
-      expect(response.body.pagination).toHaveProperty('pageSize');
-      expect(response.body.pagination).toHaveProperty('totalPages');
+      expect(response.body).toHaveProperty("data");
+      expect(response.body).toHaveProperty("pagination");
+      expect(response.body.pagination).toHaveProperty("total");
+      expect(response.body.pagination).toHaveProperty("page");
+      expect(response.body.pagination).toHaveProperty("pageSize");
+      expect(response.body.pagination).toHaveProperty("totalPages");
     });
 
-    it('should require authentication', async () => {
+    it("should require authentication", async () => {
       const response = await request(app)
-        .get('/api/v1/import/history');
+        .get("/api/v1/import/history");
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('GET /api/v1/import/:id', () => {
-    it('should return specific import log', async () => {
-      const importId = 'test-import-id';
+  describe("GET /api/v1/import/:id", () => {
+    it("should return specific import log", async () => {
+      const importId = "test-import-id";
       
       // Mock the import log exists
       const response = await request(app)
         .get(`/api/v1/import/${importId}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       // Will return 404 as no actual import exists
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Import log not found');
+      expect(response.body.error).toBe("Import log not found");
     });
 
-    it('should return 404 for non-existent import', async () => {
+    it("should return 404 for non-existent import", async () => {
       const response = await request(app)
-        .get('/api/v1/import/non-existent-id')
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/import/non-existent-id")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Import log not found');
+      expect(response.body.error).toBe("Import log not found");
     });
   });
 
-  describe('POST /api/v1/import/:id/rollback', () => {
-    it('should rollback completed import', async () => {
-      const importId = 'test-import-id';
+  describe("POST /api/v1/import/:id/rollback", () => {
+    it("should rollback completed import", async () => {
+      const importId = "test-import-id";
       
       const response = await request(app)
         .post(`/api/v1/import/${importId}/rollback`)
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set("Authorization", `Bearer ${adminToken}`);
 
       // With mocked service, this should succeed
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Import rolled back successfully');
+      expect(response.body.message).toBe("Import rolled back successfully");
     });
 
-    it('should require data_admin role', async () => {
+    it("should require data_admin role", async () => {
       const response = await request(app)
-        .post('/api/v1/import/test-id/rollback')
-        .set('Authorization', `Bearer ${authToken}`);
+        .post("/api/v1/import/test-id/rollback")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(403);
     });

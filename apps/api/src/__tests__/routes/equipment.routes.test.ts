@@ -6,7 +6,7 @@
  */
 
 // Mock the database module before importing any other modules
-jest.mock('../../config/database', () => {
+jest.mock("../../config/database", () => {
   const mockQueryRunner = {
     connect: jest.fn().mockResolvedValue(undefined),
     query: jest.fn().mockResolvedValue(undefined),
@@ -27,7 +27,7 @@ jest.mock('../../config/database', () => {
     isInitialized: true,
     getRepository: jest.fn(),
     createQueryRunner: jest.fn(() => mockQueryRunner),
-    options: { type: 'better-sqlite3' },
+    options: { type: "better-sqlite3" },
     driver: {
       escape: jest.fn(value => `'${value}'`),
     },
@@ -48,7 +48,7 @@ jest.mock('../../config/database', () => {
 });
 
 // Mock audit context middleware
-jest.mock('../../middleware/auditContext', () => ({
+jest.mock("../../middleware/auditContext", () => ({
   auditContextMiddleware: jest.fn((req, res, next) => {
     // Simulate audit context setup with mocked manager
     const mockQueryRunner = {
@@ -72,40 +72,40 @@ jest.mock('../../middleware/auditContext', () => ({
 }));
 
 // Mock rate limiter to prevent rate limiting in tests
-jest.mock('../../middleware/rateLimiter', () => ({
+jest.mock("../../middleware/rateLimiter", () => ({
   authRateLimit: jest.fn((req, res, next) => next()),
   strictAuthRateLimit: jest.fn((req, res, next) => next()),
   writeOpsRateLimit: jest.fn((req, res, next) => next()),
 }));
 
 // Mock auth middleware
-jest.mock('../../middleware/auth', () => ({
+jest.mock("../../middleware/auth", () => ({
   authenticate: jest.fn((req, res, next) => {
     // Check for Authorization header to simulate real auth behavior
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Authentication required" });
     }
-    req.user = { sub: 'test-user-id', email: 'test@example.com' };
+    req.user = { sub: "test-user-id", email: "test@example.com" };
     next();
   }),
   authorize: jest.fn(() => (req, res, next) => next()),
 }));
 
 // Mock validation middleware
-jest.mock('../../middleware/validationMiddleware', () => ({
+jest.mock("../../middleware/validationMiddleware", () => ({
   validateBody: jest.fn(() => (req, res, next) => next()),
   validateQuery: jest.fn(() => (req, res, next) => next()),
 }));
 
 // Mock multer for file uploads
-jest.mock('multer', () => {
+jest.mock("multer", () => {
   const multerMock = {
     single: jest.fn(() => (req, res, next) => {
       req.file = {
-        buffer: Buffer.from('test'),
-        originalname: 'test.csv',
-        mimetype: 'text/csv',
+        buffer: Buffer.from("test"),
+        originalname: "test.csv",
+        mimetype: "text/csv",
       };
       next();
     }),
@@ -121,8 +121,8 @@ jest.mock('multer', () => {
 });
 
 // Mock TypeORM to ensure entities work in test environment
-jest.mock('typeorm', () => {
-  const original = jest.requireActual('typeorm');
+jest.mock("typeorm", () => {
+  const original = jest.requireActual("typeorm");
   return {
     ...original,
     DataSource: jest.fn().mockImplementation(() => ({
@@ -131,13 +131,13 @@ jest.mock('typeorm', () => {
       isInitialized: true,
       getRepository: jest.fn(),
       createQueryRunner: jest.fn(),
-      options: { type: 'better-sqlite3' },
+      options: { type: "better-sqlite3" },
     })),
   };
 });
 
 // Mock EquipmentService to avoid complex repository setup issues
-jest.mock('../../services/EquipmentService', () => {
+jest.mock("../../services/EquipmentService", () => {
   return {
     EquipmentService: jest.fn().mockImplementation(() => ({
       createEquipment: jest.fn(),
@@ -152,27 +152,27 @@ jest.mock('../../services/EquipmentService', () => {
   };
 });
 
-import request from 'supertest';
-import { Express } from 'express';
-import { DataSource } from 'typeorm';
-import jwt from 'jsonwebtoken';
-import { createApp } from '../../app';
-import { AppDataSource } from '../../config/database';
-import { User } from '../../entities/User';
-import { Role } from '../../entities/Role';
-import { Site } from '../../entities/Site';
-import { Cell } from '../../entities/Cell';
-import { Equipment, EquipmentType } from '../../entities/Equipment';
-import { PLC } from '../../entities/PLC';
-import { jwtConfig } from '../../config/jwt';
-import { EquipmentService } from '../../services/EquipmentService';
+import request from "supertest";
+import { Express } from "express";
+import { DataSource } from "typeorm";
+import jwt from "jsonwebtoken";
+import { createApp } from "../../app";
+import { AppDataSource } from "../../config/database";
+import { User } from "../../entities/User";
+import { Role } from "../../entities/Role";
+import { Site } from "../../entities/Site";
+import { Cell } from "../../entities/Cell";
+import { Equipment, EquipmentType } from "../../entities/Equipment";
+import { PLC } from "../../entities/PLC";
+import { jwtConfig } from "../../config/jwt";
+import { EquipmentService } from "../../services/EquipmentService";
 import {
   EquipmentConflictError,
   EquipmentNotFoundError,
   OptimisticLockingError,
-} from '../../errors/EquipmentError';
+} from "../../errors/EquipmentError";
 
-describe('Equipment Routes Integration Tests', () => {
+describe("Equipment Routes Integration Tests", () => {
   let app: Express;
   let dataSource: DataSource;
   let testUser: User;
@@ -209,7 +209,7 @@ describe('Equipment Routes Integration Tests', () => {
     const mockRoleRepository = {
       create: jest.fn().mockImplementation(data => ({
         ...data,
-        id: data.name === 'Engineer' ? testRole.id : 'mock-role-id',
+        id: data.name === "Engineer" ? testRole.id : "mock-role-id",
       })),
       save: jest.fn().mockResolvedValue(testRole),
       findOne: jest.fn(),
@@ -307,13 +307,13 @@ describe('Equipment Routes Integration Tests', () => {
     // Configure createEquipment mock
     mockServiceInstance.createEquipment.mockImplementation(async equipmentData => {
       // Check for duplicate tag ID scenario
-      if (equipmentData.plcData.tagId === 'PRESS_001' && equipmentData.name === 'Another Press') {
+      if (equipmentData.plcData.tagId === "PRESS_001" && equipmentData.name === "Another Press") {
         throw new EquipmentConflictError("PLC with tag ID 'PRESS_001' already exists");
       }
 
       return {
-        id: '123e4567-e89b-12d3-a456-426614174005',
-        name: 'Test Press',
+        id: "123e4567-e89b-12d3-a456-426614174005",
+        name: "Test Press",
         equipmentType: EquipmentType.PRESS,
         cellId: testCell.id,
         createdBy: testUser.id,
@@ -330,14 +330,14 @@ describe('Equipment Routes Integration Tests', () => {
         },
         plcs: [
           {
-            id: '123e4567-e89b-12d3-a456-426614174006',
-            equipmentId: '123e4567-e89b-12d3-a456-426614174005',
-            tagId: 'PRESS_001',
-            description: 'Test hydraulic press PLC',
-            make: 'Allen-Bradley',
-            model: 'CompactLogix 5370',
-            ipAddress: '192.168.1.100',
-            firmwareVersion: '33.01',
+            id: "123e4567-e89b-12d3-a456-426614174006",
+            equipmentId: "123e4567-e89b-12d3-a456-426614174005",
+            tagId: "PRESS_001",
+            description: "Test hydraulic press PLC",
+            make: "Allen-Bradley",
+            model: "CompactLogix 5370",
+            ipAddress: "192.168.1.100",
+            firmwareVersion: "33.01",
             createdBy: testUser.id,
             updatedBy: testUser.id,
             createdAt: new Date(),
@@ -353,10 +353,10 @@ describe('Equipment Routes Integration Tests', () => {
       if (deletedEquipmentIds.has(id)) {
         throw new EquipmentNotFoundError(id);
       }
-      if (id === '123e4567-e89b-12d3-a456-426614174005') {
+      if (id === "123e4567-e89b-12d3-a456-426614174005") {
         return {
-          id: '123e4567-e89b-12d3-a456-426614174005',
-          name: 'Test Press',
+          id: "123e4567-e89b-12d3-a456-426614174005",
+          name: "Test Press",
           equipmentType: EquipmentType.PRESS,
           cellId: testCell.id,
           createdBy: testUser.id,
@@ -373,14 +373,14 @@ describe('Equipment Routes Integration Tests', () => {
           },
           plcs: [
             {
-              id: '123e4567-e89b-12d3-a456-426614174006',
-              equipmentId: '123e4567-e89b-12d3-a456-426614174005',
-              tagId: 'PRESS_001',
-              description: 'Test hydraulic press PLC',
-              make: 'Allen-Bradley',
-              model: 'CompactLogix 5370',
-              ipAddress: '192.168.1.100',
-              firmwareVersion: '33.01',
+              id: "123e4567-e89b-12d3-a456-426614174006",
+              equipmentId: "123e4567-e89b-12d3-a456-426614174005",
+              tagId: "PRESS_001",
+              description: "Test hydraulic press PLC",
+              make: "Allen-Bradley",
+              model: "CompactLogix 5370",
+              ipAddress: "192.168.1.100",
+              firmwareVersion: "33.01",
               createdBy: testUser.id,
               updatedBy: testUser.id,
               createdAt: new Date(),
@@ -401,8 +401,8 @@ describe('Equipment Routes Integration Tests', () => {
       return {
         data: [
           {
-            id: '123e4567-e89b-12d3-a456-426614174005',
-            name: 'Test Press',
+            id: "123e4567-e89b-12d3-a456-426614174005",
+            name: "Test Press",
             equipmentType: EquipmentType.PRESS,
             cellId: testCell.id,
             createdBy: testUser.id,
@@ -419,14 +419,14 @@ describe('Equipment Routes Integration Tests', () => {
             },
             plcs: [
               {
-                id: '123e4567-e89b-12d3-a456-426614174006',
-                equipmentId: '123e4567-e89b-12d3-a456-426614174005',
-                tagId: 'PRESS_001',
-                description: 'Test hydraulic press PLC',
-                make: 'Allen-Bradley',
-                model: 'CompactLogix 5370',
-                ipAddress: '192.168.1.100',
-                firmwareVersion: '33.01',
+                id: "123e4567-e89b-12d3-a456-426614174006",
+                equipmentId: "123e4567-e89b-12d3-a456-426614174005",
+                tagId: "PRESS_001",
+                description: "Test hydraulic press PLC",
+                make: "Allen-Bradley",
+                model: "CompactLogix 5370",
+                ipAddress: "192.168.1.100",
+                firmwareVersion: "33.01",
                 createdBy: testUser.id,
                 updatedBy: testUser.id,
                 createdAt: new Date(),
@@ -449,13 +449,13 @@ describe('Equipment Routes Integration Tests', () => {
     mockServiceInstance.updateEquipment.mockImplementation(
       async (id, updateData, expectedUpdatedAt) => {
         // Simulate optimistic locking conflict
-        if (expectedUpdatedAt.getTime() === new Date('2020-01-01T00:00:00.000Z').getTime()) {
+        if (expectedUpdatedAt.getTime() === new Date("2020-01-01T00:00:00.000Z").getTime()) {
           throw new OptimisticLockingError();
         }
 
         return {
-          id: '123e4567-e89b-12d3-a456-426614174005',
-          name: 'Updated Press',
+          id: "123e4567-e89b-12d3-a456-426614174005",
+          name: "Updated Press",
           equipmentType: EquipmentType.PRESS,
           cellId: testCell.id,
           createdBy: testUser.id,
@@ -472,14 +472,14 @@ describe('Equipment Routes Integration Tests', () => {
           },
           plcs: [
             {
-              id: '123e4567-e89b-12d3-a456-426614174006',
-              equipmentId: '123e4567-e89b-12d3-a456-426614174005',
-              tagId: 'PRESS_001',
-              description: 'Updated description',
-              make: 'Siemens',
-              model: 'CompactLogix 5370',
-              ipAddress: '192.168.1.100',
-              firmwareVersion: '33.01',
+              id: "123e4567-e89b-12d3-a456-426614174006",
+              equipmentId: "123e4567-e89b-12d3-a456-426614174005",
+              tagId: "PRESS_001",
+              description: "Updated description",
+              make: "Siemens",
+              model: "CompactLogix 5370",
+              ipAddress: "192.168.1.100",
+              firmwareVersion: "33.01",
               createdBy: testUser.id,
               updatedBy: testUser.id,
               createdAt: new Date(),
@@ -518,8 +518,8 @@ describe('Equipment Routes Integration Tests', () => {
   const setupTestData = async () => {
     // Create mock test entities with proper UUIDs for testing
     testRole = {
-      id: '123e4567-e89b-12d3-a456-426614174001',
-      name: 'Engineer',
+      id: "123e4567-e89b-12d3-a456-426614174001",
+      name: "Engineer",
       permissions: {
         equipment: {
           create: true,
@@ -533,11 +533,11 @@ describe('Equipment Routes Integration Tests', () => {
     } as Role;
 
     testUser = {
-      id: '123e4567-e89b-12d3-a456-426614174002',
-      email: 'test@equipment.com',
-      firstName: 'Test',
-      lastName: 'User',
-      passwordHash: 'test-password-hash',
+      id: "123e4567-e89b-12d3-a456-426614174002",
+      email: "test@equipment.com",
+      firstName: "Test",
+      lastName: "User",
+      passwordHash: "test-password-hash",
       roleId: testRole.id,
       isActive: true,
       createdAt: new Date(),
@@ -545,8 +545,8 @@ describe('Equipment Routes Integration Tests', () => {
     } as User;
 
     testSite = {
-      id: '123e4567-e89b-12d3-a456-426614174003',
-      name: 'Test Site',
+      id: "123e4567-e89b-12d3-a456-426614174003",
+      name: "Test Site",
       createdBy: testUser.id,
       updatedBy: testUser.id,
       createdAt: new Date(),
@@ -554,10 +554,10 @@ describe('Equipment Routes Integration Tests', () => {
     } as Site;
 
     testCell = {
-      id: '123e4567-e89b-12d3-a456-426614174004',
+      id: "123e4567-e89b-12d3-a456-426614174004",
       siteId: testSite.id,
-      name: 'Test Cell',
-      lineNumber: 'LINE-001',
+      name: "Test Cell",
+      lineNumber: "LINE-001",
       createdBy: testUser.id,
       updatedBy: testUser.id,
       createdAt: new Date(),
@@ -578,7 +578,7 @@ describe('Equipment Routes Integration Tests', () => {
       {
         issuer: jwtConfig.issuer,
         audience: jwtConfig.audience,
-        expiresIn: '1h',
+        expiresIn: "1h",
       }
     );
   };
@@ -595,8 +595,8 @@ describe('Equipment Routes Integration Tests', () => {
   }> => {
     // Create mock equipment and PLC for testing with proper UUIDs
     const equipment = {
-      id: '123e4567-e89b-12d3-a456-426614174005',
-      name: 'Test Press',
+      id: "123e4567-e89b-12d3-a456-426614174005",
+      name: "Test Press",
       equipmentType: EquipmentType.PRESS,
       cellId: testCell.id,
       createdBy: testUser.id,
@@ -606,14 +606,14 @@ describe('Equipment Routes Integration Tests', () => {
     } as Equipment;
 
     const plc = {
-      id: '123e4567-e89b-12d3-a456-426614174006',
+      id: "123e4567-e89b-12d3-a456-426614174006",
       equipmentId: equipment.id,
-      tagId: 'PRESS_001',
-      description: 'Test hydraulic press PLC',
-      make: 'Allen-Bradley',
-      model: 'CompactLogix 5370',
-      ipAddress: '192.168.1.100',
-      firmwareVersion: '33.01',
+      tagId: "PRESS_001",
+      description: "Test hydraulic press PLC",
+      make: "Allen-Bradley",
+      model: "CompactLogix 5370",
+      ipAddress: "192.168.1.100",
+      firmwareVersion: "33.01",
       createdBy: testUser.id,
       updatedBy: testUser.id,
       createdAt: new Date(),
@@ -624,18 +624,18 @@ describe('Equipment Routes Integration Tests', () => {
     return { equipment, plc };
   };
 
-  describe('POST /api/v1/equipment', () => {
+  describe("POST /api/v1/equipment", () => {
     const validEquipmentData = {
-      name: 'Test Press',
+      name: "Test Press",
       equipmentType: EquipmentType.PRESS,
       cellId: null, // Will be set in test
       plcData: {
-        tagId: 'PRESS_001',
-        description: 'Test hydraulic press PLC',
-        make: 'Allen-Bradley',
-        model: 'CompactLogix 5370',
-        ipAddress: '192.168.1.100',
-        firmwareVersion: '33.01',
+        tagId: "PRESS_001",
+        description: "Test hydraulic press PLC",
+        make: "Allen-Bradley",
+        model: "CompactLogix 5370",
+        ipAddress: "192.168.1.100",
+        firmwareVersion: "33.01",
       },
     };
 
@@ -643,84 +643,84 @@ describe('Equipment Routes Integration Tests', () => {
       validEquipmentData.cellId = testCell.id;
     });
 
-    it('should create equipment successfully with valid data', async () => {
+    it("should create equipment successfully with valid data", async () => {
       const response = await request(app)
-        .post('/api/v1/equipment')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/equipment")
+        .set("Authorization", `Bearer ${authToken}`)
         .send(validEquipmentData);
 
       expect(response.status).toBe(201);
-      expect(response.body.message).toBe('Equipment created successfully');
+      expect(response.body.message).toBe("Equipment created successfully");
       expect(response.body.equipment).toMatchObject({
-        name: 'Test Press',
+        name: "Test Press",
         equipmentType: EquipmentType.PRESS,
         cellId: testCell.id,
       });
       expect(response.body.equipment.plcs).toHaveLength(1);
       expect(response.body.equipment.plcs[0]).toMatchObject({
-        tagId: 'PRESS_001',
-        description: 'Test hydraulic press PLC',
-        make: 'Allen-Bradley',
-        model: 'CompactLogix 5370',
-        ipAddress: '192.168.1.100',
+        tagId: "PRESS_001",
+        description: "Test hydraulic press PLC",
+        make: "Allen-Bradley",
+        model: "CompactLogix 5370",
+        ipAddress: "192.168.1.100",
       });
     });
 
-    it('should return 400 for invalid equipment data', async () => {
+    it("should return 400 for invalid equipment data", async () => {
       const invalidData = {
         ...validEquipmentData,
-        name: '', // Invalid empty name
-        equipmentType: 'INVALID_TYPE',
+        name: "", // Invalid empty name
+        equipmentType: "INVALID_TYPE",
       };
 
       const response = await request(app)
-        .post('/api/v1/equipment')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/equipment")
+        .set("Authorization", `Bearer ${authToken}`)
         .send(invalidData);
 
       expect(response.status).toBe(400);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error.details).toHaveProperty('name');
-      expect(response.body.error.details).toHaveProperty('equipmentType');
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
+      expect(response.body.error.details).toHaveProperty("name");
+      expect(response.body.error.details).toHaveProperty("equipmentType");
     });
 
-    it('should return 401 without authentication token', async () => {
-      const response = await request(app).post('/api/v1/equipment').send(validEquipmentData);
+    it("should return 401 without authentication token", async () => {
+      const response = await request(app).post("/api/v1/equipment").send(validEquipmentData);
 
       expect(response.status).toBe(401);
     });
 
-    it('should return 409 for duplicate tag ID', async () => {
+    it("should return 409 for duplicate tag ID", async () => {
       // Create first equipment
       await createTestEquipment();
 
       // Try to create another with same tag ID
       const response = await request(app)
-        .post('/api/v1/equipment')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/equipment")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           ...validEquipmentData,
-          name: 'Another Press',
+          name: "Another Press",
           plcData: {
             ...validEquipmentData.plcData,
-            tagId: 'PRESS_001', // Same tag ID
-            ipAddress: '192.168.1.101', // Different IP
+            tagId: "PRESS_001", // Same tag ID
+            ipAddress: "192.168.1.101", // Different IP
           },
         });
 
       expect(response.status).toBe(409);
-      expect(response.body.error.code).toBe('EQUIPMENT_CONFLICT');
+      expect(response.body.error.code).toBe("EQUIPMENT_CONFLICT");
     });
   });
 
-  describe('GET /api/v1/equipment', () => {
-    it('should return paginated equipment list', async () => {
+  describe("GET /api/v1/equipment", () => {
+    it("should return paginated equipment list", async () => {
       // Create test equipment
       await createTestEquipment();
 
       const response = await request(app)
-        .get('/api/v1/equipment')
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/equipment")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(1);
@@ -732,137 +732,137 @@ describe('Equipment Routes Integration Tests', () => {
       });
     });
 
-    it('should support search filtering', async () => {
+    it("should support search filtering", async () => {
       await createTestEquipment();
 
       const response = await request(app)
-        .get('/api/v1/equipment')
-        .query({ search: 'Press' })
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/equipment")
+        .query({ search: "Press" })
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0].name).toBe('Test Press');
+      expect(response.body.data[0].name).toBe("Test Press");
     });
 
-    it('should support pagination', async () => {
+    it("should support pagination", async () => {
       await createTestEquipment();
 
       const response = await request(app)
-        .get('/api/v1/equipment')
+        .get("/api/v1/equipment")
         .query({ page: 1, pageSize: 10 })
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.pagination.pageSize).toBe(10);
     });
   });
 
-  describe('GET /api/v1/equipment/:id', () => {
-    it('should return equipment details', async () => {
+  describe("GET /api/v1/equipment/:id", () => {
+    it("should return equipment details", async () => {
       const { equipment } = await createTestEquipment();
 
       const response = await request(app)
         .get(`/api/v1/equipment/${equipment.id}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.equipment.id).toBe(equipment.id);
-      expect(response.body.equipment.name).toBe('Test Press');
+      expect(response.body.equipment.name).toBe("Test Press");
       expect(response.body.equipment.plcs).toHaveLength(1);
     });
 
-    it('should return 404 for non-existent equipment', async () => {
-      const nonExistentId = '123e4567-e89b-12d3-a456-426614174000';
+    it("should return 404 for non-existent equipment", async () => {
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
 
       const response = await request(app)
         .get(`/api/v1/equipment/${nonExistentId}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
-      expect(response.body.error.code).toBe('EQUIPMENT_NOT_FOUND');
+      expect(response.body.error.code).toBe("EQUIPMENT_NOT_FOUND");
     });
 
-    it('should return 400 for invalid UUID format', async () => {
+    it("should return 400 for invalid UUID format", async () => {
       const response = await request(app)
-        .get('/api/v1/equipment/invalid-uuid')
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/equipment/invalid-uuid")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
     });
   });
 
-  describe('PUT /api/v1/equipment/:id', () => {
-    it('should update equipment successfully', async () => {
+  describe("PUT /api/v1/equipment/:id", () => {
+    it("should update equipment successfully", async () => {
       const { equipment } = await createTestEquipment();
 
       const updateData = {
-        name: 'Updated Press',
+        name: "Updated Press",
         plcData: {
-          description: 'Updated description',
-          make: 'Siemens',
+          description: "Updated description",
+          make: "Siemens",
         },
         updatedAt: equipment.updatedAt.toISOString(),
       };
 
       const response = await request(app)
         .put(`/api/v1/equipment/${equipment.id}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set("Authorization", `Bearer ${authToken}`)
         .send(updateData);
 
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Equipment updated successfully');
-      expect(response.body.equipment.name).toBe('Updated Press');
-      expect(response.body.equipment.plcs[0].description).toBe('Updated description');
-      expect(response.body.equipment.plcs[0].make).toBe('Siemens');
+      expect(response.body.message).toBe("Equipment updated successfully");
+      expect(response.body.equipment.name).toBe("Updated Press");
+      expect(response.body.equipment.plcs[0].description).toBe("Updated description");
+      expect(response.body.equipment.plcs[0].make).toBe("Siemens");
     });
 
-    it('should return 409 for optimistic locking conflict', async () => {
+    it("should return 409 for optimistic locking conflict", async () => {
       const { equipment } = await createTestEquipment();
 
       const updateData = {
-        name: 'Updated Press',
-        updatedAt: new Date('2020-01-01T00:00:00.000Z').toISOString(), // Old timestamp
+        name: "Updated Press",
+        updatedAt: new Date("2020-01-01T00:00:00.000Z").toISOString(), // Old timestamp
       };
 
       const response = await request(app)
         .put(`/api/v1/equipment/${equipment.id}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set("Authorization", `Bearer ${authToken}`)
         .send(updateData);
 
       expect(response.status).toBe(409);
-      expect(response.body.error.code).toBe('OPTIMISTIC_LOCKING_ERROR');
+      expect(response.body.error.code).toBe("OPTIMISTIC_LOCKING_ERROR");
     });
   });
 
-  describe('DELETE /api/v1/equipment/:id', () => {
-    it('should soft delete equipment successfully', async () => {
+  describe("DELETE /api/v1/equipment/:id", () => {
+    it("should soft delete equipment successfully", async () => {
       const { equipment } = await createTestEquipment();
 
       const response = await request(app)
         .delete(`/api/v1/equipment/${equipment.id}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Equipment deleted successfully');
+      expect(response.body.message).toBe("Equipment deleted successfully");
 
       // Verify equipment is soft deleted (should not appear in regular queries)
       const getResponse = await request(app)
         .get(`/api/v1/equipment/${equipment.id}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(getResponse.status).toBe(404);
     });
   });
 
-  describe('GET /api/v1/equipment/statistics', () => {
-    it('should return equipment statistics', async () => {
+  describe("GET /api/v1/equipment/statistics", () => {
+    it("should return equipment statistics", async () => {
       await createTestEquipment();
 
       const response = await request(app)
-        .get('/api/v1/equipment/statistics')
-        .set('Authorization', `Bearer ${authToken}`);
+        .get("/api/v1/equipment/statistics")
+        .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.statistics).toMatchObject({
@@ -876,8 +876,8 @@ describe('Equipment Routes Integration Tests', () => {
     });
   });
 
-  describe('POST /api/v1/equipment/bulk', () => {
-    it('should perform bulk delete operation', async () => {
+  describe("POST /api/v1/equipment/bulk", () => {
+    it("should perform bulk delete operation", async () => {
       const { equipment: equipment1 } = await createTestEquipment();
 
       // Create a second equipment for bulk operation
@@ -885,8 +885,8 @@ describe('Equipment Routes Integration Tests', () => {
       const plcRepository = dataSource.getRepository(PLC);
 
       const equipment2 = equipmentRepository.create({
-        id: '123e4567-e89b-12d3-a456-426614174007',
-        name: 'Test Robot',
+        id: "123e4567-e89b-12d3-a456-426614174007",
+        name: "Test Robot",
         equipmentType: EquipmentType.ROBOT,
         cellId: testCell.id,
         createdBy: testUser.id,
@@ -895,46 +895,46 @@ describe('Equipment Routes Integration Tests', () => {
       const savedEquipment2 = await equipmentRepository.save(equipment2);
 
       const plc2 = plcRepository.create({
-        id: '123e4567-e89b-12d3-a456-426614174008',
+        id: "123e4567-e89b-12d3-a456-426614174008",
         equipmentId: savedEquipment2.id,
-        tagId: 'ROBOT_001',
-        description: 'Test robot PLC',
-        make: 'ABB',
-        model: 'IRC5',
+        tagId: "ROBOT_001",
+        description: "Test robot PLC",
+        make: "ABB",
+        model: "IRC5",
         createdBy: testUser.id,
         updatedBy: testUser.id,
       });
       await plcRepository.save(plc2);
 
       const response = await request(app)
-        .post('/api/v1/equipment/bulk')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/equipment/bulk")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           equipmentIds: [equipment1.id, savedEquipment2.id],
-          operation: 'delete',
+          operation: "delete",
         });
 
       if (response.status !== 200) {
         // eslint-disable-next-line no-console
-        console.log('Bulk delete - Response status:', response.status);
+        console.log("Bulk delete - Response status:", response.status);
         // eslint-disable-next-line no-console
-        console.log('Bulk delete - Response body:', JSON.stringify(response.body, null, 2));
+        console.log("Bulk delete - Response body:", JSON.stringify(response.body, null, 2));
       }
 
       expect(response.status).toBe(200);
       expect(response.body.deletedCount).toBe(2);
-      expect(response.body.message).toContain('Successfully deleted 2 equipment items');
+      expect(response.body.message).toContain("Successfully deleted 2 equipment items");
     });
 
-    it('should perform bulk export operation', async () => {
+    it("should perform bulk export operation", async () => {
       const { equipment } = await createTestEquipment();
 
       const response = await request(app)
-        .post('/api/v1/equipment/bulk')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post("/api/v1/equipment/bulk")
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           equipmentIds: [equipment.id],
-          operation: 'export',
+          operation: "export",
         });
 
       expect(response.status).toBe(200);

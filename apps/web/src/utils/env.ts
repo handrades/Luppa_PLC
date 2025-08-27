@@ -53,26 +53,44 @@ function getEnvVar(key: string, defaultValue?: string): string {
 function getBooleanEnvVar(key: string, defaultValue = false): boolean {
   // Try multiple approaches to check for boolean values in import.meta.env
 
-  // Approach 1: Direct check for boolean type in import.meta.env
+  // Approach 1: Check import.meta.env for both boolean and string values
   try {
     const g = globalThis as GlobalWithImportMeta;
     const hasImportMeta = typeof g?.import?.meta?.env !== 'undefined';
     if (hasImportMeta) {
       const value = g.import!.meta!.env![key];
-      if (value !== undefined && typeof value === 'boolean') {
-        return value;
+      if (value !== undefined) {
+        // If it's already a boolean, return it
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        // If it's a string, parse "true"/"false" (case-insensitive)
+        if (typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'true') return true;
+          if (lowerValue === 'false') return false;
+        }
       }
     }
   } catch {
     // import.meta not available via direct access
   }
 
-  // Approach 2: Check globalThis.__VITE_ENV__ for boolean values (test environments)
+  // Approach 2: Check globalThis.__VITE_ENV__ for both boolean and string values (test environments)
   const g = globalThis as GlobalWithImportMeta;
   if (typeof globalThis !== 'undefined' && g.__VITE_ENV__) {
     const value = g.__VITE_ENV__[key];
-    if (value !== undefined && typeof value === 'boolean') {
-      return value;
+    if (value !== undefined) {
+      // If it's already a boolean, return it
+      if (typeof value === 'boolean') {
+        return value;
+      }
+      // If it's a string, parse "true"/"false" (case-insensitive)
+      if (typeof value === 'string') {
+        const lowerValue = value.toLowerCase();
+        if (lowerValue === 'true') return true;
+        if (lowerValue === 'false') return false;
+      }
     }
   }
 

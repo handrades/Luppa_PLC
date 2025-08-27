@@ -4,15 +4,15 @@
  * Tests to ensure search performance meets requirements
  */
 
-import { SearchService } from '../../services/SearchService';
-import { AppDataSource } from '../../config/database';
-import { createClient } from 'redis';
+import { SearchService } from "../../services/SearchService";
+import { AppDataSource } from "../../config/database";
+import { createClient } from "redis";
 
 // Mock dependencies
-jest.mock('redis');
-jest.mock('../../config/database');
+jest.mock("redis");
+jest.mock("../../config/database");
 
-describe('Search Performance Benchmarks', () => {
+describe("Search Performance Benchmarks", () => {
   let searchService: SearchService;
   let mockRedis: jest.Mocked<ReturnType<typeof createClient>>;
   let mockQueryRunner: { query: jest.Mock; release: jest.Mock };
@@ -28,7 +28,7 @@ describe('Search Performance Benchmarks', () => {
       setEx: jest.fn(),
       keys: jest.fn(),
       connect: jest.fn().mockResolvedValue(undefined),
-      ping: jest.fn().mockResolvedValue('PONG'),
+      ping: jest.fn().mockResolvedValue("PONG"),
       on: jest.fn(),
     };
     (createClient as jest.MockedFunction<typeof createClient>).mockReturnValue(mockRedis);
@@ -46,8 +46,8 @@ describe('Search Performance Benchmarks', () => {
     jest.clearAllMocks();
   });
 
-  describe('query execution time benchmarks', () => {
-    it('should execute simple search in under 100ms', async () => {
+  describe("query execution time benchmarks", () => {
+    it("should execute simple search in under 100ms", async () => {
       // Mock fast database response with execution time
       mockQueryRunner.query.mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve([]), 50))
@@ -55,7 +55,7 @@ describe('Search Performance Benchmarks', () => {
       mockRedis.get.mockResolvedValue(null);
 
       const result = await searchService.search({
-        q: 'test',
+        q: "test",
         page: 1,
         pageSize: 50,
       });
@@ -63,7 +63,7 @@ describe('Search Performance Benchmarks', () => {
       expect(result.searchMetadata.executionTimeMs).toBeLessThan(150);
     });
 
-    it('should execute complex search in under 200ms', async () => {
+    it("should execute complex search in under 200ms", async () => {
       // Mock moderate database response time
       mockQueryRunner.query.mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve([]), 150))
@@ -71,23 +71,23 @@ describe('Search Performance Benchmarks', () => {
       mockRedis.get.mockResolvedValue(null);
 
       const result = await searchService.search({
-        q: 'complex search with multiple terms and filters',
+        q: "complex search with multiple terms and filters",
         page: 1,
         pageSize: 100,
         includeHighlights: true,
-        sortBy: 'relevance',
+        sortBy: "relevance",
       });
 
       expect(result.searchMetadata.executionTimeMs).toBeLessThanOrEqual(350);
     });
 
-    it('should handle 1000 results in under 500ms', async () => {
+    it("should handle 1000 results in under 500ms", async () => {
       const largeResultSet = Array.from({ length: 1000 }, (_, i) => ({
         plc_id: `plc-${i}`,
-        tag_id: `PLC-${i.toString().padStart(4, '0')}`,
+        tag_id: `PLC-${i.toString().padStart(4, "0")}`,
         plc_description: `Large dataset PLC ${i}`,
-        make: 'Performance Test',
-        model: 'Benchmark',
+        make: "Performance Test",
+        model: "Benchmark",
         relevance_score: Math.random(),
         hierarchy_path: `Site > Cell > Equipment > PLC-${i}`,
       }));
@@ -96,7 +96,7 @@ describe('Search Performance Benchmarks', () => {
       mockRedis.get.mockResolvedValue(null);
 
       const result = await searchService.search({
-        q: 'performance test',
+        q: "performance test",
         page: 1,
         pageSize: 100,
         maxResults: 1000,
@@ -108,8 +108,8 @@ describe('Search Performance Benchmarks', () => {
     });
   });
 
-  describe('cache performance benchmarks', () => {
-    it('should serve cached results in under 10ms', async () => {
+  describe("cache performance benchmarks", () => {
+    it("should serve cached results in under 10ms", async () => {
       const cachedResult = {
         data: [],
         pagination: {
@@ -121,8 +121,8 @@ describe('Search Performance Benchmarks', () => {
           hasPrev: false,
         },
         searchMetadata: {
-          query: 'cached',
-          searchType: 'fulltext',
+          query: "cached",
+          searchType: "fulltext",
           totalMatches: 0,
           executionTimeMs: 5,
         },
@@ -133,7 +133,7 @@ describe('Search Performance Benchmarks', () => {
       const startTime = performance.now();
 
       await searchService.search({
-        q: 'cached',
+        q: "cached",
         page: 1,
         pageSize: 50,
       });
@@ -142,7 +142,7 @@ describe('Search Performance Benchmarks', () => {
       expect(executionTime).toBeLessThan(50); // Relaxed from 10ms to 50ms for CI environments
     });
 
-    it('should cache large results efficiently', async () => {
+    it("should cache large results efficiently", async () => {
       const largeResults = Array.from({ length: 500 }, (_, i) => ({
         plc_id: `plc-${i}`,
         tag_id: `PLC-${i}`,
@@ -156,7 +156,7 @@ describe('Search Performance Benchmarks', () => {
       const startTime = performance.now();
 
       await searchService.search({
-        q: 'cache performance',
+        q: "cache performance",
         page: 1,
         pageSize: 50,
       });
@@ -169,8 +169,8 @@ describe('Search Performance Benchmarks', () => {
     });
   });
 
-  describe('concurrent request benchmarks', () => {
-    it('should handle 10 concurrent searches efficiently', async () => {
+  describe("concurrent request benchmarks", () => {
+    it("should handle 10 concurrent searches efficiently", async () => {
       mockQueryRunner.query.mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve([]), 100))
       );
@@ -199,7 +199,7 @@ describe('Search Performance Benchmarks', () => {
       });
     });
 
-    it('should maintain performance under load', async () => {
+    it("should maintain performance under load", async () => {
       // Simulate varying response times
       mockQueryRunner.query.mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve([]), Math.random() * 200 + 50))
@@ -235,8 +235,8 @@ describe('Search Performance Benchmarks', () => {
     }, 30000); // 30 second timeout
   });
 
-  describe('memory usage benchmarks', () => {
-    it('should not leak memory during repeated searches', async () => {
+  describe("memory usage benchmarks", () => {
+    it("should not leak memory during repeated searches", async () => {
       mockQueryRunner.query.mockResolvedValue([]);
       mockRedis.get.mockResolvedValue(null);
 
@@ -264,12 +264,12 @@ describe('Search Performance Benchmarks', () => {
     });
   });
 
-  describe('database query optimization benchmarks', () => {
-    it('should generate efficient PostgreSQL queries', async () => {
+  describe("database query optimization benchmarks", () => {
+    it("should generate efficient PostgreSQL queries", async () => {
       mockQueryRunner.query.mockResolvedValue([]);
 
       await searchService.search({
-        q: 'optimization test fulltext query',
+        q: "optimization test fulltext query",
         page: 1,
         pageSize: 50,
       });
@@ -277,27 +277,27 @@ describe('Search Performance Benchmarks', () => {
       // Find the query that contains ts_rank (full-text search query)
       const tsRankQuery = mockQueryRunner.query.mock.calls
         .map(call => call[0])
-        .find(query => typeof query === 'string' && query.includes('ts_rank'));
+        .find(query => typeof query === "string" && query.includes("ts_rank"));
 
       if (!tsRankQuery) {
         fail(
-          'No query containing ts_rank was found in mock calls. Available queries: ' +
-            mockQueryRunner.query.mock.calls.map(call => call[0]).join('\n---\n')
+          "No query containing ts_rank was found in mock calls. Available queries: " +
+            mockQueryRunner.query.mock.calls.map(call => call[0]).join("\n---\n")
         );
       }
 
       // Verify query contains performance optimizations
-      expect(tsRankQuery).toContain('ts_rank'); // Full-text search ranking
-      expect(tsRankQuery).toContain('LIMIT'); // Pagination
-      expect(tsRankQuery).not.toContain('SELECT *'); // Should select specific columns
+      expect(tsRankQuery).toContain("ts_rank"); // Full-text search ranking
+      expect(tsRankQuery).toContain("LIMIT"); // Pagination
+      expect(tsRankQuery).not.toContain("SELECT *"); // Should select specific columns
     });
 
-    it('should use appropriate search strategy based on query', async () => {
+    it("should use appropriate search strategy based on query", async () => {
       const testCases = [
-        { query: 'a', expectedCalls: 2 }, // Should use similarity search (SET LOCAL + SELECT)
-        { query: 'AB', expectedCalls: 2 }, // Should use similarity search (SET LOCAL + SELECT)
-        { query: 'ABC DEF', expectedCalls: 4 }, // Should use hybrid search (2 strategies * 2 calls each)
-        { query: 'long multi word query test', expectedCalls: 2 }, // Should use full-text (SET LOCAL + SELECT)
+        { query: "a", expectedCalls: 2 }, // Should use similarity search (SET LOCAL + SELECT)
+        { query: "AB", expectedCalls: 2 }, // Should use similarity search (SET LOCAL + SELECT)
+        { query: "ABC DEF", expectedCalls: 4 }, // Should use hybrid search (2 strategies * 2 calls each)
+        { query: "long multi word query test", expectedCalls: 2 }, // Should use full-text (SET LOCAL + SELECT)
       ];
 
       for (const testCase of testCases) {
@@ -315,8 +315,8 @@ describe('Search Performance Benchmarks', () => {
     });
   });
 
-  describe('pagination performance benchmarks', () => {
-    it('should handle deep pagination efficiently', async () => {
+  describe("pagination performance benchmarks", () => {
+    it("should handle deep pagination efficiently", async () => {
       const mockData = Array.from({ length: 100 }, (_, i) => ({
         plc_id: `plc-${i}`,
         tag_id: `PLC-${i}`,
@@ -330,7 +330,7 @@ describe('Search Performance Benchmarks', () => {
       const startTime = performance.now();
 
       const result = await searchService.search({
-        q: 'pagination test',
+        q: "pagination test",
         page: 20,
         pageSize: 50,
       });
@@ -343,9 +343,9 @@ describe('Search Performance Benchmarks', () => {
     });
   });
 
-  describe('highlighting performance benchmarks', () => {
-    it('should generate highlights efficiently for large text', async () => {
-      const longDescription = 'A'.repeat(1000) + ' test description ' + 'B'.repeat(1000);
+  describe("highlighting performance benchmarks", () => {
+    it("should generate highlights efficiently for large text", async () => {
+      const longDescription = "A".repeat(1000) + " test description " + "B".repeat(1000);
 
       const mockData = Array.from({ length: 50 }, (_, i) => ({
         plc_id: `plc-${i}`,
@@ -360,7 +360,7 @@ describe('Search Performance Benchmarks', () => {
       const startTime = performance.now();
 
       await searchService.search({
-        q: 'test',
+        q: "test",
         page: 1,
         pageSize: 50,
         includeHighlights: true,

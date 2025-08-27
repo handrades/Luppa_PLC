@@ -164,7 +164,7 @@ const generatePlcReport = ({ description, make, model, ip }: PLCRecord): string 
 
 // ✅ Good - Array methods and spread operator
 const getActivePlcs = (plcs: PLCRecord[]): PLCRecord[] => {
-  return plcs.filter(plc => plc.ip !== null).map(plc => ({ ...plc, status: 'active' }));
+  return plcs.filter(plc => plc.ip !== null).map(plc => ({ ...plc, status: 'Running' }));
 };
 ```
 
@@ -219,7 +219,7 @@ class PlcService {
       }
       return { success: true, data: plc };
     } catch (error) {
-      logger.error('Database error finding PLC', { id, error });
+      this.logger.error('Database error finding PLC', { id, error });
       return { success: false, error: 'DATABASE_ERROR' };
     }
   }
@@ -380,6 +380,7 @@ Implement clean repository patterns:
 ```typescript
 interface IPlcRepository {
   findById(id: string): Promise<PLCRecord | null>;
+  findByIp(ip: string): Promise<PLCRecord | null>;
   findByFilters(filters: PlcQueryOptions): Promise<PLCRecord[]>;
   create(data: PlcCreateInput): Promise<PLCRecord>;
   update(id: string, data: Partial<PlcCreateInput>): Promise<PLCRecord>;
@@ -719,6 +720,11 @@ interface AuditLogEntry {
 }
 
 class AuditService {
+  constructor(
+    private repository: IAuditRepository,
+    private logger: ILogger
+  ) {}
+
   async logPlcChange(
     action: 'create' | 'update' | 'delete',
     plcId: string,
@@ -743,7 +749,7 @@ class AuditService {
     await this.repository.createAuditLog(auditEntry);
 
     // Also log to Winston for external monitoring
-    logger.info('PLC audit event', {
+    this.logger.info('PLC audit event', {
       auditId: auditEntry.id,
       action: auditEntry.action,
       entityId: auditEntry.entityId,
@@ -825,7 +831,7 @@ class OfflinePlcService {
       const latestData = await this.fetchLatestData();
       this.updateLocalCache(latestData);
     } catch (error) {
-      logger.error('Sync failed', { error });
+      this.logger.error('Sync failed', { error });
     }
   }
 }

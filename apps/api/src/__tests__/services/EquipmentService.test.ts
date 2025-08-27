@@ -5,23 +5,23 @@
  * including CRUD operations, validation, and error handling.
  */
 
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository } from "typeorm";
 import {
   CreateEquipmentInput,
   EquipmentService,
   UpdateEquipmentInput,
-} from '../../services/EquipmentService';
-import { EquipmentRepository } from '../../repositories/EquipmentRepository';
-import { Equipment, EquipmentType } from '../../entities/Equipment';
-import { PLC } from '../../entities/PLC';
-import { Cell } from '../../entities/Cell';
+} from "../../services/EquipmentService";
+import { EquipmentRepository } from "../../repositories/EquipmentRepository";
+import { Equipment, EquipmentType } from "../../entities/Equipment";
+import { PLC } from "../../entities/PLC";
+import { Cell } from "../../entities/Cell";
 // Error types are tested via error messages rather than instanceof checks
 
 // Mock dependencies
-jest.mock('../../repositories/EquipmentRepository');
-jest.mock('../../config/logger');
+jest.mock("../../repositories/EquipmentRepository");
+jest.mock("../../config/logger");
 
-describe('EquipmentService', () => {
+describe("EquipmentService", () => {
   let service: EquipmentService;
   let mockEntityManager: jest.Mocked<EntityManager>;
   let mockEquipmentRepository: jest.Mocked<EquipmentRepository>;
@@ -29,45 +29,45 @@ describe('EquipmentService', () => {
   let mockCellRepository: jest.Mocked<Repository<Cell>>;
   let mockTransaction: jest.Mock;
 
-  const mockUserId = '123e4567-e89b-12d3-a456-426614174000';
-  const mockCellId = '987fcdeb-51a2-43d1-b678-123456789abc';
-  const mockEquipmentId = '456e7890-e12b-34d5-a678-901234567def';
+  const mockUserId = "123e4567-e89b-12d3-a456-426614174000";
+  const mockCellId = "987fcdeb-51a2-43d1-b678-123456789abc";
+  const mockEquipmentId = "456e7890-e12b-34d5-a678-901234567def";
 
   const mockEquipment: Equipment = {
     id: mockEquipmentId,
-    name: 'Test Press',
+    name: "Test Press",
     equipmentType: EquipmentType.PRESS,
     cellId: mockCellId,
     createdBy: mockUserId,
     updatedBy: mockUserId,
-    createdAt: new Date('2025-08-15T10:00:00.000Z'),
-    updatedAt: new Date('2025-08-15T10:00:00.000Z'),
+    createdAt: new Date("2025-08-15T10:00:00.000Z"),
+    updatedAt: new Date("2025-08-15T10:00:00.000Z"),
   } as Equipment;
 
   const mockPLC: PLC = {
-    id: '789e1234-e56b-78d9-a012-345678901abc',
+    id: "789e1234-e56b-78d9-a012-345678901abc",
     equipmentId: mockEquipmentId,
-    tagId: 'PRESS_001',
-    description: 'Main hydraulic press PLC',
-    make: 'Allen-Bradley',
-    model: 'CompactLogix 5370',
-    ipAddress: '192.168.1.100',
-    firmwareVersion: '33.01',
+    tagId: "PRESS_001",
+    description: "Main hydraulic press PLC",
+    make: "Allen-Bradley",
+    model: "CompactLogix 5370",
+    ipAddress: "192.168.1.100",
+    firmwareVersion: "33.01",
     createdBy: mockUserId,
     updatedBy: mockUserId,
-    createdAt: new Date('2025-08-15T10:00:00.000Z'),
-    updatedAt: new Date('2025-08-15T10:00:00.000Z'),
+    createdAt: new Date("2025-08-15T10:00:00.000Z"),
+    updatedAt: new Date("2025-08-15T10:00:00.000Z"),
   } as PLC;
 
   const mockCell: Cell = {
     id: mockCellId,
-    siteId: '654e3210-e87b-90d1-a234-567890123fed',
-    name: 'Assembly Line 1',
-    lineNumber: 'LINE-001',
+    siteId: "654e3210-e87b-90d1-a234-567890123fed",
+    name: "Assembly Line 1",
+    lineNumber: "LINE-001",
     createdBy: mockUserId,
     updatedBy: mockUserId,
-    createdAt: new Date('2025-08-15T09:00:00.000Z'),
-    updatedAt: new Date('2025-08-15T09:00:00.000Z'),
+    createdAt: new Date("2025-08-15T09:00:00.000Z"),
+    updatedAt: new Date("2025-08-15T09:00:00.000Z"),
   } as Cell;
 
   beforeEach(() => {
@@ -114,22 +114,22 @@ describe('EquipmentService', () => {
     service = new EquipmentService(mockEntityManager);
   });
 
-  describe('createEquipment', () => {
+  describe("createEquipment", () => {
     const createInput: CreateEquipmentInput = {
-      name: 'Test Press',
+      name: "Test Press",
       equipmentType: EquipmentType.PRESS,
       cellId: mockCellId,
       plcData: {
-        tagId: 'PRESS_001',
-        description: 'Main hydraulic press PLC',
-        make: 'Allen-Bradley',
-        model: 'CompactLogix 5370',
-        ipAddress: '192.168.1.100',
-        firmwareVersion: '33.01',
+        tagId: "PRESS_001",
+        description: "Main hydraulic press PLC",
+        make: "Allen-Bradley",
+        model: "CompactLogix 5370",
+        ipAddress: "192.168.1.100",
+        firmwareVersion: "33.01",
       },
     };
 
-    it('should successfully create equipment with PLC', async () => {
+    it("should successfully create equipment with PLC", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -157,17 +157,17 @@ describe('EquipmentService', () => {
         where: { id: mockCellId },
       });
       expect(mockEquipmentRepository.nameExistsInCell).toHaveBeenCalledWith(
-        'Test Press',
+        "Test Press",
         mockCellId
       );
       expect(mockPLCRepository.findOne).toHaveBeenCalledWith({
-        where: { tagId: 'PRESS_001', deletedAt: expect.anything() },
+        where: { tagId: "PRESS_001", deletedAt: expect.anything() },
       });
       expect(mockPLCRepository.findOne).toHaveBeenCalledWith({
-        where: { ipAddress: '192.168.1.100', deletedAt: expect.anything() },
+        where: { ipAddress: "192.168.1.100", deletedAt: expect.anything() },
       });
       expect(mockEquipmentRepository.createEquipment).toHaveBeenCalledWith({
-        name: 'Test Press',
+        name: "Test Press",
         equipmentType: EquipmentType.PRESS,
         cellId: mockCellId,
         createdBy: mockUserId,
@@ -175,7 +175,7 @@ describe('EquipmentService', () => {
       });
     });
 
-    it('should throw error when cell does not exist', async () => {
+    it("should throw error when cell does not exist", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(null);
@@ -189,7 +189,7 @@ describe('EquipmentService', () => {
       });
     });
 
-    it('should throw error when equipment name already exists in cell', async () => {
+    it("should throw error when equipment name already exists in cell", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -200,12 +200,12 @@ describe('EquipmentService', () => {
         "Equipment name 'Test Press' already exists in this cell"
       );
       expect(mockEquipmentRepository.nameExistsInCell).toHaveBeenCalledWith(
-        'Test Press',
+        "Test Press",
         mockCellId
       );
     });
 
-    it('should throw error when PLC tag ID already exists', async () => {
+    it("should throw error when PLC tag ID already exists", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -221,7 +221,7 @@ describe('EquipmentService', () => {
       );
     });
 
-    it('should throw error when PLC IP address already exists', async () => {
+    it("should throw error when PLC IP address already exists", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -237,7 +237,7 @@ describe('EquipmentService', () => {
       );
     });
 
-    it('should handle database constraint violation for tag ID', async () => {
+    it("should handle database constraint violation for tag ID", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -247,14 +247,14 @@ describe('EquipmentService', () => {
       mockPLCRepository.create.mockReturnValue(mockPLC);
 
       // Simulate database constraint violation for tag_id
-      const constraintError = new Error('Database constraint violation') as Error & {
+      const constraintError = new Error("Database constraint violation") as Error & {
         code: string;
         constraint: string;
         detail: string;
       };
-      constraintError.code = '23505';
-      constraintError.constraint = 'idx_plcs_tag_id_unique';
-      constraintError.detail = 'Key (tag_id)=(PRESS_001) already exists.';
+      constraintError.code = "23505";
+      constraintError.constraint = "idx_plcs_tag_id_unique";
+      constraintError.detail = "Key (tag_id)=(PRESS_001) already exists.";
       mockPLCRepository.save.mockRejectedValue(constraintError);
 
       // Execute & Assert
@@ -263,7 +263,7 @@ describe('EquipmentService', () => {
       );
     });
 
-    it('should handle database constraint violation for IP address', async () => {
+    it("should handle database constraint violation for IP address", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -273,14 +273,14 @@ describe('EquipmentService', () => {
       mockPLCRepository.create.mockReturnValue(mockPLC);
 
       // Simulate database constraint violation for ip_address
-      const constraintError = new Error('Database constraint violation') as Error & {
+      const constraintError = new Error("Database constraint violation") as Error & {
         code: string;
         constraint: string;
         detail: string;
       };
-      constraintError.code = '23505';
-      constraintError.constraint = 'idx_plcs_ip_address_unique';
-      constraintError.detail = 'Key (ip_address)=(192.168.1.100) already exists.';
+      constraintError.code = "23505";
+      constraintError.constraint = "idx_plcs_ip_address_unique";
+      constraintError.detail = "Key (ip_address)=(192.168.1.100) already exists.";
       mockPLCRepository.save.mockRejectedValue(constraintError);
 
       // Execute & Assert
@@ -289,7 +289,7 @@ describe('EquipmentService', () => {
       );
     });
 
-    it('should re-throw non-constraint database errors', async () => {
+    it("should re-throw non-constraint database errors", async () => {
       // Setup mocks
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
       mockCellRepository.findOne.mockResolvedValue(mockCell);
@@ -299,21 +299,21 @@ describe('EquipmentService', () => {
       mockPLCRepository.create.mockReturnValue(mockPLC);
 
       // Simulate non-constraint database error
-      const dbError = new Error('Connection timeout') as Error & {
+      const dbError = new Error("Connection timeout") as Error & {
         code: string;
       };
-      dbError.code = '08000';
+      dbError.code = "08000";
       mockPLCRepository.save.mockRejectedValue(dbError);
 
       // Execute & Assert
       await expect(service.createEquipment(createInput, { userId: mockUserId })).rejects.toThrow(
-        'Connection timeout'
+        "Connection timeout"
       );
     });
   });
 
-  describe('getEquipmentById', () => {
-    it('should return equipment when found', async () => {
+  describe("getEquipmentById", () => {
+    it("should return equipment when found", async () => {
       // Setup mocks
       const mockEquipmentWithDetails = {
         ...mockEquipment,
@@ -330,7 +330,7 @@ describe('EquipmentService', () => {
       expect(mockEquipmentRepository.findWithDetails).toHaveBeenCalledWith(mockEquipmentId);
     });
 
-    it('should throw EquipmentNotFoundError when equipment not found', async () => {
+    it("should throw EquipmentNotFoundError when equipment not found", async () => {
       // Setup mocks
       mockEquipmentRepository.findWithDetails.mockResolvedValue(null);
 
@@ -341,18 +341,18 @@ describe('EquipmentService', () => {
     });
   });
 
-  describe('updateEquipment', () => {
+  describe("updateEquipment", () => {
     const updateInput: UpdateEquipmentInput = {
-      name: 'Updated Press',
+      name: "Updated Press",
       plcData: {
-        description: 'Updated description',
-        make: 'Siemens',
+        description: "Updated description",
+        make: "Siemens",
       },
     };
 
-    const expectedUpdatedAt = new Date('2025-08-15T10:00:00.000Z');
+    const expectedUpdatedAt = new Date("2025-08-15T10:00:00.000Z");
 
-    it('should successfully update equipment', async () => {
+    it("should successfully update equipment", async () => {
       // Setup mocks
       const mockCurrentEquipment = {
         ...mockEquipment,
@@ -363,12 +363,12 @@ describe('EquipmentService', () => {
 
       const mockUpdatedEquipment = {
         ...mockCurrentEquipment,
-        name: 'Updated Press',
+        name: "Updated Press",
         plcs: [
           {
             ...mockPLC,
-            description: 'Updated description',
-            make: 'Siemens',
+            description: "Updated description",
+            make: "Siemens",
           },
         ],
       };
@@ -394,13 +394,13 @@ describe('EquipmentService', () => {
       expect(mockPLCRepository.update).toHaveBeenCalled();
     });
 
-    it('should throw OptimisticLockingError when timestamps do not match', async () => {
+    it("should throw OptimisticLockingError when timestamps do not match", async () => {
       // Setup mocks
       const mockCurrentEquipment = {
         ...mockEquipment,
         cell: mockCell,
         plcs: [mockPLC],
-        updatedAt: new Date('2025-08-15T11:00:00.000Z'), // Different timestamp
+        updatedAt: new Date("2025-08-15T11:00:00.000Z"), // Different timestamp
       };
 
       mockTransaction.mockImplementation(async callback => callback(mockEntityManager));
@@ -411,12 +411,12 @@ describe('EquipmentService', () => {
         service.updateEquipment(mockEquipmentId, updateInput, expectedUpdatedAt, {
           userId: mockUserId,
         })
-      ).rejects.toThrow('Equipment was modified by another user. Please refresh and try again.');
+      ).rejects.toThrow("Equipment was modified by another user. Please refresh and try again.");
     });
   });
 
-  describe('deleteEquipment', () => {
-    it('should successfully soft delete equipment', async () => {
+  describe("deleteEquipment", () => {
+    it("should successfully soft delete equipment", async () => {
       // Setup mocks
       const mockEquipmentWithDetails = {
         ...mockEquipment,
@@ -434,7 +434,7 @@ describe('EquipmentService', () => {
       expect(mockEquipmentRepository.softDeleteEquipment).toHaveBeenCalledWith(mockEquipmentId);
     });
 
-    it('should throw EquipmentNotFoundError when equipment not found', async () => {
+    it("should throw EquipmentNotFoundError when equipment not found", async () => {
       // Setup mocks
       mockEquipmentRepository.findWithDetails.mockResolvedValue(null);
 
@@ -445,8 +445,8 @@ describe('EquipmentService', () => {
     });
   });
 
-  describe('searchEquipment', () => {
-    it('should return paginated equipment results', async () => {
+  describe("searchEquipment", () => {
+    it("should return paginated equipment results", async () => {
       // Setup mocks
       const mockPaginatedResult = {
         data: [
@@ -467,7 +467,7 @@ describe('EquipmentService', () => {
       mockEquipmentRepository.searchEquipmentWithPagination.mockResolvedValue(mockPaginatedResult);
 
       // Execute
-      const filters = { search: 'test', page: 1, pageSize: 50 };
+      const filters = { search: "test", page: 1, pageSize: 50 };
       const result = await service.searchEquipment(filters);
 
       // Assert
@@ -476,18 +476,18 @@ describe('EquipmentService', () => {
     });
   });
 
-  describe('getEquipmentStatistics', () => {
-    it('should return equipment statistics', async () => {
+  describe("getEquipmentStatistics", () => {
+    it("should return equipment statistics", async () => {
       // Setup mocks
       const mockAllEquipment = [
         {
           ...mockEquipment,
           equipmentType: EquipmentType.PRESS,
-          plcs: [{ ...mockPLC, ipAddress: '192.168.1.100' }],
+          plcs: [{ ...mockPLC, ipAddress: "192.168.1.100" }],
         },
         {
           ...mockEquipment,
-          id: 'another-id',
+          id: "another-id",
           equipmentType: EquipmentType.ROBOT,
           plcs: [{ ...mockPLC, ipAddress: null }],
         },
