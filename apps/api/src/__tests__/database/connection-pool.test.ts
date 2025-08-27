@@ -3,10 +3,10 @@ import {
   getConnectionPoolStats,
   getDatabaseConfig,
   getDatabaseHealth,
-} from "../../config/database";
+} from '../../config/database';
 
-describe("Connection Pool Configuration", () => {
-  describe("Database Configuration", () => {
+describe('Connection Pool Configuration', () => {
+  describe('Database Configuration', () => {
     let originalEnv: NodeJS.ProcessEnv;
 
     beforeEach(() => {
@@ -27,7 +27,7 @@ describe("Connection Pool Configuration", () => {
       process.env = originalEnv;
     });
 
-    it("should use default pool settings", () => {
+    it('should use default pool settings', () => {
       const config = getDatabaseConfig();
 
       expect(config.pool.min).toBe(2);
@@ -36,11 +36,11 @@ describe("Connection Pool Configuration", () => {
       expect(config.pool.idleTimeoutMillis).toBe(600000);
     });
 
-    it("should use environment variable pool settings", () => {
-      process.env.DB_POOL_MIN = "5";
-      process.env.DB_POOL_MAX = "20";
-      process.env.DB_CONNECTION_TIMEOUT = "45000";
-      process.env.DB_IDLE_TIMEOUT = "900000";
+    it('should use environment variable pool settings', () => {
+      process.env.DB_POOL_MIN = '5';
+      process.env.DB_POOL_MAX = '20';
+      process.env.DB_CONNECTION_TIMEOUT = '45000';
+      process.env.DB_IDLE_TIMEOUT = '900000';
 
       const config = getDatabaseConfig();
 
@@ -50,37 +50,37 @@ describe("Connection Pool Configuration", () => {
       expect(config.pool.idleTimeoutMillis).toBe(900000);
     });
 
-    it("should validate pool configuration", () => {
-      process.env.DB_POOL_MIN = "0";
-      process.env.DB_POOL_MAX = "5";
+    it('should validate pool configuration', () => {
+      process.env.DB_POOL_MIN = '0';
+      process.env.DB_POOL_MAX = '5';
 
-      expect(() => getDatabaseConfig()).toThrow("Invalid pool settings");
+      expect(() => getDatabaseConfig()).toThrow('Invalid pool settings');
     });
 
-    it("should validate pool max greater than min", () => {
-      process.env.DB_POOL_MIN = "10";
-      process.env.DB_POOL_MAX = "5";
+    it('should validate pool max greater than min', () => {
+      process.env.DB_POOL_MIN = '10';
+      process.env.DB_POOL_MAX = '5';
 
-      expect(() => getDatabaseConfig()).toThrow("Invalid pool settings");
+      expect(() => getDatabaseConfig()).toThrow('Invalid pool settings');
     });
 
-    it("should validate timeout values", () => {
-      process.env.DB_CONNECTION_TIMEOUT = "500";
+    it('should validate timeout values', () => {
+      process.env.DB_CONNECTION_TIMEOUT = '500';
 
       expect(() => getDatabaseConfig()).toThrow(
-        "Connection and idle timeouts must be at least 1000ms"
+        'Connection and idle timeouts must be at least 1000ms'
       );
     });
 
-    it("should validate port range", () => {
-      process.env.DB_PORT = "70000";
+    it('should validate port range', () => {
+      process.env.DB_PORT = '70000';
 
-      expect(() => getDatabaseConfig()).toThrow("Invalid DB_PORT value");
+      expect(() => getDatabaseConfig()).toThrow('Invalid DB_PORT value');
     });
   });
 
-  describe("Connection Pool Stats", () => {
-    it("should return pool config when not connected", async () => {
+  describe('Connection Pool Stats', () => {
+    it('should return pool config when not connected', async () => {
       // Ensure database is not connected
       if (AppDataSource.isInitialized) {
         await AppDataSource.destroy();
@@ -94,7 +94,7 @@ describe("Connection Pool Configuration", () => {
       expect(stats.poolConfig.max).toBeGreaterThanOrEqual(stats.poolConfig.min);
     });
 
-    it("should handle errors gracefully", async () => {
+    it('should handle errors gracefully', async () => {
       const stats = await getConnectionPoolStats();
 
       expect(stats).toBeDefined();
@@ -102,24 +102,24 @@ describe("Connection Pool Configuration", () => {
     });
   });
 
-  describe("Database Health", () => {
-    it("should return health information", async () => {
+  describe('Database Health', () => {
+    it('should return health information', async () => {
       const health = await getDatabaseHealth();
 
       expect(health).toBeDefined();
-      expect(typeof health.isHealthy).toBe("boolean");
-      expect(typeof health.responseTime).toBe("number");
+      expect(typeof health.isHealthy).toBe('boolean');
+      expect(typeof health.responseTime).toBe('number');
       expect(health.poolStats).toBeDefined();
     });
 
-    it("should measure response time", async () => {
+    it('should measure response time', async () => {
       const health = await getDatabaseHealth();
 
       expect(health.responseTime).toBeGreaterThanOrEqual(0);
       expect(health.responseTime).toBeLessThan(5000); // Should be fast in tests
     });
 
-    it("should include pool stats in health check", async () => {
+    it('should include pool stats in health check', async () => {
       const health = await getDatabaseHealth();
 
       expect(health.poolStats.poolConfig).toBeDefined();
@@ -130,8 +130,8 @@ describe("Connection Pool Configuration", () => {
     });
   });
 
-  describe("Pool Performance", () => {
-    it("should handle multiple concurrent connections", async () => {
+  describe('Pool Performance', () => {
+    it('should handle multiple concurrent connections', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const promises: Promise<any>[] = [];
       const connectionCount = 5;
@@ -149,7 +149,7 @@ describe("Connection Pool Configuration", () => {
       });
     });
 
-    it("should maintain reasonable response times under load", async () => {
+    it('should maintain reasonable response times under load', async () => {
       const iterations = 10;
       const responseTimes: number[] = [];
 
@@ -166,43 +166,43 @@ describe("Connection Pool Configuration", () => {
     });
   });
 
-  describe("Configuration Validation", () => {
-    it("should validate SSL configuration structure", () => {
-      process.env.DB_SSL_MODE = "require";
-      process.env.NODE_ENV = "production";
+  describe('Configuration Validation', () => {
+    it('should validate SSL configuration structure', () => {
+      process.env.DB_SSL_MODE = 'require';
+      process.env.NODE_ENV = 'production';
 
       const config = getDatabaseConfig();
 
       if (config.ssl) {
-        expect(typeof config.ssl).toBe("object");
+        expect(typeof config.ssl).toBe('object');
       }
     });
 
-    it("should handle different environment configurations", () => {
+    it('should handle different environment configurations', () => {
       // Test development configuration
-      process.env.NODE_ENV = "development";
+      process.env.NODE_ENV = 'development';
       const devConfig = getDatabaseConfig();
       expect(devConfig).toBeDefined();
 
       // Test production configuration
-      process.env.NODE_ENV = "production";
+      process.env.NODE_ENV = 'production';
       const prodConfig = getDatabaseConfig();
       expect(prodConfig).toBeDefined();
     });
   });
 
-  describe("Error Handling", () => {
-    it("should handle invalid environment variables gracefully", () => {
-      process.env.DB_POOL_MIN = "invalid";
+  describe('Error Handling', () => {
+    it('should handle invalid environment variables gracefully', () => {
+      process.env.DB_POOL_MIN = 'invalid';
 
       // Should throw error for invalid numeric environment variables
       expect(() => getDatabaseConfig()).toThrow(
-        "Invalid pool settings: min=NaN, max=10. Min must be >= 1 and max must be >= min."
+        'Invalid pool settings: min=NaN, max=10. Min must be >= 1 and max must be >= min.'
       );
     });
 
-    it("should provide meaningful error messages", () => {
-      process.env.DB_PORT = "invalid_port";
+    it('should provide meaningful error messages', () => {
+      process.env.DB_PORT = 'invalid_port';
 
       expect(() => getDatabaseConfig()).toThrow(/Invalid DB_PORT value/);
     });

@@ -1,10 +1,10 @@
-import { Express, NextFunction, Request, Response } from "express";
-import { metricsMiddleware } from "../../middleware/metricsMiddleware";
-import { MetricsService } from "../../services/MetricsService";
+import { Express, NextFunction, Request, Response } from 'express';
+import { metricsMiddleware } from '../../middleware/metricsMiddleware';
+import { MetricsService } from '../../services/MetricsService';
 
 // Mock the MetricsService and logger
-jest.mock("../../services/MetricsService");
-jest.mock("../../config/logger", () => ({
+jest.mock('../../services/MetricsService');
+jest.mock('../../config/logger', () => ({
   logger: {
     error: jest.fn(),
     warn: jest.fn(),
@@ -15,7 +15,7 @@ jest.mock("../../config/logger", () => ({
 
 const MockedMetricsService = MetricsService as jest.Mocked<typeof MetricsService>;
 
-describe("metricsMiddleware", () => {
+describe('metricsMiddleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let nextFunction: NextFunction;
@@ -26,9 +26,9 @@ describe("metricsMiddleware", () => {
 
     // Setup mock request
     mockRequest = {
-      method: "GET",
-      route: { path: "/api/v1/users" },
-      path: "/api/v1/users",
+      method: 'GET',
+      route: { path: '/api/v1/users' },
+      path: '/api/v1/users',
       user: undefined,
     };
 
@@ -45,7 +45,7 @@ describe("metricsMiddleware", () => {
     };
 
     // Store the callback so we can trigger it manually
-    Object.defineProperty(mockResponse, "end", {
+    Object.defineProperty(mockResponse, 'end', {
       value: jest.fn().mockImplementation(function (this: Response) {
         if (endCallback) {
           endCallback();
@@ -58,13 +58,13 @@ describe("metricsMiddleware", () => {
     nextFunction = jest.fn();
   });
 
-  it("should call next function immediately", () => {
+  it('should call next function immediately', () => {
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(nextFunction).toHaveBeenCalledTimes(1);
   });
 
-  it("should collect HTTP metrics when response ends", () => {
+  it('should collect HTTP metrics when response ends', () => {
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     // Simulate response ending by calling the mock directly
@@ -77,11 +77,11 @@ describe("metricsMiddleware", () => {
     );
   });
 
-  it("should collect user operation metrics when user is authenticated", () => {
+  it('should collect user operation metrics when user is authenticated', () => {
     mockRequest.user = {
-      id: "123",
-      email: "test@example.com",
-      roleId: "admin",
+      id: '123',
+      email: 'test@example.com',
+      roleId: 'admin',
     } as Express.User;
 
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
@@ -90,12 +90,12 @@ describe("metricsMiddleware", () => {
     (mockResponse.end as jest.Mock)();
 
     expect(MockedMetricsService.collectUserOperationMetrics).toHaveBeenCalledWith(
-      "get_/api/v1/users",
-      "admin"
+      'get_/api/v1/users',
+      'admin'
     );
   });
 
-  it("should handle requests without authenticated user", () => {
+  it('should handle requests without authenticated user', () => {
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     // Simulate response ending
@@ -105,9 +105,9 @@ describe("metricsMiddleware", () => {
     expect(MockedMetricsService.collectUserOperationMetrics).not.toHaveBeenCalled();
   });
 
-  it("should handle requests without route path", () => {
+  it('should handle requests without route path', () => {
     mockRequest.route = undefined;
-    mockRequest.path = "/unknown";
+    mockRequest.path = '/unknown';
 
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
@@ -123,10 +123,10 @@ describe("metricsMiddleware", () => {
     expect(MockedMetricsService.collectUserOperationMetrics).not.toHaveBeenCalled();
   });
 
-  it("should handle user without role", () => {
+  it('should handle user without role', () => {
     mockRequest.user = {
-      id: "123",
-      email: "test@example.com",
+      id: '123',
+      email: 'test@example.com',
       roleId: undefined,
     } as Express.User;
 
@@ -136,12 +136,12 @@ describe("metricsMiddleware", () => {
     (mockResponse.end as jest.Mock)();
 
     expect(MockedMetricsService.collectUserOperationMetrics).toHaveBeenCalledWith(
-      "get_/api/v1/users",
+      'get_/api/v1/users',
       undefined
     );
   });
 
-  it("should measure request duration accurately", done => {
+  it('should measure request duration accurately', done => {
     // Test to measure request duration
 
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
@@ -163,9 +163,9 @@ describe("metricsMiddleware", () => {
     }, 15);
   }, 10000);
 
-  it("should handle errors in metrics collection gracefully", () => {
+  it('should handle errors in metrics collection gracefully', () => {
     MockedMetricsService.collectHttpMetrics.mockImplementation(() => {
-      throw new Error("Metrics collection failed");
+      throw new Error('Metrics collection failed');
     });
 
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
@@ -176,8 +176,8 @@ describe("metricsMiddleware", () => {
     }).not.toThrow();
   });
 
-  it.skip("should preserve original response.end functionality", () => {
-    const testData = "test response data";
+  it.skip('should preserve original response.end functionality', () => {
+    const testData = 'test response data';
 
     metricsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
@@ -189,8 +189,8 @@ describe("metricsMiddleware", () => {
     expect(endSpy).toHaveBeenCalledWith(testData);
   });
 
-  it("should work with different HTTP methods", () => {
-    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+  it('should work with different HTTP methods', () => {
+    const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
     methods.forEach(method => {
       jest.clearAllMocks();
@@ -209,7 +209,7 @@ describe("metricsMiddleware", () => {
     });
   });
 
-  it("should track different response status codes", () => {
+  it('should track different response status codes', () => {
     const statusCodes = [200, 201, 400, 401, 404, 500];
 
     statusCodes.forEach(statusCode => {

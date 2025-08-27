@@ -5,20 +5,20 @@
  * CRUD operations, validation, error handling, and business logic.
  */
 
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, Repository } from 'typeorm';
 import {
   CreateSiteInput,
   SiteSearchFilters,
   SiteService,
   UpdateSiteInput,
-} from "../../services/SiteService";
-import { Site } from "../../entities/Site";
-import { Cell } from "../../entities/Cell";
-import { Equipment } from "../../entities/Equipment";
-import { User } from "../../entities/User";
+} from '../../services/SiteService';
+import { Site } from '../../entities/Site';
+import { Cell } from '../../entities/Cell';
+import { Equipment } from '../../entities/Equipment';
+import { User } from '../../entities/User';
 
 // Mock logger to prevent console output during tests
-jest.mock("../../config/logger", () => ({
+jest.mock('../../config/logger', () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),
@@ -26,7 +26,7 @@ jest.mock("../../config/logger", () => ({
   },
 }));
 
-describe("SiteService", () => {
+describe('SiteService', () => {
   let siteService: SiteService;
   let mockEntityManager: jest.Mocked<EntityManager>;
   let mockSiteRepository: jest.Mocked<Repository<Site>>;
@@ -56,7 +56,7 @@ describe("SiteService", () => {
     getOne: jest.Mock;
   };
 
-  const mockUserId = "550e8400-e29b-41d4-a716-446655440000";
+  const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeEach(() => {
     // Create mock query builder
@@ -134,26 +134,26 @@ describe("SiteService", () => {
     jest.clearAllMocks();
   });
 
-  describe("Constructor", () => {
-    it("should throw error if EntityManager is not provided", () => {
+  describe('Constructor', () => {
+    it('should throw error if EntityManager is not provided', () => {
       expect(() => new SiteService()).toThrow(
-        "EntityManager is required for SiteService initialization"
+        'EntityManager is required for SiteService initialization'
       );
     });
 
-    it("should create service instance with EntityManager", () => {
+    it('should create service instance with EntityManager', () => {
       expect(siteService).toBeInstanceOf(SiteService);
     });
   });
 
-  describe("createSite", () => {
+  describe('createSite', () => {
     const validCreateInput: CreateSiteInput = {
-      name: "Test Site",
+      name: 'Test Site',
     };
 
     const mockSite: Site = {
-      id: "550e8400-e29b-41d4-a716-446655440001",
-      name: "Test Site",
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      name: 'Test Site',
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
@@ -169,13 +169,13 @@ describe("SiteService", () => {
       mockSiteRepository.save.mockResolvedValue(mockSite);
     });
 
-    it("should create a new site successfully", async () => {
+    it('should create a new site successfully', async () => {
       const result = await siteService.createSite(validCreateInput, {
         userId: mockUserId,
       });
 
       expect(mockSiteRepository.create).toHaveBeenCalledWith({
-        name: "Test Site",
+        name: 'Test Site',
         createdBy: mockUserId,
         updatedBy: mockUserId,
       });
@@ -187,26 +187,26 @@ describe("SiteService", () => {
       });
     });
 
-    it("should validate site name is required", async () => {
-      await expect(siteService.createSite({ name: "" }, { userId: mockUserId })).rejects.toThrow(
-        "Site name is required"
+    it('should validate site name is required', async () => {
+      await expect(siteService.createSite({ name: '' }, { userId: mockUserId })).rejects.toThrow(
+        'Site name is required'
       );
     });
 
-    it("should validate site name length", async () => {
-      const longName = "a".repeat(101);
+    it('should validate site name length', async () => {
+      const longName = 'a'.repeat(101);
       await expect(
         siteService.createSite({ name: longName }, { userId: mockUserId })
-      ).rejects.toThrow("Site name must be less than 100 characters");
+      ).rejects.toThrow('Site name must be less than 100 characters');
     });
 
-    it("should validate site name format", async () => {
+    it('should validate site name format', async () => {
       await expect(
-        siteService.createSite({ name: "Invalid@Name#" }, { userId: mockUserId })
-      ).rejects.toThrow("Site name contains invalid characters");
+        siteService.createSite({ name: 'Invalid@Name#' }, { userId: mockUserId })
+      ).rejects.toThrow('Site name contains invalid characters');
     });
 
-    it("should handle name uniqueness validation", async () => {
+    it('should handle name uniqueness validation', async () => {
       mockSiteRepository.findOne.mockResolvedValue(mockSite); // Existing site found
 
       await expect(
@@ -214,9 +214,9 @@ describe("SiteService", () => {
       ).rejects.toThrow("Site name 'Test Site' already exists");
     });
 
-    it("should handle database constraint errors", async () => {
-      const dbError = new Error("Database error") as Error & { code: string };
-      dbError.code = "23505"; // PostgreSQL unique constraint violation
+    it('should handle database constraint errors', async () => {
+      const dbError = new Error('Database error') as Error & { code: string };
+      dbError.code = '23505'; // PostgreSQL unique constraint violation
       mockSiteRepository.save.mockRejectedValue(dbError);
 
       await expect(
@@ -224,24 +224,24 @@ describe("SiteService", () => {
       ).rejects.toThrow("Site name 'Test Site' already exists");
     });
 
-    it("should trim site name", async () => {
-      const inputWithSpaces = { name: "  Test Site  " };
+    it('should trim site name', async () => {
+      const inputWithSpaces = { name: '  Test Site  ' };
 
       await siteService.createSite(inputWithSpaces, { userId: mockUserId });
 
       expect(mockSiteRepository.create).toHaveBeenCalledWith({
-        name: "Test Site",
+        name: 'Test Site',
         createdBy: mockUserId,
         updatedBy: mockUserId,
       });
     });
   });
 
-  describe("getSiteById", () => {
-    const siteId = "550e8400-e29b-41d4-a716-446655440001";
+  describe('getSiteById', () => {
+    const siteId = '550e8400-e29b-41d4-a716-446655440001';
     const mockSite: Site = {
       id: siteId,
-      name: "Test Site",
+      name: 'Test Site',
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
@@ -257,7 +257,7 @@ describe("SiteService", () => {
       mockQueryBuilder.getCount.mockResolvedValue(10); // equipment count
     });
 
-    it("should return site with counts", async () => {
+    it('should return site with counts', async () => {
       const result = await siteService.getSiteById(siteId);
 
       expect(mockSiteRepository.findOne).toHaveBeenCalledWith({
@@ -273,7 +273,7 @@ describe("SiteService", () => {
       });
     });
 
-    it("should throw error if site not found", async () => {
+    it('should throw error if site not found', async () => {
       mockSiteRepository.findOne.mockResolvedValue(null);
 
       await expect(siteService.getSiteById(siteId)).rejects.toThrow(
@@ -282,11 +282,11 @@ describe("SiteService", () => {
     });
   });
 
-  describe("searchSites", () => {
+  describe('searchSites', () => {
     const mockSites: Site[] = [
       {
-        id: "550e8400-e29b-41d4-a716-446655440001",
-        name: "Site A",
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Site A',
         createdBy: mockUserId,
         updatedBy: mockUserId,
         createdAt: new Date(),
@@ -300,16 +300,16 @@ describe("SiteService", () => {
     beforeEach(() => {
       mockQueryBuilder.getRawAndEntities.mockResolvedValue({
         entities: mockSites,
-        raw: [{ cellCount: "2", equipmentCount: "5" }],
+        raw: [{ cellCount: '2', equipmentCount: '5' }],
       });
     });
 
-    it("should search sites with default parameters", async () => {
+    it('should search sites with default parameters', async () => {
       const filters: SiteSearchFilters = {};
 
       const result = await siteService.searchSites(filters);
 
-      expect(mockSiteRepository.createQueryBuilder).toHaveBeenCalledWith("site");
+      expect(mockSiteRepository.createQueryBuilder).toHaveBeenCalledWith('site');
       expect(result.pagination).toEqual({
         page: 1,
         pageSize: 20,
@@ -318,17 +318,17 @@ describe("SiteService", () => {
       });
     });
 
-    it("should apply search filter", async () => {
-      const filters: SiteSearchFilters = { search: "test" };
+    it('should apply search filter', async () => {
+      const filters: SiteSearchFilters = { search: 'test' };
 
       await siteService.searchSites(filters);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("LOWER(site.name) LIKE LOWER(:search)", {
-        search: "%test%",
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('LOWER(site.name) LIKE LOWER(:search)', {
+        search: '%test%',
       });
     });
 
-    it("should apply pagination", async () => {
+    it('should apply pagination', async () => {
       const filters: SiteSearchFilters = { page: 2, pageSize: 10 };
 
       await siteService.searchSites(filters);
@@ -337,34 +337,34 @@ describe("SiteService", () => {
       expect(mockQueryBuilder.limit).toHaveBeenCalledWith(10);
     });
 
-    it("should apply sorting", async () => {
+    it('should apply sorting', async () => {
       const filters: SiteSearchFilters = {
-        sortBy: "createdAt",
-        sortOrder: "DESC",
+        sortBy: 'createdAt',
+        sortOrder: 'DESC',
       };
 
       await siteService.searchSites(filters);
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("site.createdAt", "DESC");
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('site.createdAt', 'DESC');
     });
 
-    it("should filter empty sites when includeEmpty is false", async () => {
+    it('should filter empty sites when includeEmpty is false', async () => {
       const filters: SiteSearchFilters = { includeEmpty: false };
 
       await siteService.searchSites(filters);
 
-      expect(mockQueryBuilder.having).toHaveBeenCalledWith("COUNT(DISTINCT equipment.id) > 0");
+      expect(mockQueryBuilder.having).toHaveBeenCalledWith('COUNT(DISTINCT equipment.id) > 0');
     });
   });
 
-  describe("updateSite", () => {
-    const siteId = "550e8400-e29b-41d4-a716-446655440001";
-    const updateData: UpdateSiteInput = { name: "Updated Site" };
+  describe('updateSite', () => {
+    const siteId = '550e8400-e29b-41d4-a716-446655440001';
+    const updateData: UpdateSiteInput = { name: 'Updated Site' };
     const expectedUpdatedAt = new Date();
 
     const mockCurrentSite: Site = {
       id: siteId,
-      name: "Original Site",
+      name: 'Original Site',
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
@@ -379,7 +379,7 @@ describe("SiteService", () => {
       jest.clearAllMocks();
     });
 
-    it("should update site successfully", async () => {
+    it('should update site successfully', async () => {
       mockSiteRepository.findOne
         .mockResolvedValueOnce(mockCurrentSite) // First call for current site
         .mockResolvedValueOnce(null); // Second call for uniqueness check
@@ -395,9 +395,9 @@ describe("SiteService", () => {
       mockSiteRepository.createQueryBuilder.mockReturnValue(mockUpdateQueryBuilder);
 
       // Mock getSiteById for return value
-      jest.spyOn(siteService, "getSiteById").mockResolvedValue({
+      jest.spyOn(siteService, 'getSiteById').mockResolvedValue({
         ...mockCurrentSite,
-        name: "Updated Site",
+        name: 'Updated Site',
         cellCount: 0,
         equipmentCount: 0,
       });
@@ -408,13 +408,13 @@ describe("SiteService", () => {
 
       expect(mockUpdateQueryBuilder.update).toHaveBeenCalledWith(Site);
       expect(mockUpdateQueryBuilder.set).toHaveBeenCalledWith({
-        name: "Updated Site",
+        name: 'Updated Site',
         updatedBy: mockUserId,
       });
-      expect(result.name).toBe("Updated Site");
+      expect(result.name).toBe('Updated Site');
     });
 
-    it("should throw error if site not found", async () => {
+    it('should throw error if site not found', async () => {
       mockSiteRepository.findOne.mockReset();
       mockSiteRepository.findOne.mockResolvedValue(null);
 
@@ -425,7 +425,7 @@ describe("SiteService", () => {
       ).rejects.toThrow(`Site with ID '${siteId}' not found`);
     });
 
-    it("should handle optimistic locking conflict", async () => {
+    it('should handle optimistic locking conflict', async () => {
       const differentTimestamp = new Date(Date.now() + 1000);
       mockSiteRepository.findOne
         .mockResolvedValueOnce(mockCurrentSite) // First call for current site
@@ -446,11 +446,11 @@ describe("SiteService", () => {
         siteService.updateSite(siteId, updateData, differentTimestamp, {
           userId: mockUserId,
         })
-      ).rejects.toThrow("Site was modified by another user. Please refresh and try again.");
+      ).rejects.toThrow('Site was modified by another user. Please refresh and try again.');
     });
 
-    it("should validate updated name uniqueness", async () => {
-      const existingSite = { ...mockCurrentSite, id: "different-id" };
+    it('should validate updated name uniqueness', async () => {
+      const existingSite = { ...mockCurrentSite, id: 'different-id' };
       mockSiteRepository.findOne.mockReset();
       mockSiteRepository.findOne
         .mockResolvedValueOnce(mockCurrentSite) // First call for current site
@@ -464,11 +464,11 @@ describe("SiteService", () => {
     });
   });
 
-  describe("deleteSite", () => {
-    const siteId = "550e8400-e29b-41d4-a716-446655440001";
+  describe('deleteSite', () => {
+    const siteId = '550e8400-e29b-41d4-a716-446655440001';
     const mockSite: Site = {
       id: siteId,
-      name: "Test Site",
+      name: 'Test Site',
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
@@ -484,13 +484,13 @@ describe("SiteService", () => {
       mockSiteRepository.delete.mockResolvedValue({ affected: 1, raw: [] });
     });
 
-    it("should delete site successfully", async () => {
+    it('should delete site successfully', async () => {
       await siteService.deleteSite(siteId, { userId: mockUserId });
 
       expect(mockSiteRepository.delete).toHaveBeenCalledWith(siteId);
     });
 
-    it("should throw error if site not found", async () => {
+    it('should throw error if site not found', async () => {
       mockSiteRepository.findOne.mockResolvedValue(null);
 
       await expect(siteService.deleteSite(siteId, { userId: mockUserId })).rejects.toThrow(
@@ -498,7 +498,7 @@ describe("SiteService", () => {
       );
     });
 
-    it("should prevent deletion of site with cells", async () => {
+    it('should prevent deletion of site with cells', async () => {
       mockCellRepository.count.mockResolvedValue(3);
 
       await expect(siteService.deleteSite(siteId, { userId: mockUserId })).rejects.toThrow(
@@ -507,35 +507,35 @@ describe("SiteService", () => {
     });
   });
 
-  describe("validateSiteUniqueness", () => {
-    it("should return true for unique name", async () => {
+  describe('validateSiteUniqueness', () => {
+    it('should return true for unique name', async () => {
       mockQueryBuilder.getOne.mockResolvedValue(null);
 
-      const result = await siteService.validateSiteUniqueness("Unique Name");
+      const result = await siteService.validateSiteUniqueness('Unique Name');
 
       expect(result).toBe(true);
     });
 
-    it("should return false for existing name", async () => {
-      mockQueryBuilder.getOne.mockResolvedValue({ name: "Existing Name" });
+    it('should return false for existing name', async () => {
+      mockQueryBuilder.getOne.mockResolvedValue({ name: 'Existing Name' });
 
-      const result = await siteService.validateSiteUniqueness("Existing Name");
+      const result = await siteService.validateSiteUniqueness('Existing Name');
 
       expect(result).toBe(false);
     });
 
-    it("should exclude specified ID from check", async () => {
-      const excludeId = "550e8400-e29b-41d4-a716-446655440001";
+    it('should exclude specified ID from check', async () => {
+      const excludeId = '550e8400-e29b-41d4-a716-446655440001';
 
-      await siteService.validateSiteUniqueness("Test Name", excludeId);
+      await siteService.validateSiteUniqueness('Test Name', excludeId);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("site.id != :excludeId", {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('site.id != :excludeId', {
         excludeId,
       });
     });
   });
 
-  describe("getSiteStatistics", () => {
+  describe('getSiteStatistics', () => {
     beforeEach(() => {
       mockSiteRepository.count.mockResolvedValue(10);
       mockCellRepository.count.mockResolvedValue(25);
@@ -545,7 +545,7 @@ describe("SiteService", () => {
         .mockResolvedValueOnce(3); // sites without equipment
     });
 
-    it("should return comprehensive site statistics", async () => {
+    it('should return comprehensive site statistics', async () => {
       const result = await siteService.getSiteStatistics();
 
       expect(result).toEqual({
@@ -559,7 +559,7 @@ describe("SiteService", () => {
       });
     });
 
-    it("should handle zero sites gracefully", async () => {
+    it('should handle zero sites gracefully', async () => {
       mockSiteRepository.count.mockResolvedValue(0);
       mockCellRepository.count.mockResolvedValue(0);
       mockEquipmentRepository.count.mockResolvedValue(0);
@@ -571,22 +571,22 @@ describe("SiteService", () => {
     });
   });
 
-  describe("getSiteSuggestions", () => {
-    it("should return empty array for empty query", async () => {
-      const result = await siteService.getSiteSuggestions("");
+  describe('getSiteSuggestions', () => {
+    it('should return empty array for empty query', async () => {
+      const result = await siteService.getSiteSuggestions('');
 
       expect(result).toEqual([]);
     });
 
-    it("should return suggestions for valid query", async () => {
-      const mockSuggestions = [{ id: "1", name: "Site A", cellCount: 2, equipmentCount: 5 }];
+    it('should return suggestions for valid query', async () => {
+      const mockSuggestions = [{ id: '1', name: 'Site A', cellCount: 2, equipmentCount: 5 }];
 
-      jest.spyOn(siteService, "searchSites").mockResolvedValue({
+      jest.spyOn(siteService, 'searchSites').mockResolvedValue({
         data: mockSuggestions,
         pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 },
       });
 
-      const result = await siteService.getSiteSuggestions("Site", 5);
+      const result = await siteService.getSiteSuggestions('Site', 5);
 
       expect(result).toEqual(mockSuggestions);
     });
