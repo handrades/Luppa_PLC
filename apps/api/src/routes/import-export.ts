@@ -1,17 +1,17 @@
-import { NextFunction, Request, Response, Router } from "express";
-import multer from "multer";
-import { ImportExportService } from "../services/ImportExportService";
-import { AuditService } from "../services/AuditService";
-import { authenticate, authorize } from "../middleware/auth";
-import { validateBody } from "../middleware/validationMiddleware";
-import { writeOpsRateLimit } from "../middleware/rateLimiter";
+import { NextFunction, Request, Response, Router } from 'express';
+import multer from 'multer';
+import { ImportExportService } from '../services/ImportExportService';
+import { AuditService } from '../services/AuditService';
+import { authenticate, authorize } from '../middleware/auth';
+import { validateBody } from '../middleware/validationMiddleware';
+import { writeOpsRateLimit } from '../middleware/rateLimiter';
 import {
   exportFiltersSchema,
   importOptionsSchemaForRoutes,
   // exportOptionsSchema, // TODO: Enable when needed
   // importHistoryQuerySchema, // TODO: Enable when needed
-} from "../validation/import-schemas";
-import { AppDataSource } from "../config/database";
+} from '../validation/import-schemas';
+import { AppDataSource } from '../config/database';
 
 const router: Router = Router();
 
@@ -23,10 +23,10 @@ const upload = multer({
   },
   fileFilter: (_req, file, cb) => {
     // Only allow CSV files
-    if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
       cb(null, true);
     } else {
-      cb(new Error("Only CSV files are allowed"));
+      cb(new Error('Only CSV files are allowed'));
     }
   },
 });
@@ -38,7 +38,7 @@ let importExportService: ImportExportService | null = null;
 const getImportExportService = (): ImportExportService => {
   if (!importExportService) {
     if (!AppDataSource || !AppDataSource.isInitialized) {
-      throw new Error("Database not initialized");
+      throw new Error('Database not initialized');
     }
     const auditService = new AuditService(AppDataSource.manager);
     importExportService = new ImportExportService(AppDataSource, auditService);
@@ -52,22 +52,19 @@ const getImportExportService = (): ImportExportService => {
  * @access  Private - Requires authentication
  */
 router.get(
-  "/import/template",
+  '/import/template',
   authenticate,
   async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const template = await getImportExportService().generateTemplate();
 
-      res.setHeader("Content-Type", "text/csv");
-      res.setHeader(
-        "Content-Disposition",
-        'attachment; filename="plc_import_template.csv"',
-      );
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="plc_import_template.csv"');
       res.send(template);
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -76,19 +73,17 @@ router.get(
  * @access  Private - Requires data_admin role
  */
 router.post(
-  "/import/preview",
+  '/import/preview',
   authenticate,
-  authorize(["admin", "data_admin"]),
-  upload.single("file"),
+  authorize(['admin', 'data_admin']),
+  upload.single('file'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: "No file provided" });
+        return res.status(400).json({ error: 'No file provided' });
       }
 
-      const preview = await getImportExportService().validateCSV(
-        req.file.buffer,
-      );
+      const preview = await getImportExportService().validateCSV(req.file.buffer);
 
       res.json({
         success: true,
@@ -97,7 +92,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -106,33 +101,30 @@ router.post(
  * @access  Private - Requires data_admin role
  */
 router.post(
-  "/import/plcs",
+  '/import/plcs',
   authenticate,
-  authorize(["admin", "data_admin"]),
+  authorize(['admin', 'data_admin']),
   writeOpsRateLimit, // Rate limiting for write operations
-  upload.single("file"),
+  upload.single('file'),
   validateBody(importOptionsSchemaForRoutes),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: "No file provided" });
+        return res.status(400).json({ error: 'No file provided' });
       }
 
       const options = {
         ...req.body,
-        userId: req.user?.sub || "",
+        userId: req.user?.sub || '',
       };
 
-      const result = await getImportExportService().importPLCs(
-        req.file.buffer,
-        options,
-      );
+      const result = await getImportExportService().importPLCs(req.file.buffer, options);
 
       if (result.totalRows > 1000) {
         // For large files, return immediate response
         res.status(202).json({
           success: true,
-          message: "Import queued for background processing",
+          message: 'Import queued for background processing',
           importId: result.importId,
           totalRows: result.totalRows,
         });
@@ -145,7 +137,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -154,40 +146,34 @@ router.post(
  * @access  Private - Requires authentication
  */
 router.post(
-  "/export/plcs",
+  '/export/plcs',
   authenticate,
   validateBody(exportFiltersSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filters = req.body;
       const options = {
-        format: (req.query.format as "csv" | "json") || "csv",
-        includeHierarchy: req.query.includeHierarchy === "true",
-        includeTags: req.query.includeTags === "true",
-        includeAuditInfo: req.query.includeAuditInfo === "true",
+        format: (req.query.format as 'csv' | 'json') || 'csv',
+        includeHierarchy: req.query.includeHierarchy === 'true',
+        includeTags: req.query.includeTags === 'true',
+        includeAuditInfo: req.query.includeAuditInfo === 'true',
       };
 
       const data = await getImportExportService().exportPLCs(filters, options);
 
-      if (options.format === "json") {
-        res.setHeader("Content-Type", "application/json");
-        res.setHeader(
-          "Content-Disposition",
-          'attachment; filename="plc_export.json"',
-        );
+      if (options.format === 'json') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename="plc_export.json"');
       } else {
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader(
-          "Content-Disposition",
-          'attachment; filename="plc_export.csv"',
-        );
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="plc_export.csv"');
       }
 
       res.send(data);
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -196,19 +182,15 @@ router.post(
  * @access  Private - Requires authentication
  */
 router.get(
-  "/import/history",
+  '/import/history',
   authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.sub || "";
+      const userId = req.user?.sub || '';
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 20;
 
-      const history = await getImportExportService().getImportHistory(
-        userId,
-        page,
-        pageSize,
-      );
+      const history = await getImportExportService().getImportHistory(userId, page, pageSize);
 
       res.json({
         success: true,
@@ -223,7 +205,7 @@ router.get(
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 /**
@@ -231,36 +213,34 @@ router.get(
  * @desc    Get specific import log details
  * @access  Private - Requires authentication
  */
-router.get(
-  "/import/:id",
-  authenticate,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const importLog = await getImportExportService().getImportLog(
-        req.params.id,
-      );
+router.get('/import/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const importLog = await getImportExportService().getImportLog(req.params.id);
 
-      if (!importLog) {
-        return res.status(404).json({ error: "Import log not found" });
-      }
-
-      // Check if user has access to this import log
-      if (
-        importLog.userId !== req.user?.sub &&
-        !(req.user?.permissions as string[])?.includes("admin")
-      ) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      res.json({
-        success: true,
-        data: importLog,
-      });
-    } catch (error) {
-      next(error);
+    if (!importLog) {
+      return res.status(404).json({ error: 'Import log not found' });
     }
-  },
-);
+
+    // Check if user has access to this import log
+    const permissions = req.user?.permissions;
+    const isAdmin = Array.isArray(permissions)
+      ? permissions.some((p: string | { name?: string; role?: string }) =>
+          typeof p === 'string' ? p === 'admin' : p?.name === 'admin' || p?.role === 'admin'
+        )
+      : false;
+
+    if (importLog.userId !== req.user?.sub && !isAdmin) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json({
+      success: true,
+      data: importLog,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @route   POST /api/v1/import/:id/rollback
@@ -268,26 +248,23 @@ router.get(
  * @access  Private - Requires data_admin role
  */
 router.post(
-  "/import/:id/rollback",
+  '/import/:id/rollback',
   authenticate,
-  authorize(["admin", "data_admin"]),
+  authorize(['admin', 'data_admin']),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.sub || "";
-      const rollback = await getImportExportService().rollbackImport(
-        req.params.id,
-        userId,
-      );
+      const userId = req.user?.sub || '';
+      const rollback = await getImportExportService().rollbackImport(req.params.id, userId);
 
       res.json({
         success: true,
-        message: "Import rolled back successfully",
+        message: 'Import rolled back successfully',
         data: rollback,
       });
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
 export default router;

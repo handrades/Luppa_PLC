@@ -38,6 +38,7 @@ interface FilterStore extends FilterState {
   setFilters: (filters: AdvancedFilters) => void;
   updateFilters: (updates: Partial<AdvancedFilters>) => void;
   clearFilters: () => void;
+  removeFilter: (key: keyof AdvancedFilters) => void;
   applyFilters: () => Promise<void>;
   resetFilters: () => void;
 
@@ -161,6 +162,16 @@ export const useFilterStore = create<FilterStore>()(
           }
 
           debouncedApplyFilters();
+        },
+
+        removeFilter: (key: keyof AdvancedFilters) => {
+          set(state => {
+            // Remove the specific filter
+            delete state.filters[key];
+            state.pendingFilters[key] = undefined;
+          });
+          // Apply filters after removal
+          get().applyFilters();
         },
 
         clearFilters: () => {

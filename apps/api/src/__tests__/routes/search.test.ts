@@ -74,7 +74,72 @@ jest.mock('../../middleware/auditContext', () => ({
 jest.mock('../../middleware/rateLimiter', () => ({
   authRateLimit: jest.fn((req, res, next) => next()),
   strictAuthRateLimit: jest.fn((req, res, next) => next()),
+  writeOpsRateLimit: jest.fn((req, res, next) => next()),
 }));
+
+// Mock auth middleware
+jest.mock('../../middleware/auth', () => ({
+  authenticate: jest.fn((req, res, next) => {
+    // Check for Authorization header to simulate real auth behavior
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Parse the token to get user info (for testing)
+    const token = authHeader.substring(7);
+    try {
+      // For test tokens, decode the payload
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.decode(token);
+      req.user = decoded || { sub: 'test-user-id', email: 'test@example.com' };
+    } catch {
+      req.user = { sub: 'test-user-id', email: 'test@example.com' };
+    }
+    next();
+  }),
+  authorize: jest.fn((requiredPermissions) => (req, res, next) => {
+    // Check if user has required permissions
+    const userPermissions = req.user?.permissions || [];
+    const hasPermission = requiredPermissions.some(perm => 
+      userPermissions.includes(perm) || userPermissions.includes('admin')
+    );
+    
+    if (!hasPermission) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    next();
+  }),
+}));
+
+// Mock validation middleware
+jest.mock('../../middleware/validationMiddleware', () => ({
+  validateBody: jest.fn(() => (req, res, next) => next()),
+  validateQuery: jest.fn(() => (req, res, next) => next()),
+}));
+
+// Mock multer for file uploads
+jest.mock('multer', () => {
+  const multerMock = {
+    single: jest.fn(() => (req, res, next) => {
+      req.file = {
+        buffer: Buffer.from('test'),
+        originalname: 'test.csv',
+        mimetype: 'text/csv',
+      };
+      next();
+    }),
+    array: jest.fn(() => (req, res, next) => next()),
+    fields: jest.fn(() => (req, res, next) => next()),
+    none: jest.fn(() => (req, res, next) => next()),
+    any: jest.fn(() => (req, res, next) => next()),
+  };
+  const multer = jest.fn(() => multerMock);
+  multer.memoryStorage = jest.fn(() => ({}));
+  multer.diskStorage = jest.fn(() => ({}));
+  return multer;
+});
 
 import request from 'supertest';
 import { Express } from 'express';

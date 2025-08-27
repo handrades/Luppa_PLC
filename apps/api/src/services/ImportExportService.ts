@@ -1,11 +1,12 @@
 import { parse } from 'csv-parse';
 import { stringify } from 'csv-stringify';
 import { Readable } from 'stream';
+import * as net from 'net';
 import { DataSource, EntityManager } from 'typeorm';
-import * as Joi from 'joi';
 import { v4 as uuidv4 } from 'uuid';
 import Bull from 'bull';
 import { redisClient } from '../config/redis';
+import { csvRowSchema } from '../validation/import-schemas';
 import { PLC } from '../entities/PLC';
 import { Site } from '../entities/Site';
 import { Cell } from '../entities/Cell';
@@ -150,7 +151,16 @@ export class ImportExportService {
         columns: true,
         skip_empty_lines: true,
         trim: true,
-        cast: true,
+        cast: function (value) {
+          // Custom cast function to preserve IDs and leading zeros
+          // Only cast booleans, leave numbers and strings as-is
+          if (value === 'true' || value === 'TRUE') return true;
+          if (value === 'false' || value === 'FALSE') return false;
+          if (value === '') return null;
+          // Keep all values as strings to preserve data integrity
+          // The validation layer will handle type conversions
+          return value;
+        },
         cast_date: false,
       });
 
@@ -220,28 +230,7 @@ export class ImportExportService {
   private validateRow(row: CSVRow, rowNumber: number): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    const schema = Joi.object({
-      site_name: Joi.string().max(100).required(),
-      cell_name: Joi.string().max(100).required(),
-      cell_type: Joi.string()
-        .valid('production', 'warehouse', 'testing', 'packaging')
-        .allow('', null),
-      equipment_name: Joi.string().max(100).required(),
-      equipment_type: Joi.string()
-        .valid('plc', 'hmi', 'robot', 'sensor', 'controller')
-        .allow('', null),
-      tag_id: Joi.string().max(100).required(),
-      description: Joi.string().required(),
-      make: Joi.string().max(100).required(),
-      model: Joi.string().max(100).required(),
-      ip_address: Joi.string()
-        .ip({ version: ['ipv4', 'ipv6'] })
-        .allow('', null),
-      firmware_version: Joi.string().max(50).allow('', null),
-      tags: Joi.string().allow('', null),
-    });
-
-    const { error } = schema.validate(row, { abortEarly: false });
+    const { error } = csvRowSchema.validate(row, { abortEarly: false });
 
     if (error) {
       error.details.forEach(detail => {
@@ -270,21 +259,10 @@ export class ImportExportService {
   }
 
   /**
-   * Validate IP address
+   * Validate IP address using Node's built-in net.isIP
    */
-  private isValidIP(ip: string): boolean {
-    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
-
-    if (ipv4Regex.test(ip)) {
-      const parts = ip.split('.');
-      return parts.every(part => {
-        const num = parseInt(part);
-        return num >= 0 && num <= 255;
-      });
-    }
-
-    return ipv6Regex.test(ip);
+  public isValidIP(ip: string): boolean {
+    return net.isIP(ip) !== 0; // Returns 0 for invalid, 4 for IPv4, 6 for IPv6
   }
 
   /**
@@ -397,6 +375,16 @@ export class ImportExportService {
             warnings.push(...processedRow.warnings);
           }
 
+          // Check if row is invalid (e.g., duplicate IP that was skipped)
+          if (processedRow.isValid === false) {
+            if (options.mergeStrategy === 'skip') {
+              skippedRows++;
+              continue;
+            }
+            // If not skipping invalid rows, throw an error
+            throw new Error('Row marked as invalid but merge strategy is not skip');
+          }
+
           await this.savePLC(processedRow, options, queryRunner.manager);
           processedRows++;
         } catch (error) {
@@ -495,7 +483,16 @@ export class ImportExportService {
         columns: true,
         skip_empty_lines: true,
         trim: true,
-        cast: true,
+        cast: function (value) {
+          // Custom cast function to preserve IDs and leading zeros
+          // Only cast booleans, leave numbers and strings as-is
+          if (value === 'true' || value === 'TRUE') return true;
+          if (value === 'false' || value === 'FALSE') return false;
+          if (value === '') return null;
+          // Keep all values as strings to preserve data integrity
+          // The validation layer will handle type conversions
+          return value;
+        },
         cast_date: false,
       });
 
@@ -534,8 +531,24 @@ export class ImportExportService {
     options: ImportOptions,
     manager: EntityManager
   ): Promise<ProcessedRow> {
+    // Extract only CSV data fields for validation (exclude metadata)
+    const csvData: CSVRow = {
+      site_name: row.site_name,
+      cell_name: row.cell_name,
+      cell_type: row.cell_type,
+      equipment_name: row.equipment_name,
+      equipment_type: row.equipment_type,
+      tag_id: row.tag_id,
+      description: row.description,
+      make: row.make,
+      model: row.model,
+      ip_address: row.ip_address,
+      firmware_version: row.firmware_version,
+      tags: row.tags,
+    };
+
     // Validate row
-    const errors = this.validateRow(row, row.rowNumber);
+    const errors = this.validateRow(csvData, row.rowNumber);
     row.errors = errors;
 
     if (errors.length > 0 && !options.createMissing) {
@@ -737,11 +750,15 @@ export class ImportExportService {
 
     // Apply filters
     if (filters.siteIds && filters.siteIds.length > 0) {
-      queryBuilder.andWhere('site.id IN (:...siteIds)', { siteIds: filters.siteIds });
+      queryBuilder.andWhere('site.id IN (:...siteIds)', {
+        siteIds: filters.siteIds,
+      });
     }
 
     if (filters.cellIds && filters.cellIds.length > 0) {
-      queryBuilder.andWhere('cell.id IN (:...cellIds)', { cellIds: filters.cellIds });
+      queryBuilder.andWhere('cell.id IN (:...cellIds)', {
+        cellIds: filters.cellIds,
+      });
     }
 
     if (filters.equipmentIds && filters.equipmentIds.length > 0) {
@@ -751,7 +768,9 @@ export class ImportExportService {
     }
 
     if (filters.cellTypes && filters.cellTypes.length > 0) {
-      queryBuilder.andWhere('cell.cellType IN (:...cellTypes)', { cellTypes: filters.cellTypes });
+      queryBuilder.andWhere('cell.cellType IN (:...cellTypes)', {
+        cellTypes: filters.cellTypes,
+      });
     }
 
     if (filters.equipmentTypes && filters.equipmentTypes.length > 0) {
@@ -769,11 +788,17 @@ export class ImportExportService {
 
     if (filters.ipRange) {
       // Parse CIDR notation and apply filter
-      queryBuilder.andWhere('plc.ipAddress <<= :ipRange', { ipRange: filters.ipRange });
+      queryBuilder.andWhere('plc.ipAddress <<= :ipRange', {
+        ipRange: filters.ipRange,
+      });
     }
 
     if (filters.tags && filters.tags.length > 0) {
-      queryBuilder.andWhere('plc.tags && :tags', { tags: filters.tags });
+      // Join with tags table and filter by tag names
+      queryBuilder
+        .innerJoin('plc.tags', 'tag')
+        .andWhere('tag.name IN (:...tags)', { tags: filters.tags })
+        .distinct(true); // Ensure distinct results to avoid duplicates
     }
 
     const plcs = await queryBuilder.getMany();
@@ -786,9 +811,9 @@ export class ImportExportService {
     const rows = plcs.map(plc => ({
       site_name: plc.equipment?.cell?.site?.name || '',
       cell_name: plc.equipment?.cell?.name || '',
-      cell_type: '', // Cell doesn't have cellType in current schema
+      cell_type: '', // Cell entity doesn't have cellType field
       equipment_name: plc.equipment?.name || '',
-      equipment_type: plc.equipment?.equipmentType || '',
+      equipment_type: plc.equipment?.equipmentType || '', // Use equipmentType field
       tag_id: plc.tagId,
       description: plc.description,
       make: plc.make,
@@ -920,6 +945,28 @@ export class ImportExportService {
 
     const cacheKey = `import_log:${importId}`;
     await redisClient.setEx(cacheKey, 86400, JSON.stringify(importLog));
+
+    // Update the user's import history cache
+    const historyCacheKey = `import_history:${importLog.userId}`;
+    const historyJson = await redisClient.get(historyCacheKey);
+    if (historyJson) {
+      try {
+        const history = JSON.parse(historyJson) as ImportLog[];
+        const importIndex = history.findIndex((entry: ImportLog) => entry.id === importId);
+        if (importIndex !== -1) {
+          history[importIndex].status = 'rolled_back';
+          history[importIndex].rollbackAvailable = false;
+          // Write the updated history back to cache with same TTL
+          await redisClient.setEx(historyCacheKey, 86400, JSON.stringify(history));
+        }
+      } catch (error) {
+        logger.warn('Failed to update import history cache', {
+          error,
+          importId,
+          userId: importLog.userId,
+        });
+      }
+    }
 
     // Create rollback record
     const rollback: ImportRollback = {

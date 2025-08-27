@@ -1,3 +1,17 @@
+// Import Equipment and Cell types from existing modules
+import type { EquipmentType } from './equipment';
+
+// Define CellType union matching backend values
+export type CellType =
+  | 'Assembly Line'
+  | 'Production Cell'
+  | 'Testing Station'
+  | 'Packaging Line'
+  | 'Quality Control'
+  | 'Storage'
+  | 'Material Handling'
+  | 'Maintenance Shop';
+
 export interface ImportOptions {
   createMissing: boolean;
   mergeStrategy: 'skip' | 'update' | 'replace';
@@ -35,11 +49,11 @@ export interface ExportFilters {
   siteIds?: string[];
   cellIds?: string[];
   equipmentIds?: string[];
-  cellTypes?: string[];
-  equipmentTypes?: string[];
+  cellTypes?: CellType[];
+  equipmentTypes?: EquipmentType[];
   dateRange?: {
-    start: Date;
-    end: Date;
+    start: string | Date;
+    end: string | Date;
   };
   ipRange?: string;
   tags?: string[];
@@ -61,8 +75,8 @@ export interface ImportLog {
   skippedRows: number;
   errors: ValidationError[];
   userId: string;
-  startedAt: Date;
-  completedAt?: Date;
+  startedAt: string | Date;
+  completedAt?: string | Date;
   duration?: number;
   rollbackAvailable: boolean;
 }
@@ -71,7 +85,7 @@ export interface ImportRollback {
   id: string;
   importId: string;
   userId: string;
-  rollbackAt: Date;
+  rollbackAt: string | Date;
   affectedRecords: number;
   status: 'success' | 'failed';
   error?: string;

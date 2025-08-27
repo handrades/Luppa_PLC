@@ -4,6 +4,9 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
   name = 'AddImportHistoryTables20250826090858';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Ensure pgcrypto extension is installed for gen_random_uuid()
+    await queryRunner.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+
     // Create import_logs table
     await queryRunner.createTable(
       new Table({
@@ -14,7 +17,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'filename',
@@ -25,6 +28,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'status',
             type: 'enum',
             enum: ['pending', 'processing', 'completed', 'failed', 'rolled_back'],
+            enumName: 'import_status_enum',
             default: "'pending'",
           },
           {
@@ -111,7 +115,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'import_id',
@@ -135,6 +139,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'status',
             type: 'enum',
             enum: ['success', 'failed'],
+            enumName: 'rollback_status_enum',
             default: "'success'",
           },
           {
@@ -194,7 +199,11 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
     await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_import_logs_user_id`);
 
     // Drop tables
-    await queryRunner.dropTable('import_rollbacks');
-    await queryRunner.dropTable('import_logs');
+    await queryRunner.dropTable('plc_inventory.import_rollbacks');
+    await queryRunner.dropTable('plc_inventory.import_logs');
+
+    // Drop enum types
+    await queryRunner.query(`DROP TYPE IF EXISTS plc_inventory.rollback_status_enum`);
+    await queryRunner.query(`DROP TYPE IF EXISTS plc_inventory.import_status_enum`);
   }
 }

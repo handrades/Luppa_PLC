@@ -5,6 +5,8 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^lodash-es$': 'lodash',
+    '\\.(css|less|scss|sass)$': '<rootDir>/src/__mocks__/styleMock.js',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
@@ -26,6 +28,7 @@ module.exports = {
   },
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  transformIgnorePatterns: ['node_modules/(?!(lodash-es)/)'],
   coverageThreshold: {
     global: {
       branches: 0,

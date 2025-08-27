@@ -9,6 +9,7 @@ jest.mock('../../config/redis', () => ({
   redisClient: {
     get: jest.fn(),
     set: jest.fn(),
+    setEx: jest.fn(),
   },
 }));
 
@@ -134,8 +135,8 @@ Main Factory,Line 1`;
     });
 
     it('should validate row data and detect errors', async () => {
-      const csvContent = `site_name,cell_name,equipment_name,tag_id,description,make,model,ip_address
-Main Factory,Line 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix,invalid_ip`;
+      const csvContent = `site_name,cell_name,cell_type,equipment_name,equipment_type,tag_id,description,make,model,ip_address,firmware_version,tags
+Main Factory,Line 1,production,Equipment 1,plc,PLC-001,Test PLC,Allen-Bradley,ControlLogix,invalid_ip,v1.0.0,tag1`;
       
       const buffer = Buffer.from(csvContent);
       const preview = await service.validateCSV(buffer);
@@ -149,8 +150,9 @@ Main Factory,Line 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix,inva
   });
 
   describe('importPLCs', () => {
-    const validCSV = `site_name,cell_name,equipment_name,tag_id,description,make,model,ip_address
-Main Factory,Line 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix,192.168.1.10`;
+    const validCSV = `site_name,cell_name,cell_type,equipment_name,equipment_type,tag_id,description,make,model,ip_address,firmware_version,tags
+Main Factory,Line 1,production,Equipment 1,plc,PLC-001,Test PLC,Allen-Bradley,ControlLogix,192.168.1.10,v1.0.0,tag1
+Main Factory,Line 1,production,Equipment 2,plc,PLC-002,Test PLC 2,Allen-Bradley,ControlLogix,192.168.1.11,v1.0.0,tag2`;
 
     it('should import PLCs successfully with auto-create hierarchy', async () => {
       const buffer = Buffer.from(validCSV);
@@ -168,11 +170,40 @@ Main Factory,Line 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix,192.
 
       const result = await service.importPLCs(buffer, options);
 
-      // The import may fail due to complex validation or hierarchy logic
-      // For now, let's just ensure it doesn't throw and handles the case gracefully
-      expect(typeof result.success).toBe('boolean');
-      expect(typeof result.processedRows).toBe('number');
-      expect(Array.isArray(result.errors)).toBe(true);
+      // Assert concrete success expectations
+      expect(result.success).toBe(true);
+      expect(result.processedRows).toBe(2); // We have 2 data rows in validCSV  
+      expect(result.errors).toHaveLength(0);
+      expect(result.skippedRows).toBe(0);
+      expect(result.totalRows).toBe(2);
+      expect(result.importId).toBeDefined();
+    });
+
+    it('should fail with validation errors for invalid CSV data', async () => {
+      // Invalid CSV with missing required fields
+      const invalidCSV = `site_name,cell_type,cell_id,line_number,equipment_id,equipment_type,plc_name,ip_address,make,model,description,tags,location,firmware_version,notes
+Site1,,,,,PLC,Test PLC,,,,Test Description,,,,`;
+      
+      const buffer = Buffer.from(invalidCSV);
+      const options = {
+        createMissing: false,
+        mergeStrategy: 'skip' as const,
+        validateOnly: false,
+        userId: 'test-user-id',
+      };
+
+      const result = await service.importPLCs(buffer, options);
+
+      // Assert concrete failure expectations
+      expect(result.success).toBe(false);
+      expect(result.processedRows).toBe(0); // No rows processed due to validation failure
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0]).toMatchObject({
+        row: expect.any(Number),
+        column: expect.any(String),
+        message: expect.any(String),
+        severity: 'error'
+      });
     });
 
     it('should skip duplicate PLCs based on IP address', async () => {
@@ -340,24 +371,24 @@ Main Factory,Line 1,Equipment 1,PLC-001,Test PLC,Allen-Bradley,ControlLogix,192.
       const service = new ImportExportService(mockDataSource, mockAuditService);
       
       // Valid IPv4
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('192.168.1.1')).toBe(true);
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('10.0.0.1')).toBe(true);
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('255.255.255.255')).toBe(true);
+      expect(service.isValidIP('192.168.1.1')).toBe(true);
+      expect(service.isValidIP('10.0.0.1')).toBe(true);
+      expect(service.isValidIP('255.255.255.255')).toBe(true);
       
       // Invalid IPv4
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('256.1.1.1')).toBe(false);
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('192.168.1')).toBe(false);
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('192.168.1.1.1')).toBe(false);
+      expect(service.isValidIP('256.1.1.1')).toBe(false);
+      expect(service.isValidIP('192.168.1')).toBe(false);
+      expect(service.isValidIP('192.168.1.1.1')).toBe(false);
     });
 
     it('should validate IPv6 addresses correctly', () => {
       const service = new ImportExportService(mockDataSource, mockAuditService);
       
       // Valid IPv6
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toBe(true);
+      expect(service.isValidIP('2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toBe(true);
       
       // Invalid IPv6
-      expect((service as unknown as {isValidIP: (ip: string) => boolean}).isValidIP('2001:0db8:85a3::8a2e:370k:7334')).toBe(false);
+      expect(service.isValidIP('2001:0db8:85a3::8a2e:370k:7334')).toBe(false);
     });
   });
 });

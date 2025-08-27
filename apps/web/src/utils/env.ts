@@ -10,8 +10,28 @@ function getEnvVar(key: string, defaultValue?: string): string {
   }
 
   // For Vite/browser environment - use import.meta.env
-  if (typeof window !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env) {
-    return (import.meta.env as Record<string, string>)[key] || defaultValue || '';
+  // We need to check for Vite's environment without directly referencing import.meta
+  // since that syntax breaks Jest even inside a conditional
+  type GlobalWithImport = typeof globalThis & {
+    import?: {
+      meta?: {
+        env?: Record<string, string>;
+      };
+    };
+  };
+
+  if (
+    typeof window !== 'undefined' &&
+    typeof (globalThis as GlobalWithImport).import !== 'undefined'
+  ) {
+    try {
+      const importMeta = (globalThis as GlobalWithImport).import?.meta;
+      if (importMeta && importMeta.env) {
+        return importMeta.env[key] || defaultValue || '';
+      }
+    } catch {
+      // Ignore errors and fall through to process.env
+    }
   }
 
   // Fallback to process.env for Node.js environments

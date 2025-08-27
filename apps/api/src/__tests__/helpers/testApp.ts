@@ -189,9 +189,13 @@ jest.mock('../../services/SiteService', () => {
           (cell: Record<string, unknown>) => cell.siteId === id
         );
         if (siteCells.length > 0) {
-          throw new Error(
-            `Cannot delete site '${site.name}' because it contains ${siteCells.length} cells`
-          );
+          const error = new Error(
+            `Cannot delete site '${site.name}' because it contains ${siteCells.length} cell(s). Delete all cells first or use cascade delete if intended.`
+          ) as Error & { statusCode?: number; code?: string };
+          error.statusCode = 409;
+          error.code = 'SITE_CONFLICT';
+          error.name = 'SiteConflictError';
+          throw error;
         }
         testData.sites.delete(id);
       }),

@@ -77,10 +77,11 @@ export const ImportExportPage: React.FC = () => {
 
   const handleImportClose = () => {
     setImportDialogOpen(false);
-    // If import was successful, switch to history tab
-    if (activeTab === 0) {
-      setActiveTab(2);
-    }
+  };
+
+  const handleImportComplete = () => {
+    // Switch to history tab only on successful import
+    setActiveTab(2);
   };
 
   const handleExportClose = () => {
@@ -207,7 +208,11 @@ export const ImportExportPage: React.FC = () => {
       </Paper>
 
       {/* Import Dialog */}
-      <ImportDialog open={importDialogOpen} onClose={handleImportClose} />
+      <ImportDialog
+        open={importDialogOpen}
+        onClose={handleImportClose}
+        onImportComplete={handleImportComplete}
+      />
 
       {/* Export Dialog */}
       <ExportDialog open={exportDialogOpen} onClose={handleExportClose} />

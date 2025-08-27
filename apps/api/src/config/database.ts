@@ -9,6 +9,7 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from './env';
+import { logger } from './logger';
 import { raceWithTimeout } from '../utils/timeout';
 import { AuditLog } from '../entities/AuditLog';
 import { Cell } from '../entities/Cell';
@@ -196,14 +197,14 @@ export const initializeDatabase = async (): Promise<void> => {
     }
 
     if (!AppDataSource.isInitialized) {
-      console.log('Starting database initialization...');
+      logger.info('Starting database initialization...');
       const pgOptions = AppDataSource.options as {
         host?: string;
         port?: number;
         database?: string;
         username?: string;
       };
-      console.log('Database config:', {
+      logger.debug('Database config:', {
         host: pgOptions.host,
         port: pgOptions.port,
         database: pgOptions.database,

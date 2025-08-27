@@ -21,6 +21,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { useImportExportStore } from '../../stores/importExportStore';
 import { useFilterStore } from '../../stores/filter.store';
 import { FilterChips } from '../filters/FilterChips';
+import { ipRangeToCidr, validateCidr } from '../../utils/network.utils';
+import type { CellType } from '../../types/import-export';
 
 interface ExportDialogProps {
   open: boolean;
@@ -34,7 +36,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   const [includeAuditInfo, setIncludeAuditInfo] = useState(false);
 
   const { isExporting, exportError, exportData } = useImportExportStore();
-  const { filters } = useFilterStore();
+  const { filters, removeFilter, clearFilters } = useFilterStore();
 
   const handleExport = async () => {
     const options = {
@@ -49,7 +51,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
       siteIds: filters.siteIds,
       cellIds: undefined, // Not available in AdvancedFilters
       equipmentIds: undefined, // Not available in AdvancedFilters
-      cellTypes: filters.cellTypes,
+      cellTypes: filters.cellTypes as CellType[], // Type coercion for cell types
       equipmentTypes: filters.equipmentTypes,
       dateRange:
         filters.createdAfter && filters.createdBefore
@@ -58,11 +60,18 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               end: filters.createdBefore,
             }
           : undefined,
-      ipRange:
-        filters.ipRange?.cidr ||
-        (filters.ipRange?.startIP && filters.ipRange?.endIP
-          ? `${filters.ipRange.startIP}-${filters.ipRange.endIP}`
-          : undefined),
+      ipRange: (() => {
+        if (filters.ipRange?.cidr) {
+          // Validate existing CIDR before using it
+          return validateCidr(filters.ipRange.cidr) ? filters.ipRange.cidr : undefined;
+        }
+        if (filters.ipRange?.startIP && filters.ipRange?.endIP) {
+          // Convert IP range to CIDR notation
+          const cidr = ipRangeToCidr(filters.ipRange.startIP, filters.ipRange.endIP);
+          return cidr && validateCidr(cidr) ? cidr : undefined;
+        }
+        return undefined;
+      })(),
       tags: filters.tagFilter?.include,
     };
 
@@ -88,9 +97,20 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
 
   const hasActiveFilters =
     filters &&
-    Object.values(filters).some(
-      filter => filter && (Array.isArray(filter) ? filter.length > 0 : true)
-    );
+    Object.entries(filters).some(([_, value]) => {
+      if (value === null || value === undefined) return false;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === 'string') return value.trim().length > 0;
+      if (typeof value === 'object') {
+        // Check if object has any non-empty values
+        return (
+          Object.keys(value).length > 0 &&
+          Object.values(value).some(v => v !== null && v !== undefined && v !== '')
+        );
+      }
+      // For other truthy primitives (numbers, booleans)
+      return true;
+    });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth='sm' fullWidth>
@@ -102,7 +122,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             Active Filters
           </Typography>
           {hasActiveFilters ? (
-            <FilterChips filters={filters} onRemoveFilter={() => {}} onClearAll={() => {}} />
+            <FilterChips
+              filters={filters}
+              onRemoveFilter={filterKey => {
+                removeFilter(filterKey as keyof typeof filters);
+              }}
+              onClearAll={clearFilters}
+            />
           ) : (
             <Alert severity='info'>No filters applied - all PLCs will be exported</Alert>
           )}

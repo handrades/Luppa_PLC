@@ -97,8 +97,9 @@ describe('CORS Middleware - Basic Functionality', () => {
       .get('/test')
       .set('Origin', 'http://definitely-malicious-site.evil.com');
 
-    // Should be rejected
-    expect(response.status).toBe(500);
+    // Should succeed but without CORS headers (browser will block)
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
   });
 
   it('should handle complex request scenarios', async () => {

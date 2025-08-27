@@ -142,6 +142,7 @@ export const useImportExportStore = create<ImportExportState>()(
           set({
             importError: error instanceof Error ? error.message : 'Import failed',
             importResult: errorResult,
+            importProgress: errorResult, // Set importProgress to failure state
             isImporting: false,
           });
 

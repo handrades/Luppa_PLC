@@ -58,6 +58,9 @@ export interface SiteServiceOptions {
 }
 
 export class SiteNotFoundError extends Error {
+  statusCode = 404;
+  code = 'SITE_NOT_FOUND';
+
   constructor(siteId: string) {
     super(`Site with ID '${siteId}' not found`);
     this.name = 'SiteNotFoundError';
@@ -65,6 +68,9 @@ export class SiteNotFoundError extends Error {
 }
 
 export class SiteConflictError extends Error {
+  statusCode = 409;
+  code = 'SITE_CONFLICT';
+
   constructor(message: string) {
     super(message);
     this.name = 'SiteConflictError';
@@ -72,6 +78,9 @@ export class SiteConflictError extends Error {
 }
 
 export class SiteValidationError extends Error {
+  statusCode = 400;
+  code = 'SITE_VALIDATION_ERROR';
+
   constructor(message: string) {
     super(message);
     this.name = 'SiteValidationError';
@@ -79,6 +88,9 @@ export class SiteValidationError extends Error {
 }
 
 export class OptimisticLockingError extends Error {
+  statusCode = 409;
+  code = 'OPTIMISTIC_LOCK_ERROR';
+
   constructor() {
     super('Site was modified by another user. Please refresh and try again.');
     this.name = 'OptimisticLockingError';

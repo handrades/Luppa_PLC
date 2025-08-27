@@ -146,17 +146,20 @@ const createCorsOptions = (): cors.CorsOptions => ({
         return callback(null, true);
       }
     } catch (error) {
-      logger.warn('Invalid origin URL', { origin, error: (error as Error).message });
+      logger.warn('Invalid origin URL', {
+        origin,
+        error: (error as Error).message,
+      });
     }
 
-    // Origin not allowed
+    // Origin not allowed - disable CORS instead of throwing error
     logger.warn('CORS origin rejected', {
       origin,
       environment: process.env.NODE_ENV,
       allowedOrigins: getAllowedOrigins(),
     });
 
-    callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+    callback(null, false);
   },
 
   // HTTP methods allowed for cross-origin requests

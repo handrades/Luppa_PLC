@@ -206,3 +206,7 @@ The framework is designed to support additional industrial apps:
 - never disable pre-push or pre-commit hooks
 
 - ALWAYS refer to [docs/best-practices/index.md](docs/best-practices/index.md) when writing code
+
+- never use console.log but use logger.debug instead
+
+- In typescript and javascript types should NEVER be set to any.

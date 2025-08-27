@@ -64,8 +64,9 @@ describe('CORS Middleware', () => {
     it('should reject requests from unauthorized origins', async () => {
       const response = await request(app).get('/test').set('Origin', 'http://malicious-site.com');
 
-      // The request should be rejected with CORS error
-      expect(response.status).toBe(500); // Express converts CORS errors to 500
+      // The request succeeds but without CORS headers, which causes browser to block it
+      expect(response.status).toBe(200);
+      expect(response.headers['access-control-allow-origin']).toBeUndefined();
     });
 
     it('should handle preflight OPTIONS requests', async () => {
@@ -146,7 +147,9 @@ describe('CORS Middleware', () => {
     it('should reject localhost origins in production', async () => {
       const response = await request(app).get('/test').set('Origin', 'http://localhost:3000');
 
-      expect(response.status).toBe(500); // CORS rejection
+      // The request succeeds but without CORS headers, which causes browser to block it
+      expect(response.status).toBe(200);
+      expect(response.headers['access-control-allow-origin']).toBeUndefined();
     });
 
     it('should allow production domain', async () => {
@@ -236,10 +239,12 @@ describe('CORS Middleware', () => {
       // };
 
       // This would be done through proper mocking in a real test
-      // For now, we just verify the request is rejected
+      // For now, we just verify the request succeeds but without CORS headers
       const response = await request(app).get('/test').set('Origin', 'http://malicious-site.com');
 
-      expect(response.status).toBe(500);
+      // The request succeeds but without CORS headers
+      expect(response.status).toBe(200);
+      expect(response.headers['access-control-allow-origin']).toBeUndefined();
     });
 
     it('should handle missing origin header gracefully', async () => {

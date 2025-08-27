@@ -40,6 +40,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
   const [mergeStrategy, setMergeStrategy] = useState<'skip' | 'update' | 'replace'>('skip');
   const [createMissing, setCreateMissing] = useState(true);
   const [validateOnly, setValidateOnly] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const {
     preview,
@@ -57,13 +59,31 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         setFile(file);
+        setUploadError(null);
+        setUploading(true);
 
-        // Upload and validate file
-        await uploadFile(file);
-        const isValid = await validateFile(file);
+        try {
+          // Upload and validate file
+          await uploadFile(file);
+          const isValid = await validateFile(file);
 
-        if (isValid) {
-          setActiveStep(1); // Move to preview step
+          if (isValid) {
+            setActiveStep(1); // Move to preview step
+          } else {
+            // Validation failed, show error
+            setUploadError('File validation failed. Please check the file format and content.');
+          }
+        } catch (error) {
+          // Handle upload/validation failure - error is displayed in UI
+          setUploadError(
+            error instanceof Error
+              ? error.message
+              : 'Failed to upload or validate the file. Please try again.'
+          );
+          // Reset file state on error
+          setFile(null);
+        } finally {
+          setUploading(false);
         }
       }
     },
@@ -142,10 +162,20 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
             <Typography variant='body2' color='text.secondary'>
               Maximum file size: 10MB
             </Typography>
-            {file && (
+            {file && !uploadError && (
               <Alert severity='info' sx={{ mt: 2 }}>
                 Selected file: {file.name} ({(file.size / 1024).toFixed(2)} KB)
               </Alert>
+            )}
+            {uploadError && (
+              <Alert severity='error' sx={{ mt: 2 }}>
+                {uploadError}
+              </Alert>
+            )}
+            {uploading && (
+              <Typography variant='body2' sx={{ mt: 2 }}>
+                Uploading and validating file...
+              </Typography>
             )}
           </Box>
         );

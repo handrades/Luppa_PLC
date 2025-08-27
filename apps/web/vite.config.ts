@@ -26,12 +26,15 @@ export default defineConfig({
         secure: false,
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // eslint-disable-next-line no-console
             console.log(`[Proxy] ${req.method} ${req.url} -> ${options.target}${req.url}`);
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
+            // eslint-disable-next-line no-console
             console.log(`[Proxy Response] ${proxyRes.statusCode} from ${req.url}`);
           });
           proxy.on('error', (err, _req, _res) => {
+            // eslint-disable-next-line no-console
             console.error('[Proxy Error]', err);
           });
         },
