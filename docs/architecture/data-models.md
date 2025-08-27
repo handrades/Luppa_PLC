@@ -136,12 +136,12 @@ interface Equipment {
 }
 
 enum EquipmentType {
-  PRESS = 'PRESS',
-  ROBOT = 'ROBOT',
-  OVEN = 'OVEN',
-  CONVEYOR = 'CONVEYOR',
-  ASSEMBLY_TABLE = 'ASSEMBLY_TABLE',
-  OTHER = 'OTHER',
+  PRESS = "PRESS",
+  ROBOT = "ROBOT",
+  OVEN = "OVEN",
+  CONVEYOR = "CONVEYOR",
+  ASSEMBLY_TABLE = "ASSEMBLY_TABLE",
+  OTHER = "OTHER",
 }
 ```
 
@@ -229,13 +229,13 @@ interface Tag {
 }
 
 enum TagDataType {
-  BOOL = 'BOOL',
-  INT = 'INT',
-  DINT = 'DINT',
-  REAL = 'REAL',
-  STRING = 'STRING',
-  TIMER = 'TIMER',
-  COUNTER = 'COUNTER',
+  BOOL = "BOOL",
+  INT = "INT",
+  DINT = "DINT",
+  REAL = "REAL",
+  STRING = "STRING",
+  TIMER = "TIMER",
+  COUNTER = "COUNTER",
 }
 ```
 
@@ -278,9 +278,9 @@ interface AuditLog {
 }
 
 enum AuditAction {
-  INSERT = 'INSERT',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
+  INSERT = "INSERT",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
 }
 ```
 

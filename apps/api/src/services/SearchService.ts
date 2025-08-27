@@ -276,7 +276,10 @@ export class SearchService {
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('Search execution failed', { error: errorMessage, query: searchQuery.q });
+      logger.error('Search execution failed', {
+        error: errorMessage,
+        query: searchQuery.q,
+      });
       throw error;
     }
   }
@@ -651,7 +654,9 @@ export class SearchService {
     } catch (error) {
       clearTimeout(timeout);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('Failed to refresh search materialized view', { error: errorMessage });
+      logger.error('Failed to refresh search materialized view', {
+        error: errorMessage,
+      });
       throw error;
     } finally {
       clearTimeout(timeout);

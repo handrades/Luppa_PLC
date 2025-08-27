@@ -276,10 +276,10 @@ export const PLCForm: React.FC<PLCFormProps> = ({
 
 ```typescript
 // stores/auth.store.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User, LoginCredentials } from '@/types';
-import { authService } from '@/services/auth.service';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { User, LoginCredentials } from "@/types";
+import { authService } from "@/services/auth.service";
 
 interface AuthState {
   user: User | null;
@@ -297,7 +297,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isLoading: false,
 
-      login: async credentials => {
+      login: async (credentials) => {
         set({ isLoading: true });
         try {
           const response = await authService.login(credentials);
@@ -333,17 +333,17 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'auth-storage',
-      partialize: state => ({
+      name: "auth-storage",
+      partialize: (state) => ({
         token: state.token,
         user: state.user,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Selector for isAuthenticated
-export const useIsAuthenticated = () => useAuthStore(state => !!state.token);
+export const useIsAuthenticated = () => useAuthStore((state) => !!state.token);
 
 // stores/plc.store.ts
 interface PLCFilters {
@@ -361,12 +361,12 @@ interface PLCState {
   setFilters: (filters: PLCFilters) => void;
 }
 
-export const usePLCStore = create<PLCState>(set => ({
+export const usePLCStore = create<PLCState>((set) => ({
   plcs: [],
   filters: {},
   isLoading: false,
 
-  fetchPLCs: async filters => {
+  fetchPLCs: async (filters) => {
     set({ isLoading: true });
     try {
       const plcs = await plcService.getPLCs(filters);
@@ -377,8 +377,8 @@ export const usePLCStore = create<PLCState>(set => ({
     }
   },
 
-  setFilters: filters => {
-    set(state => ({
+  setFilters: (filters) => {
+    set((state) => ({
       filters: { ...state.filters, ...filters },
     }));
   },

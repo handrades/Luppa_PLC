@@ -53,15 +53,15 @@ const swaggerOptions: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:${appConfig.port}`,
+        url: `http://localhost:${appConfig.port}/api/v1`,
         description: 'Development server',
       },
       {
-        url: `https://localhost:${appConfig.port}`,
+        url: `https://localhost:${appConfig.port}/api/v1`,
         description: 'Development server (HTTPS)',
       },
       {
-        url: 'http://localhost:3000/api',
+        url: 'http://localhost:3000/api/v1',
         description: 'Development server via Nginx proxy',
       },
     ],

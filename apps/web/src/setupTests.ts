@@ -14,6 +14,26 @@ if (typeof globalThis.TextEncoder === 'undefined') {
 }
 
 // Mock import.meta for Vite environment
+// We need to inject import.meta.env in a way that eval() can access it
+// This is done by modifying the global scope that eval operates in
+(function () {
+  // Create a global import.meta.env reference that eval can access
+  const script = document.createElement('script');
+  script.textContent = `
+    // Define import.meta.env globally for eval access
+    if (typeof globalThis.import === 'undefined') {
+      globalThis.import = {};
+    }
+    if (typeof globalThis.import.meta === 'undefined') {
+      globalThis.import.meta = {};
+    }
+    globalThis.import.meta.env = ${JSON.stringify(testEnv)};
+  `;
+  document.head.appendChild(script);
+  document.head.removeChild(script);
+})();
+
+// Also define it directly on globalThis for non-eval access
 Object.defineProperty(globalThis, 'import', {
   value: {
     meta: {

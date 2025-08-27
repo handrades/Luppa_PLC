@@ -55,25 +55,33 @@ const VirtualizedPlcList: React.FC<PlcListProps> = ({ plcs, itemHeight }) => {
 const calculatePlcHealthMetrics = useMemo(() => {
   return plcs.reduce(
     (metrics, plc) => {
-      const health = calculatePlcHealthScore(plc.uptime, plc.errorCount, plc.lastResponseTime);
+      const health = calculatePlcHealthScore(
+        plc.uptime,
+        plc.errorCount,
+        plc.lastResponseTime,
+      );
 
       return {
         ...metrics,
         [plc.id]: health,
-        averageHealth: (metrics.averageHealth * metrics.count + health) / (metrics.count + 1),
+        averageHealth:
+          (metrics.averageHealth * metrics.count + health) /
+          (metrics.count + 1),
         count: metrics.count + 1,
       };
     },
-    { averageHealth: 0, count: 0 }
+    { averageHealth: 0, count: 0 },
   );
 }, [plcs]);
 
 // Memoized filter functions
 const filteredPlcs = useMemo(() => {
-  return plcs.filter(plc => {
+  return plcs.filter((plc) => {
     const matchesSite = !filters.site || plc.location.siteName === filters.site;
     const matchesStatus = !filters.status || plc.status === filters.status;
-    const matchesTags = !filters.tags?.length || filters.tags.some(tag => plc.tags.includes(tag));
+    const matchesTags =
+      !filters.tags?.length ||
+      filters.tags.some((tag) => plc.tags.includes(tag));
 
     return matchesSite && matchesStatus && matchesTags;
   });

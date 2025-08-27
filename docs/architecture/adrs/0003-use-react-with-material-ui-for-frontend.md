@@ -98,20 +98,20 @@ We will use **React 18+** with **Material-UI (MUI) v5+** as the primary frontend
 
 ```typescript
 // Theme configuration for industrial environments
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
 const industrialTheme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2', // Blue for reliability
-      contrastText: '#ffffff',
+      main: "#1976d2", // Blue for reliability
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: '#dc004e', // Red for alerts/warnings
+      main: "#dc004e", // Red for alerts/warnings
     },
     background: {
-      default: '#f5f5f5', // Light gray for reduced eye strain
-      paper: '#ffffff',
+      default: "#f5f5f5", // Light gray for reduced eye strain
+      paper: "#ffffff",
     },
   },
   components: {
@@ -120,7 +120,7 @@ const industrialTheme = createTheme({
       styleOverrides: {
         root: {
           minHeight: 44, // Touch-friendly minimum
-          fontSize: '1rem',
+          fontSize: "1rem",
         },
       },
     },
@@ -135,9 +135,9 @@ const industrialTheme = createTheme({
   typography: {
     // Optimized for industrial displays
     fontSize: 16, // Larger base font
-    h1: { fontSize: '2.5rem' },
-    h2: { fontSize: '2rem' },
-    body1: { fontSize: '1rem', lineHeight: 1.6 },
+    h1: { fontSize: "2.5rem" },
+    h2: { fontSize: "2rem" },
+    body1: { fontSize: "1rem", lineHeight: 1.6 },
   },
 });
 ```
@@ -226,12 +226,12 @@ export const AppRouter = () => (
 ### Zustand for Global State
 
 ```typescript
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface AppStore {
   // User preferences
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
   sidebarCollapsed: boolean;
 
   // Application state
@@ -239,7 +239,7 @@ interface AppStore {
   filters: PlcFilters;
 
   // Actions
-  setTheme: (theme: 'light' | 'dark') => void;
+  setTheme: (theme: "light" | "dark") => void;
   toggleSidebar: () => void;
   setSelectedPlcs: (ids: string[]) => void;
   updateFilters: (filters: Partial<PlcFilters>) => void;
@@ -247,43 +247,43 @@ interface AppStore {
 
 const useAppStore = create<AppStore>()(
   persist(
-    set => ({
-      theme: 'light',
+    (set) => ({
+      theme: "light",
       sidebarCollapsed: false,
       selectedPlcs: [],
       filters: {},
 
-      setTheme: theme => set({ theme }),
+      setTheme: (theme) => set({ theme }),
       toggleSidebar: () =>
-        set(state => ({
+        set((state) => ({
           sidebarCollapsed: !state.sidebarCollapsed,
         })),
-      setSelectedPlcs: selectedPlcs => set({ selectedPlcs }),
-      updateFilters: newFilters =>
-        set(state => ({
+      setSelectedPlcs: (selectedPlcs) => set({ selectedPlcs }),
+      updateFilters: (newFilters) =>
+        set((state) => ({
           filters: { ...state.filters, ...newFilters },
         })),
     }),
     {
-      name: 'app-storage',
-      partialize: state => ({
+      name: "app-storage",
+      partialize: (state) => ({
         theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
       }),
-    }
-  )
+    },
+  ),
 );
 ```
 
 ### React Query for Server State
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Custom hooks for data fetching
 export const usePlcs = (filters?: PlcFilters) => {
   return useQuery({
-    queryKey: ['plcs', filters],
+    queryKey: ["plcs", filters],
     queryFn: () => plcApi.getPlcs(filters),
     staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: true, // Refresh when user returns
@@ -296,7 +296,7 @@ export const useCreatePlc = () => {
   return useMutation({
     mutationFn: plcApi.createPlc,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plcs'] });
+      queryClient.invalidateQueries({ queryKey: ["plcs"] });
     },
   });
 };
@@ -420,15 +420,15 @@ const PlcControlPanel: React.FC<PlcControlPanelProps> = ({ plc, onUpdate }) => (
 
 ```typescript
 // Tree shaking - import specific components
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 // Instead of: import { Button, TextField } from '@mui/material';
 
 // Dynamic imports for large components
 const DataGrid = lazy(() =>
-  import('@mui/x-data-grid').then(module => ({
+  import("@mui/x-data-grid").then((module) => ({
     default: module.DataGrid,
-  }))
+  })),
 );
 ```
 

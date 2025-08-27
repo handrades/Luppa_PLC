@@ -33,8 +33,14 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({ progress }) => {
 
   const steps = [
     { label: 'Validating data', completed: progress.processedRows > 0 },
-    { label: 'Creating hierarchy', completed: progress.processedRows > progress.totalRows * 0.25 },
-    { label: 'Importing PLCs', completed: progress.processedRows > progress.totalRows * 0.5 },
+    {
+      label: 'Creating hierarchy',
+      completed: progress.processedRows > progress.totalRows * 0.25,
+    },
+    {
+      label: 'Importing PLCs',
+      completed: progress.processedRows > progress.totalRows * 0.5,
+    },
     {
       label: 'Updating relationships',
       completed: progress.processedRows > progress.totalRows * 0.75,

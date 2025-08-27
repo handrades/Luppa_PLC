@@ -6,10 +6,10 @@
 
 ```typescript
 // Required imports and interfaces
-import { Repository, getRepository } from 'typeorm';
-import { User } from '@/entities/User';
-import { AuditLog } from '@/entities/AuditLog';
-import { NotificationService } from '@/services/NotificationService';
+import { Repository, getRepository } from "typeorm";
+import { User } from "@/entities/User";
+import { AuditLog } from "@/entities/AuditLog";
+import { NotificationService } from "@/services/NotificationService";
 
 interface CacheService {
   storeSession(sessionId: string, data: SessionData): Promise<void>;
@@ -32,27 +32,27 @@ interface Request {
 // JWT service with enhanced security
 export class AuthService {
   private readonly JWT_SECRET = process.env.JWT_SECRET!;
-  private readonly JWT_EXPIRES_IN = '24h';
-  private readonly REFRESH_TOKEN_EXPIRES_IN = '7d';
+  private readonly JWT_EXPIRES_IN = "24h";
+  private readonly REFRESH_TOKEN_EXPIRES_IN = "7d";
 
   constructor(
     private readonly cacheService: CacheService,
     private readonly userRepository: Repository<User>,
-    private readonly request?: Request // For accessing IP and User-Agent
+    private readonly request?: Request, // For accessing IP and User-Agent
   ) {}
 
   private getCurrentIP(): string {
     // Extract IP from request headers, handling proxies
     return (
       this.request?.ip ||
-      (this.request?.headers['x-forwarded-for'] as string) ||
-      (this.request?.headers['x-real-ip'] as string) ||
-      'unknown'
+      (this.request?.headers["x-forwarded-for"] as string) ||
+      (this.request?.headers["x-real-ip"] as string) ||
+      "unknown"
     );
   }
 
   private getCurrentUserAgent(): string {
-    return this.request?.headers['user-agent'] || 'unknown';
+    return this.request?.headers["user-agent"] || "unknown";
   }
 
   async generateTokens(user: User): Promise<AuthTokens> {
@@ -66,14 +66,18 @@ export class AuthService {
 
     const accessToken = jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.JWT_EXPIRES_IN,
-      issuer: 'inventory-framework',
-      audience: 'inventory-users',
-      algorithm: 'HS256',
+      issuer: "inventory-framework",
+      audience: "inventory-users",
+      algorithm: "HS256",
     });
 
-    const refreshToken = jwt.sign({ userId: user.id, sessionId: payload.sessionId }, this.JWT_SECRET, {
-      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
-    });
+    const refreshToken = jwt.sign(
+      { userId: user.id, sessionId: payload.sessionId },
+      this.JWT_SECRET,
+      {
+        expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+      },
+    );
 
     // Store session in Redis for validation
     await this.cacheService.storeSession(payload.sessionId, {
@@ -94,22 +98,22 @@ export class AuthService {
       // Validate session still exists
       const session = await this.cacheService.getSession(payload.sessionId);
       if (!session) {
-        throw new UnauthorizedError('Session expired or invalid');
+        throw new UnauthorizedError("Session expired or invalid");
       }
 
       // Check if user is still active
       const user = await this.userRepository.findOne({
         where: { id: payload.userId, isActive: true },
-        relations: ['role'],
+        relations: ["role"],
       });
 
       if (!user) {
-        throw new UnauthorizedError('User no longer active');
+        throw new UnauthorizedError("User no longer active");
       }
 
       return { ...payload, user };
     } catch (error) {
-      throw new UnauthorizedError('Invalid token');
+      throw new UnauthorizedError("Invalid token");
     }
   }
 }
@@ -141,23 +145,27 @@ export class RBACMiddleware {
       try {
         const user = req.user; // Set by JWT middleware
         if (!user) {
-          return res.status(401).json({ error: 'Authentication required' });
+          return res.status(401).json({ error: "Authentication required" });
         }
 
-        const hasPermission = this.checkPermission(user.role.permissions, resource, action);
+        const hasPermission = this.checkPermission(
+          user.role.permissions,
+          resource,
+          action,
+        );
         if (!hasPermission) {
           // Log security event
           await this.auditService.logSecurityEvent({
             userId: user.id,
-            action: 'ACCESS_DENIED',
+            action: "ACCESS_DENIED",
             resource,
             requestedAction: action,
             ipAddress: req.ip,
-            userAgent: req.get('User-Agent'),
+            userAgent: req.get("User-Agent"),
           });
 
           return res.status(403).json({
-            error: 'Insufficient permissions',
+            error: "Insufficient permissions",
             required: `${resource}:${action}`,
           });
         }
@@ -169,7 +177,11 @@ export class RBACMiddleware {
     };
   }
 
-  private checkPermission(permissions: RolePermissions, resource: string, action: string): boolean {
+  private checkPermission(
+    permissions: RolePermissions,
+    resource: string,
+    action: string,
+  ): boolean {
     const resourcePermissions = permissions[resource];
     return resourcePermissions?.[action] === true;
   }
@@ -180,18 +192,26 @@ export class RBACMiddleware {
 const auditRepository = getRepository(AuditLog); // Or your preferred DI method
 const notificationService = new NotificationService(); // Or inject from container
 
-const auditServiceInstance = new AuditService(auditRepository, notificationService);
+const auditServiceInstance = new AuditService(
+  auditRepository,
+  notificationService,
+);
 const rbacMiddleware = new RBACMiddleware(auditServiceInstance);
 
 // Usage in routes
-router.get('/plcs', authMiddleware.authenticate, rbacMiddleware.authorize('plcs', 'read'), PLCController.list);
+router.get(
+  "/plcs",
+  authMiddleware.authenticate,
+  rbacMiddleware.authorize("plcs", "read"),
+  PLCController.list,
+);
 
 router.post(
-  '/plcs',
+  "/plcs",
   authMiddleware.authenticate,
-  rbacMiddleware.authorize('plcs', 'create'),
+  rbacMiddleware.authorize("plcs", "create"),
   validationMiddleware.validate(plcCreateSchema),
-  PLCController.create
+  PLCController.create,
 );
 ```
 
@@ -288,7 +308,7 @@ $$ LANGUAGE plpgsql;
 export class AuditService {
   constructor(
     private auditRepository: Repository<AuditLog>,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   async logChange(changeData: AuditChangeData): Promise<void> {
@@ -308,9 +328,9 @@ export class AuditService {
     await this.auditRepository.save(auditLog);
 
     // Trigger notifications for high-risk events
-    if (auditLog.riskLevel === 'HIGH' || auditLog.riskLevel === 'CRITICAL') {
+    if (auditLog.riskLevel === "HIGH" || auditLog.riskLevel === "CRITICAL") {
       await this.notificationService.notifySecurityTeam({
-        type: 'SECURITY_EVENT',
+        type: "SECURITY_EVENT",
         severity: auditLog.riskLevel,
         message: `${changeData.action} on ${changeData.tableName}`,
         auditLogId: auditLog.id,
@@ -319,15 +339,18 @@ export class AuditService {
   }
 
   // Compliance reporting
-  async generateComplianceReport(startDate: Date, endDate: Date): Promise<ComplianceReport> {
+  async generateComplianceReport(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<ComplianceReport> {
     const auditLogs = await this.auditRepository
-      .createQueryBuilder('audit')
-      .leftJoinAndSelect('audit.user', 'user')
-      .where('audit.timestamp BETWEEN :start AND :end', {
+      .createQueryBuilder("audit")
+      .leftJoinAndSelect("audit.user", "user")
+      .where("audit.timestamp BETWEEN :start AND :end", {
         start: startDate,
         end: endDate,
       })
-      .orderBy('audit.timestamp', 'DESC')
+      .orderBy("audit.timestamp", "DESC")
       .getMany();
 
     return {
@@ -335,22 +358,29 @@ export class AuditService {
       totalChanges: auditLogs.length,
       riskBreakdown: this.calculateRiskBreakdown(auditLogs),
       userActivity: this.calculateUserActivity(auditLogs),
-      systemChanges: auditLogs.filter(log => ['users', 'roles', 'permissions'].includes(log.tableName)),
-      equipmentChanges: auditLogs.filter(log => ['plcs', 'equipment', 'sites', 'cells'].includes(log.tableName)),
+      systemChanges: auditLogs.filter((log) =>
+        ["users", "roles", "permissions"].includes(log.tableName),
+      ),
+      equipmentChanges: auditLogs.filter((log) =>
+        ["plcs", "equipment", "sites", "cells"].includes(log.tableName),
+      ),
     };
   }
 
   private assessRiskLevel(changeData: AuditChangeData): RiskLevel {
     // Business logic for risk assessment
-    if (changeData.tableName === 'users' && changeData.action === 'DELETE') {
-      return 'CRITICAL';
+    if (changeData.tableName === "users" && changeData.action === "DELETE") {
+      return "CRITICAL";
     }
 
-    if (changeData.tableName === 'plcs' && changeData.oldValues?.ip_address !== changeData.newValues?.ip_address) {
-      return 'MEDIUM';
+    if (
+      changeData.tableName === "plcs" &&
+      changeData.oldValues?.ip_address !== changeData.newValues?.ip_address
+    ) {
+      return "MEDIUM";
     }
 
-    return 'LOW';
+    return "LOW";
   }
 }
 ```

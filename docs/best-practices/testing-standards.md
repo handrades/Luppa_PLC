@@ -6,7 +6,7 @@ Follow consistent testing patterns using Jest:
 
 ```typescript
 // Service layer testing
-describe('PlcService', () => {
+describe("PlcService", () => {
   let service: PlcService;
   let mockRepository: jest.Mocked<IPlcRepository>;
   let mockAuditService: jest.Mocked<IAuditService>;
@@ -33,25 +33,25 @@ describe('PlcService', () => {
     service = new PlcService(mockRepository, mockAuditService, mockLogger);
   });
 
-  describe('createPlc', () => {
+  describe("createPlc", () => {
     const validPlcData: PlcCreateInput = {
-      description: 'Test PLC',
-      make: 'Allen-Bradley',
-      model: 'CompactLogix 5370',
-      ip: '192.168.1.100',
-      tags: ['production', 'line1'],
+      description: "Test PLC",
+      make: "Allen-Bradley",
+      model: "CompactLogix 5370",
+      ip: "192.168.1.100",
+      tags: ["production", "line1"],
       location: {
-        siteName: 'Plant A',
-        cellType: 'Production',
-        cellId: 'CELL-001',
+        siteName: "Plant A",
+        cellType: "Production",
+        cellId: "CELL-001",
       },
     };
 
-    it('should create PLC successfully with valid data', async () => {
+    it("should create PLC successfully with valid data", async () => {
       const expectedPlc: PLCRecord = {
-        id: 'plc-123',
+        id: "plc-123",
         ...validPlcData,
-        status: 'Unknown',
+        status: "Unknown",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -59,7 +59,7 @@ describe('PlcService', () => {
       mockRepository.create.mockResolvedValue(expectedPlc);
       mockRepository.findByIp.mockResolvedValue(null);
 
-      const result = await service.createPlc(validPlcData, 'user-123');
+      const result = await service.createPlc(validPlcData, "user-123");
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -67,21 +67,21 @@ describe('PlcService', () => {
       }
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
-          action: 'plc.created',
-          entityId: 'plc-123',
-          userId: 'user-123',
-        })
+          action: "plc.created",
+          entityId: "plc-123",
+          userId: "user-123",
+        }),
       );
     });
 
-    it('should return error when IP address is already in use', async () => {
+    it("should return error when IP address is already in use", async () => {
       mockRepository.findByIp.mockResolvedValue(expectedPlc);
 
-      const result = await service.createPlc(validPlcData, 'user-123');
+      const result = await service.createPlc(validPlcData, "user-123");
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toBe('IP address already in use');
+        expect(result.error).toBe("IP address already in use");
       }
       expect(mockRepository.create).not.toHaveBeenCalled();
     });

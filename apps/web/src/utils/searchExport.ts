@@ -77,7 +77,9 @@ export const exportSearchResultsToJSON = (results: SearchResultItem[], filename?
   );
 
   // Create and download JSON file
-  const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+  const blob = new Blob([jsonContent], {
+    type: 'application/json;charset=utf-8;',
+  });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
 

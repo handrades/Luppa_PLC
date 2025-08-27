@@ -21,8 +21,8 @@ paths:
       tags: [Sites]
       summary: List all sites
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: search
           in: query
           schema:
@@ -33,7 +33,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSites'
+                $ref: "#/components/schemas/PaginatedSites"
 
     post:
       tags: [Sites]
@@ -43,14 +43,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SiteInput'
+              $ref: "#/components/schemas/SiteInput"
       responses:
         201:
           description: Site created
 
   /sites/{siteId}:
     parameters:
-      - $ref: '#/components/parameters/SiteIdParam'
+      - $ref: "#/components/parameters/SiteIdParam"
     get:
       tags: [Sites]
       summary: Get site details
@@ -60,12 +60,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SiteWithCellCount'
+                $ref: "#/components/schemas/SiteWithCellCount"
 
   # Cell Management
   /sites/{siteId}/cells:
     parameters:
-      - $ref: '#/components/parameters/SiteIdParam'
+      - $ref: "#/components/parameters/SiteIdParam"
     get:
       tags: [Cells]
       summary: List cells in a site
@@ -77,7 +77,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Cell'
+                  $ref: "#/components/schemas/Cell"
 
     post:
       tags: [Cells]
@@ -87,11 +87,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CellInput'
+              $ref: "#/components/schemas/CellInput"
 
   /cells/{cellId}:
     parameters:
-      - $ref: '#/components/parameters/CellIdParam'
+      - $ref: "#/components/parameters/CellIdParam"
     get:
       tags: [Cells]
       summary: Get cell details
@@ -101,12 +101,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CellWithEquipmentCount'
+                $ref: "#/components/schemas/CellWithEquipmentCount"
 
   # Equipment Management
   /cells/{cellId}/equipment:
     parameters:
-      - $ref: '#/components/parameters/CellIdParam'
+      - $ref: "#/components/parameters/CellIdParam"
     get:
       tags: [Equipment]
       summary: List equipment in a cell
@@ -118,7 +118,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Equipment'
+                  $ref: "#/components/schemas/Equipment"
 
     post:
       tags: [Equipment]
@@ -126,7 +126,7 @@ paths:
 
   /equipment/{equipmentId}:
     parameters:
-      - $ref: '#/components/parameters/EquipmentIdParam'
+      - $ref: "#/components/parameters/EquipmentIdParam"
     get:
       tags: [Equipment]
       summary: Get equipment details
@@ -136,12 +136,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Equipment'
+                $ref: "#/components/schemas/Equipment"
 
   # PLC Management
   /equipment/{equipmentId}/plcs:
     parameters:
-      - $ref: '#/components/parameters/EquipmentIdParam'
+      - $ref: "#/components/parameters/EquipmentIdParam"
     get:
       tags: [PLCs]
       summary: List PLCs in equipment
@@ -153,7 +153,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PLC'
+                  $ref: "#/components/schemas/PLC"
 
     post:
       tags: [PLCs]
@@ -202,11 +202,11 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PLCWithHierarchy'
+                      $ref: "#/components/schemas/PLCWithHierarchy"
 
   /plcs/{plcId}:
     parameters:
-      - $ref: '#/components/parameters/PLCIdParam'
+      - $ref: "#/components/parameters/PLCIdParam"
     get:
       tags: [PLCs]
       summary: Get PLC details with full hierarchy
@@ -214,7 +214,7 @@ paths:
   # Tag Management
   /plcs/{plcId}/tags:
     parameters:
-      - $ref: '#/components/parameters/PLCIdParam'
+      - $ref: "#/components/parameters/PLCIdParam"
     get:
       tags: [Tags]
       summary: List tags for a PLC
@@ -254,7 +254,7 @@ paths:
               type: object
               properties:
                 filters:
-                  $ref: '#/components/schemas/PLCFilters'
+                  $ref: "#/components/schemas/PLCFilters"
                 includeHierarchy:
                   type: boolean
                   default: true
@@ -394,7 +394,7 @@ components:
 
     SiteWithCellCount:
       allOf:
-        - $ref: '#/components/schemas/Site'
+        - $ref: "#/components/schemas/Site"
         - type: object
           properties:
             cellCount:
@@ -441,7 +441,7 @@ components:
 
     CellWithEquipmentCount:
       allOf:
-        - $ref: '#/components/schemas/Cell'
+        - $ref: "#/components/schemas/Cell"
         - type: object
           properties:
             equipmentCount:
@@ -510,18 +510,18 @@ components:
 
     PLCWithHierarchy:
       allOf:
-        - $ref: '#/components/schemas/PLC'
+        - $ref: "#/components/schemas/PLC"
         - type: object
           properties:
             hierarchy:
               type: object
               properties:
                 site:
-                  $ref: '#/components/schemas/Site'
+                  $ref: "#/components/schemas/Site"
                 cell:
-                  $ref: '#/components/schemas/Cell'
+                  $ref: "#/components/schemas/Cell"
                 equipment:
-                  $ref: '#/components/schemas/Equipment'
+                  $ref: "#/components/schemas/Equipment"
 
     PaginatedSites:
       type: object
@@ -530,7 +530,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Site'
+            $ref: "#/components/schemas/Site"
         pagination:
           type: object
           required: [page, pageSize, total, totalPages]

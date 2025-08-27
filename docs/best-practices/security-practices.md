@@ -5,8 +5,8 @@
 Always sanitize inputs for industrial environments:
 
 ```typescript
-import DOMPurify from 'dompurify';
-import { escape } from 'html-escaper';
+import DOMPurify from "dompurify";
+import { escape } from "html-escaper";
 
 // Sanitize user inputs
 const sanitizePlcDescription = (description: string): string => {
@@ -17,7 +17,8 @@ const sanitizePlcDescription = (description: string): string => {
 
 // Validate IP addresses
 const isValidPlcIpAddress = (ip: string): boolean => {
-  const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const ipRegex =
+    /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   return ipRegex.test(ip);
 };
 
@@ -25,7 +26,7 @@ const isValidPlcIpAddress = (ip: string): boolean => {
 const createPlcRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many PLC creation requests',
+  message: "Too many PLC creation requests",
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -41,7 +42,7 @@ interface AuditLogEntry {
   timestamp: Date;
   userId: string;
   action: string;
-  entityType: 'plc' | 'user' | 'system';
+  entityType: "plc" | "user" | "system";
   entityId: string;
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
@@ -51,30 +52,30 @@ interface AuditLogEntry {
 
 class AuditService {
   async logPlcChange(
-    action: 'create' | 'update' | 'delete',
+    action: "create" | "update" | "delete",
     plcId: string,
     userId: string,
     oldValues?: Partial<PLCRecord>,
     newValues?: Partial<PLCRecord>,
-    request?: Request
+    request?: Request,
   ): Promise<void> {
     const auditEntry: AuditLogEntry = {
       id: generateId(),
       timestamp: new Date(),
       userId,
       action: `plc.${action}`,
-      entityType: 'plc',
+      entityType: "plc",
       entityId: plcId,
       oldValues,
       newValues,
-      ipAddress: request?.ip || 'unknown',
-      userAgent: request?.headers['user-agent'] || 'unknown',
+      ipAddress: request?.ip || "unknown",
+      userAgent: request?.headers["user-agent"] || "unknown",
     };
 
     await this.repository.createAuditLog(auditEntry);
 
     // Also log to Winston for external monitoring
-    logger.info('PLC audit event', {
+    logger.info("PLC audit event", {
       auditId: auditEntry.id,
       action: auditEntry.action,
       entityId: auditEntry.entityId,

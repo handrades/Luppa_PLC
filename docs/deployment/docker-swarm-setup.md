@@ -319,10 +319,10 @@ deploy:
   resources:
     limits:
       memory: 2G
-      cpus: '2.0'
+      cpus: "2.0"
     reservations:
       memory: 1G
-      cpus: '1.0'
+      cpus: "1.0"
 ```
 
 ### Database Optimization

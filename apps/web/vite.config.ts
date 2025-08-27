@@ -19,7 +19,7 @@ export default defineConfig({
       allow: ['..', '../..'],
     },
     proxy: {
-      '/api': {
+      '/api/v1': {
         // Always use the api service name in Docker environment
         target: `http://api:3010`,
         changeOrigin: true,
@@ -38,6 +38,12 @@ export default defineConfig({
             console.error('[Proxy Error]', err);
           });
         },
+      },
+      // Keep legacy /api path for backward compatibility
+      '/api': {
+        target: `http://api:3010`,
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

@@ -54,14 +54,17 @@ class PlcService {
   constructor(
     private repository: IPlcRepository,
     private auditService: IAuditService,
-    private logger: ILogger
+    private logger: ILogger,
   ) {}
 
-  async createPlc(data: PlcCreateInput, userId: string): Promise<Result<PLCRecord, string>> {
+  async createPlc(
+    data: PlcCreateInput,
+    userId: string,
+  ): Promise<Result<PLCRecord, string>> {
     try {
       // Business logic validation
       if (data.ip && (await this.repository.findByIp(data.ip))) {
-        return { success: false, error: 'IP address already in use' };
+        return { success: false, error: "IP address already in use" };
       }
 
       // Create the PLC
@@ -70,22 +73,22 @@ class PlcService {
       // Best-effort audit logging for compliance (does not fail the operation)
       try {
         await this.auditService.log({
-          action: 'plc.created',
-          entityType: 'plc',
+          action: "plc.created",
+          entityType: "plc",
           entityId: plc.id,
           userId,
           details: { description: plc.description, make: plc.make },
         });
       } catch (auditError) {
         // Log audit failure but continue with successful operation
-        this.logger.warn('Audit logging failed for PLC creation', {
+        this.logger.warn("Audit logging failed for PLC creation", {
           plcId: plc.id,
           userId,
           auditError: auditError.message,
         });
       }
 
-      this.logger.info('PLC created successfully', {
+      this.logger.info("PLC created successfully", {
         plcId: plc.id,
         userId,
         make: plc.make,
@@ -93,8 +96,8 @@ class PlcService {
 
       return { success: true, data: plc };
     } catch (error) {
-      this.logger.error('Error creating PLC', { error, data, userId });
-      return { success: false, error: 'Failed to create PLC' };
+      this.logger.error("Error creating PLC", { error, data, userId });
+      return { success: false, error: "Failed to create PLC" };
     }
   }
 }

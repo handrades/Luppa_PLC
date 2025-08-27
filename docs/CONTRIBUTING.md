@@ -107,7 +107,10 @@ async function getPlcById(id: string): Promise<PlcInventoryItem | null> {
 }
 
 // Component naming: PascalCase
-export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({ items, onSelectItem }) => {
+export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({
+  items,
+  onSelectItem,
+}) => {
   // Implementation
 };
 ```
@@ -120,14 +123,14 @@ export const PlcInventoryList: React.FC<PlcInventoryListProps> = ({ items, onSel
 // Use enums for constants
 
 enum PlcStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  UNKNOWN = 'unknown',
+  ONLINE = "online",
+  OFFLINE = "offline",
+  UNKNOWN = "unknown",
 }
 
 // Use utility types when appropriate
 type PartialPlcItem = Partial<PlcInventoryItem>;
-type PlcUpdateData = Omit<PlcInventoryItem, 'id'>;
+type PlcUpdateData = Omit<PlcInventoryItem, "id">;
 ```
 
 ### React Standards
@@ -212,12 +215,12 @@ interface PlcStore {
 // /api/v1/plcs/:id - Resource endpoints
 
 // Use proper HTTP methods and status codes
-app.get('/api/v1/plcs', async (req, res) => {
+app.get("/api/v1/plcs", async (req, res) => {
   try {
     const plcs = await plcService.findAll(req.query);
     res.json({ data: plcs, meta: { total: plcs.length } });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -235,26 +238,26 @@ const createPlcSchema = Joi.object({
 
 ```typescript
 // Entity definition with TypeORM
-@Entity('plcs')
+@Entity("plcs")
 export class PlcEntity extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   description: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   make: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   model: string;
 
-  @Column({ type: 'inet', nullable: true })
-  @Index({ unique: true, where: 'ip_address IS NOT NULL' })
+  @Column({ type: "inet", nullable: true })
+  @Index({ unique: true, where: "ip_address IS NOT NULL" })
   ipAddress?: string;
 
-  @Column('text', { array: true, default: [] })
-  @Index('idx_plcs_tags', { using: 'gin' })
+  @Column("text", { array: true, default: [] })
+  @Index("idx_plcs_tags", { using: "gin" })
   tags: string[];
 }
 ```
@@ -267,7 +270,7 @@ export class PlcEntity extends BaseEntity {
 // Test file naming: *.test.ts or *.test.tsx
 // Use descriptive test names
 
-describe('PlcService', () => {
+describe("PlcService", () => {
   let service: PlcService;
   let mockRepository: jest.Mocked<Repository<PlcEntity>>;
 
@@ -276,10 +279,10 @@ describe('PlcService', () => {
     service = new PlcService(mockRepository);
   });
 
-  describe('findById', () => {
-    it('should return PLC when found', async () => {
+  describe("findById", () => {
+    it("should return PLC when found", async () => {
       // Arrange
-      const plcId = 'test-id';
+      const plcId = "test-id";
       const expectedPlc = createMockPlc({ id: plcId });
       mockRepository.findOne.mockResolvedValue(expectedPlc);
 
@@ -293,7 +296,7 @@ describe('PlcService', () => {
       });
     });
 
-    it('should return null when PLC not found', async () => {
+    it("should return null when PLC not found", async () => {
       // Test implementation
     });
   });
@@ -304,7 +307,7 @@ describe('PlcService', () => {
 
 ```typescript
 // API integration tests
-describe('PLC API', () => {
+describe("PLC API", () => {
   let app: Application;
   let testDb: TestDatabase;
 
@@ -317,15 +320,15 @@ describe('PLC API', () => {
     await testDb.cleanup();
   });
 
-  describe('GET /api/v1/plcs', () => {
-    it('should return paginated PLC list', async () => {
+  describe("GET /api/v1/plcs", () => {
+    it("should return paginated PLC list", async () => {
       // Seed test data
-      await testDb.seed('plcs', [
-        { description: 'Test PLC 1', make: 'Siemens' },
-        { description: 'Test PLC 2', make: 'Allen Bradley' },
+      await testDb.seed("plcs", [
+        { description: "Test PLC 1", make: "Siemens" },
+        { description: "Test PLC 2", make: "Allen Bradley" },
       ]);
 
-      const response = await request(app).get('/api/v1/plcs').expect(200);
+      const response = await request(app).get("/api/v1/plcs").expect(200);
 
       expect(response.body.data).toHaveLength(2);
       expect(response.body.meta.total).toBe(2);
@@ -361,7 +364,10 @@ export class PlcService {
    * @param userId - ID of user creating the item (for audit trail)
    * @returns Promise resolving to created PLC with generated ID
    */
-  async create(data: Omit<PlcInventoryItem, 'id'>, userId: string): Promise<PlcInventoryItem> {
+  async create(
+    data: Omit<PlcInventoryItem, "id">,
+    userId: string,
+  ): Promise<PlcInventoryItem> {
     // Implementation
   }
 }
@@ -388,7 +394,7 @@ export class PlcService {
  * />
  * ```
  */
-export const PlcInventoryList: React.FC<PlcInventoryListProps> = props => {
+export const PlcInventoryList: React.FC<PlcInventoryListProps> = (props) => {
   // Implementation
 };
 ````
@@ -642,25 +648,25 @@ Invoke-psake DockerHealth # Check service health
 
 ```typescript
 // Use proper logging instead of console.log
-import { logger } from '../utils/logger';
+import { logger } from "../utils/logger";
 
-logger.debug('PLC item selected', { plcId: item.id });
-logger.warn('API response delayed', { responseTime: elapsed });
-logger.error('Failed to load PLCs', { error: error.message });
+logger.debug("PLC item selected", { plcId: item.id });
+logger.warn("API response delayed", { responseTime: elapsed });
+logger.error("Failed to load PLCs", { error: error.message });
 ```
 
 ### Backend Debugging
 
 ```typescript
 // Use Winston logger
-import { logger } from '../config/logger';
+import { logger } from "../config/logger";
 
-logger.info('PLC search initiated', {
+logger.info("PLC search initiated", {
   userId: req.user.id,
   filters: req.query,
 });
 
-logger.error('Database query failed', {
+logger.error("Database query failed", {
   error: error.message,
   stack: error.stack,
   query: query,
@@ -699,12 +705,12 @@ const sanitizedDescription = validator.escape(req.body.description);
 
 ```typescript
 // Use middleware for protected routes
-app.get('/api/v1/plcs', authenticateUser, authorizePlcRead, (req, res) => {
+app.get("/api/v1/plcs", authenticateUser, authorizePlcRead, (req, res) => {
   // Implementation
 });
 
 // Implement proper RBAC
-const userCan = await rbac.can(user.role, 'read', 'plc');
+const userCan = await rbac.can(user.role, "read", "plc");
 ```
 
 ### SQL Injection Prevention
