@@ -28,7 +28,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'status',
             type: 'enum',
             enum: ['pending', 'processing', 'completed', 'failed', 'rolled_back'],
-            enumName: 'import_status_enum',
+            enumName: 'plc_inventory.import_status_enum',
             default: "'pending'",
           },
           {
@@ -139,7 +139,7 @@ export class AddImportHistoryTables20250826090858 implements MigrationInterface 
             name: 'status',
             type: 'enum',
             enum: ['success', 'failed'],
-            enumName: 'rollback_status_enum',
+            enumName: 'plc_inventory.rollback_status_enum',
             default: "'success'",
           },
           {

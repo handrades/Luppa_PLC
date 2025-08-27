@@ -29,12 +29,13 @@ export function ipRangeToCidr(startIP: string, endIP: string): string | undefine
     // This is a simplified implementation that finds exact power-of-2 ranges
     const range = end - start + 1;
 
-    // Check if it's a power of 2 (exact CIDR block)
-    if ((range & (range - 1)) === 0) {
+    // Check if it's a power of 2 (exact CIDR block) and range is valid
+    if (range > 0 && Number.isInteger(Math.log2(range))) {
       const prefixLength = 32 - Math.log2(range);
       if (Number.isInteger(prefixLength) && prefixLength >= 0 && prefixLength <= 32) {
         // Verify the start address is aligned to the block size
-        const blockSize = 1 << (32 - prefixLength);
+        // Use safe math to avoid overflow for large ranges (e.g., /0)
+        const blockSize = prefixLength === 0 ? Math.pow(2, 32) : Math.pow(2, 32 - prefixLength);
         if (start % blockSize === 0) {
           return `${startIP}/${prefixLength}`;
         }

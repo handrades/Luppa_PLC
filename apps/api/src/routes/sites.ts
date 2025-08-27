@@ -56,7 +56,6 @@ const getSiteService = (req: Request): SiteService => {
  *             type: object
  *             required:
  *               - name
- *               - description
  *             properties:
  *               name:
  *                 type: string
@@ -126,14 +125,14 @@ router.post(
  *           type: integer
  *           minimum: 1
  *           default: 1
- *       - name: limit
+ *       - name: pageSize
  *         in: query
  *         description: Items per page
  *         schema:
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *           default: 10
+ *           default: 20
  *       - name: search
  *         in: query
  *         description: Search term for name or description
@@ -148,14 +147,16 @@ router.post(
  *           default: createdAt
  *       - name: sortOrder
  *         in: query
- *         description: Sort order
+ *         description: Sort order (case-insensitive)
  *         schema:
  *           type: string
- *           enum: [asc, desc]
+ *           enum: [asc, desc, ASC, DESC]
  *           default: desc
  *     responses:
  *       200:
  *         description: List of sites retrieved successfully
+ *       400:
+ *         description: Invalid query parameters or validation error
  *       401:
  *         description: Unauthorized
  */

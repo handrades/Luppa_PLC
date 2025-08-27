@@ -4,46 +4,68 @@
 
 // Helper function to get environment variables with fallback for Jest
 function getEnvVar(key: string, defaultValue?: string): string {
-  // For Jest/Node.js environment
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-    return process.env[key] || defaultValue || '';
-  }
-
-  // For Vite/browser environment - use import.meta.env
-  // We need to check for Vite's environment without directly referencing import.meta
-  // since that syntax breaks Jest even inside a conditional
-  type GlobalWithImport = typeof globalThis & {
-    import?: {
-      meta?: {
-        env?: Record<string, string>;
-      };
-    };
-  };
-
-  if (
-    typeof window !== 'undefined' &&
-    typeof (globalThis as GlobalWithImport).import !== 'undefined'
-  ) {
+  // Try to access Vite's import.meta.env first (browser environment)
+  // We use eval to avoid syntax errors in environments where import.meta doesn't exist
+  if (typeof window !== 'undefined') {
     try {
-      const importMeta = (globalThis as GlobalWithImport).import?.meta;
-      if (importMeta && importMeta.env) {
-        return importMeta.env[key] || defaultValue || '';
+      // Use eval to safely check for import.meta at runtime
+      // eslint-disable-next-line no-eval
+      const importMetaEnv = eval(
+        'typeof import.meta !== "undefined" ? import.meta.env : undefined'
+      );
+      if (importMetaEnv && importMetaEnv[key] !== undefined) {
+        return String(importMetaEnv[key]);
       }
     } catch {
-      // Ignore errors and fall through to process.env
+      // import.meta not available, continue to other checks
     }
   }
 
-  // Fallback to process.env for Node.js environments
+  // For Jest/Node.js environment
   if (typeof process !== 'undefined' && process.env) {
-    return process.env[key] || defaultValue || '';
+    const value = process.env[key];
+    if (value !== undefined && value !== '') {
+      return value;
+    }
   }
 
   return defaultValue || '';
 }
 
 function getBooleanEnvVar(key: string, defaultValue = false): boolean {
-  return getEnvVar(key) === 'true' || defaultValue;
+  // Try to access Vite's import.meta.env first to check for boolean type
+  if (typeof window !== 'undefined') {
+    try {
+      // Use eval to safely check for import.meta at runtime
+      // eslint-disable-next-line no-eval
+      const importMetaEnv = eval(
+        'typeof import.meta !== "undefined" ? import.meta.env : undefined'
+      );
+      if (importMetaEnv && importMetaEnv[key] !== undefined) {
+        const value = importMetaEnv[key];
+        if (typeof value === 'boolean') {
+          return value;
+        }
+      }
+    } catch {
+      // import.meta not available, continue
+    }
+  }
+
+  // Get string value
+  const value = getEnvVar(key);
+
+  // Handle explicit "true" and "false" strings (case-insensitive)
+  if (value !== '') {
+    const lowerValue = value.toLowerCase();
+    if (lowerValue === 'true') return true;
+    if (lowerValue === 'false') return false;
+    // If it's any other non-empty string, treat as truthy
+    return true;
+  }
+
+  // Fall back to default
+  return defaultValue;
 }
 
 function getNumberEnvVar(key: string, defaultValue: number): number {

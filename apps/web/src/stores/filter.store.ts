@@ -38,7 +38,7 @@ interface FilterStore extends FilterState {
   setFilters: (filters: AdvancedFilters) => void;
   updateFilters: (updates: Partial<AdvancedFilters>) => void;
   clearFilters: () => void;
-  removeFilter: (key: keyof AdvancedFilters) => void;
+  removeFilter: (key: keyof AdvancedFilters) => Promise<void>;
   applyFilters: () => Promise<void>;
   resetFilters: () => void;
 
@@ -164,14 +164,21 @@ export const useFilterStore = create<FilterStore>()(
           debouncedApplyFilters();
         },
 
-        removeFilter: (key: keyof AdvancedFilters) => {
+        removeFilter: async (key: keyof AdvancedFilters) => {
+          // Set pending filters with atomic validate/apply
           set(state => {
-            // Remove the specific filter
-            delete state.filters[key];
-            state.pendingFilters[key] = undefined;
+            // For default keys, restore initial values; for others, set undefined
+            if (key in initialFilters) {
+              // Restore default values for built-in filters
+              const defaultValue = initialFilters[key as keyof typeof initialFilters];
+              (state.pendingFilters as Record<string, unknown>)[key] = defaultValue;
+            } else {
+              // Mark for removal by deleting the key
+              delete state.pendingFilters[key];
+            }
           });
-          // Apply filters after removal
-          get().applyFilters();
+          // Apply filters atomically and wait for completion
+          await get().applyFilters();
         },
 
         clearFilters: () => {

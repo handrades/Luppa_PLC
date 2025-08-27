@@ -58,42 +58,58 @@ export interface SiteServiceOptions {
 }
 
 export class SiteNotFoundError extends Error {
-  statusCode = 404;
-  code = 'SITE_NOT_FOUND';
+  readonly statusCode = 404;
+  readonly code = 'SITE_NOT_FOUND';
 
   constructor(siteId: string) {
     super(`Site with ID '${siteId}' not found`);
     this.name = 'SiteNotFoundError';
+    Object.setPrototypeOf(this, SiteNotFoundError.prototype);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SiteNotFoundError);
+    }
   }
 }
 
 export class SiteConflictError extends Error {
-  statusCode = 409;
-  code = 'SITE_CONFLICT';
+  readonly statusCode = 409;
+  readonly code = 'SITE_CONFLICT';
 
   constructor(message: string) {
     super(message);
     this.name = 'SiteConflictError';
+    Object.setPrototypeOf(this, SiteConflictError.prototype);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SiteConflictError);
+    }
   }
 }
 
 export class SiteValidationError extends Error {
-  statusCode = 400;
-  code = 'SITE_VALIDATION_ERROR';
+  readonly statusCode = 400;
+  readonly code = 'SITE_VALIDATION_ERROR';
 
   constructor(message: string) {
     super(message);
     this.name = 'SiteValidationError';
+    Object.setPrototypeOf(this, SiteValidationError.prototype);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SiteValidationError);
+    }
   }
 }
 
 export class OptimisticLockingError extends Error {
-  statusCode = 409;
-  code = 'OPTIMISTIC_LOCK_ERROR';
+  readonly statusCode = 409;
+  readonly code = 'OPTIMISTIC_LOCK_ERROR';
 
   constructor() {
     super('Site was modified by another user. Please refresh and try again.');
     this.name = 'OptimisticLockingError';
+    Object.setPrototypeOf(this, OptimisticLockingError.prototype);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, OptimisticLockingError);
+    }
   }
 }
 

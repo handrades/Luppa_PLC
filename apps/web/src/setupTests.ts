@@ -27,17 +27,26 @@ Object.defineProperty(globalThis, 'import', {
 // Also set process.env for fallback
 Object.assign(process.env, testEnv);
 
-// Mock crypto.randomUUID for tests
-Object.defineProperty(globalThis, 'crypto', {
-  value: {
-    randomUUID: (() => {
-      let counter = 0;
-      return () => `test-uuid-${++counter}`;
-    })(),
-  },
-  writable: true,
-  configurable: true,
-});
+// Mock crypto.randomUUID for tests - preserve existing crypto members
+if (!globalThis.crypto) {
+  // If crypto doesn't exist, create it
+  globalThis.crypto = {} as Crypto;
+}
+
+// Only add randomUUID if it doesn't exist
+if (typeof globalThis.crypto.randomUUID !== 'function') {
+  const randomUUID = (() => {
+    let counter = 0;
+    return () => `test-uuid-${++counter}`;
+  })();
+
+  // Add randomUUID to existing crypto object
+  Object.defineProperty(globalThis.crypto, 'randomUUID', {
+    value: randomUUID,
+    writable: true,
+    configurable: true,
+  });
+}
 
 // Mock window.location.href for auth tests
 // Only redefine if not already configurable

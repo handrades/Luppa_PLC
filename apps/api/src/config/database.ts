@@ -295,9 +295,9 @@ export const getConnectionPoolStats = async (): Promise<{
     (AppDataSource && AppDataSource.options.type === 'better-sqlite3')
   ) {
     return {
-      isConnected: AppDataSource && AppDataSource.isInitialized,
-      totalConnections: AppDataSource && AppDataSource.isInitialized ? 1 : 0,
-      idleConnections: AppDataSource && AppDataSource.isInitialized ? 1 : 0,
+      isConnected: !!AppDataSource && AppDataSource.isInitialized,
+      totalConnections: !!AppDataSource && AppDataSource.isInitialized ? 1 : 0,
+      idleConnections: !!AppDataSource && AppDataSource.isInitialized ? 1 : 0,
       runningConnections: 0,
       poolConfig: {
         min: 1,
