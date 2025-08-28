@@ -35,7 +35,12 @@ export class AnalyticsService {
       // Check cache
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        return JSON.parse(cached);
+        const overview = JSON.parse(cached);
+        // Convert lastUpdated string back to Date
+        if (overview.lastUpdated) {
+          overview.lastUpdated = new Date(overview.lastUpdated);
+        }
+        return overview;
       }
 
       // Get total counts
@@ -320,7 +325,12 @@ export class AnalyticsService {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        return JSON.parse(cached);
+        const activities: RecentActivity[] = JSON.parse(cached);
+        // Convert timestamp strings back to Date objects
+        return activities.map(activity => ({
+          ...activity,
+          timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date(),
+        }));
       }
 
       const result = await AppDataSource.query(
@@ -476,29 +486,39 @@ export class AnalyticsService {
   }
 
   async clearCache(): Promise<void> {
-    const keys = [
-      'analytics:overview',
-      'analytics:distribution:site',
-      'analytics:distribution:make',
-      'analytics:distribution:equipment_type',
-      'analytics:hierarchy',
-    ];
-
-    // Clear top models cache for various limits
-    for (let i = 5; i <= 20; i += 5) {
-      keys.push(`analytics:top_models:${i}`);
-    }
-
-    // Clear activity cache for various limits
-    for (let i = 10; i <= 50; i += 10) {
-      keys.push(`analytics:activity:${i}`);
-    }
-
     try {
-      await Promise.all(keys.map(key => redisClient.del(key)));
-      logger.info('Analytics cache cleared');
+      const pattern = 'analytics:*';
+      const batchSize = 100;
+      let cursor = '0';
+      let totalDeleted = 0;
+
+      // Use SCAN to find all matching keys
+      do {
+        const result = await redisClient.scan(cursor, {
+          MATCH: pattern,
+          COUNT: batchSize,
+        });
+        
+        cursor = result.cursor;
+        const keys = result.keys;
+
+        if (keys.length > 0) {
+          // Delete keys in batch using UNLINK for non-blocking deletion
+          try {
+            await redisClient.unlink(keys);
+            totalDeleted += keys.length;
+          } catch (unlinkError) {
+            // Fallback to DEL if UNLINK is not available
+            await redisClient.del(keys);
+            totalDeleted += keys.length;
+          }
+        }
+      } while (cursor !== '0');
+
+      logger.info(`Analytics cache cleared: ${totalDeleted} keys deleted`);
     } catch (error) {
-      logger.error('Error clearing analytics cache:', error);
+      logger.error('Failed to clear analytics cache:', error);
+      throw error;
     }
   }
 }

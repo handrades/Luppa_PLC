@@ -10,6 +10,7 @@ import { Tag } from '../../entities/Tag.js';
 import { Site } from '../../entities/Site.js';
 import { Cell } from '../../entities/Cell.js';
 import { User } from '../../entities/User.js';
+import { logger } from '../../config/logger.js';
 
 export const seedPLCInventory = async (dataSource: DataSource): Promise<void> => {
   const plcRepo = dataSource.getRepository(PLC);
@@ -22,16 +23,16 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   // Check if PLCs already exist
   const existingPlcCount = await plcRepo.count();
   if (existingPlcCount > 0) {
-    console.log(`  �  PLCs already exist (${existingPlcCount} found), skipping PLC seed`);
+    logger.info(`  - PLCs already exist (${existingPlcCount} found), skipping PLC seed`);
     return;
   }
 
   // Get admin user for created_by/updated_by
   const adminUser = await userRepo.findOne({
-    where: { email: 'admin@luppa.com' },
+    where: { email: 'admin@luppa-plc.local' },
   });
   if (!adminUser) {
-    console.error('  L Admin user not found, cannot create PLC inventory');
+    logger.error('  - Admin user not found, cannot create PLC inventory');
     return;
   }
 
@@ -40,7 +41,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   const cells = await cellRepo.find({ relations: ['site'] });
 
   if (sites.length === 0 || cells.length === 0) {
-    console.log('  �  No sites or cells found, skipping PLC inventory seed');
+    logger.info('  - No sites or cells found, skipping PLC inventory seed');
     return;
   }
 
@@ -73,39 +74,39 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   ];
 
   const createdEquipment = await equipmentRepo.save(equipmentData);
-  console.log(`   Created ${createdEquipment.length} equipment entries`);
+  logger.info(`  - Created ${createdEquipment.length} equipment entries`);
 
   // Create PLC entries
   const plcData = [
     {
-      tag_id: 'PLC-001',
+      tagId: 'PLC-001',
       description: 'Main assembly line controller for production line 1',
       make: 'Allen-Bradley',
       model: 'CompactLogix 5380',
-      ip_address: '192.168.1.101',
-      firmware_version: 'v32.011',
+      ipAddress: '192.168.1.101',
+      firmwareVersion: 'v32.011',
       equipment: createdEquipment[0],
       createdBy: adminUser.id,
       updatedBy: adminUser.id,
     },
     {
-      tag_id: 'PLC-002',
+      tagId: 'PLC-002',
       description: 'Conveyor system controller for material handling',
       make: 'Siemens',
       model: 'S7-1500',
-      ip_address: '192.168.1.102',
-      firmware_version: 'v2.9.3',
+      ipAddress: '192.168.1.102',
+      firmwareVersion: 'v2.9.3',
       equipment: createdEquipment[1],
       createdBy: adminUser.id,
       updatedBy: adminUser.id,
     },
     {
-      tag_id: 'PLC-003',
+      tagId: 'PLC-003',
       description: 'Quality inspection station controller',
       make: 'Omron',
       model: 'NX102',
-      ip_address: '192.168.1.103',
-      firmware_version: 'v1.4.0',
+      ipAddress: '192.168.1.103',
+      firmwareVersion: 'v1.4.0',
       equipment: createdEquipment[2],
       createdBy: adminUser.id,
       updatedBy: adminUser.id,
@@ -113,7 +114,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   ];
 
   const createdPlcs = await plcRepo.save(plcData);
-  console.log(`   Created ${createdPlcs.length} PLCs`);
+  logger.info(`  - Created ${createdPlcs.length} PLCs`);
 
   // Create sample tags for each PLC
   const tagData = [];
@@ -121,8 +122,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
     tagData.push(
       {
         plc,
-        name: `${plc.tag_id}_START`,
-        data_type: 'BOOL',
+        name: `${plc.tagId}_START`,
+        dataType: 'BOOL',
         description: 'Start command for the system',
         address: 'B3:0/0',
         createdBy: adminUser.id,
@@ -130,8 +131,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       },
       {
         plc,
-        name: `${plc.tag_id}_STOP`,
-        data_type: 'BOOL',
+        name: `${plc.tagId}_STOP`,
+        dataType: 'BOOL',
         description: 'Stop command for the system',
         address: 'B3:0/1',
         createdBy: adminUser.id,
@@ -139,8 +140,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       },
       {
         plc,
-        name: `${plc.tag_id}_SPEED`,
-        data_type: 'REAL',
+        name: `${plc.tagId}_SPEED`,
+        dataType: 'REAL',
         description: 'System speed setpoint',
         address: 'F8:10',
         createdBy: adminUser.id,
@@ -148,8 +149,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       },
       {
         plc,
-        name: `${plc.tag_id}_COUNT`,
-        data_type: 'DINT',
+        name: `${plc.tagId}_COUNT`,
+        dataType: 'DINT',
         description: 'Production counter',
         address: 'N7:0',
         createdBy: adminUser.id,
@@ -159,7 +160,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   }
 
   await tagRepo.save(tagData);
-  console.log(`   Created ${tagData.length} tags`);
+  logger.info(`  - Created ${tagData.length} tags`);
 };
 
 export default seedPLCInventory;

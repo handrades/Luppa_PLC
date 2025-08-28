@@ -45,7 +45,7 @@ export class AddAnalyticsViews1756176000000 implements MigrationInterface {
       CREATE INDEX idx_hierarchy_counts_equipment_id ON plc_inventory.hierarchy_counts(equipment_id)
     `);
 
-    // Create view for recent activity with user join
+    // Create view for recent activity with user join (no PII)
     await queryRunner.query(`
       CREATE VIEW plc_inventory.recent_activity AS
       SELECT 
@@ -56,10 +56,7 @@ export class AddAnalyticsViews1756176000000 implements MigrationInterface {
         al.changes,
         al.created_at,
         al.user_id,
-        u.username,
-        u.email,
-        u.first_name,
-        u.last_name
+        u.username
       FROM core.audit_logs al
       LEFT JOIN core.users u ON u.id = al.user_id
       WHERE al.entity_type IN ('plc', 'equipment', 'cell', 'site')

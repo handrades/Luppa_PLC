@@ -87,17 +87,23 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
         yPos += 7;
         pdf.setFontSize(10);
 
-        data.distribution.site.labels.forEach((label, index) => {
+        const siteLabels = data.distribution.site.labels || [];
+        const siteValues = data.distribution.site.values || [];
+        const sitePercentages = data.distribution.site.percentages || [];
+        const siteCount = Math.min(siteLabels.length, siteValues.length, sitePercentages.length);
+        
+        for (let index = 0; index < siteCount; index++) {
           if (yPos > 180) {
             pdf.addPage();
             yPos = 20;
           }
 
-          const value = data.distribution!.site!.values[index];
-          const percentage = data.distribution!.site!.percentages[index];
+          const label = siteLabels[index];
+          const value = siteValues[index];
+          const percentage = sitePercentages[index];
           pdf.text(`• ${label}: ${value} (${percentage.toFixed(1)}%)`, 20, yPos);
           yPos += 6;
-        });
+        }
         yPos += 4;
       }
 
@@ -108,17 +114,23 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
         yPos += 7;
         pdf.setFontSize(10);
 
-        data.distribution.make.labels.slice(0, 10).forEach((label, index) => {
+        const makeLabels = data.distribution.make.labels || [];
+        const makeValues = data.distribution.make.values || [];
+        const makePercentages = data.distribution.make.percentages || [];
+        const makeCount = Math.min(10, makeLabels.length, makeValues.length, makePercentages.length);
+        
+        for (let index = 0; index < makeCount; index++) {
           if (yPos > 180) {
             pdf.addPage();
             yPos = 20;
           }
 
-          const value = data.distribution!.make!.values[index];
-          const percentage = data.distribution!.make!.percentages[index];
+          const label = makeLabels[index];
+          const value = makeValues[index];
+          const percentage = makePercentages[index];
           pdf.text(`• ${label}: ${value} (${percentage.toFixed(1)}%)`, 20, yPos);
           yPos += 6;
-        });
+        }
       }
     }
 
@@ -149,11 +161,15 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
     }
 
     // Capture dashboard screenshot for visual reference
+    const buttons = element.querySelectorAll('button, .MuiIconButton-root');
+    const buttonStyles: { element: HTMLElement; originalDisplay: string }[] = [];
+    
     try {
-      // Hide unnecessary elements for screenshot
-      const buttons = element.querySelectorAll('button, .MuiIconButton-root');
+      // Hide unnecessary elements for screenshot and save original display values
       buttons.forEach(btn => {
-        (btn as HTMLElement).style.display = 'none';
+        const htmlBtn = btn as HTMLElement;
+        buttonStyles.push({ element: htmlBtn, originalDisplay: htmlBtn.style.display });
+        htmlBtn.style.display = 'none';
       });
 
       const canvas = await html2canvas(element, {
@@ -161,11 +177,6 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
         logging: false,
         useCORS: true,
         allowTaint: true,
-      });
-
-      // Restore hidden elements
-      buttons.forEach(btn => {
-        (btn as HTMLElement).style.display = '';
       });
 
       // Add screenshot as the last page
@@ -180,6 +191,12 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
       pdf.addImage(imgData, 'PNG', 15, 30, imgWidth, Math.min(imgHeight, 150));
     } catch (error) {
       // Failed to capture dashboard screenshot - continue without it
+      console.warn('Failed to capture dashboard screenshot:', error);
+    } finally {
+      // Always restore hidden elements
+      buttonStyles.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
     }
 
     // Save the PDF
