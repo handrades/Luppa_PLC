@@ -6,7 +6,7 @@
 import { DataSource } from 'typeorm';
 import { PLC } from '../../entities/PLC.js';
 import { Equipment, EquipmentType } from '../../entities/Equipment.js';
-import { Tag } from '../../entities/Tag.js';
+import { Tag, TagDataType } from '../../entities/Tag.js';
 import { Site } from '../../entities/Site.js';
 import { Cell } from '../../entities/Cell.js';
 import { User } from '../../entities/User.js';
@@ -123,7 +123,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       {
         plc,
         name: `${plc.tagId}_START`,
-        dataType: 'BOOL',
+        dataType: TagDataType.BOOL,
         description: 'Start command for the system',
         address: 'B3:0/0',
         createdBy: adminUser.id,
@@ -132,7 +132,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       {
         plc,
         name: `${plc.tagId}_STOP`,
-        dataType: 'BOOL',
+        dataType: TagDataType.BOOL,
         description: 'Stop command for the system',
         address: 'B3:0/1',
         createdBy: adminUser.id,
@@ -141,7 +141,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       {
         plc,
         name: `${plc.tagId}_SPEED`,
-        dataType: 'REAL',
+        dataType: TagDataType.REAL,
         description: 'System speed setpoint',
         address: 'F8:10',
         createdBy: adminUser.id,
@@ -150,7 +150,7 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       {
         plc,
         name: `${plc.tagId}_COUNT`,
-        dataType: 'DINT',
+        dataType: TagDataType.DINT,
         description: 'Production counter',
         address: 'N7:0',
         createdBy: adminUser.id,

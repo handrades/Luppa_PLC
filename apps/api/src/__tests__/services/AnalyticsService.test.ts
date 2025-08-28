@@ -17,6 +17,8 @@ describe('AnalyticsService', () => {
   let mockRedisGet: jest.Mock;
   let mockRedisSetEx: jest.Mock;
   let mockRedisDel: jest.Mock;
+  let mockRedisScan: jest.Mock;
+  let mockRedisUnlink: jest.Mock;
 
   beforeEach(() => {
     analyticsService = new AnalyticsService();
@@ -31,12 +33,16 @@ describe('AnalyticsService', () => {
     mockRedisGet = jest.fn();
     mockRedisSetEx = jest.fn();
     mockRedisDel = jest.fn();
+    mockRedisScan = jest.fn();
+    mockRedisUnlink = jest.fn();
     
     (AppDataSource.getRepository as jest.Mock) = jest.fn().mockReturnValue(mockRepository);
     (AppDataSource.query as jest.Mock) = mockQuery;
     (redisClient.get as jest.Mock) = mockRedisGet;
     (redisClient.setEx as jest.Mock) = mockRedisSetEx;
     (redisClient.del as jest.Mock) = mockRedisDel;
+    (redisClient.scan as jest.Mock) = mockRedisScan;
+    (redisClient.unlink as jest.Mock) = mockRedisUnlink;
   });
 
   afterEach(() => {
@@ -298,23 +304,46 @@ describe('AnalyticsService', () => {
 
   describe('clearCache', () => {
     it('should clear all analytics cache keys', async () => {
+      // Mock scan to return analytics keys
+      mockRedisScan
+        .mockResolvedValueOnce({
+          cursor: '5',
+          keys: [
+            'analytics:overview',
+            'analytics:distribution:site',
+            'analytics:distribution:make',
+          ],
+        })
+        .mockResolvedValueOnce({
+          cursor: '0',
+          keys: [
+            'analytics:top_models:10',
+            'analytics:activity:20:0',
+          ],
+        });
+
       await analyticsService.clearCache();
 
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:overview');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:distribution:site');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:distribution:make');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:distribution:equipment_type');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:hierarchy');
+      expect(mockRedisScan).toHaveBeenCalledTimes(2);
+      expect(mockRedisScan).toHaveBeenCalledWith('0', {
+        MATCH: 'analytics:*',
+        COUNT: 100,
+      });
+      expect(mockRedisScan).toHaveBeenCalledWith('5', {
+        MATCH: 'analytics:*',
+        COUNT: 100,
+      });
       
-      // Check top models cache keys
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:top_models:5');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:top_models:10');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:top_models:15');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:top_models:20');
-      
-      // Check activity cache keys
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:activity:10');
-      expect(mockRedisDel).toHaveBeenCalledWith('analytics:activity:20');
+      expect(mockRedisUnlink).toHaveBeenCalledTimes(2);
+      expect(mockRedisUnlink).toHaveBeenCalledWith([
+        'analytics:overview',
+        'analytics:distribution:site',
+        'analytics:distribution:make',
+      ]);
+      expect(mockRedisUnlink).toHaveBeenCalledWith([
+        'analytics:top_models:10',
+        'analytics:activity:20:0',
+      ]);
     });
   });
 });
