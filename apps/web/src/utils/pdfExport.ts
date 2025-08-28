@@ -197,7 +197,9 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
       pdf.addImage(imgData, 'PNG', 15, 30, imgWidth, Math.min(imgHeight, 150));
     } catch (error) {
       // Failed to capture dashboard screenshot - continue without it
-      logger.warn('Failed to capture dashboard screenshot:', error);
+      logger.warn('Failed to capture dashboard screenshot', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       // Always restore hidden elements
       buttonStyles.forEach(({ element, originalDisplay }) => {
