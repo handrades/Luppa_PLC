@@ -131,7 +131,7 @@ export class AnalyticsService {
 
       const result = await AppDataSource.query(`
         SELECT 
-          make as label,
+          COALESCE(make, 'Unknown') as label,
           COUNT(*) as value
         FROM plc_inventory.plcs
         WHERE deleted_at IS NULL
@@ -161,7 +161,7 @@ export class AnalyticsService {
 
       const result = await AppDataSource.query(`
         SELECT 
-          type as label,
+          COALESCE(type, 'Unknown') as label,
           COUNT(*) as value
         FROM plc_inventory.equipment
         WHERE deleted_at IS NULL
@@ -192,8 +192,8 @@ export class AnalyticsService {
       const result = await AppDataSource.query(
         `
         SELECT 
-          make,
-          model,
+          COALESCE(make, 'Unknown') as make,
+          COALESCE(model, 'Unknown') as model,
           COUNT(*) as count
         FROM plc_inventory.plcs
         WHERE deleted_at IS NULL
@@ -206,17 +206,20 @@ export class AnalyticsService {
 
       // Calculate total for percentages
       const total = result.reduce(
-        (sum: number, item: { count: string }) => sum + parseInt(item.count),
+        (sum: number, item: { count: string }) => sum + parseInt(item.count, 10),
         0
       );
 
       const topModels: TopModel[] = result.map(
-        (item: { make: string; model: string; count: string }) => ({
-          make: item.make,
-          model: item.model,
-          count: parseInt(item.count),
-          percentage: (parseInt(item.count) / total) * 100,
-        })
+        (item: { make: string; model: string; count: string }) => {
+          const count = parseInt(item.count, 10);
+          return {
+            make: item.make || 'Unknown',
+            model: item.model || 'Unknown',
+            count: count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+          };
+        }
       );
 
       await redisClient.setEx(cacheKey, AnalyticsService.CACHE_TTL, JSON.stringify(topModels));
@@ -419,8 +422,8 @@ export class AnalyticsService {
         return { percentage: 0, direction: 'stable' };
       }
 
-      const currentCount = parseInt(result[0].current_count) || 0;
-      const previousCount = parseInt(result[0].previous_count) || 0;
+      const currentCount = parseInt(result[0].current_count, 10) || 0;
+      const previousCount = parseInt(result[0].previous_count, 10) || 0;
 
       if (previousCount === 0) {
         if (currentCount > 0) {
@@ -445,16 +448,17 @@ export class AnalyticsService {
   private formatDistributionData(
     result: Array<{ label: string; value: string }>
   ): DistributionData {
-    const total = result.reduce((sum, item) => sum + parseInt(item.value), 0);
+    const total = result.reduce((sum, item) => sum + parseInt(item.value, 10), 0);
 
     const labels: string[] = [];
     const values: number[] = [];
     const percentages: number[] = [];
 
     result.forEach(item => {
-      labels.push(item.label);
-      values.push(parseInt(item.value));
-      percentages.push(total > 0 ? (parseInt(item.value) / total) * 100 : 0);
+      const value = parseInt(item.value, 10);
+      labels.push(item.label || 'Unknown');
+      values.push(value);
+      percentages.push(total > 0 ? (value / total) * 100 : 0);
     });
 
     const colors = labels.map(
@@ -500,16 +504,20 @@ export class AnalyticsService {
         });
 
         cursor = result.cursor;
-        const keys = result.keys;
+        const keys: string[] = result.keys;
 
         if (keys.length > 0) {
           // Delete keys in batch using UNLINK for non-blocking deletion
           try {
-            await redisClient.unlink(...keys);
+            // Node-redis v4+ expects individual key arguments, not an array
+            // TypeScript has issues with spread on dynamic arrays, so we use a workaround
+            const unlinkFn = redisClient.unlink.bind(redisClient) as (...args: string[]) => Promise<number>;
+            await unlinkFn(...keys);
             totalDeleted += keys.length;
           } catch (unlinkError) {
             // Fallback to DEL if UNLINK is not available
-            await redisClient.del(...keys);
+            const delFn = redisClient.del.bind(redisClient) as (...args: string[]) => Promise<number>;
+            await delFn(...keys);
             totalDeleted += keys.length;
           }
         }
