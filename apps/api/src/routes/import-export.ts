@@ -11,7 +11,7 @@ import {
   // exportOptionsSchema, // TODO: Enable when needed
   // importHistoryQuerySchema, // TODO: Enable when needed
 } from '../validation/import-schemas';
-import { AppDataSource } from '../config/database';
+import { getAppDataSource } from '../config/database';
 
 const router: Router = Router();
 
@@ -37,11 +37,12 @@ let importExportService: ImportExportService | null = null;
 // Helper function to get or create the service
 const getImportExportService = (): ImportExportService => {
   if (!importExportService) {
-    if (!AppDataSource || !AppDataSource.isInitialized) {
+    const dataSource = getAppDataSource();
+    if (!dataSource || !dataSource.isInitialized) {
       throw new Error('Database not initialized');
     }
-    const auditService = new AuditService(AppDataSource.manager);
-    importExportService = new ImportExportService(AppDataSource, auditService);
+    const auditService = new AuditService(dataSource.manager);
+    importExportService = new ImportExportService(dataSource, auditService);
   }
   return importExportService;
 };

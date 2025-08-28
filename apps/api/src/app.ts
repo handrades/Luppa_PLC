@@ -27,7 +27,7 @@ import usersRouter from './routes/users';
 import equipmentRouter from './routes/equipment';
 import metricsRouter from './routes/metrics';
 import searchRouter from './routes/search';
-import importExportRouter from './routes/import-export';
+// import importExportRouter from './routes/import-export';
 import sitesRouter from './routes/sites';
 import cellsRouter from './routes/cells';
 import analyticsRouter from './routes/analytics';
@@ -149,7 +149,7 @@ export const createApp = (): express.Application => {
   app.use('/api/v1/equipment', equipmentRouter);
   app.use('/api/v1/search', searchRouter);
   app.use('/api/v1/analytics', analyticsRouter);
-  app.use('/api/v1', importExportRouter);
+  // app.use('/api/v1', importExportRouter);
   app.use('/api/v1', auditRouter);
 
   // 11. 404 not found handler (must come after all routes)

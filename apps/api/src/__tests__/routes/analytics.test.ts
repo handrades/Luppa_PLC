@@ -1,15 +1,32 @@
-import request from 'supertest';
-import { Express, Request, Response } from 'express';
-import { createApp } from '../../app';
-import analyticsService from '../../services/AnalyticsService';
-import { authenticate, authorize } from '../../middleware/auth';
+// Create the mock service instance
+const mockAnalyticsService = {
+  getEquipmentOverview: jest.fn(),
+  getDistributionBySite: jest.fn(),
+  getDistributionByMake: jest.fn(),
+  getDistributionByType: jest.fn(),
+  getTopModels: jest.fn(),
+  getHierarchyStatistics: jest.fn(),
+  getRecentActivity: jest.fn(),
+  clearCache: jest.fn(),
+};
 
-jest.mock('../../services/AnalyticsService');
+// Mock the AnalyticsService singleton - must be hoisted before imports
+jest.mock('../../services/AnalyticsService', () => {
+  return {
+    default: mockAnalyticsService,
+    AnalyticsService: jest.fn(),
+  };
+});
 jest.mock('../../middleware/auth', () => ({
   authenticate: jest.fn((req, res, next) => next()),
   authorize: jest.fn(() => (req, res, next) => next()),
 }));
 jest.mock('../../config/logger');
+
+import request from 'supertest';
+import { Express, Request, Response } from 'express';
+import { createApp } from '../../app';
+import { authenticate, authorize } from '../../middleware/auth';
 
 interface MockRequest extends Request {
   user?: { id: string; username: string; roles: string[] };
@@ -47,12 +64,15 @@ describe('Analytics Routes', () => {
         lastUpdated: new Date(),
       };
 
-      (analyticsService.getEquipmentOverview as jest.Mock).mockResolvedValue(mockOverview);
+      mockAnalyticsService.getEquipmentOverview.mockResolvedValue(mockOverview);
 
       const response = await request(app)
         .get('/api/v1/analytics/overview')
         .set('Authorization', 'Bearer test-token');
 
+      if (response.status !== 200) {
+        console.error('Response error:', response.body);
+      }
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(expect.objectContaining({
@@ -65,7 +85,7 @@ describe('Analytics Routes', () => {
     });
 
     it('should handle service errors', async () => {
-      (analyticsService.getEquipmentOverview as jest.Mock).mockRejectedValue(
+      mockAnalyticsService.getEquipmentOverview.mockRejectedValue(
         new Error('Database error')
       );
 
@@ -86,7 +106,7 @@ describe('Analytics Routes', () => {
     };
 
     it('should return distribution by site', async () => {
-      (analyticsService.getDistributionBySite as jest.Mock).mockResolvedValue(mockDistribution);
+      mockAnalyticsService.getDistributionBySite.mockResolvedValue(mockDistribution);
 
       const response = await request(app)
         .get('/api/v1/analytics/distribution/site')
@@ -98,25 +118,25 @@ describe('Analytics Routes', () => {
     });
 
     it('should return distribution by make', async () => {
-      (analyticsService.getDistributionByMake as jest.Mock).mockResolvedValue(mockDistribution);
+      mockAnalyticsService.getDistributionByMake.mockResolvedValue(mockDistribution);
 
       const response = await request(app)
         .get('/api/v1/analytics/distribution/make')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(analyticsService.getDistributionByMake).toHaveBeenCalled();
+      expect(mockAnalyticsService.getDistributionByMake).toHaveBeenCalled();
     });
 
     it('should return distribution by equipment type', async () => {
-      (analyticsService.getDistributionByType as jest.Mock).mockResolvedValue(mockDistribution);
+      mockAnalyticsService.getDistributionByType.mockResolvedValue(mockDistribution);
 
       const response = await request(app)
         .get('/api/v1/analytics/distribution/equipment_type')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(analyticsService.getDistributionByType).toHaveBeenCalled();
+      expect(mockAnalyticsService.getDistributionByType).toHaveBeenCalled();
     });
 
     it('should reject invalid distribution type', async () => {
@@ -138,7 +158,7 @@ describe('Analytics Routes', () => {
     ];
 
     it('should return top models with default limit', async () => {
-      (analyticsService.getTopModels as jest.Mock).mockResolvedValue(mockTopModels);
+      mockAnalyticsService.getTopModels.mockResolvedValue(mockTopModels);
 
       const response = await request(app)
         .get('/api/v1/analytics/top-models')
@@ -146,18 +166,18 @@ describe('Analytics Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual(mockTopModels);
-      expect(analyticsService.getTopModels).toHaveBeenCalledWith(10);
+      expect(mockAnalyticsService.getTopModels).toHaveBeenCalledWith(10);
     });
 
     it('should accept custom limit', async () => {
-      (analyticsService.getTopModels as jest.Mock).mockResolvedValue(mockTopModels);
+      mockAnalyticsService.getTopModels.mockResolvedValue(mockTopModels);
 
       const response = await request(app)
         .get('/api/v1/analytics/top-models?limit=20')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(analyticsService.getTopModels).toHaveBeenCalledWith(20);
+      expect(mockAnalyticsService.getTopModels).toHaveBeenCalledWith(20);
     });
 
     it('should validate limit parameter', async () => {
@@ -185,7 +205,7 @@ describe('Analytics Routes', () => {
     ];
 
     it('should return hierarchy statistics', async () => {
-      (analyticsService.getHierarchyStatistics as jest.Mock).mockResolvedValue(mockHierarchy);
+      mockAnalyticsService.getHierarchyStatistics.mockResolvedValue(mockHierarchy);
 
       const response = await request(app)
         .get('/api/v1/analytics/hierarchy')
@@ -210,7 +230,7 @@ describe('Analytics Routes', () => {
     ];
 
     it('should return recent activities with pagination', async () => {
-      (analyticsService.getRecentActivity as jest.Mock).mockResolvedValue(mockActivities);
+      mockAnalyticsService.getRecentActivity.mockResolvedValue(mockActivities);
 
       const response = await request(app)
         .get('/api/v1/analytics/recent-activity')
@@ -228,11 +248,11 @@ describe('Analytics Routes', () => {
         limit: 20,
         hasMore: false,
       });
-      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(20, 0);
+      expect(mockAnalyticsService.getRecentActivity).toHaveBeenCalledWith(20, 0);
     });
 
     it('should accept pagination parameters', async () => {
-      (analyticsService.getRecentActivity as jest.Mock).mockResolvedValue(mockActivities);
+      mockAnalyticsService.getRecentActivity.mockResolvedValue(mockActivities);
 
       const response = await request(app)
         .get('/api/v1/analytics/recent-activity?limit=50&page=2')
@@ -241,7 +261,7 @@ describe('Analytics Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.pagination.page).toBe(2);
       expect(response.body.pagination.limit).toBe(50);
-      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(50, 50);
+      expect(mockAnalyticsService.getRecentActivity).toHaveBeenCalledWith(50, 50);
     });
   });
 
@@ -256,8 +276,8 @@ describe('Analytics Routes', () => {
         lastUpdated: new Date(),
       };
 
-      (analyticsService.getEquipmentOverview as jest.Mock).mockResolvedValue(mockOverview);
-      (analyticsService.getDistributionBySite as jest.Mock).mockResolvedValue({
+      mockAnalyticsService.getEquipmentOverview.mockResolvedValue(mockOverview);
+      mockAnalyticsService.getDistributionBySite.mockResolvedValue({
         labels: ['Site A'],
         values: [100],
         percentages: [100],
@@ -308,7 +328,7 @@ describe('Analytics Routes', () => {
 
   describe('POST /api/v1/analytics/cache/clear', () => {
     it('should clear analytics cache', async () => {
-      (analyticsService.clearCache as jest.Mock).mockResolvedValue(undefined);
+      mockAnalyticsService.clearCache.mockResolvedValue(undefined);
 
       const response = await request(app)
         .post('/api/v1/analytics/cache/clear')
@@ -317,7 +337,7 @@ describe('Analytics Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Analytics cache cleared successfully');
-      expect(analyticsService.clearCache).toHaveBeenCalled();
+      expect(mockAnalyticsService.clearCache).toHaveBeenCalled();
     });
 
     it.skip('should require admin role', async () => {

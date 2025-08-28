@@ -1,6 +1,6 @@
 import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 import { AuditAction, AuditLog, RiskLevel } from '../entities/AuditLog';
-import { AppDataSource } from '../config/database';
+import { getAppDataSource } from '../config/database';
 import { AuditImmutabilityError } from '../utils/auditErrors';
 
 /**
@@ -12,7 +12,7 @@ export class AuditRepository {
   private manager: EntityManager;
 
   constructor(entityManager?: EntityManager) {
-    this.manager = entityManager || AppDataSource.manager;
+    this.manager = entityManager || getAppDataSource().manager;
     this.repository = this.manager.getRepository(AuditLog);
   }
 

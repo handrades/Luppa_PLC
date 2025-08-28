@@ -6,28 +6,14 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { auditContextMiddleware } from '../../middleware/auditContext';
-import { AppDataSource } from '../../config/database';
+import { AppDataSource, getAppDataSource } from '../../config/database';
 import { QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
 
 // Request properties are now defined globally in types/express.d.ts
 type RequestWithAudit = Request;
 
-// Mock dependencies
-jest.mock('../../config/database', () => ({
-  AppDataSource: {
-    manager: {},
-    createQueryRunner: jest.fn(),
-  },
-}));
-
-jest.mock('../../config/logger', () => ({
-  logger: {
-    warn: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-}));
+// Database and logger are already mocked in jest.setup.js
 
 describe('Audit Context Middleware', () => {
   let mockRequest: Partial<RequestWithAudit>;
@@ -98,9 +84,11 @@ describe('Audit Context Middleware', () => {
       } as unknown,
     };
 
-    // Reset AppDataSource mock
-    (AppDataSource as { isInitialized?: boolean }).isInitialized = true;
-    (AppDataSource.createQueryRunner as jest.Mock).mockReturnValue(mockQueryRunner);
+    // Reset getAppDataSource mock
+    (getAppDataSource as jest.Mock).mockReturnValue({
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      isInitialized: true,
+    });
 
     // Store callbacks for both on and once events
     (mockResponse.on as jest.Mock).mockImplementation((event, callback) => {
