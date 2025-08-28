@@ -30,6 +30,7 @@ import searchRouter from './routes/search';
 import importExportRouter from './routes/import-export';
 import sitesRouter from './routes/sites';
 import cellsRouter from './routes/cells';
+import analyticsRouter from './routes/analytics';
 
 // Extend Express Request interface for raw body support
 // Express Request interface augmented in types/express.d.ts
@@ -147,6 +148,7 @@ export const createApp = (): express.Application => {
   app.use('/api/v1/cells', cellsRouter);
   app.use('/api/v1/equipment', equipmentRouter);
   app.use('/api/v1/search', searchRouter);
+  app.use('/api/v1/analytics', analyticsRouter);
   app.use('/api/v1', importExportRouter);
   app.use('/api/v1', auditRouter);
 
