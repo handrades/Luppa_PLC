@@ -3,10 +3,40 @@ import { AppDataSource } from '../../config/database';
 import { redisClient } from '../../config/redis';
 import { performance } from 'perf_hooks';
 
-// Mock dependencies
-jest.mock('../../config/database');
-jest.mock('../../config/redis');
-jest.mock('../../config/logger');
+// Mock dependencies with explicit ESM-shaped modules
+jest.mock('../../config/database', () => ({
+  __esModule: true,
+  AppDataSource: {
+    query: jest.fn(),
+    getRepository: jest.fn(() => ({
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(0),
+      })),
+    })),
+  },
+}));
+
+jest.mock('../../config/redis', () => ({
+  __esModule: true,
+  redisClient: {
+    get: jest.fn().mockResolvedValue(null),
+    setEx: jest.fn().mockResolvedValue('OK'),
+    scan: jest.fn().mockResolvedValue({ cursor: '0', keys: [] }),
+    unlink: jest.fn().mockResolvedValue(0),
+    del: jest.fn().mockResolvedValue(0),
+  },
+}));
+
+jest.mock('../../config/logger', () => ({
+  __esModule: true,
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 
 describe('Analytics Performance Tests', () => {
   let analyticsService: AnalyticsService;
@@ -15,9 +45,11 @@ describe('Analytics Performance Tests', () => {
   beforeAll(() => {
     analyticsService = new AnalyticsService();
     mockQuery = jest.fn();
-    (AppDataSource.query as jest.Mock) = mockQuery;
-    (redisClient.get as jest.Mock) = jest.fn().mockResolvedValue(null);
-    (redisClient.setEx as jest.Mock) = jest.fn().mockResolvedValue('OK');
+    const appDataSourceMock = AppDataSource as typeof AppDataSource & { query: jest.Mock };
+    appDataSourceMock.query = mockQuery;
+    const redisClientMock = redisClient as typeof redisClient & { get: jest.Mock; setEx: jest.Mock };
+    redisClientMock.get = jest.fn().mockResolvedValue(null);
+    redisClientMock.setEx = jest.fn().mockResolvedValue('OK');
   });
 
   afterEach(() => {
@@ -35,7 +67,7 @@ describe('Analytics Performance Tests', () => {
         getCount: jest.fn().mockResolvedValue(10000),
       };
 
-      (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
+      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
 
       // Measure performance
       const startTime = performance.now();
@@ -126,7 +158,7 @@ describe('Analytics Performance Tests', () => {
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(10000),
       };
-      (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
+      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
 
       const startTime = performance.now();
       
@@ -161,13 +193,13 @@ describe('Analytics Performance Tests', () => {
       };
 
       // First request - no cache
-      (redisClient.get as jest.Mock).mockResolvedValueOnce(null);
+      (redisClient as typeof redisClient & { get: jest.Mock }).get = jest.fn().mockResolvedValueOnce(null);
       const mockRepository = {
         createQueryBuilder: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(10000),
       };
-      (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
+      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
       mockQuery.mockResolvedValue([{ current_count: '100', previous_count: '95' }]);
 
       const firstStartTime = performance.now();
@@ -176,7 +208,7 @@ describe('Analytics Performance Tests', () => {
       const firstExecutionTime = firstEndTime - firstStartTime;
 
       // Second request - with cache
-      (redisClient.get as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockOverview));
+      (redisClient as typeof redisClient & { get: jest.Mock }).get = jest.fn().mockResolvedValueOnce(JSON.stringify(mockOverview));
 
       const secondStartTime = performance.now();
       await analyticsService.getEquipmentOverview();
@@ -272,7 +304,7 @@ describe('Analytics Performance Tests', () => {
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(1000),
       };
-      (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
+      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
 
       const startTime = performance.now();
       

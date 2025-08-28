@@ -505,11 +505,11 @@ export class AnalyticsService {
         if (keys.length > 0) {
           // Delete keys in batch using UNLINK for non-blocking deletion
           try {
-            await redisClient.unlink(keys);
+            await redisClient.unlink(keys as string[]);
             totalDeleted += keys.length;
           } catch (unlinkError) {
             // Fallback to DEL if UNLINK is not available
-            await redisClient.del(keys);
+            await redisClient.del(keys as string[]);
             totalDeleted += keys.length;
           }
         }

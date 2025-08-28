@@ -335,15 +335,15 @@ describe('AnalyticsService', () => {
       });
       
       expect(mockRedisUnlink).toHaveBeenCalledTimes(2);
-      expect(mockRedisUnlink).toHaveBeenCalledWith([
+      expect(mockRedisUnlink).toHaveBeenCalledWith(
         'analytics:overview',
         'analytics:distribution:site',
         'analytics:distribution:make',
-      ]);
-      expect(mockRedisUnlink).toHaveBeenCalledWith([
+      );
+      expect(mockRedisUnlink).toHaveBeenCalledWith(
         'analytics:top_models:10',
         'analytics:activity:20:0',
-      ]);
+      );
     });
   });
 });
