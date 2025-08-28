@@ -498,7 +498,7 @@ export class AnalyticsService {
           MATCH: pattern,
           COUNT: batchSize,
         });
-        
+
         cursor = result.cursor;
         const keys = result.keys;
 

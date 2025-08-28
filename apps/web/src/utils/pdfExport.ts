@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AnalyticsExportData } from '../types/analytics';
+import { logger } from '../utils/logger';
 
 export async function exportToPDF(element: HTMLElement, data: AnalyticsExportData): Promise<void> {
   try {
@@ -91,7 +92,7 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
         const siteValues = data.distribution.site.values || [];
         const sitePercentages = data.distribution.site.percentages || [];
         const siteCount = Math.min(siteLabels.length, siteValues.length, sitePercentages.length);
-        
+
         for (let index = 0; index < siteCount; index++) {
           if (yPos > 180) {
             pdf.addPage();
@@ -117,8 +118,13 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
         const makeLabels = data.distribution.make.labels || [];
         const makeValues = data.distribution.make.values || [];
         const makePercentages = data.distribution.make.percentages || [];
-        const makeCount = Math.min(10, makeLabels.length, makeValues.length, makePercentages.length);
-        
+        const makeCount = Math.min(
+          10,
+          makeLabels.length,
+          makeValues.length,
+          makePercentages.length
+        );
+
         for (let index = 0; index < makeCount; index++) {
           if (yPos > 180) {
             pdf.addPage();
@@ -163,7 +169,7 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
     // Capture dashboard screenshot for visual reference
     const buttons = element.querySelectorAll('button, .MuiIconButton-root');
     const buttonStyles: { element: HTMLElement; originalDisplay: string }[] = [];
-    
+
     try {
       // Hide unnecessary elements for screenshot and save original display values
       buttons.forEach(btn => {
@@ -191,7 +197,7 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
       pdf.addImage(imgData, 'PNG', 15, 30, imgWidth, Math.min(imgHeight, 150));
     } catch (error) {
       // Failed to capture dashboard screenshot - continue without it
-      console.warn('Failed to capture dashboard screenshot:', error);
+      logger.warn('Failed to capture dashboard screenshot:', error);
     } finally {
       // Always restore hidden elements
       buttonStyles.forEach(({ element, originalDisplay }) => {
