@@ -8,12 +8,33 @@ import { AuditImmutabilityError } from '../utils/auditErrors';
  * Provides query methods with no update/delete capabilities to maintain immutability
  */
 export class AuditRepository {
-  private repository: Repository<AuditLog>;
-  private manager: EntityManager;
+  private _repository?: Repository<AuditLog>;
+  private _manager?: EntityManager;
+  private providedManager?: EntityManager;
 
   constructor(entityManager?: EntityManager) {
-    this.manager = entityManager || getAppDataSource().manager;
-    this.repository = this.manager.getRepository(AuditLog);
+    // Store the provided manager but don't access DataSource yet
+    this.providedManager = entityManager;
+  }
+
+  /**
+   * Lazy getter for EntityManager - defers DataSource access until needed
+   */
+  private get manager(): EntityManager {
+    if (!this._manager) {
+      this._manager = this.providedManager || getAppDataSource().manager;
+    }
+    return this._manager;
+  }
+
+  /**
+   * Lazy getter for repository - defers initialization until needed
+   */
+  private get repository(): Repository<AuditLog> {
+    if (!this._repository) {
+      this._repository = this.manager.getRepository(AuditLog);
+    }
+    return this._repository;
   }
 
   /**

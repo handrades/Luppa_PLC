@@ -43,12 +43,15 @@ jest.mock('./src/config/database', () => {
       connection: {
         driver: {
           escape: jest.fn().mockImplementation(value => {
-            if (value === null || value === undefined) return "'null'";
+            if (value === null || value === undefined) return 'NULL';
+            if (typeof value === 'number') return String(value);
+            if (typeof value === 'boolean') return String(value);
             if (typeof value === 'string') {
               const escaped = value.replace(/'/g, "''");
               return `'${escaped}'`;
             }
-            return `'${String(value)}'`;
+            // For other primitive types, return unquoted literal
+            return String(value);
           }),
         },
       },
@@ -63,6 +66,7 @@ jest.mock('./src/config/database', () => {
     getCount: jest.fn(),
     getMany: jest.fn(),
     getOne: jest.fn(),
+    findOne: jest.fn(),
     select: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
@@ -80,13 +84,73 @@ jest.mock('./src/config/database', () => {
     getRepository: jest.fn().mockReturnValue(mockRepository),
     query: jest.fn(),
     createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
-    manager: {},
+    manager: {
+      getRepository: jest.fn().mockReturnValue(mockRepository),
+    },
     isInitialized: true,
+    destroy: jest.fn().mockResolvedValue(undefined),
   };
 
   return {
     AppDataSource: mockDataSource,
     getAppDataSource: jest.fn(() => mockDataSource),
+    getDatabaseConfig: jest.fn(() => {
+      // Parse environment variables with same logic as real implementation
+      const port = parseInt(process.env.DB_PORT || '5432', 10);
+      const poolConfig = {
+        min: parseInt(process.env.DB_POOL_MIN || '2', 10),
+        max: parseInt(process.env.DB_POOL_MAX || '10', 10),
+        connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10),
+        idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '600000', 10),
+      };
+
+      // Validate port number
+      if (isNaN(port) || port < 1 || port > 65535) {
+        throw new Error(
+          `Invalid DB_PORT value: ${process.env.DB_PORT}. Must be a number between 1 and 65535.`
+        );
+      }
+
+      // Validate pool settings
+      if (
+        isNaN(poolConfig.min) ||
+        isNaN(poolConfig.max) ||
+        poolConfig.min < 1 ||
+        poolConfig.max < poolConfig.min
+      ) {
+        throw new Error(
+          `Invalid pool settings: min=${poolConfig.min}, max=${poolConfig.max}. Min must be >= 1 and max must be >= min.`
+        );
+      }
+
+      // Validate timeout settings
+      if (
+        isNaN(poolConfig.connectionTimeoutMillis) ||
+        isNaN(poolConfig.idleTimeoutMillis) ||
+        poolConfig.connectionTimeoutMillis < 1000 ||
+        poolConfig.idleTimeoutMillis < 1000
+      ) {
+        throw new Error('Connection and idle timeouts must be at least 1000ms');
+      }
+
+      return {
+        host: process.env.DB_HOST || 'localhost',
+        port: port,
+        database: process.env.DB_DATABASE || process.env.DB_NAME || 'test_db',
+        username: process.env.DB_USERNAME || process.env.DB_USER || 'test_user',
+        password: process.env.DB_PASSWORD || 'test_password',
+        ssl:
+          process.env.DB_SSL_MODE === 'require'
+            ? {
+                rejectUnauthorized: process.env.NODE_ENV === 'production',
+                ca: process.env.DB_SSL_CA ? process.env.DB_SSL_CA : undefined,
+                cert: process.env.DB_SSL_CERT ? process.env.DB_SSL_CERT : undefined,
+                key: process.env.DB_SSL_KEY ? process.env.DB_SSL_KEY : undefined,
+              }
+            : false,
+        pool: poolConfig,
+      };
+    }),
     initializeDatabase: jest.fn().mockResolvedValue(undefined),
     closeDatabase: jest.fn().mockResolvedValue(undefined),
     isDatabaseHealthy: jest.fn().mockResolvedValue(true),

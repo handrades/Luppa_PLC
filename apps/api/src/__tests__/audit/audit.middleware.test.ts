@@ -6,7 +6,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { auditContextMiddleware } from '../../middleware/auditContext';
-import { AppDataSource, getAppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
 
@@ -242,7 +242,7 @@ describe('Audit Context Middleware', () => {
 
   describe('Error Handling', () => {
     it('should continue request processing when database is unavailable', async () => {
-      (AppDataSource.createQueryRunner as jest.Mock).mockImplementation(() => {
+      (getAppDataSource as jest.Mock).mockImplementation(() => {
         throw new Error('Database connection failed');
       });
 
@@ -321,7 +321,10 @@ describe('Audit Context Middleware', () => {
 
   describe('Integration with AppDataSource', () => {
     it('should handle uninitialized AppDataSource gracefully', async () => {
-      (AppDataSource as { isInitialized?: boolean }).isInitialized = false;
+      (getAppDataSource as jest.Mock).mockReturnValue({
+        isInitialized: false,
+        createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      });
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 

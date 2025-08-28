@@ -30,6 +30,7 @@ export const mockRepository = {
   getCount: jest.fn(),
   getMany: jest.fn(),
   getOne: jest.fn(),
+  findOne: jest.fn(),
   select: jest.fn().mockReturnThis(),
   addSelect: jest.fn().mockReturnThis(),
   leftJoin: jest.fn().mockReturnThis(),
@@ -47,7 +48,9 @@ export const mockDataSource = {
   getRepository: jest.fn().mockReturnValue(mockRepository),
   query: jest.fn(),
   createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
-  manager: {},
+  manager: {
+    getRepository: jest.fn().mockReturnValue(mockRepository),
+  },
   isInitialized: true,
 };
 

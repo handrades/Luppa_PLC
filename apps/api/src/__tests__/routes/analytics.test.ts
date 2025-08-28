@@ -13,6 +13,7 @@ const mockAnalyticsService = {
 // Mock the AnalyticsService singleton - must be hoisted before imports
 jest.mock('../../services/AnalyticsService', () => {
   return {
+    __esModule: true,
     default: mockAnalyticsService,
     AnalyticsService: jest.fn(),
   };
@@ -24,9 +25,9 @@ jest.mock('../../middleware/auth', () => ({
 jest.mock('../../config/logger');
 
 import request from 'supertest';
-import { Express, Request, Response } from 'express';
-import { createApp } from '../../app';
+import express, { Express, Request, Response } from 'express';
 import { authenticate, authorize } from '../../middleware/auth';
+import analyticsRouter from '../../routes/analytics';
 
 interface MockRequest extends Request {
   user?: { id: string; username: string; roles: string[] };
@@ -46,7 +47,10 @@ describe('Analytics Routes', () => {
     
     (authorize as jest.Mock).mockImplementation(() => (_req: MockRequest, _res: Response, next: () => void) => next());
     
-    app = createApp();
+    // Create a simple test app with only the analytics router
+    app = express();
+    app.use(express.json());
+    app.use('/api/v1/analytics', analyticsRouter);
   });
 
   afterEach(() => {
