@@ -27,7 +27,14 @@ export class AddAnalyticsViews1756176000000 implements MigrationInterface {
                s.created_at, c.created_at, e.created_at
     `);
 
-    // Create indexes on the materialized view
+    // Create unique index for CONCURRENTLY refresh capability
+    await queryRunner.query(`
+      CREATE UNIQUE INDEX idx_hierarchy_counts_unique 
+      ON plc_inventory.hierarchy_counts(site_id, cell_id, equipment_id)
+      WHERE site_id IS NOT NULL OR cell_id IS NOT NULL OR equipment_id IS NOT NULL
+    `);
+
+    // Create additional indexes for query performance
     await queryRunner.query(`
       CREATE INDEX idx_hierarchy_counts_site_id ON plc_inventory.hierarchy_counts(site_id)
     `);
@@ -129,6 +136,10 @@ export class AddAnalyticsViews1756176000000 implements MigrationInterface {
     await queryRunner.query(`DROP FUNCTION IF EXISTS plc_inventory.refresh_hierarchy_counts()`);
     await queryRunner.query(`DROP FUNCTION IF EXISTS plc_inventory.calculate_weekly_trend()`);
     await queryRunner.query(`DROP VIEW IF EXISTS plc_inventory.recent_activity`);
+    await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_hierarchy_counts_unique`);
+    await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_hierarchy_counts_site_id`);
+    await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_hierarchy_counts_cell_id`);
+    await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_hierarchy_counts_equipment_id`);
     await queryRunner.query(`DROP MATERIALIZED VIEW IF EXISTS plc_inventory.hierarchy_counts`);
     await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_equipment_type`);
     await queryRunner.query(`DROP INDEX IF EXISTS plc_inventory.idx_plcs_make_model`);

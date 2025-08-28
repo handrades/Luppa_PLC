@@ -223,8 +223,8 @@ export class AnalyticsService {
     }
   }
 
-  async getHierarchyStatistics(): Promise<HierarchyNode[]> {
-    const cacheKey = 'analytics:hierarchy';
+  async getHierarchyStatistics(depth: number = 3): Promise<HierarchyNode[]> {
+    const cacheKey = `analytics:hierarchy:${depth}`;
 
     try {
       const cached = await redisClient.get(cacheKey);
@@ -251,39 +251,56 @@ export class AnalyticsService {
       const hierarchy: HierarchyNode[] = [];
 
       for (const site of sites) {
-        const cells = await AppDataSource.query(
-          `
-          SELECT 
-            c.id,
-            c.name,
-            c.cell_type,
-            COUNT(DISTINCT e.id) as equipment_count,
-            COUNT(DISTINCT p.id) as plc_count
-          FROM plc_inventory.cells c
-          LEFT JOIN plc_inventory.equipment e ON e.cell_id = c.id AND e.deleted_at IS NULL
-          LEFT JOIN plc_inventory.plcs p ON p.equipment_id = e.id AND p.deleted_at IS NULL
-          WHERE c.site_id = $1 AND c.deleted_at IS NULL
-          GROUP BY c.id, c.name, c.cell_type
-          ORDER BY c.name
-        `,
-          [site.id]
-        );
-
         const siteNode: HierarchyNode = {
           id: site.id,
           name: site.name,
           type: 'site',
           count: parseInt(site.plc_count),
-          children: cells.map(
-            (cell: { id: string; name: string; cell_type: string; plc_count: string }) => ({
-              id: cell.id,
-              name: `${cell.name} (${cell.cell_type})`,
-              type: 'cell',
-              count: parseInt(cell.plc_count),
-              children: [],
-            })
-          ),
+          children: [],
         };
+
+        // Include cells if depth >= 2
+        if (depth >= 2) {
+          const cells = await AppDataSource.query(
+            `
+            SELECT 
+              c.id,
+              c.name,
+              c.cell_type,
+              COUNT(DISTINCT e.id) as equipment_count,
+              COUNT(DISTINCT p.id) as plc_count
+            FROM plc_inventory.cells c
+            LEFT JOIN plc_inventory.equipment e ON e.cell_id = c.id AND e.deleted_at IS NULL
+            LEFT JOIN plc_inventory.plcs p ON p.equipment_id = e.id AND p.deleted_at IS NULL
+            WHERE c.site_id = $1 AND c.deleted_at IS NULL
+            GROUP BY c.id, c.name, c.cell_type
+            ORDER BY c.name
+          `,
+            [site.id]
+          );
+
+          siteNode.children = cells.map(
+            (cell: {
+              id: string;
+              name: string;
+              cell_type: string;
+              equipment_count: string;
+              plc_count: string;
+            }) => {
+              const cellNode: HierarchyNode = {
+                id: cell.id,
+                name: `${cell.name} (${cell.cell_type})`,
+                type: 'cell',
+                count: parseInt(cell.plc_count),
+                children: [],
+              };
+
+              // Note: depth 3 would include equipment details
+              // For now, we limit to site and cell levels
+              return cellNode;
+            }
+          );
+        }
 
         hierarchy.push(siteNode);
       }
@@ -297,8 +314,8 @@ export class AnalyticsService {
     }
   }
 
-  async getRecentActivity(limit: number = 20): Promise<RecentActivity[]> {
-    const cacheKey = `analytics:activity:${limit}`;
+  async getRecentActivity(limit: number = 20, offset: number = 0): Promise<RecentActivity[]> {
+    const cacheKey = `analytics:activity:${limit}:${offset}`;
 
     try {
       const cached = await redisClient.get(cacheKey);
@@ -328,9 +345,9 @@ export class AnalyticsService {
         LEFT JOIN core.users u ON u.id = al.user_id
         WHERE al.entity_type IN ('plc', 'equipment', 'cell', 'site')
         ORDER BY al.created_at DESC
-        LIMIT $1
+        LIMIT $1 OFFSET $2
       `,
-        [limit]
+        [limit, offset]
       );
 
       const activities: RecentActivity[] = result.map(
@@ -376,18 +393,16 @@ export class AnalyticsService {
             COUNT(*) as count
           FROM plc_inventory.plcs
           WHERE deleted_at IS NULL
-            AND created_at >= NOW() - INTERVAL '2 weeks'
+            AND created_at >= DATE_TRUNC('week', NOW() - INTERVAL '1 week')
+            AND created_at < DATE_TRUNC('week', NOW()) + INTERVAL '1 week'
           GROUP BY week
+        ),
+        week_data AS (
+          SELECT 
+            COALESCE((SELECT count FROM weekly_counts WHERE week = DATE_TRUNC('week', NOW())), 0) as current_count,
+            COALESCE((SELECT count FROM weekly_counts WHERE week = DATE_TRUNC('week', NOW() - INTERVAL '1 week')), 0) as previous_count
         )
-        SELECT 
-          COALESCE(current.count, 0) as current_count,
-          COALESCE(previous.count, 0) as previous_count
-        FROM (
-          SELECT count FROM weekly_counts WHERE week = DATE_TRUNC('week', NOW())
-        ) current
-        CROSS JOIN (
-          SELECT count FROM weekly_counts WHERE week = DATE_TRUNC('week', NOW() - INTERVAL '1 week')
-        ) previous
+        SELECT current_count, previous_count FROM week_data
       `);
 
       if (!result || result.length === 0) {

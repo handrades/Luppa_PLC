@@ -235,10 +235,10 @@ describe('Analytics Performance Tests', () => {
       await analyticsService.getDistributionBySite();
 
       // Verify query includes proper GROUP BY and ORDER BY
-      expect(mockQuery).toHaveBeenCalledWith(
+      expect(mockQuery.mock.calls[0][0]).toEqual(
         expect.stringContaining('GROUP BY'),
       );
-      expect(mockQuery).toHaveBeenCalledWith(
+      expect(mockQuery.mock.calls[0][0]).toEqual(
         expect.stringContaining('ORDER BY value DESC'),
       );
     });

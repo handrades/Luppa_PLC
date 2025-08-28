@@ -5,7 +5,7 @@
 
 import { DataSource } from 'typeorm';
 import { PLC } from '../../entities/PLC.js';
-import { Equipment } from '../../entities/Equipment.js';
+import { Equipment, EquipmentType } from '../../entities/Equipment.js';
 import { Tag } from '../../entities/Tag.js';
 import { Site } from '../../entities/Site.js';
 import { Cell } from '../../entities/Cell.js';
@@ -48,36 +48,27 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
   const equipmentData = [
     {
       name: 'Assembly Line 1 Controller',
-      description: 'Main PLC controlling assembly line 1',
-      type: 'PLC Controller',
-      manufacturer: 'Allen-Bradley',
-      model: 'CompactLogix 5380',
-      serial_number: 'AB-CL5380-001',
+      equipmentType: EquipmentType.ASSEMBLY_TABLE,
+      cellId: cells[0].id,
       cell: cells[0],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
     {
       name: 'Conveyor System Controller',
-      description: 'Controls material handling conveyor system',
-      type: 'PLC Controller',
-      manufacturer: 'Siemens',
-      model: 'S7-1500',
-      serial_number: 'SIE-S71500-001',
+      equipmentType: EquipmentType.CONVEYOR,
+      cellId: cells[1]?.id || cells[0].id,
       cell: cells[1] || cells[0],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
     {
       name: 'Quality Station PLC',
-      description: 'Quality inspection station controller',
-      type: 'PLC Controller',
-      manufacturer: 'Omron',
-      model: 'NX102',
-      serial_number: 'OMR-NX102-001',
+      equipmentType: EquipmentType.OTHER,
+      cellId: cells[2]?.id || cells[0].id,
       cell: cells[2] || cells[0],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
   ];
 
@@ -94,8 +85,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       ip_address: '192.168.1.101',
       firmware_version: 'v32.011',
       equipment: createdEquipment[0],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
     {
       tag_id: 'PLC-002',
@@ -105,8 +96,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       ip_address: '192.168.1.102',
       firmware_version: 'v2.9.3',
       equipment: createdEquipment[1],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
     {
       tag_id: 'PLC-003',
@@ -116,8 +107,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
       ip_address: '192.168.1.103',
       firmware_version: 'v1.4.0',
       equipment: createdEquipment[2],
-      created_by: adminUser,
-      updated_by: adminUser,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
     },
   ];
 
@@ -134,8 +125,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
         data_type: 'BOOL',
         description: 'Start command for the system',
         address: 'B3:0/0',
-        created_by: adminUser,
-        updated_by: adminUser,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
       },
       {
         plc,
@@ -143,8 +134,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
         data_type: 'BOOL',
         description: 'Stop command for the system',
         address: 'B3:0/1',
-        created_by: adminUser,
-        updated_by: adminUser,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
       },
       {
         plc,
@@ -152,8 +143,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
         data_type: 'REAL',
         description: 'System speed setpoint',
         address: 'F8:10',
-        created_by: adminUser,
-        updated_by: adminUser,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
       },
       {
         plc,
@@ -161,8 +152,8 @@ export const seedPLCInventory = async (dataSource: DataSource): Promise<void> =>
         data_type: 'DINT',
         description: 'Production counter',
         address: 'N7:0',
-        created_by: adminUser,
-        updated_by: adminUser,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
       }
     );
   }

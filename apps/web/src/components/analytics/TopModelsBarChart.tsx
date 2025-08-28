@@ -70,8 +70,11 @@ const TopModelsBarChart: React.FC<TopModelsBarChartProps> = ({ data, onBarClick 
   }));
 
   const handleClick = (data: unknown) => {
-    if (onBarClick && data) {
-      onBarClick(data as TopModel);
+    interface BarClickData {
+      payload?: TopModel;
+    }
+    if (onBarClick && data && (data as BarClickData).payload) {
+      onBarClick((data as BarClickData).payload);
     }
   };
 

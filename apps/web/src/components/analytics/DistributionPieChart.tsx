@@ -62,15 +62,16 @@ const DistributionPieChart: React.FC<DistributionPieChartProps> = ({ data, onSeg
     midAngle,
     innerRadius,
     outerRadius,
-    percentage,
+    percent,
   }: {
     cx: number;
     cy: number;
     midAngle: number;
     innerRadius: number;
     outerRadius: number;
-    percentage: number;
+    percent?: number;
   }) => {
+    const percentage = (percent ?? 0) * 100;
     if (percentage < 5) return null; // Don't show label for small slices
 
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -87,7 +88,7 @@ const DistributionPieChart: React.FC<DistributionPieChartProps> = ({ data, onSeg
         fontSize={12}
         fontWeight='bold'
       >
-        {`${percentage.toFixed(0)}%`}
+        {`${Math.round(percentage)}%`}
       </text>
     );
   };

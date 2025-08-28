@@ -106,7 +106,12 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities }) =
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <List sx={{ flex: 1, overflow: 'auto', maxHeight: 320 }}>
         {activities.map(activity => (
-          <ListItem key={activity.id} alignItems='flex-start' sx={{ px: 0 }}>
+          <ListItem
+            key={activity.id}
+            data-testid='activity-item'
+            alignItems='flex-start'
+            sx={{ px: 0 }}
+          >
             <ListItemAvatar>
               <Avatar
                 sx={{

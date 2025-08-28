@@ -102,7 +102,7 @@ export async function exportToPDF(element: HTMLElement, data: AnalyticsExportDat
       }
 
       // Make distribution
-      if (data.distribution?.make && yPos < 150) {
+      if (data.distribution?.make) {
         pdf.setFontSize(12);
         pdf.text('By Manufacturer:', 15, yPos);
         yPos += 7;

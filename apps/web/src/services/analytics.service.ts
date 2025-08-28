@@ -16,10 +16,14 @@ class AnalyticsService {
   private baseUrl = `${API_BASE_URL}/analytics`;
 
   private getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+    const tokenKey = env.AUTH_TOKEN_KEY || 'authToken';
+    const token = localStorage.getItem(tokenKey);
+    if (token) {
+      return {
+        Authorization: `Bearer ${token}`,
+      };
+    }
+    return {};
   }
 
   async getOverview(): Promise<DashboardOverview> {

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type { ReactNode } from 'react';
 import TopModelsBarChart from '../TopModelsBarChart';
 import { TopModel } from '../../../types/analytics';
 
@@ -8,16 +9,16 @@ jest.mock('recharts', () => {
   const originalModule = jest.requireActual('recharts');
   return {
     ...originalModule,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    BarChart: ({ children, data }: { children: React.ReactNode; data?: unknown[] }) => (
+    ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    BarChart: ({ children, data }: { children: ReactNode; data?: unknown[] }) => (
       <div data-testid='bar-chart' data-count={data?.length || 0}>
         {children}
       </div>
     ),
-    Bar: ({ onClick, children }: { onClick?: (data: unknown) => void; children?: React.ReactNode }) => {
+    Bar: ({ onClick, children }: { onClick?: (data: unknown) => void; children?: ReactNode }) => {
       const mockData = [
-        { displayName: 'Allen Bradley Comp...', count: 50 },
-        { displayName: 'Siemens S7-1200', count: 30 },
+        { displayName: 'Allen Bradley Comp...', count: 50, make: 'Allen Bradley', model: 'CompactLogix', percentage: 50 },
+        { displayName: 'Siemens S7-1200', count: 30, make: 'Siemens', model: 'S7-1200', percentage: 30 },
       ];
       return (
         <div data-testid='bar'>
@@ -25,7 +26,7 @@ jest.mock('recharts', () => {
             <div
               key={index}
               data-testid={`bar-item-${index}`}
-              onClick={() => onClick && onClick(item)}
+              onClick={() => onClick && onClick({ payload: item })}
             >
               {item.displayName}: {item.count}
             </div>

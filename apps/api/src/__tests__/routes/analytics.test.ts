@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Express, Request, Response } from 'express';
 import { createApp } from '../../app';
 import analyticsService from '../../services/AnalyticsService';
 import { authenticate, authorize } from '../../middleware/auth';
@@ -11,7 +11,7 @@ jest.mock('../../middleware/auth', () => ({
 }));
 jest.mock('../../config/logger');
 
-interface MockRequest extends Express.Request {
+interface MockRequest extends Request {
   user?: { id: string; username: string; roles: string[] };
 }
 
@@ -27,7 +27,7 @@ describe('Analytics Routes', () => {
       next();
     });
     
-    (authorize as jest.Mock).mockImplementation(() => (_req: MockRequest, _res: Express.Response, next: () => void) => next());
+    (authorize as jest.Mock).mockImplementation(() => (_req: MockRequest, _res: Response, next: () => void) => next());
     
     app = createApp();
   });
@@ -228,7 +228,7 @@ describe('Analytics Routes', () => {
         limit: 20,
         hasMore: false,
       });
-      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(20);
+      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(20, 0);
     });
 
     it('should accept pagination parameters', async () => {
@@ -241,7 +241,7 @@ describe('Analytics Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.pagination.page).toBe(2);
       expect(response.body.pagination.limit).toBe(50);
-      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(50);
+      expect(analyticsService.getRecentActivity).toHaveBeenCalledWith(50, 50);
     });
   });
 
@@ -322,7 +322,7 @@ describe('Analytics Routes', () => {
 
     it.skip('should require admin role', async () => {
       // Create a new app instance with restricted authorize mock
-      (authorize as jest.Mock).mockImplementation(() => (_req: MockRequest, res: Express.Response) => {
+      (authorize as jest.Mock).mockImplementation(() => (_req: MockRequest, res: Response) => {
         res.status(403).json({ error: 'Insufficient permissions' });
       });
       

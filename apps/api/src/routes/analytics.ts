@@ -3,7 +3,13 @@ import { authenticate, authorize } from '../middleware/auth';
 import analyticsService from '../services/AnalyticsService';
 import { asyncHandler } from '../utils/errorHandler';
 import { logger } from '../config/logger';
+import { JwtPayload } from '../config/jwt';
 import Joi from 'joi';
+
+// Extend Request type for authenticated routes
+interface AuthRequest extends Request {
+  user?: JwtPayload;
+}
 
 const router: Router = Router();
 
@@ -18,6 +24,10 @@ const topModelsQuerySchema = Joi.object({
 const recentActivityQuerySchema = Joi.object({
   limit: Joi.number().min(10).max(100).default(20),
   page: Joi.number().min(1).default(1),
+});
+
+const hierarchyQuerySchema = Joi.object({
+  depth: Joi.number().min(1).max(3).default(3),
 });
 
 const exportBodySchema = Joi.object({
@@ -180,8 +190,17 @@ router.get(
 router.get(
   '/hierarchy',
   authorize(['analytics_viewer', 'admin']),
-  asyncHandler(async (_req: Request, res: Response) => {
-    const hierarchy = await analyticsService.getHierarchyStatistics();
+  asyncHandler(async (req: Request, res: Response) => {
+    const { error, value } = hierarchyQuerySchema.validate(req.query);
+    if (error) {
+      res.status(400).json({
+        success: false,
+        error: error.details[0].message,
+      });
+      return;
+    }
+
+    const hierarchy = await analyticsService.getHierarchyStatistics(value.depth);
 
     res.set('Cache-Control', 'public, max-age=60');
     res.json({
@@ -232,7 +251,9 @@ router.get(
       return;
     }
 
-    const activities = await analyticsService.getRecentActivity(value.limit);
+    // Calculate offset for pagination
+    const offset = (value.page - 1) * value.limit;
+    const activities = await analyticsService.getRecentActivity(value.limit, offset);
 
     res.set('Cache-Control', 'public, max-age=30');
     res.json({
@@ -298,8 +319,9 @@ router.post(
     }
 
     // Log the export request
+    const authReq = req as AuthRequest;
     logger.info('Analytics export requested', {
-      userId: (req as unknown as { user: { id: string } }).user.id,
+      userId: authReq.user?.sub,
       format: value.format,
       sections: value.sections,
     });
@@ -334,7 +356,7 @@ router.post(
     // Add metadata
     exportData.metadata = {
       generatedAt: new Date(),
-      generatedBy: (req as unknown as { user: { username: string } }).user.username,
+      generatedBy: authReq.user?.email || 'Unknown',
       format: value.format,
     };
 
@@ -368,8 +390,9 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     await analyticsService.clearCache();
 
+    const authReq = req as AuthRequest;
     logger.info('Analytics cache cleared', {
-      userId: (req as unknown as { user: { id: string } }).user.id,
+      userId: authReq.user?.sub,
     });
 
     res.json({

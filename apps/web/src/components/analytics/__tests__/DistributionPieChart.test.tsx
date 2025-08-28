@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type { ReactNode } from 'react';
 import DistributionPieChart from '../DistributionPieChart';
 import { DistributionData } from '../../../types/analytics';
 
@@ -8,9 +9,9 @@ jest.mock('recharts', () => {
   const originalModule = jest.requireActual('recharts');
   return {
     ...originalModule,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    PieChart: ({ children }: { children: React.ReactNode }) => <div data-testid='pie-chart'>{children}</div>,
-    Pie: ({ data, onClick, children }: { data?: unknown[]; onClick?: (item: unknown) => void; children?: React.ReactNode }) => (
+    ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    PieChart: ({ children }: { children: ReactNode }) => <div data-testid='pie-chart'>{children}</div>,
+    Pie: ({ data, onClick, children }: { data?: unknown[]; onClick?: (item: unknown) => void; children?: ReactNode }) => (
       <div data-testid='pie'>
         {(data as { name: string; value: number }[])?.map((item, index) => (
           <div
