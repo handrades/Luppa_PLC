@@ -511,12 +511,16 @@ export class AnalyticsService {
           try {
             // Node-redis v4+ expects individual key arguments, not an array
             // TypeScript has issues with spread on dynamic arrays, so we use a workaround
-            const unlinkFn = redisClient.unlink.bind(redisClient) as (...args: string[]) => Promise<number>;
+            const unlinkFn = redisClient.unlink.bind(redisClient) as (
+              ...args: string[]
+            ) => Promise<number>;
             await unlinkFn(...keys);
             totalDeleted += keys.length;
           } catch (unlinkError) {
             // Fallback to DEL if UNLINK is not available
-            const delFn = redisClient.del.bind(redisClient) as (...args: string[]) => Promise<number>;
+            const delFn = redisClient.del.bind(redisClient) as (
+              ...args: string[]
+            ) => Promise<number>;
             await delFn(...keys);
             totalDeleted += keys.length;
           }
