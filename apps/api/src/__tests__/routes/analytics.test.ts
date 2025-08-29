@@ -19,8 +19,8 @@ jest.mock('../../services/AnalyticsService', () => {
   };
 });
 jest.mock('../../middleware/auth', () => ({
-  authenticate: jest.fn((req, res, next) => next()),
-  authorize: jest.fn(() => (req, res, next) => next()),
+  authenticate: jest.fn((_req, _res, next) => next()),
+  authorize: jest.fn(() => (_req, _res, next) => next()),
 }));
 jest.mock('../../config/logger');
 
@@ -74,9 +74,7 @@ describe('Analytics Routes', () => {
         .get('/api/v1/analytics/overview')
         .set('Authorization', 'Bearer test-token');
 
-      if (response.status !== 200) {
-        console.error('Response error:', response.body);
-      }
+      // Include response body in assertion message for debugging
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(expect.objectContaining({
@@ -350,7 +348,10 @@ describe('Analytics Routes', () => {
         res.status(403).json({ error: 'Insufficient permissions' });
       });
       
-      const restrictedApp = createApp();
+      // Create a simple test app with analytics router
+      const restrictedApp = express();
+      restrictedApp.use(express.json());
+      restrictedApp.use('/api/v1/analytics', analyticsRouter);
 
       const response = await request(restrictedApp)
         .post('/api/v1/analytics/cache/clear')
