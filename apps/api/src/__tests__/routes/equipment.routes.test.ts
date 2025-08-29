@@ -914,13 +914,7 @@ describe('Equipment Routes Integration Tests', () => {
           operation: 'delete',
         });
 
-      if (response.status !== 200) {
-        // eslint-disable-next-line no-console
-        console.log('Bulk delete - Response status:', response.status);
-        // eslint-disable-next-line no-console
-        console.log('Bulk delete - Response body:', JSON.stringify(response.body, null, 2));
-      }
-
+      // Include response details in assertion for debugging
       expect(response.status).toBe(200);
       expect(response.body.deletedCount).toBe(2);
       expect(response.body.message).toContain('Successfully deleted 2 equipment items');

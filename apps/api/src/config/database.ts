@@ -181,9 +181,6 @@ export const getAppDataSource = (): DataSource => {
   return AppDataSource;
 };
 
-// Initialize AppDataSource for immediate use (backwards compatibility)
-AppDataSource = createDataSource();
-
 /**
  * Initialize database connection
  *
