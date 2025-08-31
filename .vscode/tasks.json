@@ -136,14 +136,16 @@
       "problemMatcher": []
     },
     {
-      "label": "Run (Docker)",
+      "label": "Docker: Start All Services",
       "type": "shell",
       "command": "pwsh",
-      "args": ["-Command", "Invoke-psake Run"],
+      "args": ["-Command", "Invoke-psake DockerUp"],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}"
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+          "COMPOSE_PROJECT_NAME": "luppa-dev",
+          "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
         }
       },
       "windows": {
@@ -181,7 +183,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Build (Docker)",
+      "label": "Docker: Build All Services",
       "type": "shell",
       "command": "pwsh",
       "args": ["-Command", "Invoke-psake DockerBuild"],
@@ -226,7 +228,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stop (Docker)",
+      "label": "Docker: Stop All Services",
       "type": "shell",
       "command": "pwsh",
       "args": ["-Command", "Invoke-psake DockerDown"],
@@ -670,6 +672,216 @@
         "panel": "shared"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "🚀 Start Full Application Stack",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "Write-Host '🚀 Starting Luppa PLC Full Application Stack...' -ForegroundColor Cyan; Invoke-psake DockerUp"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+          "COMPOSE_PROJECT_NAME": "luppa-dev",
+          "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev",
+            "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev",
+            "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+          }
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Starts PostgreSQL, Redis, API, Web Frontend, and Nginx proxy. Access at http://localhost:3011"
+    },
+    {
+      "label": "🛑 Stop Full Application Stack",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "Write-Host '🛑 Stopping Luppa PLC Application Stack...' -ForegroundColor Yellow; Invoke-psake DockerDown"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+          "COMPOSE_PROJECT_NAME": "luppa-dev"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 Show Application Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Invoke-psake DockerStatus; Write-Host ''; Write-Host 'Application URLs:' -ForegroundColor Cyan; Write-Host '  Main App: http://localhost:3011' -ForegroundColor Green; Write-Host '  API Health: http://localhost:3010/health' -ForegroundColor Green; Write-Host '  Direct Frontend: http://localhost:3100' -ForegroundColor Green"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+          "COMPOSE_PROJECT_NAME": "luppa-dev"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔄 Restart Application Stack",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Write-Host 'Restarting Application Stack...' -ForegroundColor Cyan; Invoke-psake DockerRestart"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+          "COMPOSE_PROJECT_NAME": "luppa-dev",
+          "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev",
+            "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PATH": "${workspaceFolder}/node_modules/.bin:${env:PATH}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev",
+            "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
+          }
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 Setup Database (Migrations + Seed)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "Write-Host 'Running database migrations and seeding...' -ForegroundColor Cyan; docker compose -f config/docker-compose.dev.yml -p luppa-dev exec -T api sh -c 'npm run migration:run && npm run seed'"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "COMPOSE_PROJECT_NAME": "luppa-dev"
+        }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "linux": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "COMPOSE_PROJECT_NAME": "luppa-dev"
+          }
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "dependsOn": ["Docker: Start All Services"]
     }
   ]
 }

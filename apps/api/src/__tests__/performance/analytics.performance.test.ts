@@ -1,5 +1,5 @@
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { AppDataSource } from '../../config/database';
+import { AppDataSource, getAppDataSource } from '../../config/database';
 import { redisClient } from '../../config/redis';
 import { performance } from 'perf_hooks';
 
@@ -15,6 +15,15 @@ jest.mock('../../config/database', () => ({
       })),
     })),
   },
+  getAppDataSource: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue([]),
+    getRepository: jest.fn(() => ({
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(0),
+      })),
+    })),
+  })),
 }));
 
 jest.mock('../../config/redis', () => ({
@@ -41,12 +50,24 @@ jest.mock('../../config/logger', () => ({
 describe('Analytics Performance Tests', () => {
   let analyticsService: AnalyticsService;
   let mockQuery: jest.Mock;
+  let getAppDataSourceMock: jest.Mock;
 
   beforeAll(() => {
     analyticsService = new AnalyticsService();
     mockQuery = jest.fn();
-    const appDataSourceMock = AppDataSource as typeof AppDataSource & { query: jest.Mock };
-    appDataSourceMock.query = mockQuery;
+    getAppDataSourceMock = getAppDataSource as jest.Mock;
+    
+    // Set up default mock for getAppDataSource
+    getAppDataSourceMock.mockReturnValue({
+      query: mockQuery,
+      getRepository: jest.fn(() => ({
+        createQueryBuilder: jest.fn(() => ({
+          where: jest.fn().mockReturnThis(),
+          getCount: jest.fn().mockResolvedValue(0),
+        })),
+      })),
+    });
+    
     const redisClientMock = redisClient as typeof redisClient & { get: jest.Mock; setEx: jest.Mock };
     redisClientMock.get = jest.fn().mockResolvedValue(null);
     redisClientMock.setEx = jest.fn().mockResolvedValue('OK');
@@ -67,7 +88,10 @@ describe('Analytics Performance Tests', () => {
         getCount: jest.fn().mockResolvedValue(10000),
       };
 
-      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
+      getAppDataSourceMock.mockReturnValue({
+        query: mockQuery,
+        getRepository: jest.fn().mockReturnValue(mockRepository),
+      });
 
       // Measure performance
       const startTime = performance.now();
