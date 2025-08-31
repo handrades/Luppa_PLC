@@ -1,5 +1,4 @@
 import {
-  AppDataSource,
   getConnectionPoolStats,
   getDatabaseConfig,
   getDatabaseHealth,
