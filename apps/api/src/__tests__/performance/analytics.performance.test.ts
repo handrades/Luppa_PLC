@@ -1,20 +1,11 @@
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { AppDataSource, getAppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { redisClient } from '../../config/redis';
 import { performance } from 'perf_hooks';
 
 // Mock dependencies with explicit ESM-shaped modules
 jest.mock('../../config/database', () => ({
   __esModule: true,
-  AppDataSource: {
-    query: jest.fn(),
-    getRepository: jest.fn(() => ({
-      createQueryBuilder: jest.fn(() => ({
-        where: jest.fn().mockReturnThis(),
-        getCount: jest.fn().mockResolvedValue(0),
-      })),
-    })),
-  },
   getAppDataSource: jest.fn(() => ({
     query: jest.fn().mockResolvedValue([]),
     getRepository: jest.fn(() => ({
@@ -23,6 +14,7 @@ jest.mock('../../config/database', () => ({
         getCount: jest.fn().mockResolvedValue(0),
       })),
     })),
+    isInitialized: false,
   })),
 }));
 
@@ -52,7 +44,10 @@ describe('Analytics Performance Tests', () => {
   let mockQuery: jest.Mock;
   let getAppDataSourceMock: jest.Mock;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    // Reset all mocks before each test
+    jest.resetAllMocks();
+    
     analyticsService = new AnalyticsService();
     mockQuery = jest.fn();
     getAppDataSourceMock = getAppDataSource as jest.Mock;
@@ -66,11 +61,15 @@ describe('Analytics Performance Tests', () => {
           getCount: jest.fn().mockResolvedValue(0),
         })),
       })),
+      isInitialized: true,
     });
     
-    const redisClientMock = redisClient as typeof redisClient & { get: jest.Mock; setEx: jest.Mock };
+    const redisClientMock = redisClient as typeof redisClient & { get: jest.Mock; setEx: jest.Mock; scan: jest.Mock; unlink: jest.Mock; del: jest.Mock };
     redisClientMock.get = jest.fn().mockResolvedValue(null);
     redisClientMock.setEx = jest.fn().mockResolvedValue('OK');
+    redisClientMock.scan = jest.fn().mockResolvedValue({ cursor: '0', keys: [] });
+    redisClientMock.unlink = jest.fn().mockResolvedValue(0);
+    redisClientMock.del = jest.fn().mockResolvedValue(0);
   });
 
   afterEach(() => {
@@ -182,7 +181,11 @@ describe('Analytics Performance Tests', () => {
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(10000),
       };
-      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
+      getAppDataSourceMock.mockReturnValue({
+        query: mockQuery,
+        getRepository: jest.fn().mockReturnValue(mockRepository),
+        isInitialized: true,
+      });
 
       const startTime = performance.now();
       
@@ -223,7 +226,11 @@ describe('Analytics Performance Tests', () => {
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(10000),
       };
-      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
+      getAppDataSourceMock.mockReturnValue({
+        query: mockQuery,
+        getRepository: jest.fn().mockReturnValue(mockRepository),
+        isInitialized: true,
+      });
       mockQuery.mockResolvedValue([{ current_count: '100', previous_count: '95' }]);
 
       const firstStartTime = performance.now();
@@ -328,7 +335,11 @@ describe('Analytics Performance Tests', () => {
         where: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(1000),
       };
-      (AppDataSource as typeof AppDataSource & { getRepository: jest.Mock }).getRepository = jest.fn().mockReturnValue(mockRepository);
+      getAppDataSourceMock.mockReturnValue({
+        query: mockQuery,
+        getRepository: jest.fn().mockReturnValue(mockRepository),
+        isInitialized: true,
+      });
 
       const startTime = performance.now();
       

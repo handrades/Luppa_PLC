@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import { createTestApp } from '../helpers/testApp';
 import { createAuthToken } from '../helpers/auth';
-import { AppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 
 describe('Import/Export API Routes', () => {
   let app: express.Application;
@@ -20,8 +20,9 @@ describe('Import/Export API Routes', () => {
   });
 
   afterAll(async () => {
-    if (AppDataSource.isInitialized) {
-      await AppDataSource.destroy();
+    const dataSource = getAppDataSource();
+    if (dataSource && dataSource.isInitialized) {
+      await dataSource.destroy();
     }
   });
 

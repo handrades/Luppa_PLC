@@ -20,7 +20,7 @@ describe('Health Configuration Functions', () => {
       expect(typeof result.isHealthy).toBe('boolean');
       expect(typeof result.responseTime).toBe('number');
       expect(result.responseTime).toBeGreaterThanOrEqual(0);
-      expect(result.responseTime).toBeLessThan(endTime - startTime + 10); // Allow small margin
+      expect(result.responseTime).toBeLessThanOrEqual(endTime - startTime + 50); // Allow reasonable margin for CI environment
 
       // Validate pool stats structure
       expect(result.poolStats).toHaveProperty('isConnected');

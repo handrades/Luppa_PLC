@@ -469,7 +469,14 @@ jest.mock('../../config/database', () => ({
     isInitialized: true,
     manager: {},
     destroy: jest.fn().mockResolvedValue(undefined)
-  }
+  },
+  getAppDataSource: jest.fn(() => ({
+    isInitialized: true,
+    manager: {},
+    destroy: jest.fn().mockResolvedValue(undefined),
+    getRepository: jest.fn(),
+    query: jest.fn()
+  }))
 }));
 
 /**

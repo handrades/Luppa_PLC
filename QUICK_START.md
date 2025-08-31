@@ -33,12 +33,12 @@ pwsh -c "Invoke-psake DockerUp"
 
 ## Access Points
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Main Application** | <http://localhost:3011> | Full app via Nginx (USE THIS!) |
-| API Health Check | <http://localhost:3010/health> | Direct API health endpoint |
-| Direct Frontend | <http://localhost:3100> | Vite dev server (hot reload) |
-| Direct API | <http://localhost:3010> | Express API server |
+| Service              | URL                            | Description                    |
+| -------------------- | ------------------------------ | ------------------------------ |
+| **Main Application** | <http://localhost:3011>        | Full app via Nginx (USE THIS!) |
+| API Health Check     | <http://localhost:3010/health> | Direct API health endpoint     |
+| Direct Frontend      | <http://localhost:3100>        | Vite dev server (hot reload)   |
+| Direct API           | <http://localhost:3010>        | Express API server             |
 
 ## What's the Difference Between Configurations?
 

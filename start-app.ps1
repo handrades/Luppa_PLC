@@ -96,7 +96,25 @@ function Start-Application {
         # Run migrations and seed
         Write-Host ""
         Write-Host "🗄️  Setting up database..." -ForegroundColor Yellow
-        docker compose -f config/docker-compose.dev.yml -p luppa-dev exec -T api sh -c 'npm run migration:run 2>/dev/null && npm run seed 2>/dev/null' 2>$null
+        
+        # Run migrations
+        Write-Host "   Running migrations..." -ForegroundColor Gray
+        $migrationResult = docker compose -f config/docker-compose.dev.yml -p luppa-dev exec -T api npm run migration:run 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Database migration failed!" -ForegroundColor Red
+            Write-Host $migrationResult -ForegroundColor Red
+            exit 1
+        }
+        
+        # Run seed
+        Write-Host "   Seeding database..." -ForegroundColor Gray
+        $seedResult = docker compose -f config/docker-compose.dev.yml -p luppa-dev exec -T api npm run seed 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Database seeding failed!" -ForegroundColor Red
+            Write-Host $seedResult -ForegroundColor Red
+            exit 1
+        }
+        
         Write-Host "✅ Database ready!" -ForegroundColor Green
         
         if ($Logs) {

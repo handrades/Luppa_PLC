@@ -152,7 +152,9 @@
         "options": {
           "cwd": "${workspaceFolder}",
           "env": {
-            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}"
+            "Path": "${workspaceFolder}/node_modules/.bin;${env:Path}",
+            "COMPOSE_PROJECT_NAME": "luppa-dev",
+            "ALLOWED_ORIGINS": "http://localhost:3011,http://localhost:3010,http://localhost:3100,http://localhost:3000,http://localhost:5173,http://localhost:4173"
           }
         }
       },

@@ -107,13 +107,13 @@ pnpm dev
 
 ## Service URLs and Ports
 
-| Service | Container Name | Internal Port | External Port | URL |
-|---------|---------------|---------------|---------------|-----|
-| Nginx Proxy | luppa-nginx-dev | 80 | 3011 | <http://localhost:3011> |
-| Web Frontend | luppa-web-dev | 5173 | 3100 | <http://localhost:3100> |
-| API Backend | luppa-api-dev | 3010 | 3010 | <http://localhost:3010> |
-| PostgreSQL | luppa-postgres-dev | 5432 | 5433 | localhost:5433 |
-| Redis | luppa-redis-dev | 6379 | 6380 | localhost:6380 |
+| Service      | Container Name     | Internal Port | External Port | URL                     |
+| ------------ | ------------------ | ------------- | ------------- | ----------------------- |
+| Nginx Proxy  | luppa-nginx-dev    | 80            | 3011          | <http://localhost:3011> |
+| Web Frontend | luppa-web-dev      | 5173          | 3100          | <http://localhost:3100> |
+| API Backend  | luppa-api-dev      | 3010          | 3010          | <http://localhost:3010> |
+| PostgreSQL   | luppa-postgres-dev | 5432          | 5433          | localhost:5433          |
+| Redis        | luppa-redis-dev    | 6379          | 6380          | localhost:6380          |
 
 ## Common Operations
 
