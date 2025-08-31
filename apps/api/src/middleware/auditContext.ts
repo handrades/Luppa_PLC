@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { AppDataSource } from '../config/database';
+import { getAppDataSource } from '../config/database';
 import { logger } from '../config/logger';
 
 /**
@@ -27,8 +27,8 @@ export const auditContextMiddleware = async (
     const sessionId = generateSessionId(req);
 
     // Set PostgreSQL session variables for audit triggers
-    if (AppDataSource?.isInitialized) {
-      const queryRunner = AppDataSource.createQueryRunner();
+    if (getAppDataSource()?.isInitialized) {
+      const queryRunner = getAppDataSource().createQueryRunner();
 
       try {
         // Connect the query runner to ensure it has an active connection

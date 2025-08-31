@@ -2034,8 +2034,10 @@ Task DockerUp -Alias up -Description "Start all development services" {
   Invoke-DockerCompose -Arguments @("up", "-d")
     
   Write-Host "`nServices started successfully!" -ForegroundColor Green
-  Write-Host "Access the application at: http://localhost:3000" -ForegroundColor Yellow
-  Write-Host "API health check: http://localhost:3000/api/health" -ForegroundColor Yellow
+  Write-Host "Access the application at: http://localhost:3011" -ForegroundColor Yellow
+  Write-Host "Direct API: http://localhost:3010" -ForegroundColor Yellow
+  Write-Host "Direct Frontend: http://localhost:3100" -ForegroundColor Yellow
+  Write-Host "API health check: http://localhost:3010/health" -ForegroundColor Yellow
     
   Invoke-Task DockerStatus
 }

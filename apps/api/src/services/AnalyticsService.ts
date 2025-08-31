@@ -1,4 +1,4 @@
-import { AppDataSource } from '../config/database';
+import { getAppDataSource } from '../config/database';
 import { Equipment } from '../entities/Equipment';
 import { PLC } from '../entities/PLC';
 import { Site } from '../entities/Site';
@@ -13,7 +13,7 @@ import {
   TopModel,
 } from '../types/analytics.types';
 
-export class AnalyticsService {
+class AnalyticsService {
   private static CACHE_TTL = 300; // 5 minutes
   private static COLORS = [
     '#0088FE',
@@ -45,22 +45,26 @@ export class AnalyticsService {
 
       // Get total counts
       const [totalEquipment, totalPLCs, totalSites, totalCells] = await Promise.all([
-        AppDataSource.getRepository(Equipment)
+        getAppDataSource()
+          .getRepository(Equipment)
           .createQueryBuilder('e')
           .where('e.deleted_at IS NULL')
           .getCount(),
 
-        AppDataSource.getRepository(PLC)
+        getAppDataSource()
+          .getRepository(PLC)
           .createQueryBuilder('p')
           .where('p.deleted_at IS NULL')
           .getCount(),
 
-        AppDataSource.getRepository(Site)
+        getAppDataSource()
+          .getRepository(Site)
           .createQueryBuilder('s')
           .where('s.deleted_at IS NULL')
           .getCount(),
 
-        AppDataSource.getRepository(Cell)
+        getAppDataSource()
+          .getRepository(Cell)
           .createQueryBuilder('c')
           .where('c.deleted_at IS NULL')
           .getCount(),
@@ -97,7 +101,7 @@ export class AnalyticsService {
         return JSON.parse(cached);
       }
 
-      const result = await AppDataSource.query(`
+      const result = await getAppDataSource().query(`
         SELECT 
           s.name as label,
           COUNT(DISTINCT e.id) as value
@@ -129,7 +133,7 @@ export class AnalyticsService {
         return JSON.parse(cached);
       }
 
-      const result = await AppDataSource.query(`
+      const result = await getAppDataSource().query(`
         SELECT 
           COALESCE(make, 'Unknown') as label,
           COUNT(*) as value
@@ -159,7 +163,7 @@ export class AnalyticsService {
         return JSON.parse(cached);
       }
 
-      const result = await AppDataSource.query(`
+      const result = await getAppDataSource().query(`
         SELECT 
           COALESCE(type, 'Unknown') as label,
           COUNT(*) as value
@@ -189,7 +193,7 @@ export class AnalyticsService {
         return JSON.parse(cached);
       }
 
-      const result = await AppDataSource.query(
+      const result = await getAppDataSource().query(
         `
         SELECT 
           COALESCE(make, 'Unknown') as make,
@@ -240,7 +244,7 @@ export class AnalyticsService {
         return JSON.parse(cached);
       }
 
-      const sites = await AppDataSource.query(`
+      const sites = await getAppDataSource().query(`
         SELECT 
           s.id,
           s.name,
@@ -269,7 +273,7 @@ export class AnalyticsService {
 
         // Include cells if depth >= 2
         if (depth >= 2) {
-          const cells = await AppDataSource.query(
+          const cells = await getAppDataSource().query(
             `
             SELECT 
               c.id,
@@ -336,7 +340,7 @@ export class AnalyticsService {
         }));
       }
 
-      const result = await AppDataSource.query(
+      const result = await getAppDataSource().query(
         `
         SELECT 
           al.id,
@@ -399,7 +403,7 @@ export class AnalyticsService {
     direction: 'up' | 'down' | 'stable';
   }> {
     try {
-      const result = await AppDataSource.query(`
+      const result = await getAppDataSource().query(`
         WITH weekly_counts AS (
           SELECT 
             DATE_TRUNC('week', created_at) as week,
@@ -535,4 +539,6 @@ export class AnalyticsService {
   }
 }
 
+// Export a singleton instance by default and the class for testing
+export { AnalyticsService };
 export default new AnalyticsService();

@@ -1,10 +1,9 @@
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { AppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { redisClient } from '../../config/redis';
 
-jest.mock('../../config/database');
+// Database and logger are already mocked in jest.setup.js
 jest.mock('../../config/redis');
-jest.mock('../../config/logger');
 
 describe('AnalyticsService', () => {
   let analyticsService: AnalyticsService;
@@ -36,8 +35,14 @@ describe('AnalyticsService', () => {
     mockRedisScan = jest.fn();
     mockRedisUnlink = jest.fn();
     
-    (AppDataSource.getRepository as jest.Mock) = jest.fn().mockReturnValue(mockRepository);
-    (AppDataSource.query as jest.Mock) = mockQuery;
+    // Mock getAppDataSource return value
+    const mockDataSource = {
+      getRepository: jest.fn().mockReturnValue(mockRepository),
+      query: mockQuery,
+    };
+    
+    (getAppDataSource as jest.Mock).mockReturnValue(mockDataSource);
+    
     (redisClient.get as jest.Mock) = mockRedisGet;
     (redisClient.setEx as jest.Mock) = mockRedisSetEx;
     (redisClient.del as jest.Mock) = mockRedisDel;
