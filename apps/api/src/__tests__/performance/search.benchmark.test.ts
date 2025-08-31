@@ -5,7 +5,7 @@
  */
 
 import { SearchService } from '../../services/SearchService';
-import { AppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { createClient } from 'redis';
 
 // Mock dependencies
@@ -37,7 +37,11 @@ describe('Search Performance Benchmarks', () => {
       query: jest.fn(),
       release: jest.fn(),
     };
-    (AppDataSource.createQueryRunner as jest.Mock).mockReturnValue(mockQueryRunner);
+    const getAppDataSourceMock = getAppDataSource as jest.Mock;
+    getAppDataSourceMock.mockReturnValue({
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      isInitialized: true,
+    });
 
     searchService = new SearchService();
   });
