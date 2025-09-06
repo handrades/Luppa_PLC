@@ -5,7 +5,7 @@
  */
 
 import { SearchService } from '../../services/SearchService';
-import { AppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { createClient } from 'redis';
 import { createHash } from 'crypto';
 
@@ -15,7 +15,6 @@ const MockedCreateClient = createClient as jest.MockedFunction<typeof createClie
 
 // Mock AppDataSource
 jest.mock('../../config/database');
-const MockedAppDataSource = AppDataSource as jest.Mocked<typeof AppDataSource>;
 
 describe('SearchService', () => {
   let searchService: SearchService;
@@ -43,7 +42,13 @@ describe('SearchService', () => {
       query: jest.fn(),
       release: jest.fn(),
     };
-    MockedAppDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    
+    // Mock getAppDataSource
+    const getAppDataSourceMock = getAppDataSource as jest.Mock;
+    getAppDataSourceMock.mockReturnValue({
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      isInitialized: true,
+    });
 
     searchService = new SearchService();
   });

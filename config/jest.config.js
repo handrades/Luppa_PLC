@@ -30,4 +30,5 @@ export default {
   transform: {
     '^.+\\.ts$': ['ts-jest', { useESM: true }],
   },
+  setupFiles: ['<rootDir>/../apps/api/jest.setup.js'],
 };

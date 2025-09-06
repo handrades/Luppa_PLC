@@ -469,7 +469,14 @@ jest.mock('../../config/database', () => ({
     isInitialized: true,
     manager: {},
     destroy: jest.fn().mockResolvedValue(undefined)
-  }
+  },
+  getAppDataSource: jest.fn(() => ({
+    isInitialized: true,
+    manager: {},
+    destroy: jest.fn().mockResolvedValue(undefined),
+    getRepository: jest.fn(),
+    query: jest.fn()
+  }))
 }));
 
 /**
@@ -571,8 +578,7 @@ export async function createTestApp(): Promise<Express> {
 
   // Error handling middleware
   app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
-    // eslint-disable-next-line no-console
-    console.error('Test app error:', error);
+    // In test environment, we don't need to log errors as they're expected in many test cases
 
     // Handle different error types
     let statusCode = 500;

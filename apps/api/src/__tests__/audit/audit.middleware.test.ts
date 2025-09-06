@@ -6,28 +6,14 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { auditContextMiddleware } from '../../middleware/auditContext';
-import { AppDataSource } from '../../config/database';
+import { getAppDataSource } from '../../config/database';
 import { QueryRunner } from 'typeorm';
 import { logger } from '../../config/logger';
 
 // Request properties are now defined globally in types/express.d.ts
 type RequestWithAudit = Request;
 
-// Mock dependencies
-jest.mock('../../config/database', () => ({
-  AppDataSource: {
-    manager: {},
-    createQueryRunner: jest.fn(),
-  },
-}));
-
-jest.mock('../../config/logger', () => ({
-  logger: {
-    warn: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-}));
+// Database and logger are already mocked in jest.setup.js
 
 describe('Audit Context Middleware', () => {
   let mockRequest: Partial<RequestWithAudit>;
@@ -98,9 +84,11 @@ describe('Audit Context Middleware', () => {
       } as unknown,
     };
 
-    // Reset AppDataSource mock
-    (AppDataSource as { isInitialized?: boolean }).isInitialized = true;
-    (AppDataSource.createQueryRunner as jest.Mock).mockReturnValue(mockQueryRunner);
+    // Reset getAppDataSource mock
+    (getAppDataSource as jest.Mock).mockReturnValue({
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      isInitialized: true,
+    });
 
     // Store callbacks for both on and once events
     (mockResponse.on as jest.Mock).mockImplementation((event, callback) => {
@@ -254,7 +242,7 @@ describe('Audit Context Middleware', () => {
 
   describe('Error Handling', () => {
     it('should continue request processing when database is unavailable', async () => {
-      (AppDataSource.createQueryRunner as jest.Mock).mockImplementation(() => {
+      (getAppDataSource as jest.Mock).mockImplementation(() => {
         throw new Error('Database connection failed');
       });
 
@@ -333,7 +321,10 @@ describe('Audit Context Middleware', () => {
 
   describe('Integration with AppDataSource', () => {
     it('should handle uninitialized AppDataSource gracefully', async () => {
-      (AppDataSource as { isInitialized?: boolean }).isInitialized = false;
+      (getAppDataSource as jest.Mock).mockReturnValue({
+        isInitialized: false,
+        createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      });
 
       await auditContextMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
 

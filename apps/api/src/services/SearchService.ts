@@ -1,4 +1,4 @@
-import { AppDataSource } from '../config/database';
+import { getAppDataSource } from '../config/database';
 import { createClient } from 'redis';
 import { createHash } from 'crypto';
 import { logger } from '../config/logger';
@@ -291,7 +291,7 @@ export class SearchService {
     query: string,
     options: SearchQuery
   ): Promise<SearchResultItem[]> {
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = getAppDataSource().createQueryRunner();
 
     try {
       // Set DB-side timeout to prevent long-running queries
@@ -328,7 +328,7 @@ export class SearchService {
     query: string,
     options: SearchQuery
   ): Promise<SearchResultItem[]> {
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = getAppDataSource().createQueryRunner();
 
     try {
       // Set DB-side timeout to prevent long-running queries
@@ -639,7 +639,7 @@ export class SearchService {
    * Refresh materialized view for search performance
    */
   async refreshSearchView(): Promise<void> {
-    const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = getAppDataSource().createQueryRunner();
 
     // Set longer timeout for view refresh operations
     const timeout = setTimeout(() => {
